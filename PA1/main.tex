@@ -1,0 +1,136 @@
+\documentclass[12pt,a4paper]{article}
+
+% --- Font & Vietnamese support ---
+\usepackage[utf8]{inputenc}
+\usepackage[vietnamese]{babel}
+\usepackage[T5]{fontenc}
+\usepackage{lmodern} % scalable font
+
+% --- Page Layout ---
+\usepackage{geometry}
+\geometry{
+    a4paper,
+    top=25mm,
+    bottom=25mm,
+    left=30mm,
+    right=20mm,
+    headheight=14.5pt
+}
+
+% --- Colors ---
+\usepackage{xcolor}
+\definecolor{primary}{RGB}{26, 54, 93}   % Deep Navy Blue
+\definecolor{secondary}{RGB}{74, 85, 104} % Slate Gray
+\definecolor{accent}{RGB}{49, 151, 149}   % Teal
+\definecolor{bgcode}{RGB}{247, 250, 252}  % Light Gray for code background
+
+% --- Navigation & Links ---
+\usepackage{hyperref}
+\hypersetup{
+    colorlinks=true,
+    linkcolor=primary,
+    filecolor=accent,      
+    urlcolor=accent,
+    citecolor=primary,
+    pdftitle={Báo cáo Đồ án - Tuần 1},
+    pdfpagemode=FullScreen,
+}
+\usepackage{bookmark}
+
+% --- Headers & Footers ---
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\textsl{\small Đồ án Khởi nghiệp - K23}}
+\fancyhead[R]{\textsl{\small Tuần \weeknumber}}
+\fancyfoot[C]{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+\renewcommand{\footrulewidth}{0.4pt}
+
+% --- Typography ---
+\usepackage{titlesec}
+\titleformat{\section}
+  {\normalfont\large\bfseries\color{primary}}{\thesection.}{0.5em}{}
+\titleformat{\subsection}
+  {\normalfont\normalsize\bfseries\color{secondary}}{\thesubsection.}{0.5em}{}
+
+% --- Utilities ---
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{amsmath}
+\usepackage{listings}
+\usepackage{caption}
+
+% Setup Listings for code
+\lstset{
+    backgroundcolor=\color{bgcode},
+    basicstyle=\ttfamily\small,
+    breakatwhitespace=false,
+    breaklines=true,
+    captionpos=b,
+    keepspaces=true,
+    numbers=left,
+    numberstyle=\tiny\color{secondary},
+    showspaces=false,
+    showstringspaces=false,
+    showtabs=false,
+    tabsize=2,
+    frame=single,
+    rulecolor=\color{secondary!30}
+}
+
+% --- Document Info ---
+\newcommand{\weeknumber}{1}
+\newcommand{\reporttitle}{BÁO CÁO TIẾN ĐỘ TUẦN \weeknumber}
+\newcommand{\subject}{ĐỒ ÁN KHỞI NGHIỆP}
+\newcommand{\studentname}{Nguyễn Văn A}
+\newcommand{\studentid}{23120000}
+\newcommand{\instructor}{GV. Hướng dẫn}
+
+\begin{document}
+
+% === COVER PAGE ===
+\begin{titlepage}
+    \begin{center}
+        \large
+        \textbf{TRƯỜNG ĐẠI HỌC KHOA HỌC TỰ NHIÊN - ĐHQG-HCM} \\
+        \textbf{KHOA CÔNG NGHỆ THÔNG TIN} \\
+        \vspace{1cm}
+        % Logo can be un-commented once the image file exists
+        % \includegraphics[width=0.25\textwidth]{../shared/images/logo.png}
+        \vspace{1.5cm}
+        
+        \Large
+        \textcolor{primary}{\textbf{\subject}} \\
+        \vspace{1cm}
+        \huge
+        \textcolor{primary}{\textbf{\reporttitle}} \\
+        \vspace{1.5cm}
+        
+        \large
+        \textbf{Nhóm thực hiện:} \\
+        \studentname\ - \studentid \\
+        \vspace{1cm}
+        \textbf{Giảng viên hướng dẫn:} \\
+        \instructor \\
+        
+        \vfill
+        \large
+        TP. Hồ Chí Minh, Tháng 6 Năm 2026
+    \end{center}
+\end{titlepage}
+
+\newpage
+\tableofcontents
+\newpage
+
+% === MAIN CONTENT ===
+\input{sections/section1}
+\input{sections/section2}
+
+\section{Tài liệu tham khảo}
+% Chèn tài liệu tham khảo bằng bibtex
+\bibliographystyle{plain}
+\bibliography{references}
+
+\end{document}

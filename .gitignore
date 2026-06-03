@@ -1,0 +1,27 @@
+# --- LaTeX Auxiliary Files ---
+*.aux
+*.fdb_latexmk
+*.fls
+*.log
+*.out
+*.toc
+*.synctex.gz
+*.bbl
+*.blg
+*.pdf.bak
+
+# --- VS Code ---
+# Giữ lại settings.json để cả nhóm dùng chung cấu hình biên dịch tự động, bỏ qua các cache khác
+.vscode/*
+!.vscode/settings.json
+.history/
+
+# --- OS-specific files ---
+.DS_Store
+Thumbs.db
+
+# --- PDF Output (Tùy chọn) ---
+# Mặc định LaTeX sẽ sinh ra file PDF từ code nguồn. 
+# Nếu nhóm bạn muốn đẩy file PDF lên GitHub để tiện đọc trực tiếp thì COMMENT dòng dưới.
+# Nếu không muốn lưu file PDF trên Git (vì nó tự sinh ra được), hãy UNCOMMENT dòng dưới.
+# *.pdf
