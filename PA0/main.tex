@@ -62,7 +62,7 @@
 % --- Utilities ---
 \usepackage{graphicx}
 \usepackage{tikz}
-\usetikzlibrary{calc}
+\usetikzlibrary{arrows.meta,calc,positioning}
 \usepackage{booktabs}
 \usepackage{array}
 \usepackage{longtable}
@@ -158,10 +158,16 @@
 
 \newpage
 \pagenumbering{arabic}
+\setcounter{tocdepth}{1}
 \tableofcontents
 \newpage
 
-\input{sections/section1}
-\input{sections/section2}
+\input{sections/01-co-so-y-tuong}
+\input{sections/02-van-de-thuc-te}
+\input{sections/03-doi-tuong-khach-hang}
+\input{sections/04-giai-phap}
+\input{sections/06-khac-biet}
+\input{sections/07-tinh-kha-thi}
+\input{sections/08-ket-luan}
 
 \end{document}

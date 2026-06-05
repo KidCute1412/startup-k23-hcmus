@@ -1,0 +1,99 @@
+% !TeX root = ../main.tex
+\section{Giải pháp đưa ra}
+
+Dự án đề xuất xây dựng một nền tảng web/app cho phép người dùng \textbf{thuê thiết bị gaming trong vài ngày hoặc thử trước khi mua}. Người dùng có thể tìm kiếm thiết bị theo loại sản phẩm, thương hiệu, game phù hợp, giá thuê, tình trạng thiết bị và thông số kỹ thuật. Sau đó, người dùng đặt thuê, thanh toán phí thuê, đặt cọc hoặc đăng ký hỗ trợ cọc, rồi nhận thiết bị để trải nghiệm thực tế.
+
+Về dòng tiền, Mutux đóng vai trò trung gian giữa người thuê và người cho thuê. Nền tảng thu phí thuê, giữ cọc như một khoản bảo chứng, chuyển tiền thuê cho người cho thuê sau khi trừ hoa hồng. Với người dùng chưa đủ tiền cọc cho thiết bị có giá trị cao, Mutux có thể cung cấp dịch vụ hỗ trợ cọc: người thuê trả thêm một khoản phí dịch vụ, còn nền tảng đứng ra bảo chứng phần cọc theo điều kiện xác minh.
+
+\begin{figure}[h]
+    \centering
+    \begin{tikzpicture}[
+        box/.style={
+            draw=primary,
+            rounded corners=4pt,
+            line width=0.8pt,
+            align=center,
+            minimum width=3.0cm,
+            minimum height=1.1cm,
+            fill=primary!5
+        },
+        smallbox/.style={
+            draw=accent,
+            rounded corners=4pt,
+            line width=0.8pt,
+            align=center,
+            minimum width=3.5cm,
+            minimum height=0.95cm,
+            fill=accent!7
+        },
+        flow/.style={-{Latex[length=2.5mm]}, line width=0.75pt, color=secondary},
+        money/.style={-{Latex[length=2.5mm]}, line width=0.9pt, color=accent},
+        note/.style={align=center, font=\footnotesize}
+    ]
+        \node[box] (renter) at (0,1.6) {Người thuê\\game gear};
+        \node[box] (platform) at (5.0,1.6) {Nền tảng\\Mutux};
+        \node[box] (owner) at (10.0,1.6) {Người cho thuê\\shop/chủ gear};
+        \node[smallbox] (deposit) at (5.0,-0.2) {Giữ cọc / hỗ trợ cọc\\hoàn cọc khi đủ điều kiện};
+
+        \draw[money] ([yshift=0.22cm]renter.east) -- ([yshift=0.22cm]platform.west)
+            node[midway, above=0.12cm, note]{Phí thuê + tiền cọc};
+        \draw[money] ([yshift=-0.22cm]renter.east) -- ([yshift=-0.22cm]platform.west)
+            node[midway, below=0.12cm, note]{hoặc phí hỗ trợ cọc};
+        \draw[money] ([yshift=0.22cm]platform.east) -- ([yshift=0.22cm]owner.west)
+            node[midway, above=0.12cm, note]{Tiền thuê sau hoa hồng};
+        \draw[money] (platform.south) -- (deposit.north)
+            node[midway, right=0.12cm, note]{quản lý cọc};
+
+        \draw[flow] (10.0,-2.0) -- (0,-2.0)
+            node[midway, above=0.12cm, note]{Giao thiết bị};
+        \draw[flow] (0,-2.6) -- (10.0,-2.6)
+            node[midway, below=0.12cm, note]{Trả thiết bị};
+    \end{tikzpicture}
+    \caption{Luồng thiết bị và dòng tiền trong mô hình Mutux}
+\end{figure}
+
+\subsection{Các loại thiết bị có thể cho thuê}
+
+\begin{itemize}
+    \item Chuột gaming: Logitech, Razer, Zowie, Pulsar, Lamzu, Glorious.
+    \item Bàn phím cơ: phân loại theo layout, switch, kết nối và độ phản hồi.
+    \item Tai nghe gaming: test âm thanh, mic, độ thoải mái khi đeo lâu.
+    \item Tay cầm: phục vụ FC Online, eFootball, FIFA, PES, racing game.
+    \item Combo gear: chuột, bàn phím và tai nghe theo từng thể loại game.
+\end{itemize}
+
+\subsection{Tính năng cho người thuê}
+
+\begin{itemize}
+    \item Đăng ký và đăng nhập tài khoản.
+    \item Xem danh sách thiết bị gaming đang có sẵn.
+    \item Lọc thiết bị theo loại, thương hiệu, giá thuê, tình trạng và game phù hợp.
+    \item Xem chi tiết thiết bị gồm ảnh, thông số, mô tả, tình trạng và đánh giá.
+    \item Đặt thuê theo ngày.
+    \item Thanh toán phí thuê, đặt cọc hoặc đăng ký hỗ trợ cọc.
+    \item Theo dõi trạng thái đơn thuê.
+    \item Đánh giá thiết bị sau khi trả hàng.
+    \item Nhận gợi ý gear phù hợp theo game đang chơi.
+\end{itemize}
+
+\subsection{Tính năng cho shop hoặc chủ gear}
+
+\begin{itemize}
+    \item Đăng thiết bị lên nền tảng.
+    \item Quản lý danh sách thiết bị.
+    \item Cập nhật tình trạng thiết bị: available, booked, renting, returned, maintenance.
+    \item Quản lý lịch thuê.
+    \item Theo dõi doanh thu.
+    \item Xem đánh giá từ người thuê.
+\end{itemize}
+
+\subsection{Tính năng cho admin}
+
+\begin{itemize}
+    \item Quản lý người dùng.
+    \item Quản lý thiết bị.
+    \item Quản lý đơn thuê.
+    \item Kiểm duyệt thiết bị do shop hoặc chủ gear đăng.
+    \item Xử lý tranh chấp, trả muộn, hư hỏng hoặc mất thiết bị.
+    \item Theo dõi doanh thu và hoa hồng nền tảng.
+\end{itemize}
