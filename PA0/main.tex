@@ -4,7 +4,7 @@
 \usepackage[utf8]{inputenc}
 \usepackage[vietnamese]{babel}
 \usepackage[T5]{fontenc}
-\usepackage{lmodern} % scalable font
+\usepackage{tgpagella}
 
 % --- Page Layout ---
 \usepackage{geometry}
@@ -19,21 +19,24 @@
 
 % --- Colors ---
 \usepackage{xcolor}
-\definecolor{primary}{RGB}{26, 54, 93}   % Deep Navy Blue
-\definecolor{secondary}{RGB}{74, 85, 104} % Slate Gray
-\definecolor{accent}{RGB}{49, 151, 149}   % Teal
-\definecolor{bgcode}{RGB}{247, 250, 252}  % Light Gray for code background
+\definecolor{primary}{RGB}{26, 54, 93}
+\definecolor{secondary}{RGB}{74, 85, 104}
+\definecolor{accent}{RGB}{49, 151, 149}
+\definecolor{bgcode}{RGB}{247, 250, 252}
+
+\newcommand{\schoolfont}{\fontsize{15}{18}\selectfont}
+\newcommand{\facultyfont}{\fontsize{13}{16}\selectfont}
 
 % --- Navigation & Links ---
 \usepackage{hyperref}
 \hypersetup{
     colorlinks=true,
     linkcolor=primary,
-    filecolor=accent,      
+    filecolor=accent,
     urlcolor=accent,
     citecolor=primary,
-    pdftitle={Báo cáo Đồ án - Tuần 0},
-    pdfpagemode=FullScreen,
+    pdftitle={Bao cao do an - Tuan 0},
+    pdfpagemode=FullScreen
 }
 \usepackage{bookmark}
 
@@ -53,15 +56,20 @@
   {\normalfont\large\bfseries\color{primary}}{\thesection.}{0.5em}{}
 \titleformat{\subsection}
   {\normalfont\normalsize\bfseries\color{secondary}}{\thesubsection.}{0.5em}{}
+\titleformat{\subsubsection}
+  {\normalfont\normalsize\bfseries\itshape\color{secondary}}{\thesubsubsection.}{0.5em}{}
 
 % --- Utilities ---
 \usepackage{graphicx}
+\usepackage{tikz}
+\usetikzlibrary{calc}
 \usepackage{booktabs}
+\usepackage{array}
+\usepackage{longtable}
 \usepackage{amsmath}
 \usepackage{listings}
 \usepackage{caption}
 
-% Setup Listings for code
 \lstset{
     backgroundcolor=\color{bgcode},
     basicstyle=\ttfamily\small,
@@ -81,55 +89,79 @@
 
 % --- Document Info ---
 \newcommand{\weeknumber}{0}
-\newcommand{\reporttitle}{BÁO CÁO TIẾN ĐỘ TUẦN \weeknumber}
+\newcommand{\projectname}{Mutux}
+\newcommand{\reporttitle}{Nền tảng thuê / thử thiết bị gaming trước khi mua}
 \newcommand{\subject}{ĐỒ ÁN KHỞI NGHIỆP}
-\newcommand{\studentname}{Nguyễn Văn A}
-\newcommand{\studentid}{23120000}
-\newcommand{\instructor}{GV. Hướng dẫn}
+\newcommand{\instructor}{Đinh Bá Tiến}
 
 \begin{document}
 
-% === COVER PAGE ===
+\pagenumbering{gobble}
 \begin{titlepage}
-    \begin{center}
-        \large
-        \textbf{TRƯỜNG ĐẠI HỌC KHOA HỌC TỰ NHIÊN - ĐHQG-HCM} \\
-        \textbf{KHOA CÔNG NGHỆ THÔNG TIN} \\
-        \vspace{1cm}
-        % Logo can be un-commented once the image file exists
-        % \includegraphics[width=0.25\textwidth]{../shared/images/logo.png}
-        \vspace{1.5cm}
-        
-        \Large
-        \textcolor{primary}{\textbf{\subject}} \\
-        \vspace{1cm}
-        \huge
-        \textcolor{primary}{\textbf{\reporttitle}} \\
-        \vspace{1.5cm}
-        
-        \large
-        \textbf{Nhóm thực hiện:} \\
-        \studentname\ - \studentid \\
-        \vspace{1cm}
-        \textbf{Giảng viên hướng dẫn:} \\
-        \instructor \\
-        
-        \vfill
-        \large
-        TP. Hồ Chí Minh, Tháng 6 Năm 2026
-    \end{center}
+  \begin{tikzpicture}[overlay,remember picture]
+    \draw[line width=3pt]
+      ($(current page.north west)+(1.5cm,-2.5cm)$)
+      rectangle
+      ($(current page.south east)+(-1.5cm,3cm)$);
+  \end{tikzpicture}
+
+  \centering
+  \vspace*{\stretch{1}}
+
+  {\schoolfont\bfseries TRƯỜNG ĐẠI HỌC KHOA HỌC TỰ NHIÊN \\ ĐHQG-HCM\par}
+  \vspace{0.1cm}
+  {\facultyfont\bfseries KHOA CÔNG NGHỆ THÔNG TIN\par}
+
+  \vspace{0.9cm}
+
+  \includegraphics[width=0.34\textwidth]{figures/logo-KHTN_REMAKE-1-1024x1024.png}\par
+
+  \vspace{0.55cm}
+
+  {\Large\bfseries \subject\par}
+  \vspace{0.35cm}
+  {\Large\bfseries Tuần \weeknumber\par}
+  \vspace{0.35cm}
+  {\Huge\bfseries \textcolor{primary}{\projectname}\par}
+  \vspace{0.25cm}
+  {\large\bfseries \reporttitle\par}
+
+  \vspace{0.65cm}
+
+  {\Large Môn học: Khởi nghiệp\par}
+  {\Large Lớp: 23CLC\par}
+
+  \vspace*{\stretch{1}}
+
+  {\Large\bfseries Thành viên nhóm}\par
+  \vspace{0.25cm}
+  \begin{tabular}{@{}cll@{}}
+    \toprule
+    \textbf{STT} & \textbf{MSSV} & \textbf{Họ và tên} \\
+    \midrule
+    1 & 23127141 & Trần Cao Văn \\
+    2 & 23127318 & Lê Hồ Đan Anh \\
+    3 & 23127016 & Lưu Huy Minh Quang \\
+    4 & 23127404 & Lê Tuấn Lộc \\
+    5 & 23127465 & Nguyễn Hồ Anh Quốc \\
+    \bottomrule
+  \end{tabular}\par
+
+  \vspace{0.6cm}
+
+  {\Large\bfseries Giảng viên}\par
+  \vspace{0.2cm}
+  {\Large \instructor\par}
+
+  \vspace*{\stretch{2}}
 \end{titlepage}
 
 \newpage
+\pagenumbering{arabic}
 \tableofcontents
 \newpage
 
-% === MAIN CONTENT ===
 \input{sections/section1}
 \input{sections/section2}
-\section{Tài liệu tham khảo}
-% Chèn tài liệu tham khảo bằng bibtex
-\bibliographystyle{plain}
-\bibliography{references}
 
 \end{document}
