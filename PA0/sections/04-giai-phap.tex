@@ -1,9 +1,11 @@
 % !TeX root = ../main.tex
 \section{Giải pháp đưa ra}
 
-Dự án đề xuất xây dựng một nền tảng web/app cho phép người dùng \textbf{thuê thiết bị gaming trong vài ngày hoặc thử trước khi mua}. Người dùng có thể tìm kiếm thiết bị theo loại sản phẩm, thương hiệu, game phù hợp, giá thuê, tình trạng thiết bị và thông số kỹ thuật. Sau đó, người dùng đặt thuê, thanh toán phí thuê, đặt cọc hoặc đăng ký hỗ trợ cọc, rồi nhận thiết bị để trải nghiệm thực tế.
+Dự án đề xuất xây dựng một nền tảng web/app cho phép người dùng \textbf{thuê thiết bị gaming trong vài ngày hoặc thử trước khi mua}. Người dùng có thể tìm kiếm thiết bị theo loại sản phẩm, thương hiệu, game phù hợp, giá thuê, tình trạng thiết bị và thông số kỹ thuật. Sau đó, người dùng đặt thuê, thanh toán phí thuê và chọn một trong hai cách bảo chứng: đặt cọc truyền thống hoặc đăng ký hỗ trợ cọc, rồi nhận thiết bị để trải nghiệm thực tế.
 
-Về dòng tiền, Mutux đóng vai trò trung gian giữa người thuê và người cho thuê. Nền tảng thu phí thuê, giữ cọc như một khoản bảo chứng, chuyển tiền thuê cho người cho thuê sau khi trừ hoa hồng. Với người dùng chưa đủ tiền cọc cho thiết bị có giá trị cao, Mutux có thể cung cấp dịch vụ hỗ trợ cọc: người thuê trả thêm một khoản phí dịch vụ, còn nền tảng đứng ra bảo chứng phần cọc theo điều kiện xác minh.
+Về dòng tiền, Mutux đóng vai trò trung gian giữa người thuê và người cho thuê. Với cách thuê truyền thống, người thuê thường phải trả cùng lúc \textbf{tiền thuê} và \textbf{tiền cọc tương đương toàn bộ giá trị sản phẩm}. Đây là rào cản lớn vì ngay cả một món gear có giá dưới 2.000.000 đồng, người thuê vẫn phải chuẩn bị gần như đủ giá trị món hàng làm tiền cọc, sau đó mới trả thêm tiền thuê cho lần mượn đó.
+
+Với giải pháp của Mutux, người thuê không cần bỏ ra một khoản lớn như vậy cho một lần thuê. Nền tảng có thể hỗ trợ hoặc kết nối đối tác tài chính để \textbf{cho vay phần cọc}, với hạn mức phụ thuộc vào giá trị sản phẩm và mức độ xác minh của người thuê. Khi đặt thuê, người thuê chỉ cần trả \textbf{tiền thuê do người cho thuê đặt ra} cộng với một \textbf{khoản phí vay/hỗ trợ cọc nhỏ}, thường rẻ tương tự cách các ví trả sau hoặc SPayLater tính phí cho khoản trả sau ngắn hạn. Nhờ đó, phần cọc vẫn được bảo chứng để xử lý trường hợp hư hỏng hoặc mất thiết bị, nhưng người thuê không phải khóa một số tiền lớn ngay từ đầu.
 
 \begin{figure}[h]
     \centering
@@ -33,12 +35,12 @@ Về dòng tiền, Mutux đóng vai trò trung gian giữa người thuê và ng
         \node[box] (renter) at (0,1.6) {Người thuê\\game gear};
         \node[box] (platform) at (5.0,1.6) {Nền tảng\\Mutux};
         \node[box] (owner) at (10.0,1.6) {Người cho thuê\\shop/chủ gear};
-        \node[smallbox] (deposit) at (5.0,-0.2) {Giữ cọc / hỗ trợ cọc\\hoàn cọc khi đủ điều kiện};
+        \node[smallbox] (deposit) at (5.0,-0.2) {Bảo chứng cọc\\xử lý hư hỏng/mất thiết bị};
 
         \draw[money] ([yshift=0.22cm]renter.east) -- ([yshift=0.22cm]platform.west)
-            node[midway, above=0.12cm, note]{Phí thuê + tiền cọc};
+            node[midway, above=0.12cm, note]{Truyền thống: cọc 100\% giá trị + phí thuê};
         \draw[money] ([yshift=-0.22cm]renter.east) -- ([yshift=-0.22cm]platform.west)
-            node[midway, below=0.12cm, note]{hoặc phí hỗ trợ cọc};
+            node[midway, below=0.12cm, note]{Mutux: phí thuê + phí vay cọc nhỏ};
         \draw[money] ([yshift=0.22cm]platform.east) -- ([yshift=0.22cm]owner.west)
             node[midway, above=0.12cm, note]{Tiền thuê sau hoa hồng};
         \draw[money] (platform.south) -- (deposit.north)
