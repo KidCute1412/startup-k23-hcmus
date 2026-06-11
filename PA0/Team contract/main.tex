@@ -38,7 +38,7 @@
     filecolor=accent,
     urlcolor=accent,
     citecolor=primary,
-    pdftitle={Bao cao do an - Tuan 0},
+    pdftitle={Bao cao do an - PA0},
     pdfpagemode=FullScreen
 }
 \usepackage{bookmark}
@@ -48,7 +48,7 @@
 \pagestyle{fancy}
 \fancyhf{}
 \fancyhead[L]{\textsl{\small Đồ án Khởi nghiệp - K23}}
-\fancyhead[R]{\textsl{\small Tuần \weeknumber}}
+\fancyhead[R]{\textsl{\small PA\weeknumber}}
 \fancyfoot[C]{\thepage}
 \renewcommand{\headrulewidth}{0.4pt}
 \renewcommand{\footrulewidth}{0.4pt}
@@ -115,30 +115,42 @@
   \vspace{0.1cm}
   {\facultyfont\bfseries KHOA CÔNG NGHỆ THÔNG TIN\par}
 
-  \vspace{0.9cm}
+  \vspace{0.75cm}
 
-  \includegraphics[width=0.34\textwidth]{figures/logo-KHTN_REMAKE-1-1024x1024.png}\par
+  \includegraphics[width=0.3\textwidth]{figures/logo-KHTN_REMAKE-1-1024x1024.png}\par
+
+  \vspace{0.45cm}
+
+  {\Large\bfseries \subject\par}
+  \vspace{0.25cm}
+  {\Large\bfseries PA\weeknumber\par}
+  \vspace{0.25cm}
+  {\Huge\bfseries \textcolor{primary}{\projectname}\par}
+  \vspace{0.2cm}
+  {\large\bfseries \reporttitle\par}
+
+  \vspace{0.45cm}
+
+  {\large Môn học: Khởi nghiệp\par}
+  {\large Lớp: 23CLC\par}
 
   \vspace{0.55cm}
 
-  {\Large\bfseries \subject\par}
-  \vspace{0.35cm}
-  {\Large\bfseries Tuần \weeknumber\par}
-  \vspace{0.35cm}
-  {\Huge\bfseries \textcolor{primary}{\projectname}\par}
-  \vspace{0.25cm}
-  {\large\bfseries \reporttitle\par}
+  {\Large\bfseries Giảng viên}\par
+  \vspace{0.18cm}
 
-  \vspace{0.65cm}
+  {\normalsize Đinh Bá Tiến\par}
+  {\normalsize Trần Duy Hoàng\par}
+  {\normalsize Đậu Ngọc Hà Dương\par}
+  {\normalsize Phạm Hoàng Hải\par}
+  {\normalsize Nguyễn Lê Hoàng Dũng\par}
 
-  {\Large Môn học: Khởi nghiệp\par}
-  {\Large Lớp: 23CLC\par}
+  \vspace{0.5cm}
 
-  \vspace*{\stretch{1}}
-
-  {\Large\bfseries Nhóm 6}\par
   {\Large\bfseries Thành viên nhóm}\par
-  \vspace{0.25cm}
+  \vspace{0.2cm}
+
+  \small
   \begin{tabular}{@{}cll@{}}
     \toprule
     \textbf{STT} & \textbf{MSSV} & \textbf{Họ và tên} \\
@@ -150,16 +162,9 @@
     5 & 23127465 & Nguyễn Hồ Anh Quốc \\
     \bottomrule
   \end{tabular}\par
+  \normalsize
 
-  \vspace{0.6cm}
-  {\Large\bfseries Team Contract}\par
-  \vspace{1.6cm}
-
-  {\Large\bfseries Giảng viên}\par
-  \vspace{0.2cm}
-  {\Large \instructor\par}
-
-  \vspace*{\stretch{2}}
+  \vspace*{\stretch{1}}
 \end{titlepage}
 
 \newpage
@@ -195,7 +200,7 @@ Với Business responsibility bao gồm các công việc sau được chia cho 
 \toprule
 \textbf{Họ và Tên} & \textbf{MSSV} & \textbf{Business responsibility} \\
 \midrule
-23127141 & Trần Cao Vân & Project manager, Business Analyst \\
+23127141 & Trần Cao Vân & Project Manager, Business Analyst \\
 23127318 & Lê Hồ Đan Anh & Business Analyst \\
 23127016 & Lưu Huy Minh Quang & Project Owner \\
 23127404 & Lê Tuấn Lộc & Marketing \\
@@ -210,11 +215,11 @@ Với Research \& Development sẽ các công việc sau:
 \toprule
 \textbf{Họ và Tên} & \textbf{MSSV} & \textbf{R\&D responsibility} \\
 \midrule
-23127141 & Trần Cao Vân & Front end head development, Tester \\
+23127141 & Trần Cao Vân & Frontend head development, Tester \\
 23127318 & Lê Hồ Đan Anh & Backend development \\
-23127016 & Lưu Huy Minh Quang & Back end development \\
-23127404 & Lê Tuấn Lộc & Back end head development \\
-23127465 & Nguyễn Hồ Anh Quốc & Front end development\\
+23127016 & Lưu Huy Minh Quang & Backend development \\
+23127404 & Lê Tuấn Lộc & Backend head development \\
+23127465 & Nguyễn Hồ Anh Quốc & Frontend development\\
 \bottomrule
 \end{tabular}
 \vspace{0.5cm}
@@ -225,29 +230,29 @@ Nhóm làm việc với những nguyên tắc sau:
     \item Hoàn thành đúng thời hạn: Với các nhiệm vụ được đưa ra trong nhóm, cần hoàn thành phần việc của mình được giao và hoàn thành đúng thời hạn.
     \item Tất cả cùng đưa ra ý kiến: Vì số lượng thành viên nhóm nhỏ nên các quyết định quan trọng luôn ưu tiên tiếng nói và quyết định của các thành viên để đạt được kết quả cuối cùng.
     \item Dân chủ trong đưa ra quyết định cuối cùng: Nhóm sẽ dựa trên số lượng người đồng ý với một ý kiến nào đó đạt trên 3/5 để chọn kết quả cuối cùng. Với các thành viên không thể tham gia buổi vote, cần báo cáo trước phiếu vote của mình cho quyết định nào hoặc sẽ phải chấp nhận bị mất đi quyền vote của bản thân. Với các trường hợp đồng ý kiến: chẳng hạn 2/4 cho một quyết định nào đó. Nhóm sẽ tiến hành phân tích kĩ hơn về các lựa chọn và quyết định một ý kiến cuối cùng.
-    \item Các công việc chỉ làm trong tài liệu nội bộ: Tài liệu nội bộ gồm thư mục drive của nhóm, repo github của nhóm. Các tài liệu chỉ được dùng để làm việc liên quan đến nhóm. Không chia sẻ tài liệu ra bên ngoài.
+    \item Các công việc chỉ làm trong tài liệu nội bộ: Tài liệu nội bộ gồm thư mục drive của nhóm, repository Github của nhóm. Các tài liệu chỉ được dùng để làm việc liên quan đến nhóm. Không chia sẻ tài liệu ra bên ngoài.
     \item Chịu trách nhiệm cho phần việc của mình: Cá nhân phải chịu trách nhiệm cho phần việc đã được chia cho bản thân. Không hoàn thành hoặc hoàn thành trễ hạn sẽ bị phê bình và phạt tùy theo mức độ quan trọng của công việc. Trưởng của bộ phận phải có trách nhiệm với delivery cuối cùng trong công việc đó. Với các trường họp bất ngờ, bất khả kháng cần báo cáo lên với nhóm để thông báo cho các thành viên biết để có hướng xử lí kịp thời.
 \end{itemize}
 
 \subsection{Cách phân chia công việc}
 Công việc sẽ được phân chia trong buổi họp bằng sự trao đổi giữa các thành viên. Chi tiết công việc, người phụ trách và deadline đều được ghi chú lại trong meeting note. Với các trường hợp gấp cần hỗ trợ, các thành viên khác có thể được phân chia hỗ trợ để hoàn thành công việc đó thông qua kênh chat của nhóm. 
 
-Với các công việc ở mức độ lớn của product như Back end, Front end, cả nhóm sẽ họp trước để chia việc theo milestone. Từ đó, mỗi bộ phận sẽ chia việc chi tiết ra cho từng thành viên hoàn thành
+Với các công việc ở mức độ lớn của product như back-end, front-end, cả nhóm sẽ họp trước để chia việc theo milestone. Từ đó, mỗi bộ phận sẽ chia việc chi tiết ra cho từng thành viên hoàn thành
 
 
 
 \subsection{Cách trao đổi và quản lí tiến độ}
 Hình thức trao đổi được chia làm 2 hình thức chính: online và offline.
 \begin{itemize}
-    \item \textbf{Online}: trao đổi thông tin thông qua kênh chat của nhóm qua messenger. Các tài liệu mang tính document, được chia sẻ trên drive của nhóm.
+    \item \textbf{Online}: trao đổi thông tin thông qua kênh chat của nhóm qua Messenger. Các tài liệu mang tính document, được chia sẻ trên drive của nhóm.
     \item \textbf{Offline}: trao đổi thông tin trực tiếp qua họp nhóm. Buổi họp được tổ chức với toàn bộ nhóm hoặc với từng cá nhân một hoặc họp giữa các thành viên trong từng bộ phận. Mỗi buổi họp cần phải ghi lại biên bản họp về các nội dung cuộc họp đó.
 \end{itemize}
 
 \subsection{Quy định tham gia họp nhóm, hoàn thành công việc và xử lý trường hợp thành viên không đóng góp}
 
-Nhóm thực hiện việc họp nhóm qua google meet và họp trực tiếp. Link Google Meet sẽ là link cố định và sẽ có link dự phòng hoặc họp ở nền tảng khác nếu có sự cố diễn ra. Buổi họp có thể được tổ chức với toàn bộ nhóm hoặc với từng cá nhân một hoặc họp giữa các thành viên trong từng bộ phận. Mỗi buổi họp cần phải ghi lại biên bản họp về các nội dung cuộc họp đó.
+Nhóm thực hiện việc họp nhóm qua Google Meet và họp trực tiếp. Link Google Meet sẽ là link cố định và sẽ có link dự phòng hoặc họp ở nền tảng khác nếu có sự cố diễn ra. Buổi họp có thể được tổ chức với toàn bộ nhóm hoặc với từng cá nhân một hoặc họp giữa các thành viên trong từng bộ phận. Mỗi buổi họp cần phải ghi lại biên bản họp về các nội dung cuộc họp đó.
 
-Một công việc được hoàn thành phải là công việc hoàn tất các yêu cầu đề ra và hoàn tất trong thời gian quy định. Khi hoàn thành, cá nhân hoặc tập thể bộ phận phải báo cáo lên kênh tin nhắn, và upload lên google drive hoặc github tương ứng. Với công việc không hoàn thành được hoặc không hoàn thành trong tiến độ, nếu cá nhân hoặc tập thể tự dự đoán việc không hoàn thành kịp, cần báo cáo nhanh lên nhóm chat để yêu cầu hỗ trợ. Nếu công việc không hoàn thành, thành viên hoặc tập thể sẽ bị trừ điểm và phê bình nhưng nhóm cũng phải họp để nghĩ phương hướng xử lý để tiếp tục tiến độ dự án. 
+Một công việc được hoàn thành phải là công việc hoàn tất các yêu cầu đề ra và hoàn tất trong thời gian quy định. Khi hoàn thành, cá nhân hoặc tập thể bộ phận phải báo cáo lên kênh tin nhắn, và upload lên Google Drive hoặc GitHub tương ứng. Với công việc không hoàn thành được hoặc không hoàn thành trong tiến độ, nếu cá nhân hoặc tập thể tự dự đoán việc không hoàn thành kịp, cần báo cáo nhanh lên nhóm chat để yêu cầu hỗ trợ. Nếu công việc không hoàn thành, thành viên hoặc tập thể sẽ bị trừ điểm và phê bình nhưng nhóm cũng phải họp để nghĩ phương hướng xử lý để tiếp tục tiến độ dự án. 
 
 Trường hợp thành viên không đóng góp, không hoàn thành công việc gây ảnh hưởng đến tiến độ và sản phẩm. Nhóm sẽ họp để đánh giá về cá nhân và đưa ra các quyết định tương ứng. Từ trừ điểm thành phần đến có thể loại trừ thành viên khỏi nhóm.
 

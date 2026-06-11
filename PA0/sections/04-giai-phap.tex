@@ -7,7 +7,7 @@ Về dòng tiền, Mutux đóng vai trò trung gian giữa người thuê và ng
 
 Với giải pháp của Mutux, người thuê không cần bỏ ra một khoản lớn như vậy cho một lần thuê. Nền tảng có thể hỗ trợ hoặc kết nối đối tác tài chính để \textbf{cho vay phần cọc}, với hạn mức phụ thuộc vào giá trị sản phẩm và mức độ xác minh của người thuê. Khi đặt thuê, người thuê chỉ cần trả \textbf{tiền thuê do người cho thuê đặt ra} cộng với một \textbf{khoản phí vay/hỗ trợ cọc nhỏ}, thường rẻ tương tự cách các ví trả sau hoặc SPayLater tính phí cho khoản trả sau ngắn hạn. Nhờ đó, phần cọc vẫn được bảo chứng để xử lý trường hợp hư hỏng hoặc mất thiết bị, nhưng người thuê không phải khóa một số tiền lớn ngay từ đầu.
 
-\begin{figure}[h]
+\begin{figure}[h!]
     \centering
     \begin{tikzpicture}[
         box/.style={
@@ -32,23 +32,23 @@ Với giải pháp của Mutux, người thuê không cần bỏ ra một khoả
         money/.style={-{Latex[length=2.5mm]}, line width=0.9pt, color=accent},
         note/.style={align=center, font=\footnotesize}
     ]
-        \node[box] (renter) at (0,1.6) {Người thuê\\game gear};
-        \node[box] (platform) at (5.0,1.6) {Nền tảng\\Mutux};
-        \node[box] (owner) at (10.0,1.6) {Người cho thuê\\shop/chủ gear};
-        \node[smallbox] (deposit) at (5.0,-0.2) {Bảo chứng cọc\\xử lý hư hỏng/mất thiết bị};
+        \node[box] (renter) at (0,1.8) {Người thuê\\game gear};
+        \node[box] (platform) at (5.5,1.8) {Nền tảng\\Mutux};
+        \node[box] (owner) at (11.0,1.8) {Người cho thuê\\shop/chủ gear};
+        \node[smallbox] (deposit) at (5.5,-0.4) {Bảo chứng cọc\\xử lý hư hỏng/mất thiết bị};
 
-        \draw[money] ([yshift=0.22cm]renter.east) -- ([yshift=0.22cm]platform.west)
-            node[midway, above=0.12cm, note]{Truyền thống: cọc 100\% giá trị + phí thuê};
-        \draw[money] ([yshift=-0.22cm]renter.east) -- ([yshift=-0.22cm]platform.west)
-            node[midway, below=0.12cm, note]{Mutux: phí thuê + phí vay cọc nhỏ};
-        \draw[money] ([yshift=0.22cm]platform.east) -- ([yshift=0.22cm]owner.west)
-            node[midway, above=0.12cm, note]{Tiền thuê sau hoa hồng};
+        \draw[money] ([yshift=0.26cm]renter.east) -- ([yshift=0.26cm]platform.west)
+            node[midway, above=0.12cm, note, text width=3.2cm]{Truyền thống: cọc 100\% giá trị + phí thuê};
+        \draw[money] ([yshift=-0.26cm]renter.east) -- ([yshift=-0.26cm]platform.west)
+            node[midway, below=0.12cm, note, text width=3.2cm]{Mutux: phí thuê + phí vay cọc nhỏ};
+        \draw[money] ([yshift=0.26cm]platform.east) -- ([yshift=0.26cm]owner.west)
+            node[midway, above=0.12cm, note, text width=3.2cm]{Tiền thuê sau hoa hồng};
         \draw[money] (platform.south) -- (deposit.north)
             node[midway, right=0.12cm, note]{quản lý cọc};
 
-        \draw[flow] (10.0,-2.0) -- (0,-2.0)
+        \draw[flow] (11.0,-2.4) -- (0,-2.4)
             node[midway, above=0.12cm, note]{Giao thiết bị};
-        \draw[flow] (0,-2.6) -- (10.0,-2.6)
+        \draw[flow] (0,-3.0) -- (11.0,-3.0)
             node[midway, below=0.12cm, note]{Trả thiết bị};
     \end{tikzpicture}
     \caption{Luồng thiết bị và dòng tiền trong mô hình Mutux}
