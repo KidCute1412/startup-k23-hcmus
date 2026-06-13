@@ -122,18 +122,6 @@ erDiagram
         boolean is_active
     }
 
-    credit_usages {
-        uuid      id               PK
-        uuid      mutux_wallet_id  FK
-        uuid      rental_order_id  FK
-        decimal   locked_amount
-        string    status
-        timestamp locked_at
-        timestamp released_at
-    }
-
-    
-
     %% ══════════════════════════════════════════
     %% RENTAL ORDERS
     %% ══════════════════════════════════════════
@@ -167,7 +155,6 @@ erDiagram
     escrow_wallets {
         uuid      id               PK
         uuid      rental_order_id  FK
-        uuid      mutux_wallet_id  FK
         decimal   amount
         string    source
         string    status
@@ -357,12 +344,9 @@ erDiagram
 
     credit_partners     ||--o{ mutux_wallets         : "issues"
     mutux_wallets       ||--o{ credit_transactions   : "records"
-    mutux_wallets       ||--o{ credit_usages         : "locks via"
-    mutux_wallets       ||--o{ escrow_wallets        : "backs"
     users               ||--o{ payments              : "made"
     %% lender_wallets       ||--o{ payments              : "used in"
 
-    credit_usages       ||--|| rental_orders         : "tied to"
 
     gear_categories     ||--o{ gear_categories       : "parent of"
     gear_categories     ||--o{ gears                 : "categorizes"
@@ -440,10 +424,6 @@ erDiagram
 | `ref_type` | `rental_order` · `credit_usage` · `dispute` |
 | `status` | `pending` · `success` · `failed` · `reversed` |
 
-### credit_usages
-| Field | Values |
-|---|---|
-| `status` | `locked` · `released` · `compensated` |
 
 ### gears
 | Field | Values |
@@ -469,13 +449,6 @@ erDiagram
 | `type` | `rental_fee` · `deposit` · `credit_fee` · `refund` · `compensation` · `withdrawal`|
 | `method` | `momo` · `vnpay` · `bank_transfer` · `credit_line` |
 | `status` | `pending` · `success` · `failed` · `refunded` |
-
-### shipments
-| Field | Values |
-|---|---|
-| `direction` | `outbound` · `inbound` |
-| `provider` | `grab` · `ghn` · `ghtk` · `viettel_post` · `other` |
-| `status` | `pending` · `picked_up` · `in_transit` · `delivered` · `failed` · `returned` |
 
 ### messages
 | Field | Values |

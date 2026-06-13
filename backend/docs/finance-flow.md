@@ -2,106 +2,224 @@
 
 ## Tổng quan
 
-Mutux không giữ tiền thật của user. Thay vào đó, hệ thống cấp cho user một **hạn mức tín dụng** (Ví Mutux) do đối tác tài chính bảo lãnh — dùng để đặt cọc thuê gear thay cho tiền mặt.
+Mutux hỗ trợ 2 hình thức đặt cọc:
+
+1. **Cọc truyền thống (Traditional Deposit)** – người thuê thanh toán tiền cọc bằng tiền thật.
+2. **Cọc trả sau (Credit Line)** – người thuê dùng hạn mức tín dụng được cấp bởi đối tác tài chính.
+
+Trong cả hai trường hợp:
+
+```text
+rental_fee     = tiền thuê
+deposit_amount = tiền cọc
+```
+
+Tiền thuê luôn được thanh toán bằng tiền thật.
+
+---
+
+# 1. Cọc truyền thống
+
+## Tổng quan
+
+Người thuê thanh toán cả tiền thuê và tiền cọc bằng tiền thật.
+
+Mutux giữ tiền cọc trong `escrow_wallets` cho đến khi đơn thuê kết thúc.
+
+---
+
+## Vai trò các bảng
+
+| Bảng             | Vai trò                                            |
+| ---------------- | -------------------------------------------------- |
+| `payments`       | Ghi nhận thanh toán tiền thuê, tiền cọc, hoàn tiền |
+| `escrow_wallets` | Giữ tiền cọc thật của renter                       |
+| `lender_wallets` | Số dư doanh thu của lender                         |
+
+---
+
+## 1. Thanh toán tiền thuê và tiền cọc
+
+Ví dụ:
+
+```text
+rental_fee = 500.000đ
+deposit_amount = 2.000.000đ
+```
+
+Tạo payment:
+
+```text
+payments.type = rental_fee
+payments.amount = 500.000
+payments.status = success
+```
+
+```text
+payments.type = deposit
+payments.amount = 2.000.000
+payments.status = success
+```
+
+Tạo escrow:
+
+```text
+escrow_wallets.rental_order_id = rental_order_id
+escrow_wallets.amount = 2.000.000
+escrow_wallets.source = renter_cash
+escrow_wallets.status = locked
+```
+
+Dòng tiền:
+
+```text
+Renter
+   │
+   ├─ rental_fee
+   └─ deposit_amount
+        ▼
+      Mutux
+        │
+        ▼
+  escrow_wallets
+```
+
+---
+
+## 2. Đơn hoàn thành bình thường
+
+Khi:
+
+```text
+rental_orders.status = completed
+```
+
+Giải phóng escrow:
+
+```text
+escrow_wallets.status = released
+escrow_wallets.released_at = now()
+```
+
+Hoàn tiền cọc:
+
+```text
+payments.type = refund
+payments.user_id = renter_id
+payments.amount = 2.000.000
+payments.status = success
+```
+
+Cộng doanh thu cho lender:
+
+```text
+lender_wallets.balance += rental_orders.rental_fee
+```
+
+Ví dụ:
+
+```text
+lender_wallets.balance += 500.000
+```
+
+---
+
+## 3. Gear hư hoặc mất
+
+Ví dụ:
+
+```text
+deposit_amount = 2.000.000
+deduct_amount = 1.500.000
+```
+
+Đánh dấu escrow:
+
+```text
+escrow_wallets.status = compensated
+```
+
+Chuyển tiền bồi thường:
+
+```text
+lender_wallets.balance += 1.500.000
+```
+
+Hoàn phần còn lại:
+
+```text
+payments.type = refund
+payments.user_id = renter_id
+payments.amount = 500.000
+payments.status = success
+```
+
+Đồng thời cộng tiền thuê:
+
+```text
+lender_wallets.balance += rental_orders.rental_fee
+```
+
+---
+
+# 2. Cọc trả sau (Credit Line)
+
+## Tổng quan
+
+Người thuê không cần nộp tiền cọc bằng tiền thật.
+
+Thay vào đó hệ thống khóa một phần hạn mức tín dụng do đối tác tài chính cấp.
+
+Khoản cọc này vẫn được quản lý thông qua:
+
+```text
+escrow_wallets
+```
+
+giống như cọc truyền thống, chỉ khác nguồn tiền là hạn mức tín dụng thay vì tiền thật.
 
 ---
 
 ## Các bên tham gia
 
-| Bên                | Vai trò                                                     |
-| ------------------ | ----------------------------------------------------------- |
-| **Credit Partner** | Cấp hạn mức tín dụng, thu hồi nợ khi phát sinh              |
-| **Renter**         | Dùng hạn mức để đặt cọc, thanh toán phí thuê bằng tiền thật |
-| **Lender**         | Nhận phí thuê, nhận bồi thường nếu gear bị hư/mất           |
-| **Mutux**          | Trung gian giữ escrow, xử lý dispute                        |
+| Bên            | Vai trò                              |
+| -------------- | ------------------------------------ |
+| Credit Partner | Cấp hạn mức tín dụng và thu hồi nợ   |
+| Renter         | Dùng hạn mức để đặt cọc              |
+| Lender         | Nhận tiền thuê và tiền bồi thường    |
+| Mutux          | Quản lý đơn thuê và xử lý tranh chấp |
 
 ---
 
 ## Ví Mutux (`mutux_wallets`)
 
 ```text
-total_limit      = 5.000.000đ   ← hạn mức được cấp
-display_balance  = 5.000.000đ   ← số dư khả dụng (user thấy)
-locked_balance   = 0đ           ← đang bị khoá cho đơn thuê
-outstanding_debt = 0đ           ← nợ phát sinh (gear hư/mất)
-```
-
-> `display_balance + locked_balance ≤ total_limit` luôn đúng.
-> `outstanding_debt` là nợ riêng, credit partner sẽ thu hồi ngoài luồng.
-
----
-
-## Luồng tiền theo kịch bản
-
-### Kịch bản 1 — Thuê & trả bình thường
-
-```text
-[Lock cọc 2tr]
-  display_balance  5tr → 3tr
-  locked_balance    0  → 2tr
-
-[Trả gear OK]
-  display_balance  3tr → 5tr
-  locked_balance   2tr → 0
-  outstanding_debt      = 0
-```
-
-### Kịch bản 2 — Gear hư / mất → bồi thường
-
-```text
-[Lock cọc 2tr]
-  display_balance  5tr → 3tr
-  locked_balance    0  → 2tr
-
-[Bồi thường 2tr]
-  locked_balance   2tr → 0
-  outstanding_debt  0  → 2tr
-  display_balance       = 3tr
-```
-
----
-
-## Vai trò từng bảng
-
-| Bảng                   | Vai trò                                                                 |
-| ---------------------- | ----------------------------------------------------------------------- |
-| `mutux_wallets`        | State hiện tại của ví (số dư, nợ)                                       |
-| `credit_usages`        | State machine của từng lần lock cọc (`locked → released / compensated`) |
-| `escrow_wallets`       | Container giữ tiền cọc cho từng đơn hàng                                |
-| `credit_transactions`  | Ledger ghi mọi biến động (audit log, không dùng để tính state)          |
-| `lender_wallets`       | Số dư doanh thu của người cho thuê                                      |
-
----
-
-## Phí thuê — tách biệt hoàn toàn với cọc
-
-Phí thuê (`rental_fee`) được thanh toán bằng **tiền thật** (MoMo, VNPay, bank transfer) — không dùng hạn mức Ví Mutux.
-
-Hạn mức chỉ dùng cho **tiền cọc**.
-
----
-
-## Quy trình dòng tiền
-
-### 1. Renter đặt thuê gear
-
-Renter cần thanh toán:
-
-```text
-Tiền thuê  = rental_fee
-Tiền cọc   = deposit_amount
+total_limit      = 5.000.000
+display_balance  = 5.000.000
+locked_balance   = 0
+outstanding_debt = 0
 ```
 
 Trong đó:
 
 ```text
-rental_fee     → tiền thật
-deposit_amount → hạn mức Ví Mutux
+display_balance + locked_balance ≤ total_limit
 ```
 
 ---
 
-### 2. Thanh toán tiền thuê
+## Vai trò các bảng
+
+| Bảng                  | Vai trò                                         |
+| --------------------- | ----------------------------------------------- |
+| `mutux_wallets`       | State hiện tại của hạn mức tín dụng             |
+| `escrow_wallets`      | Quản lý khoản cọc được khóa từ hạn mức tín dụng |
+| `credit_transactions` | Audit log các biến động tín dụng                |
+| `lender_wallets`      | Số dư doanh thu của lender                      |
+
+---
+
+## 1. Thanh toán tiền thuê
 
 Ví dụ:
 
@@ -128,11 +246,9 @@ Renter
 Mutux
 ```
 
-Mutux nhận tiền thuê trước.
-
 ---
 
-### 3. Khóa tiền cọc
+## 2. Khóa tiền cọc
 
 Ví dụ:
 
@@ -147,16 +263,25 @@ display_balance -= 2.000.000
 locked_balance  += 2.000.000
 ```
 
-Tạo:
+Tạo escrow:
 
 ```text
-credit_usages.status = locked
-credit_usages.locked_amount = 2.000.000
+escrow_wallets.rental_order_id = rental_order_id
+escrow_wallets.amount = 2.000.000
+escrow_wallets.source = credit_line
+escrow_wallets.status = locked
+```
+
+Ý nghĩa:
+
+```text
+Mutux đang giữ khoản bảo lãnh trị giá 2.000.000đ
+được đảm bảo bằng hạn mức tín dụng.
 ```
 
 ---
 
-### 4. Đơn hoàn thành bình thường
+## 3. Đơn hoàn thành bình thường
 
 Khi:
 
@@ -164,105 +289,95 @@ Khi:
 rental_orders.status = completed
 ```
 
-Mở khóa cọc:
+Mở khóa hạn mức:
 
 ```text
 display_balance += 2.000.000
 locked_balance  -= 2.000.000
-
-credit_usages.status = released
 ```
 
-Đồng thời cộng doanh thu cho lender:
+Giải phóng escrow:
+
+```text
+escrow_wallets.status = released
+escrow_wallets.released_at = now()
+```
+
+Cộng doanh thu cho lender:
 
 ```text
 lender_wallets.balance += rental_orders.rental_fee
 ```
 
+---
+
+## 4. Gear hư hoặc mất
+
 Ví dụ:
 
 ```text
-lender_wallets.balance += 500.000
+deposit_amount = 2.000.000
 ```
 
----
-
-### 5. Gear hư hoặc mất
-
-Khi dispute xác nhận bồi thường:
+Chuyển khoản bảo lãnh thành nợ:
 
 ```text
 locked_balance   -= 2.000.000
 outstanding_debt += 2.000.000
+```
 
-credit_usages.status = compensated
+Đánh dấu escrow:
+
+```text
+escrow_wallets.status = compensated
 ```
 
 Credit Partner sẽ thu hồi khoản nợ này ngoài hệ thống.
 
----
-
-### 6. Lender rút tiền
-
-Mutux lấy phí nền tảng từ config nào đó? 
-
-Ví dụ:
+Bồi thường cho lender:
 
 ```text
-lender_wallets.balance = 500.000
-fee_rate = 10%
-```
-
-Tính:
-
-```text
-platform_fee = 50.000
-payout_amount = 450.000
-```
-
-Tạo payment:
-
-```text
-payments.type = withdrawal
-payments.user_id = lender_id
-payments.amount = 450.000
-payments.method = bank_transfer
-payments.status = pending
-```
-
-Khi chuyển khoản thành công:
-
-```text
-payments.status = success
-
-lender_wallets.balance -= 500.000
-lender_wallets.total_withdrawn += 450.000
+lender_wallets.balance += deposit_amount
+lender_wallets.balance += rental_orders.rental_fee
 ```
 
 ---
 
-## Tóm tắt dòng tiền
+# Tóm tắt
 
 ```text
-Renter
- ├─ Thanh toán rental_fee bằng tiền thật
- │
- └─ Khóa deposit bằng Ví Mutux
-          │
-          ▼
-        Mutux
-          │
-          ├─ Hoàn cọc nếu trả gear bình thường
-          │
-          ├─ Chuyển thành nợ nếu gear hư/mất
-          │
-          └─ Cộng rental_fee vào lender_wallets
-                        │
-                        ▼
-                   Lender
-                        │
-                        └─ Rút tiền
-                               │
-                               ├─ Mutux trừ platform fee
-                               └─ Chuyển khoản phần còn lại
+Traditional Deposit
+-------------------
+Renter trả rental_fee + deposit
+        ↓
+      Mutux
+        ↓
+  escrow_wallets
+        ↓
+released / compensated
+        ↓
+Hoàn cọc hoặc bồi thường
+
+Credit Line
+-----------
+Renter trả rental_fee
+        ↓
+Mutux khóa hạn mức tín dụng
+        ↓
+escrow_wallets
+(source = credit_line)
+        ↓
+released / compensated
+        ↓
+Mở khóa hoặc phát sinh nợ
+
+Lender
+------
+Doanh thu → lender_wallets
+        ↓
+Rút tiền
+        ↓
+Mutux trừ phí nền tảng
+        ↓
+Chuyển khoản ngân hàng
 ```
