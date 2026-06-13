@@ -16,6 +16,9 @@ erDiagram
         string    cccd
         string    avatar_url
         string    bio
+        float     rating
+        string    address
+        int       total_reviews
         string    role
         string    kyc_status
         boolean   is_active
@@ -23,26 +26,6 @@ erDiagram
         timestamp updated_at
     }
 
-    lender_profiles {
-        uuid      id                   PK
-        uuid      user_id              FK
-        string    shop_name
-        string    shop_address
-        string    shop_bio
-        string    business_license_url
-        float     rating
-        int       total_reviews
-        timestamp created_at
-    }
-
-    renter_profiles {
-        uuid      id            PK
-        uuid      user_id       FK
-        string    bio
-        float     rating
-        int       total_reviews
-        timestamp created_at
-    }
     %% ══════════════════════════════════════════
     %% GEAR
     %% ══════════════════════════════════════════
@@ -85,10 +68,11 @@ erDiagram
         timestamp changed_at
     }
 
-    gear_images {
+    gear_media {
         uuid    id         PK
         uuid    gear_id    FK
-        string  image_url
+        string  type
+        string  url
         boolean is_primary
         int     sort_order
     }
@@ -168,7 +152,10 @@ erDiagram
         decimal   deposit_amount
         string    deposit_type
         string    status
-        text      renter_note
+        timestamp lender_sent_at
+        timestamp renter_received_at    
+        timestamp renter_returned_at
+        timestamp lender_received_at
         timestamp created_at
         timestamp updated_at
     }
@@ -197,7 +184,7 @@ erDiagram
         uuid      id               PK
         uuid      rental_order_id  FK
         uuid      user_id          FK
-        uuid      wallet_id  FK
+        %% uuid      wallet_id  FK
         string    type
         decimal   amount
         string    method
@@ -208,41 +195,20 @@ erDiagram
     }
 
     %% ══════════════════════════════════════════
-    %% SHIPMENT
+    %% GEAR CONDITION + SHIPMENT CONFIRMATION
     %% ══════════════════════════════════════════
 
-    shipments {
-        uuid      id              PK
-        uuid      rental_order_id FK
-        string    direction
-        string    provider
-        string    tracking_code
-        string    tracking_url
-        string    status
-        string    sender_name
-        string    sender_phone
-        string    sender_address
-        string    receiver_name
-        string    receiver_phone
-        string    receiver_address
-        decimal   shipping_fee
-        timestamp picked_up_at
-        timestamp delivered_at
-        timestamp created_at
-        timestamp updated_at
-    }
-
-    %% ══════════════════════════════════════════
-    %% GEAR CONDITION VIDEOS
-    %% ══════════════════════════════════════════
-
-    gear_videos {
+    rental_proofs {
         uuid      id              PK
         uuid      rental_order_id FK
         uuid      uploaded_by     FK
+
         string    stage
-        string    video_url
+        string    proof_type
+
+        string    file_url
         text      note
+
         timestamp uploaded_at
     }
 
@@ -387,23 +353,21 @@ erDiagram
     %% ══════════════════════════════════════════
     users ||--o{ bank_accounts : "owns"
     users ||--o| lender_wallets : "owns"
-    users               ||--o| lender_profiles      : "has"
-    users               ||--o| renter_profiles      : "has"
     users               ||--o| mutux_wallets         : "holds"
 
     credit_partners     ||--o{ mutux_wallets         : "issues"
     mutux_wallets       ||--o{ credit_transactions   : "records"
     mutux_wallets       ||--o{ credit_usages         : "locks via"
     mutux_wallets       ||--o{ escrow_wallets        : "backs"
-    mutux_wallets       ||--o{ payments              : "used in"
-    lender_wallets       ||--o{ payments              : "used in"
+    users               ||--o{ payments              : "made"
+    %% lender_wallets       ||--o{ payments              : "used in"
 
     credit_usages       ||--|| rental_orders         : "tied to"
 
     gear_categories     ||--o{ gear_categories       : "parent of"
     gear_categories     ||--o{ gears                 : "categorizes"
     users               ||--o{ gears                 : "lists"
-    gears               ||--o{ gear_images            : "has"
+    gears               ||--o{ gear_media            : "has"
     gears               ||--o{ gear_price_history     : "tracks"
 
     users               ||--o{ rental_orders         : "rents"
@@ -411,8 +375,7 @@ erDiagram
 
     rental_orders       ||--|| escrow_wallets        : "has"
     rental_orders       ||--o{ payments              : "has"
-    rental_orders       ||--o{ gear_videos           : "has"
-    rental_orders       ||--o{ shipments             : "has"
+    rental_orders       ||--o{ rental_proofs          : "has"
     rental_orders       ||--o{ disputes              : "may trigger"
     rental_orders       ||--o{ reviews               : "reviewed after"
     rental_orders       ||--o| conversations         : "has chat"
@@ -445,7 +408,7 @@ erDiagram
 { "connectivity": "wired", "driver_mm": 50, "frequency_hz": "20-20000", "microphone": true, "ear_cushion": "memory foam", "color": "black/red" }
 ```
 
-### `gear_videos.stage` – 4 mốc xác nhận
+### `rental_proofs.stage` – 4 mốc xác nhận
 
 | stage | Người upload | Thời điểm |
 |---|---|---|
@@ -519,10 +482,11 @@ erDiagram
 |---|---|
 | `type` | `text` · `image` · `video` |
 
-### gear_videos
+### rental_proofs
 | Field | Values |
 |---|---|
 | `stage` | `pre_shipment` · `post_received` · `pre_return` · `post_returned` |
+|`proof_type` | `image` · `video` |
 
 ### disputes
 | Field | Values |
