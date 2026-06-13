@@ -13,7 +13,7 @@
 # --- VS Code ---
 # Giữ lại settings.json để cả nhóm dùng chung cấu hình biên dịch tự động, bỏ qua các cache khác
 .vscode/*
-!.vscode/settings.json
+.vscode/settings.json
 .history/
 
 # --- OS-specific files ---
