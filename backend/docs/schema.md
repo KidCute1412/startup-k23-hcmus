@@ -140,10 +140,13 @@ erDiagram
         decimal   deposit_amount
         string    deposit_type
         string    status
-        timestamp lender_sent_at
+        string    shipping_address
+        string    shipping_name
+        string    shipping_phone
+        timestamp lender_shipped_at
         timestamp renter_received_at    
         timestamp renter_returned_at
-        timestamp lender_received_at
+        timestamp lender_received_back_at
         timestamp created_at
         timestamp updated_at
     }
@@ -169,7 +172,7 @@ erDiagram
 
     payments {
         uuid      id               PK
-        uuid      rental_order_id  FK
+        uuid      rental_order_id  FK "nullable"
         uuid      user_id          FK
         %% uuid      wallet_id  FK
         string    type
@@ -205,7 +208,7 @@ erDiagram
 
     conversations {
         uuid      id              PK
-        uuid      rental_order_id FK
+        uuid      rental_order_id FK "nullable"
         uuid      renter_id       FK
         uuid      lender_id       FK
         timestamp last_message_at
@@ -284,7 +287,7 @@ erDiagram
     }
 
     %% ══════════════════════════════════════════
-    %% MEMBERSHIP
+    %% MEMBERSHIP [POST-MVP]
     %% ══════════════════════════════════════════
 
     membership_plans {
@@ -317,6 +320,18 @@ erDiagram
         timestamp updated_at
     }
 
+    lender_wallet_transactions {
+        uuid      id                      PK
+        uuid      lender_wallet_id        FK
+        uuid      rental_order_id         FK "nullable"
+        string    type
+        decimal   amount
+        decimal   balance_before
+        decimal   balance_after
+        string    note
+        timestamp created_at
+    }
+
     bank_accounts {
     uuid      id                PK
     uuid      user_id           FK
@@ -344,6 +359,7 @@ erDiagram
 
     credit_partners     ||--o{ mutux_wallets         : "issues"
     mutux_wallets       ||--o{ credit_transactions   : "records"
+    lender_wallets      ||--o{ lender_wallet_transactions : "records"
     users               ||--o{ payments              : "made"
     %% lender_wallets       ||--o{ payments              : "used in"
 
@@ -363,6 +379,7 @@ erDiagram
     rental_orders       ||--o{ disputes              : "may trigger"
     rental_orders       ||--o{ reviews               : "reviewed after"
     rental_orders       ||--o| conversations         : "has chat"
+    gears               ||--o{ conversations         : "has inquiry"
 
     conversations       ||--o{ messages              : "contains"
     users               ||--o{ messages              : "sends"
@@ -478,3 +495,8 @@ erDiagram
 | Field | Values |
 |---|---|
 | `status` | `active` · `expired` · `cancelled` |
+
+### lender_wallet_transactions
+| Field | Values |
+|---|---|
+| `type` | `income` · `withdrawal` · `compensation` · `fee_deduction` |
