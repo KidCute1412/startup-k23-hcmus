@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>PRO GEAR HUB | High-Refresh Rate Monitor</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;700;800&amp;family=Geist:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-tertiary-fixed": "#23005b",
+                        "on-tertiary": "#3c0090",
+                        "primary": "#dbfcff",
+                        "tertiary-fixed-dim": "#d1bcff",
+                        "error": "#ffb4ab",
+                        "secondary-fixed": "#c3f400",
+                        "surface-dim": "#131314",
+                        "outline": "#849495",
+                        "on-surface": "#e5e2e3",
+                        "background": "#131314",
+                        "error-container": "#93000a",
+                        "inverse-primary": "#006970",
+                        "surface-container-lowest": "#0e0e0f",
+                        "surface-tint": "#00dbe9",
+                        "surface": "#131314",
+                        "outline-variant": "#3b494b",
+                        "primary-fixed-dim": "#00dbe9",
+                        "tertiary": "#faf3ff",
+                        "on-secondary": "#283500",
+                        "on-secondary-container": "#556d00",
+                        "tertiary-container": "#e1d2ff",
+                        "on-surface-variant": "#b9cacb",
+                        "surface-container-low": "#1c1b1c",
+                        "on-primary-fixed-variant": "#004f54",
+                        "on-error": "#690005",
+                        "primary-container": "#00f0ff",
+                        "secondary": "#ffffff",
+                        "on-primary-fixed": "#002022",
+                        "surface-container": "#201f20",
+                        "on-tertiary-fixed-variant": "#5700c9",
+                        "surface-container-highest": "#353436",
+                        "tertiary-fixed": "#e9ddff",
+                        "secondary-container": "#c3f400",
+                        "on-primary": "#00363a",
+                        "surface-container-high": "#2a2a2b",
+                        "on-primary-container": "#006970",
+                        "surface-variant": "#353436",
+                        "primary-fixed": "#7df4ff",
+                        "on-secondary-fixed": "#161e00",
+                        "on-background": "#e5e2e3",
+                        "inverse-on-surface": "#313031",
+                        "surface-bright": "#3a393a",
+                        "on-tertiary-container": "#7213ff",
+                        "on-secondary-fixed-variant": "#3c4d00",
+                        "inverse-surface": "#e5e2e3",
+                        "on-error-container": "#ffdad6",
+                        "secondary-fixed-dim": "#abd600"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0px",
+                        "lg": "0px",
+                        "xl": "0px",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "gutter": "24px",
+                        "xs": "8px",
+                        "base": "4px",
+                        "xl": "64px",
+                        "margin": "32px",
+                        "lg": "40px",
+                        "sm": "16px",
+                        "md": "24px"
+                    },
+                    "fontFamily": {
+                        "body-md": ["Geist"],
+                        "label-md": ["Geist"],
+                        "display-lg-mobile": ["Sora"],
+                        "headline-lg": ["Sora"],
+                        "technical-sm": ["Geist"],
+                        "headline-md": ["Sora"],
+                        "display-lg": ["Sora"],
+                        "body-lg": ["Geist"]
+                    },
+                    "fontSize": {
+                        "body-md": ["16px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                        "label-md": ["14px", {"lineHeight": "1.0", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                        "display-lg-mobile": ["36px", {"lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "800"}],
+                        "headline-lg": ["32px", {"lineHeight": "1.2", "fontWeight": "700"}],
+                        "technical-sm": ["12px", {"lineHeight": "1.0", "letterSpacing": "0.1em", "fontWeight": "500"}],
+                        "headline-md": ["24px", {"lineHeight": "1.3", "fontWeight": "700"}],
+                        "display-lg": ["48px", {"lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "800"}],
+                        "body-lg": ["18px", {"lineHeight": "1.6", "fontWeight": "400"}]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            background-color: #050505;
+            color: #e5e2e3;
+            -webkit-font-smoothing: antialiased;
+        }
+        .glass-panel {
+            background: rgba(32, 31, 32, 0.4);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(132, 148, 149, 0.2);
+        }
+        .neon-glow-primary:hover {
+            box-shadow: 0 0 15px rgba(219, 252, 255, 0.4);
+        }
+        .neon-glow-secondary {
+            box-shadow: 0 0 10px rgba(195, 244, 0, 0.2);
+        }
+        .scan-line {
+            background: linear-gradient(to bottom, transparent 50%, rgba(0, 240, 255, 0.02) 50%);
+            background-size: 100% 4px;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+</head>
+<body class="font-body-md text-body-md overflow-x-hidden">
+<!-- TopNavBar -->
+<nav class="flex items-center justify-between px-gutter py-4 w-full sticky top-0 z-50 bg-surface-container-low dark:bg-surface-container-low border-b border-outline-variant dark:border-outline-variant shadow-sm">
+<div class="flex items-center gap-lg">
+<span class="font-headline-md text-headline-md font-bold tracking-tighter text-on-surface dark:text-on-surface">PRO GEAR HUB</span>
+<div class="hidden md:flex gap-md">
+<a class="font-body-md text-body-md text-on-surface-variant dark:text-on-surface-variant hover:text-primary transition-colors duration-200" href="#">Keyboards</a>
+<a class="font-body-md text-body-md text-on-surface-variant dark:text-on-surface-variant hover:text-primary transition-colors duration-200" href="#">Mice</a>
+<a class="font-body-md text-body-md text-on-surface-variant dark:text-on-surface-variant hover:text-primary transition-colors duration-200" href="#">Headsets</a>
+<a class="font-body-md text-body-md text-primary dark:text-primary border-b-2 border-primary pb-1" href="#">Monitors</a>
+<a class="font-body-md text-body-md text-on-surface-variant dark:text-on-surface-variant hover:text-primary transition-colors duration-200" href="#">PC Rigs</a>
+</div>
+</div>
+<div class="flex items-center gap-sm">
+<div class="hidden lg:flex items-center bg-surface-container px-sm py-xs rounded-full border border-outline-variant">
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="search">search</span>
+<input class="bg-transparent border-none focus:ring-0 text-sm w-48 text-on-surface ml-xs" placeholder="Search gear..." type="text"/>
+</div>
+<button class="material-symbols-outlined p-2 text-on-surface-variant hover:text-primary active:scale-95 transition-all" data-icon="shopping_cart">shopping_cart</button>
+<button class="material-symbols-outlined p-2 text-on-surface-variant hover:text-primary active:scale-95 transition-all" data-icon="account_circle">account_circle</button>
+<button class="hidden md:block px-md py-2 bg-secondary-container text-on-secondary-container font-label-md text-label-md active:scale-95 transition-transform">Rent Now</button>
+</div>
+</nav>
+<main class="max-w-[1440px] mx-auto px-gutter py-lg grid grid-cols-1 lg:grid-cols-12 gap-lg relative">
+<!-- Breadcrumb & Title Section (Full Width Desktop) -->
+<div class="lg:col-span-12 mb-md">
+<div class="flex items-center gap-2 text-on-surface-variant font-technical-sm text-technical-sm uppercase mb-xs">
+<span>Catalog</span>
+<span class="material-symbols-outlined text-xs" data-icon="chevron_right">chevron_right</span>
+<span>Monitors</span>
+<span class="material-symbols-outlined text-xs" data-icon="chevron_right">chevron_right</span>
+<span class="text-primary">Apex Predator 360Hz</span>
+</div>
+<h1 class="font-display-lg text-display-lg font-extrabold uppercase tracking-tight text-on-surface">APEX PREDATOR 360Hz<br/><span class="text-primary-container">PRO-ELITE DISPLAY</span></h1>
+</div>
+<!-- Left Column: Product Visuals -->
+<div class="lg:col-span-7 flex flex-col gap-md">
+<!-- Main Product Image -->
+<div class="glass-panel aspect-video flex items-center justify-center p-md relative overflow-hidden group">
+<div class="absolute inset-0 scan-line opacity-20 pointer-events-none"></div>
+<div class="absolute top-4 right-4 bg-primary px-3 py-1 text-on-primary font-technical-sm text-technical-sm">ID: UNIT_X_782</div>
+<img alt="High Refresh Rate Gaming Monitor" class="w-full h-full object-contain mix-blend-screen transition-transform duration-500 group-hover:scale-105" data-alt="A high-performance 360Hz gaming monitor centered in a high-contrast dark studio. The monitor screen displays a vibrant, high-energy cybernetic interface with neon blue and cyan light streaks. The surrounding atmosphere is deep obsidian with subtle glassmorphic glows and sharp technical details. The lighting is focused, casting a soft electric blue aura on the desk surface beneath the monitor's angular stand." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAt3iGcX-ThOl2XLqj6vbrDKIxo0RvmpMs8yXyPCE3PZptH3LDSuSbe3solfPlbkFHmjyANVlZGcvQXM8pLab63TE3Xkb46cfn2SL3oNwH2mHTTmvvZ7oMrgFR_yyc_NyBFKuzp41KiABrnOoSeddlO5LOGM14yXhU5iefKpQ63VMJRz667uP8c8uBHLqeqirIliqqLfQkqo6TLTHBIVU7PFno3EHmlBvBWBwB7AUgcwb6nCOpaKmtm1v2dkYBNwex2cJGn4DNE6Q"/>
+<div class="absolute bottom-4 left-4 flex gap-xs">
+<span class="px-2 py-1 border border-secondary text-secondary font-technical-sm text-technical-sm uppercase">4K ULTRA</span>
+<span class="px-2 py-1 border border-secondary-fixed text-secondary-fixed font-technical-sm text-technical-sm uppercase">360Hz REFRESH</span>
+</div>
+</div>
+<!-- Thumbnail Reel -->
+<div class="grid grid-cols-4 gap-sm">
+<div class="glass-panel aspect-square p-2 cursor-pointer border-primary">
+<img class="w-full h-full object-cover" data-alt="Close up shot of the rear of a high-end gaming monitor showing integrated RGB lighting and technical ventilation ports in a dark neon environment." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAQUE7NlTQYHB-SPsLtLOj0HOgtPoZ_oYYAM25fB1NPTLbPa3R1wa_U9k16nhr4k7qqTqCWs7WtxWocu8OAf6d25TYfUHlKuEp5zqVHqZFHMgcuFGkyf8j2bPx1GmbmKC1DI3EfHgSAZrYlr2_QtGI19zUG8YOrKDuzYVPL0S9xpOG55h1v8WdZ-4_ci_Nl-cvNFxwBN8sf0VdKlQAXKZMtt-P-K7zsnT-vIqsHnSS6iUP8OjbB0SKAz9JgxnL7lPSdNxPSZ9fh5Q"/>
+</div>
+<div class="glass-panel aspect-square p-2 opacity-60 hover:opacity-100 transition-opacity cursor-pointer">
+<img class="w-full h-full object-cover" data-alt="Side profile view of an ultra-slim high-performance gaming monitor display against a dark tech-focused background with subtle electric blue highlights." src="https://lh3.googleusercontent.com/aida-public/AB6AXuB-17zwz61bBJNIWczLh1DlMPkVmeGIBV1O8qy9LeCep4wQol_SjHuRHl2m2869nuotmDdk0nNKiZ6wThzD7lca9mo1aHSlmUTFKX3asQSSHhEleRAKwSQT64w8FYvW_r0TrTWGpuz7L1OLUBpJcLo1nNqtNu0BxMVaw5T7Z5x6IGftU3UeV-472cY0Hb3hI26ITQMviqoUrP9RYwd6N7WbgowcWPRhngSo86e7aDABAYNdhY72rbONdIqyvKVfbmxZBvr2v4ac2Q"/>
+</div>
+<div class="glass-panel aspect-square p-2 opacity-60 hover:opacity-100 transition-opacity cursor-pointer">
+<img class="w-full h-full object-cover" data-alt="Detail shot of the monitor's input ports including DisplayPort and HDMI with a high-contrast cinematic lighting and a slight tech-noir aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBaOXek6yAs1WmT2IpkuO3t9j8dll8P5EmIcBmK7_KLJCni0LeBxMVVTuiUVDfh_rMPXNy2v5U6qqqpSW-hDaSwTUZpegHMoTLWjJPGn5E8yY5RVVIByzr5cnnOSyeUkdbrAXJPy0flo2vDcZHIMu408YitCFdezuGG2l-euHcdWpkH535vVkth6P7GwbbNr_5bvNuunutXNh9T6j9SNxegYYxNBA2-8V8IP7lJwZkQkyuOMBB9xMKr65OT8d5_g1v3-TnEj_gP_A"/>
+</div>
+<div class="glass-panel aspect-square p-2 opacity-60 hover:opacity-100 transition-opacity cursor-pointer">
+<div class="w-full h-full flex flex-col items-center justify-center text-on-surface-variant">
+<span class="material-symbols-outlined" data-icon="play_circle">play_circle</span>
+<span class="font-technical-sm text-[10px]">VIDEO</span>
+</div>
+</div>
+</div>
+<!-- Tabs Section -->
+<div class="mt-lg">
+<div class="flex border-b border-outline-variant mb-md overflow-x-auto no-scrollbar">
+<button class="px-md py-sm font-label-md text-label-md text-primary border-b-2 border-primary whitespace-nowrap" id="tab-specs" onclick="switchTab('specs')">SPECIFICATIONS</button>
+<button class="px-md py-sm font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors whitespace-nowrap" id="tab-reviews" onclick="switchTab('reviews')">REVIEWS (128)</button>
+<button class="px-md py-sm font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors whitespace-nowrap" id="tab-terms" onclick="switchTab('terms')">RENTAL TERMS</button>
+</div>
+<div class="tab-content block" id="content-specs">
+<div class="grid grid-cols-2 md:grid-cols-3 gap-md">
+<div class="p-sm glass-panel">
+<p class="font-technical-sm text-secondary-fixed mb-xs uppercase">Refresh Rate</p>
+<p class="font-headline-md text-on-surface">360Hz</p>
+</div>
+<div class="p-sm glass-panel">
+<p class="font-technical-sm text-secondary-fixed mb-xs uppercase">Response Time</p>
+<p class="font-headline-md text-on-surface">0.5ms GtG</p>
+</div>
+<div class="p-sm glass-panel">
+<p class="font-technical-sm text-secondary-fixed mb-xs uppercase">Panel Type</p>
+<p class="font-headline-md text-on-surface">Fast IPS</p>
+</div>
+<div class="p-sm glass-panel">
+<p class="font-technical-sm text-secondary-fixed mb-xs uppercase">Resolution</p>
+<p class="font-headline-md text-on-surface">2560 x 1440</p>
+</div>
+<div class="p-sm glass-panel">
+<p class="font-technical-sm text-secondary-fixed mb-xs uppercase">Color Space</p>
+<p class="font-headline-md text-on-surface">99% sRGB</p>
+</div>
+<div class="p-sm glass-panel">
+<p class="font-technical-sm text-secondary-fixed mb-xs uppercase">HDR Support</p>
+<p class="font-headline-md text-on-surface">HDR 600</p>
+</div>
+</div>
+</div>
+<div class="tab-content hidden" id="content-reviews">
+<div class="space-y-md">
+<div class="glass-panel p-md">
+<div class="flex justify-between items-start mb-sm">
+<div>
+<p class="font-label-md text-primary">ELITE_GAMER_99</p>
+<div class="flex text-secondary-fixed">
+<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">star</span>
+</div>
+</div>
+<span class="font-technical-sm text-on-surface-variant">2 DAYS AGO</span>
+</div>
+<p class="text-on-surface">Absolute game changer for CS2. The clarity during flick shots is unlike anything I've experienced on 144Hz. Worth every penny of the rental.</p>
+</div>
+</div>
+</div>
+<div class="tab-content hidden" id="content-terms">
+<div class="glass-panel p-md space-y-sm">
+<div class="flex items-start gap-sm">
+<span class="material-symbols-outlined text-primary" data-icon="verified">verified</span>
+<div>
+<p class="font-label-md text-on-surface">Zero-Latency Shipping</p>
+<p class="text-sm text-on-surface-variant">Arrives in technical-grade protective casing 1 day before your rental starts.</p>
+</div>
+</div>
+<div class="flex items-start gap-sm">
+<span class="material-symbols-outlined text-primary" data-icon="construction">construction</span>
+<div>
+<p class="font-label-md text-on-surface">Maintenance Guarantee</p>
+<p class="text-sm text-on-surface-variant">Every unit is calibrated and stress-tested before shipment. Dead-pixel free guarantee.</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Right Column: Booking Sidebar -->
+<aside class="lg:col-span-5">
+<div class="glass-panel p-md sticky top-24 border-primary/30 shadow-2xl">
+<div class="flex justify-between items-center mb-md">
+<div class="flex flex-col">
+<span class="font-technical-sm text-on-surface-variant uppercase">Rental Rate</span>
+<div class="flex items-baseline gap-xs">
+<span class="font-headline-lg text-primary">$45.00</span>
+<span class="text-on-surface-variant">/ day</span>
+</div>
+</div>
+<div class="flex flex-col items-end">
+<span class="flex items-center text-secondary-fixed font-technical-sm">
+<span class="material-symbols-outlined text-xs mr-1" style="font-variation-settings: 'FILL' 1;">star</span>
+                            4.9 (128)
+                        </span>
+<div class="bg-secondary-container/10 border border-secondary-container text-secondary-fixed px-2 py-0.5 font-technical-sm mt-1">AVAILABLE NOW</div>
+</div>
+</div>
+<div class="space-y-md">
+<!-- Date Pickers -->
+<div class="grid grid-cols-2 gap-sm">
+<div class="flex flex-col gap-xs">
+<label class="font-technical-sm text-on-surface-variant uppercase">Drop-Off</label>
+<div class="bg-surface-container-high border-b border-outline-variant p-sm flex items-center justify-between">
+<span class="text-sm">24 MAY</span>
+<span class="material-symbols-outlined text-sm" data-icon="calendar_today">calendar_today</span>
+</div>
+</div>
+<div class="flex flex-col gap-xs">
+<label class="font-technical-sm text-on-surface-variant uppercase">Return</label>
+<div class="bg-surface-container-high border-b border-outline-variant p-sm flex items-center justify-between">
+<span class="text-sm">27 MAY</span>
+<span class="material-symbols-outlined text-sm" data-icon="calendar_today">calendar_today</span>
+</div>
+</div>
+</div>
+<!-- Protection Plan -->
+<div class="flex flex-col gap-xs">
+<label class="font-technical-sm text-on-surface-variant uppercase">Protection Level</label>
+<select class="bg-surface-container-high border-none border-b border-outline-variant p-sm text-sm focus:ring-1 focus:ring-primary appearance-none w-full text-on-surface">
+<option>Standard HUD (Included)</option>
+<option>Pro-Armor (+ $15.00/day)</option>
+<option>God-Mode Full Cover (+ $30.00/day)</option>
+</select>
+</div>
+<!-- Price Breakdown -->
+<div class="bg-surface-container-lowest p-sm border border-outline-variant mt-lg">
+<div class="flex justify-between text-sm mb-xs">
+<span class="text-on-surface-variant">Rental (3 Days x $45)</span>
+<span>$135.00</span>
+</div>
+<div class="flex justify-between text-sm mb-xs">
+<span class="text-on-surface-variant">Shipping &amp; Handling</span>
+<span>$15.00</span>
+</div>
+<div class="flex justify-between text-sm mb-xs">
+<span class="text-on-surface-variant">Damage Protection</span>
+<span>$0.00</span>
+</div>
+<div class="border-t border-outline-variant my-sm pt-sm flex justify-between items-center">
+<span class="font-label-md text-on-surface">TOTAL PRICE</span>
+<span class="font-headline-md text-primary">$150.00</span>
+</div>
+</div>
+<!-- Action Buttons -->
+<button class="w-full py-md bg-primary-container text-on-primary-container font-headline-md font-bold uppercase tracking-widest neon-glow-primary active:scale-95 transition-all">
+                        INITIATE RENTAL
+                    </button>
+<button class="w-full py-sm border border-primary text-primary font-label-md uppercase tracking-widest hover:bg-primary/5 transition-all">
+                        ADD TO GEAR LIST
+                    </button>
+<div class="flex items-center justify-center gap-md text-on-surface-variant font-technical-sm mt-md">
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-xs" data-icon="security">security</span>SECURE TRANS</span>
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-xs" data-icon="local_shipping">local_shipping</span>EXPRESS DELIVERY</span>
+</div>
+</div>
+</div>
+</aside>
+</main>
+<!-- Footer -->
+<footer class="w-full py-xl px-gutter flex flex-col items-center gap-md text-center bg-surface-container-highest dark:bg-surface-container-highest border-t border-outline-variant mt-xl">
+<span class="font-headline-md text-headline-md text-primary font-bold">PRO GEAR HUB</span>
+<div class="flex flex-wrap justify-center gap-md">
+<a class="font-technical-sm text-technical-sm text-on-surface-variant hover:text-secondary-fixed-dim underline transition-all duration-300" href="#">About Us</a>
+<a class="font-technical-sm text-technical-sm text-on-surface-variant hover:text-secondary-fixed-dim underline transition-all duration-300" href="#">Terms of Service</a>
+<a class="font-technical-sm text-technical-sm text-on-surface-variant hover:text-secondary-fixed-dim underline transition-all duration-300" href="#">Privacy Policy</a>
+<a class="font-technical-sm text-technical-sm text-on-surface-variant hover:text-secondary-fixed-dim underline transition-all duration-300" href="#">Rental Guide</a>
+<a class="font-technical-sm text-technical-sm text-on-surface-variant hover:text-secondary-fixed-dim underline transition-all duration-300" href="#">Contact Support</a>
+</div>
+<p class="font-technical-sm text-technical-sm text-on-surface dark:text-on-surface mt-sm opacity-60">© 2024 PRO GEAR HUB. Precision Performance Rented.</p>
+</footer>
+<script>
+        function switchTab(tabId) {
+            // Hide all contents
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.add('hidden');
+                tab.classList.remove('block');
+            });
+            
+            // Remove active style from all buttons
+            document.querySelectorAll('[id^="tab-"]').forEach(btn => {
+                btn.classList.remove('text-primary', 'border-primary', 'border-b-2');
+                btn.classList.add('text-on-surface-variant');
+            });
+            
+            // Show active content
+            document.getElementById('content-' + tabId).classList.remove('hidden');
+            document.getElementById('content-' + tabId).classList.add('block');
+            
+            // Add active style to selected button
+            const activeBtn = document.getElementById('tab-' + tabId);
+            activeBtn.classList.add('text-primary', 'border-primary', 'border-b-2');
+            activeBtn.classList.remove('text-on-surface-variant');
+        }
+
+        // Simple parallax effect for images on hover
+        document.querySelectorAll('.glass-panel').forEach(panel => {
+            panel.addEventListener('mousemove', (e) => {
+                const img = panel.querySelector('img');
+                if (!img) return;
+                const { left, top, width, height } = panel.getBoundingClientRect();
+                const x = (e.clientX - left) / width - 0.5;
+                const y = (e.clientY - top) / height - 0.5;
+                img.style.transform = `scale(1.05) translate(${x * 10}px, ${y * 10}px)`;
+            });
+            panel.addEventListener('mouseleave', (e) => {
+                const img = panel.querySelector('img');
+                if (img) img.style.transform = 'scale(1) translate(0, 0)';
+            });
+        });
+    </script>
+</body></html>

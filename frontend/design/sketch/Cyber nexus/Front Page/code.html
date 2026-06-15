@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+
+<html class="scroll-smooth" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Cyber Nexus | Pro-Grade Gaming Gear Rental</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Manrope:wght@600;700;800&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&amp;family=Manrope:wght@100..900&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "surface-tint": "#0c56d0",
+                    "surface": "#f8f9fb",
+                    "outline-variant": "#c3c6d6",
+                    "background": "#f8f9fb",
+                    "surface-container-lowest": "#ffffff",
+                    "error-container": "#ffdad6",
+                    "inverse-primary": "#b2c5ff",
+                    "error": "#ba1a1a",
+                    "secondary-fixed": "#ffdbc8",
+                    "primary": "#003d9b",
+                    "tertiary-fixed-dim": "#b4c6f3",
+                    "surface-dim": "#d9dadc",
+                    "outline": "#737685",
+                    "on-surface": "#191c1e",
+                    "on-tertiary-fixed": "#051a3e",
+                    "on-tertiary": "#ffffff",
+                    "on-secondary-fixed-variant": "#753400",
+                    "on-tertiary-container": "#c1d2ff",
+                    "surface-bright": "#f8f9fb",
+                    "secondary-fixed-dim": "#ffb68b",
+                    "inverse-surface": "#2e3132",
+                    "on-error-container": "#93000a",
+                    "secondary-container": "#fb7800",
+                    "surface-container-high": "#e7e8ea",
+                    "on-primary": "#ffffff",
+                    "on-primary-container": "#c4d2ff",
+                    "surface-variant": "#e1e2e4",
+                    "on-secondary-fixed": "#321200",
+                    "on-background": "#191c1e",
+                    "inverse-on-surface": "#f0f1f3",
+                    "primary-fixed": "#dae2ff",
+                    "on-tertiary-fixed-variant": "#35466c",
+                    "surface-container": "#edeef0",
+                    "surface-container-highest": "#e1e2e4",
+                    "tertiary-fixed": "#d8e2ff",
+                    "tertiary-container": "#495a81",
+                    "on-surface-variant": "#434654",
+                    "on-secondary-container": "#592600",
+                    "on-secondary": "#ffffff",
+                    "tertiary": "#314368",
+                    "primary-fixed-dim": "#b2c5ff",
+                    "secondary": "#994700",
+                    "on-primary-fixed": "#001848",
+                    "surface-container-low": "#f3f4f6",
+                    "on-error": "#ffffff",
+                    "on-primary-fixed-variant": "#0040a2",
+                    "primary-container": "#0052cc"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "stack-sm": "8px",
+                    "stack-lg": "32px",
+                    "stack-md": "16px",
+                    "margin-mobile": "16px",
+                    "gutter": "24px",
+                    "base": "8px",
+                    "margin-desktop": "48px",
+                    "container-max": "1280px"
+            },
+            "fontFamily": {
+                    "body-sm": ["Inter"],
+                    "label-md": ["Inter"],
+                    "label-sm": ["Inter"],
+                    "headline-md": ["Manrope"],
+                    "body-lg": ["Inter"],
+                    "headline-xl": ["Manrope"],
+                    "body-md": ["Inter"],
+                    "headline-lg": ["Manrope"],
+                    "headline-lg-mobile": ["Manrope"]
+            },
+            "fontSize": {
+                    "body-sm": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                    "label-md": ["14px", {"lineHeight": "16px", "fontWeight": "600"}],
+                    "label-sm": ["12px", {"lineHeight": "14px", "fontWeight": "500"}],
+                    "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                    "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
+                    "headline-xl": ["48px", {"lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "headline-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "700"}],
+                    "headline-lg-mobile": ["24px", {"lineHeight": "32px", "fontWeight": "700"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .neon-glow-orange {
+            box-shadow: 0 0 15px rgba(251, 120, 0, 0.4);
+        }
+        .neon-glow-blue {
+            box-shadow: 0 0 15px rgba(0, 82, 204, 0.4);
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(225, 226, 228, 0.5);
+        }
+        .hero-gradient {
+            background: radial-gradient(circle at 20% 50%, rgba(0, 61, 155, 0.08) 0%, transparent 50%),
+                        radial-gradient(circle at 80% 80%, rgba(251, 120, 0, 0.08) 0%, transparent 50%);
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background font-body-md selection:bg-secondary-container selection:text-white">
+<!-- TopNavBar -->
+<header class="w-full top-0 sticky bg-surface-container-lowest shadow-sm border-b border-outline-variant z-50">
+<nav class="flex items-center justify-between px-margin-desktop py-4 max-w-container-max mx-auto">
+<div class="flex items-center gap-8">
+<span class="font-headline-md text-headline-md font-bold text-secondary-container">Cyber Nexus</span>
+<div class="hidden md:flex items-center gap-6">
+<a class="font-label-md text-label-md text-primary border-b-2 border-primary pb-1 transition-colors duration-200" href="#">Home</a>
+<a class="font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors duration-200" href="#">Browse Gear</a>
+<a class="font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors duration-200" href="#">Support</a>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<div class="hidden lg:flex items-center bg-surface-container px-4 py-2 rounded-full border border-outline-variant">
+<span class="material-symbols-outlined text-on-surface-variant text-[20px]">search</span>
+<input class="bg-transparent border-none focus:ring-0 text-body-sm w-48" placeholder="Search high-end gear..." type="text"/>
+</div>
+<div class="flex items-center gap-3">
+<button class="material-symbols-outlined text-on-surface-variant hover:text-primary transition-colors">shopping_cart</button>
+<button class="material-symbols-outlined text-on-surface-variant hover:text-primary transition-colors">account_circle</button>
+</div>
+</div>
+</nav>
+</header>
+<main class="relative">
+<!-- Hero Section -->
+<section class="relative overflow-hidden hero-gradient py-stack-lg min-h-[819px] flex items-center">
+
+<div class="max-w-container-max mx-auto px-margin-desktop w-full grid grid-cols-1 md:grid-cols-12 gap-gutter relative z-10">
+<div class="md:col-span-6 flex flex-col justify-center gap-6">
+<div class="inline-flex items-center gap-2 bg-primary-container/10 text-primary px-3 py-1 rounded-full w-fit">
+<span class="material-symbols-outlined text-[18px]" style="font-variation-settings: 'FILL' 1;">bolt</span>
+<span class="font-label-sm text-label-sm">NEXT-GEN PERFORMANCE NOW</span>
+</div>
+<h1 class="font-headline-xl text-headline-xl text-on-background leading-tight">
+                        Rent the <span class="text-secondary-container">Future</span> of Gaming.
+                    </h1>
+<p class="font-body-lg text-body-lg text-on-surface-variant max-w-lg">
+                        Access high-end GPUs, mechanical keyboards, and custom-built rigs. No massive upfront costs. Just pure performance on your terms.
+                    </p>
+<div class="flex flex-wrap gap-4 mt-4">
+<button class="bg-secondary-container text-white px-8 py-4 rounded-lg font-label-md text-label-md flex items-center gap-2 neon-glow-orange active:opacity-80 transition-all">
+                            Rent Now <span class="material-symbols-outlined">rocket_launch</span>
+</button>
+<button class="bg-surface-container-lowest border-2 border-primary text-primary px-8 py-4 rounded-lg font-label-md text-label-md flex items-center gap-2 hover:bg-primary-fixed transition-all">
+                            View Catalog
+                        </button>
+</div>
+<div class="flex items-center gap-8 mt-4">
+<div class="flex flex-col">
+<span class="font-headline-md text-headline-md">24h</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Setup Time</span>
+</div>
+<div class="h-10 w-[1px] bg-outline-variant"></div>
+<div class="flex flex-col">
+<span class="font-headline-md text-headline-md">100%</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Insured Gear</span>
+</div>
+</div>
+</div>
+<div class="md:col-span-6 flex items-center justify-center relative">
+<div class="relative w-full aspect-square max-w-lg">
+<div class="absolute inset-0 bg-primary/10 rounded-full blur-3xl animate-pulse"></div>
+<img alt="High-end Gaming PC" class="relative z-10 w-full h-full object-contain drop-shadow-2xl" data-alt="A high-performance custom-built gaming PC featuring translucent tempered glass side panels, glowing with vibrant orange and deep blue internal RGB lighting components. The liquid cooling tubes run through the chassis with a futuristic neon aesthetic. The computer sits on a reflective dark surface in a minimalist, professional studio environment, emphasizing a corporate modern tech brand identity." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBHhTO2mUAglKT59GxGnrAFLo4m9At6dM_AIbGYcUTts2H7TY9SI7kMvOhspvOYv3nxi0tCxE5Xv52KqgUv-SECigov9uUNWMoMyVC8fZ7EMOeGxPoR_OkI_Z1SqOL3dLPY04UkI0UycfmTDodQnpiZme2pHXoC8vtvtTgncRG1QDVrCEgdg3T2JSa17Y6LhO1OLg_QsL6YHK-jVKPLXI_oekjma643bVGlWwKkhDyF1r8jeP3FR6WDzILgUDuv9diiQ_JU9DI66A"/>
+</div>
+</div>
+</div>
+</section>
+<!-- Trending Gear Section -->
+<section class="bg-surface py-stack-lg">
+<div class="max-w-container-max mx-auto px-margin-desktop">
+<div class="flex justify-between items-end mb-stack-lg">
+<div>
+<h2 class="font-headline-lg text-headline-lg text-on-background">Trending Gear</h2>
+<p class="font-body-md text-body-md text-on-surface-variant">The most requested hardware by pros this week.</p>
+</div>
+<a class="text-primary font-label-md text-label-md flex items-center gap-1 hover:underline" href="#">
+                        Explore all gear <span class="material-symbols-outlined">arrow_forward</span>
+</a>
+</div>
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-gutter">
+<!-- Product Card 1 -->
+<div class="bg-surface-container-lowest rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow group border border-outline-variant">
+<div class="relative aspect-square bg-surface-container overflow-hidden">
+<img alt="High-end GPU" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" data-alt="A close-up shot of a modern, flagship graphics card with triple-fan cooling and sleek matte black casing. Subtle orange LED highlights peek through the heatsink. The GPU is presented in a clean, high-tech studio with soft directional lighting that emphasizes its metallic textures and professional build quality, matching a corporate gaming gear aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCd2czmsLDlXIkNZl-v7UN9fWuynsTyYCv3dgbEuPOLaxetMcehohXUp-1RY0Ohe7oHw-txM8QLS0T0e9y4-WvSrzd_KArirHBqp8Z16uW606-HP1_74iEaz56ABaY2TmsJN34ZDKbY45Q5MRoh4dadhA_r-p2kGVLdktr-5cqYsRXD-BItD_YRc1ASOwlJZz9EYV-mfTRpNWp7ciAKgZz9LPo8EOXCq_gATn7IoMQSz4_56MjUehe1uS5s9ABte746zCPkO1Urxg"/>
+<span class="absolute top-3 left-3 bg-success-container bg-green-100 text-green-800 px-3 py-1 rounded-full font-label-sm text-label-sm flex items-center gap-1">
+<span class="w-2 h-2 rounded-full bg-green-600"></span> Available
+                            </span>
+</div>
+<div class="p-4 flex flex-col gap-2">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Components</span>
+<h3 class="font-headline-md text-[18px] text-on-background">RTX 4090 Phantom OC</h3>
+<div class="flex items-center gap-2">
+<span class="bg-secondary-container/10 text-on-secondary-container px-2 py-0.5 rounded text-label-sm">Verified Gear</span>
+</div>
+<div class="flex items-center justify-between mt-4">
+<div class="flex flex-col">
+<span class="text-body-sm text-on-surface-variant">Daily rate</span>
+<span class="font-headline-md text-primary">$12.50</span>
+</div>
+<button class="bg-secondary-container text-white px-4 py-2 rounded font-label-md text-label-md active:scale-95 transition-all">Rent</button>
+</div>
+</div>
+</div>
+<!-- Product Card 2 -->
+<div class="bg-surface-container-lowest rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow group border border-outline-variant">
+<div class="relative aspect-square bg-surface-container overflow-hidden">
+<img alt="Mechanical Keyboard" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" data-alt="A premium custom mechanical keyboard featuring semi-transparent keycaps and a solid aluminum silver frame. The RGB backlighting is set to a crisp cool blue, creating a professional and clean aesthetic. The keyboard is photographed on a textured dark desk pad with soft professional lighting, showcasing its premium materials and modern design." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAmQ9d4vFUuCwnKlOHDsPHppAnZJOB3tCoYSlu8wnhuSUwM2KnosQ4irbXSgBfXvx0dGHsvstO7rmJ3FN7WhvdMrAUGztK9nPyqSKNfFKWV8MBvPUGXHbJkIUGGFpWBnv1l6cAm7Mb6TTk_uE99I8dk0-TYBJs0BEanpT7XpmlByOECE7zWZigybnG3TSr21yXZ51gYvJmRzQ9XIa8VpJe8EEnvM-8gJ5s96mjNL3yShCrVn_JteDPF89eESfKqIQnhBSCP-FRU4w"/>
+<span class="absolute top-3 left-3 bg-secondary-fixed text-on-secondary-fixed px-3 py-1 rounded-full font-label-sm text-label-sm">Trending</span>
+</div>
+<div class="p-4 flex flex-col gap-2">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Peripherals</span>
+<h3 class="font-headline-md text-[18px] text-on-background">Apex Pro TKL Wireless</h3>
+<div class="flex items-center gap-2">
+<span class="bg-secondary-container/10 text-on-secondary-container px-2 py-0.5 rounded text-label-sm">Verified Gear</span>
+</div>
+<div class="flex items-center justify-between mt-4">
+<div class="flex flex-col">
+<span class="text-body-sm text-on-surface-variant">Daily rate</span>
+<span class="font-headline-md text-primary">$4.99</span>
+</div>
+<button class="bg-secondary-container text-white px-4 py-2 rounded font-label-md text-label-md active:scale-95 transition-all">Rent</button>
+</div>
+</div>
+</div>
+<!-- Product Card 3 -->
+<div class="bg-surface-container-lowest rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow group border border-outline-variant">
+<div class="relative aspect-square bg-surface-container overflow-hidden">
+<img alt="Gaming Mouse" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" data-alt="A sleek, ultra-lightweight wireless gaming mouse in matte white with an ergonomic design. The mouse is positioned on a clean workstation background. Soft, diffused lighting highlights its smooth curves and precision craftsmanship, evoking a sense of speed and high-level technical proficiency for pro-grade gaming performance." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCqZmOGR4pXe3OnEB8K5RG1wj371cQCItpNDWVoYON2Xq1wJpBusS03NDsgNUTNgEN66jiG-DFZ6KCnclQgz2Q6BjlEkGRg-OMDbWsuUpGjvhG3VeY_gZceDiIqtFkMjD8DOJnA-Ih7GidISojN31FvdwtHcoH4sZSq1dKEaOWMpV-Ap3HYHv0oeGzGi6b8c4Zi4knkoTOcjgAy18gzeinpyp5pqg4VVOBNow0rZR-ZSMkhyp6PW4HWVUz25CqeKrb5bsy48Nd2pw"/>
+<span class="absolute top-3 left-3 bg-success-container bg-green-100 text-green-800 px-3 py-1 rounded-full font-label-sm text-label-sm flex items-center gap-1">
+<span class="w-2 h-2 rounded-full bg-green-600"></span> Available
+                            </span>
+</div>
+<div class="p-4 flex flex-col gap-2">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Peripherals</span>
+<h3 class="font-headline-md text-[18px] text-on-background">Superlight Pro X2</h3>
+<div class="flex items-center gap-2">
+<span class="bg-secondary-container/10 text-on-secondary-container px-2 py-0.5 rounded text-label-sm">Verified Gear</span>
+</div>
+<div class="flex items-center justify-between mt-4">
+<div class="flex flex-col">
+<span class="text-body-sm text-on-surface-variant">Daily rate</span>
+<span class="font-headline-md text-primary">$3.50</span>
+</div>
+<button class="bg-secondary-container text-white px-4 py-2 rounded font-label-md text-label-md active:scale-95 transition-all">Rent</button>
+</div>
+</div>
+</div>
+<!-- Product Card 4 -->
+<div class="bg-surface-container-lowest rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow group border border-outline-variant">
+<div class="relative aspect-square bg-surface-container overflow-hidden">
+<img alt="Headset" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" data-alt="A high-fidelity wireless gaming headset featuring plush leather ear cushions and a carbon fiber headband. The device glows with a faint amber light from its status indicators. The background is a dimly lit, professional gaming setup that suggests elite performance and immersive sound quality within a modern corporate aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuABIjO6-283Ge6HZcNSVPlgd6zqZAXNeEdLslRy9r3jYccOesfnuWNl6qr-Bk4vo3x6i8u8u5AWipB1zW5IlVey-IW04tikMsATOgpXgo77_8sYY1Bk3xDjSJEYy7QP0G8EV0mQBmtlSDfGNmm2LjWl8n48iXtaE71EvMumdlHNI88Vwg0z_HrI65W2pKgw9gFKzc9Db76A59UmwSwiDDQmkSB8J__5bBKgKZnIwgVSE5Kl8AwaVa2njbl4fUxnJqgPco0DWeNHlg"/>
+<span class="absolute top-3 left-3 bg-primary-fixed text-on-primary-fixed px-3 py-1 rounded-full font-label-sm text-label-sm">New In</span>
+</div>
+<div class="p-4 flex flex-col gap-2">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Audio</span>
+<h3 class="font-headline-md text-[18px] text-on-background">Nova Pro Wireless</h3>
+<div class="flex items-center gap-2">
+<span class="bg-secondary-container/10 text-on-secondary-container px-2 py-0.5 rounded text-label-sm">Verified Gear</span>
+</div>
+<div class="flex items-center justify-between mt-4">
+<div class="flex flex-col">
+<span class="text-body-sm text-on-surface-variant">Daily rate</span>
+<span class="font-headline-md text-primary">$6.25</span>
+</div>
+<button class="bg-secondary-container text-white px-4 py-2 rounded font-label-md text-label-md active:scale-95 transition-all">Rent</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Why Rent With Us -->
+<section class="py-stack-lg bg-surface-container-low overflow-hidden relative">
+<div class="max-w-container-max mx-auto px-margin-desktop grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+<div class="order-2 lg:order-1 relative">
+<div class="grid grid-cols-2 gap-4">
+<div class="glass-card p-6 rounded-xl border border-outline-variant shadow-sm flex flex-col gap-3">
+<span class="material-symbols-outlined text-primary text-[32px]">speed</span>
+<h4 class="font-headline-md text-[20px]">Latest Tech</h4>
+<p class="text-body-sm text-on-surface-variant">Access current-gen hardware the moment it drops without waiting for stock alerts.</p>
+</div>
+<div class="glass-card p-6 rounded-xl border border-outline-variant shadow-sm flex flex-col gap-3 mt-8">
+<span class="material-symbols-outlined text-secondary-container text-[32px]">calendar_month</span>
+<h4 class="font-headline-md text-[20px]">Flexible Plans</h4>
+<p class="text-body-sm text-on-surface-variant">From weekend tournaments to monthly seasons. Scale your rental to your schedule.</p>
+</div>
+<div class="glass-card p-6 rounded-xl border border-outline-variant shadow-sm flex flex-col gap-3">
+<span class="material-symbols-outlined text-primary text-[32px]">verified_user</span>
+<h4 class="font-headline-md text-[20px]">Full Insurance</h4>
+<p class="text-body-sm text-on-surface-variant">Peace of mind included. All rentals are covered against accidental technical failure.</p>
+</div>
+<div class="glass-card p-6 rounded-xl border border-outline-variant shadow-sm flex flex-col gap-3 mt-8">
+<span class="material-symbols-outlined text-secondary-container text-[32px]">autorenew</span>
+<h4 class="font-headline-md text-[20px]">Easy Swap</h4>
+<p class="text-body-sm text-on-surface-variant">Tired of your setup? Swap for any other gear in our catalog instantly.</p>
+</div>
+</div>
+</div>
+<div class="order-1 lg:order-2 flex flex-col gap-6">
+<h2 class="font-headline-lg text-headline-lg text-on-background">Engineered for <span class="text-primary">Performance</span></h2>
+<p class="font-body-lg text-body-lg text-on-surface-variant">
+                        We don't just rent hardware; we provide the competitive edge. Every piece of equipment is bench-tested, sanitized, and updated with the latest drivers before delivery.
+                    </p>
+<ul class="flex flex-col gap-4">
+<li class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+<span class="text-body-md font-medium">Free delivery within major gaming hubs</span>
+</li>
+<li class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+<span class="text-body-md font-medium">24/7 technical support from esports pros</span>
+</li>
+<li class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+<span class="text-body-md font-medium">Option to buy at a discounted rate after rental</span>
+</li>
+</ul>
+<div class="mt-4 p-4 border-l-4 border-secondary-container bg-surface-container-highest">
+<p class="italic text-on-surface-variant">"Cyber Nexus has fundamentally changed how our pro-team handles off-site bootcamping. Reliable, fast, and high-spec."</p>
+<span class="block mt-2 font-label-md text-label-md">— Marcus "Volt" Chen, Team Alpha Captain</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Gamer Testimonials -->
+<section class="py-stack-lg bg-surface-container-lowest">
+<div class="max-w-container-max mx-auto px-margin-desktop text-center mb-stack-lg">
+<h2 class="font-headline-lg text-headline-lg text-on-background mb-2">Gamer Testimonials</h2>
+<p class="text-body-md text-on-surface-variant">Trusted by over 50,000 players worldwide.</p>
+</div>
+<div class="max-w-container-max mx-auto px-margin-desktop grid grid-cols-1 md:grid-cols-3 gap-gutter">
+<!-- Testimonial 1 -->
+<div class="bg-surface p-8 rounded-xl border border-outline-variant hover:border-primary transition-colors flex flex-col gap-6">
+<div class="flex gap-1 text-secondary-container">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">star</span>
+</div>
+<p class="text-body-md italic text-on-surface">"Rented a 4090 for a weekend tournament. It arrived in pristine condition and was pre-configured. Won the finals and couldn't have done it without the extra frames."</p>
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-full overflow-hidden">
+<img alt="User" class="w-full h-full object-cover" data-alt="A portrait of a young male gamer in high-key, professional studio lighting. He has a determined expression and is wearing a sleek, dark tech-wear jacket. The background is a blurred digital display, maintaining a clean and modern corporate aesthetic suitable for a tech brand customer testimonial." src="https://lh3.googleusercontent.com/aida-public/AB6AXuA30WmVzJ8GuJqQfLoBw81-letmWJMAjy72zdJUPIb9pGotYTQnfkjJdk5mSyN73CPSS9M1BOJLqZuP-Nhzig2K_SNLzYhzO-W83tyVf37xZvS6uv2bR8zoE9AVrrnyWS8QoaxsuN39uJgegkyb7UWxzf6oxEoL__MN-OVQNEfnXFsOgytUfGw1XaJKHjzyLd4D86i10ioPvmNSp8kqMWivQ3uRzBh-qQYjUUB1RE4C9vJaD_Kf6ZMaP63oX5D0mfyOo8VQUJfAJg"/>
+</div>
+<div>
+<p class="font-label-md text-label-md">Alex Rivera</p>
+<p class="text-label-sm text-on-surface-variant">Competitive Valorant Player</p>
+</div>
+</div>
+</div>
+<!-- Testimonial 2 -->
+<div class="bg-surface p-8 rounded-xl border border-outline-variant hover:border-primary transition-colors flex flex-col gap-6">
+<div class="flex gap-1 text-secondary-container">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">star</span>
+</div>
+<p class="text-body-md italic text-on-surface">"Cyber Nexus is my go-to for streaming gear. I swap out my mic and camera every few months to keep my setup fresh. The flexible plans are actually life-saving for my budget."</p>
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-full overflow-hidden">
+<img alt="User" class="w-full h-full object-cover" data-alt="A portrait of a professional female content creator with a bright, friendly smile. She is wearing high-quality studio headphones around her neck. The setting is a clean, modern home studio with soft daylight and organized tech equipment in the background, reinforcing a sense of trust and professional utility." src="https://lh3.googleusercontent.com/aida-public/AB6AXuALYYfk5FQEEA5u7vVhs_tkchlwI_w14xpAOaqccHyStC4uCNHw-05JkgChJVDAFXqkjEXvynTC0DlzeeMMmmi0xFT-TbteRBZ_kSbkFpEKxaSLQhTc5CS1X1Qnlg0u8ZxLr7ZitHLJQg252guBrztF_yAIRvEZEin-uj47WG_QznZxK8EooixifS-4ZQB7cJMjQWRPwVTurrl1o_I5P-c9OfnAeYuwnTuPqBwx94w2ZiycTyOQL6F9QL95Jydzx_BaU2py7-Ouww"/>
+</div>
+<div>
+<p class="font-label-md text-label-md">Sarah Jenkins</p>
+<p class="text-label-sm text-on-surface-variant">Twitch Partner / Content Creator</p>
+</div>
+</div>
+</div>
+<!-- Testimonial 3 -->
+<div class="bg-surface p-8 rounded-xl border border-outline-variant hover:border-primary transition-colors flex flex-col gap-6">
+<div class="flex gap-1 text-secondary-container">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">star</span>
+</div>
+<p class="text-body-md italic text-on-surface">"The insurance policy is legit. Had a power surge that fried my rental rig, and Nexus replaced it within 18 hours with zero extra charges. Truly professional service."</p>
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-full overflow-hidden">
+<img alt="User" class="w-full h-full object-cover" data-alt="A portrait of a male tech professional in his 30s with a confident and satisfied expression. He is wearing a clean charcoal polo shirt. The environment is a modern, brightly lit office space with minimalist design, emphasizing the reliability and corporate trust of the service being reviewed." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAschzBc7tL8_YWkosnUCG7Ts1eO7YY1--l5jOnYeaxY1CNZB_1XLfHyawCwejUerzwqEZPUZu9I-5HsoHA0-1UwaEcg9IxxfPsjKtw8ONUz80AIQNB5GWU79q4m9ZywdJhcAdU7x8USXlTrFXx7_kamFJFsQXZXe44-_EwGF67_ursZjc_GzIuBm7QFwywxKnl4Go3GfjMsWvDS2eRIzhpyGAjSqgo6OPSe-vse_NUT8HgTzpHtrN2fVk37f4-Otd0Ut4fw1YjVg"/>
+</div>
+<div>
+<p class="font-label-md text-label-md">David Miller</p>
+<p class="text-label-sm text-on-surface-variant">Software Engineer</p>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Quick CTA -->
+<section class="py-stack-lg relative overflow-hidden bg-primary px-margin-desktop">
+
+<div class="max-w-container-max mx-auto relative z-10 flex flex-col items-center text-center gap-6">
+<h2 class="font-headline-lg text-headline-lg text-white">Ready to Elevate Your Setup?</h2>
+<p class="text-body-lg text-primary-fixed max-w-2xl">Join thousands of elite gamers who trust Cyber Nexus for their competitive performance needs.</p>
+<div class="flex gap-4">
+<button class="bg-secondary-container text-white px-10 py-5 rounded-lg font-label-md text-headline-md neon-glow-orange hover:scale-105 transition-transform active:opacity-90">Get Started Now</button>
+</div>
+<div class="flex gap-8 mt-4 text-primary-fixed/80">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]">verified</span>
+<span class="text-body-sm">No Credit Check Required</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]">local_shipping</span>
+<span class="text-body-sm">Next-Day Delivery</span>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- Footer -->
+<footer class="w-full bottom-0 bg-inverse-surface text-surface py-stack-lg border-t border-outline">
+<div class="max-w-container-max mx-auto px-margin-desktop flex flex-col gap-12">
+<div class="grid grid-cols-1 md:grid-cols-4 gap-12">
+<div class="flex flex-col gap-4">
+<span class="font-headline-lg text-headline-lg text-surface-container-lowest">Cyber Nexus</span>
+<p class="font-body-sm text-body-sm text-surface-variant">The world's premier platform for high-performance gaming gear rentals. Empowering players since 2021.</p>
+</div>
+<div class="flex flex-col gap-4">
+<span class="font-label-md text-label-md uppercase tracking-widest text-primary-fixed">Products</span>
+<ul class="flex flex-col gap-2 font-body-sm text-body-sm">
+<li class="text-surface-variant hover:text-primary-fixed cursor-pointer transition-colors">Gaming PCs</li>
+<li class="text-surface-variant hover:text-primary-fixed cursor-pointer transition-colors">Graphics Cards</li>
+<li class="text-surface-variant hover:text-primary-fixed cursor-pointer transition-colors">Keyboards &amp; Mice</li>
+<li class="text-surface-variant hover:text-primary-fixed cursor-pointer transition-colors">Monitors</li>
+</ul>
+</div>
+<div class="flex flex-col gap-4">
+<span class="font-label-md text-label-md uppercase tracking-widest text-primary-fixed">Company</span>
+<ul class="flex flex-col gap-2 font-body-sm text-body-sm">
+<li class="text-surface-variant hover:text-primary-fixed cursor-pointer transition-colors">About Us</li>
+<li class="text-surface-variant hover:text-primary-fixed cursor-pointer transition-colors">Careers</li>
+<li class="text-surface-variant hover:text-primary-fixed cursor-pointer transition-colors">Partner Program</li>
+<li class="text-surface-variant hover:text-primary-fixed cursor-pointer transition-colors">Press Kit</li>
+</ul>
+</div>
+<div class="flex flex-col gap-4">
+<span class="font-label-md text-label-md uppercase tracking-widest text-primary-fixed">Newsletter</span>
+<p class="font-body-sm text-body-sm text-surface-variant">Get the latest gear alerts and tournament invites.</p>
+<div class="flex items-center gap-2">
+<input class="bg-surface-container-high border-none rounded text-body-sm w-full focus:ring-2 focus:ring-primary" placeholder="Email address" type="email"/>
+<button class="bg-primary-container text-white p-2 rounded">
+<span class="material-symbols-outlined">send</span>
+</button>
+</div>
+</div>
+</div>
+<div class="flex flex-col md:flex-row justify-between items-center gap-base border-t border-outline/30 pt-8">
+<span class="font-body-sm text-body-sm text-surface-variant">© 2024 Cyber Nexus. All Rights Reserved. Professional Grade Gear.</span>
+<div class="flex gap-8">
+<span class="font-body-sm text-body-sm text-surface-variant hover:text-secondary-fixed underline cursor-pointer">Terms of Service</span>
+<span class="font-body-sm text-body-sm text-surface-variant hover:text-secondary-fixed underline cursor-pointer">Privacy Policy</span>
+<span class="font-body-sm text-body-sm text-surface-variant hover:text-secondary-fixed underline cursor-pointer">Insurance Details</span>
+<span class="font-body-sm text-body-sm text-surface-variant hover:text-secondary-fixed underline cursor-pointer">Contact Us</span>
+</div>
+</div>
+</div>
+</footer>
+<!-- FAB -->
+<button class="fixed bottom-8 right-8 bg-secondary-container text-white w-14 h-14 rounded-full flex items-center justify-center shadow-xl hover:scale-110 active:scale-95 transition-all z-40 neon-glow-orange group">
+<span class="material-symbols-outlined text-[28px]">support_agent</span>
+<span class="absolute right-16 bg-surface-container-lowest text-on-surface px-3 py-1 rounded shadow-lg text-label-sm whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity">Expert Help</span>
+</button>
+<script>
+        // Micro-interactions and subtle effects
+        document.querySelectorAll('.active\\:scale-95').forEach(button => {
+            button.addEventListener('mousedown', () => {
+                button.classList.add('scale-95');
+            });
+            button.addEventListener('mouseup', () => {
+                button.classList.remove('scale-95');
+            });
+            button.addEventListener('mouseleave', () => {
+                button.classList.remove('scale-95');
+            });
+        });
+
+        // Sticky nav transition
+        window.addEventListener('scroll', () => {
+            const header = document.querySelector('header');
+            if (window.scrollY > 20) {
+                header.classList.add('bg-white/95', 'backdrop-blur-md');
+            } else {
+                header.classList.remove('bg-white/95', 'backdrop-blur-md');
+            }
+        });
+    </script>
+</body></html>

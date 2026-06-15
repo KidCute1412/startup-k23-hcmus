@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;700;800&amp;family=Geist:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-tertiary-fixed": "#23005b",
+                    "on-tertiary": "#3c0090",
+                    "primary": "#dbfcff",
+                    "tertiary-fixed-dim": "#d1bcff",
+                    "error": "#ffb4ab",
+                    "secondary-fixed": "#c3f400",
+                    "surface-dim": "#131314",
+                    "outline": "#849495",
+                    "on-surface": "#e5e2e3",
+                    "background": "#131314",
+                    "error-container": "#93000a",
+                    "inverse-primary": "#006970",
+                    "surface-container-lowest": "#0e0e0f",
+                    "surface-tint": "#00dbe9",
+                    "surface": "#131314",
+                    "outline-variant": "#3b494b",
+                    "primary-fixed-dim": "#00dbe9",
+                    "tertiary": "#faf3ff",
+                    "on-secondary": "#283500",
+                    "on-secondary-container": "#556d00",
+                    "tertiary-container": "#e1d2ff",
+                    "on-surface-variant": "#b9cacb",
+                    "surface-container-low": "#1c1b1c",
+                    "on-primary-fixed-variant": "#004f54",
+                    "on-error": "#690005",
+                    "primary-container": "#00f0ff",
+                    "secondary": "#ffffff",
+                    "on-primary-fixed": "#002022",
+                    "surface-container": "#201f20",
+                    "on-tertiary-fixed-variant": "#5700c9",
+                    "surface-container-highest": "#353436",
+                    "tertiary-fixed": "#e9ddff",
+                    "secondary-container": "#c3f400",
+                    "on-primary": "#00363a",
+                    "surface-container-high": "#2a2a2b",
+                    "on-primary-container": "#006970",
+                    "surface-variant": "#353436",
+                    "primary-fixed": "#7df4ff",
+                    "on-secondary-fixed": "#161e00",
+                    "on-background": "#e5e2e3",
+                    "inverse-on-surface": "#313031",
+                    "surface-bright": "#3a393a",
+                    "on-tertiary-container": "#7213ff",
+                    "on-secondary-fixed-variant": "#3c4d00",
+                    "inverse-surface": "#e5e2e3",
+                    "on-error-container": "#ffdad6",
+                    "secondary-fixed-dim": "#abd600"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "gutter": "24px",
+                    "xs": "8px",
+                    "base": "4px",
+                    "xl": "64px",
+                    "margin": "32px",
+                    "lg": "40px",
+                    "sm": "16px",
+                    "md": "24px"
+            },
+            "fontFamily": {
+                    "body-md": ["Geist"],
+                    "label-md": ["Geist"],
+                    "display-lg-mobile": ["Sora"],
+                    "headline-lg": ["Sora"],
+                    "technical-sm": ["Geist"],
+                    "headline-md": ["Sora"],
+                    "display-lg": ["Sora"],
+                    "body-lg": ["Geist"]
+            },
+            "fontSize": {
+                    "body-md": ["16px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                    "label-md": ["14px", {"lineHeight": "1.0", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                    "display-lg-mobile": ["36px", {"lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "800"}],
+                    "headline-lg": ["32px", {"lineHeight": "1.2", "fontWeight": "700"}],
+                    "technical-sm": ["12px", {"lineHeight": "1.0", "letterSpacing": "0.1em", "fontWeight": "500"}],
+                    "headline-md": ["24px", {"lineHeight": "1.3", "fontWeight": "700"}],
+                    "display-lg": ["48px", {"lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "800"}],
+                    "body-lg": ["18px", {"lineHeight": "1.6", "fontWeight": "400"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .glass-panel {
+            background: rgba(18, 18, 20, 0.7);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(132, 148, 149, 0.2);
+        }
+        .neon-glow-primary:hover {
+            box-shadow: 0 0 15px rgba(219, 252, 255, 0.4);
+        }
+        .neon-glow-secondary {
+            box-shadow: 0 0 20px rgba(195, 244, 0, 0.3);
+        }
+        .scan-line {
+            background: linear-gradient(to bottom, transparent 50%, rgba(0, 0, 0, 0.1) 50%);
+            background-size: 100% 2px;
+        }
+        body {
+            background-color: #050505;
+        }
+    </style>
+</head>
+<body class="font-body-md text-on-surface selection:bg-primary-container selection:text-on-primary-container overflow-x-hidden">
+<!-- TopNavBar Component -->
+<header class="flex items-center justify-between px-gutter py-4 w-full sticky top-0 z-50 bg-surface-container-low dark:bg-surface-container-low border-b border-outline-variant dark:border-outline-variant shadow-sm">
+<div class="flex items-center gap-md">
+<h1 class="font-headline-md text-headline-md font-bold tracking-tighter text-on-surface dark:text-on-surface">PRO GEAR HUB</h1>
+<nav class="hidden md:flex gap-sm items-center ml-lg">
+<a class="font-body-md text-body-md text-primary dark:text-primary border-b-2 border-primary pb-1 hover:text-primary transition-colors duration-200" href="#">Keyboards</a>
+<a class="font-body-md text-body-md text-on-surface-variant dark:text-on-surface-variant hover:text-primary transition-colors duration-200" href="#">Mice</a>
+<a class="font-body-md text-body-md text-on-surface-variant dark:text-on-surface-variant hover:text-primary transition-colors duration-200" href="#">Headsets</a>
+<a class="font-body-md text-body-md text-on-surface-variant dark:text-on-surface-variant hover:text-primary transition-colors duration-200" href="#">Monitors</a>
+<a class="font-body-md text-body-md text-on-surface-variant dark:text-on-surface-variant hover:text-primary transition-colors duration-200" href="#">PC Rigs</a>
+</nav>
+</div>
+<div class="flex items-center gap-sm">
+<div class="hidden lg:flex items-center bg-surface-container-highest px-sm py-xs rounded-lg border border-outline-variant">
+<span class="material-symbols-outlined text-on-surface-variant">search</span>
+<input class="bg-transparent border-none focus:ring-0 text-body-md w-48 text-on-surface" placeholder="Search gear..." type="text"/>
+</div>
+<div class="flex gap-xs">
+<button class="material-symbols-outlined p-xs text-on-surface-variant hover:text-primary transition-all">shopping_cart</button>
+<button class="material-symbols-outlined p-xs text-on-surface-variant hover:text-primary transition-all">account_circle</button>
+</div>
+<button class="bg-primary-container text-on-primary-container px-md py-xs font-label-md text-label-md active:scale-95 transition-transform">Rent Now</button>
+</div>
+</header>
+<main>
+<!-- Hero Section -->
+<section class="relative w-full h-[819px] flex items-center overflow-hidden">
+
+<div class="absolute inset-0 z-0">
+<img class="w-full h-full object-cover object-center grayscale brightness-[0.3]" data-alt="A professional gamer in a dark, tech-filled command center with atmospheric blue and green neon lighting. They are wearing a premium headset and using high-end glowing mechanical keyboard and mouse. The scene is high-contrast, cinematic, and emphasizes the sleek textures of the gaming hardware in a futuristic high-performance environment." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBeMYf5kuhf0hUx_uUlN6g33htsvCr1fdPFFkj9XEzv3egEnmxU5zuomhYGH7CeoD5VM2j12jhcTDA0bcHbq37lbejlRUdbMEJFbxahLrPtWkUOwNvcYsFGk-7Ct_IQkTUMTcVg740B8dPLqtf2XkSgRw8UZmsaOq7RTFsQFTGKE2HtOOMuTNroR81x2JoIAwRdRGSCIVrR8OOwUc-Rox2AnEmfSDHQoDWayWkO92Mhcl6kE_f7LaOYuwHEoUKc5KanmaobNgDxuA"/>
+</div>
+<div class="relative z-10 px-gutter md:px-xl max-w-4xl">
+<div class="mb-sm flex items-center gap-xs">
+<span class="w-12 h-[2px] bg-primary"></span>
+<span class="font-technical-sm text-technical-sm uppercase tracking-widest text-primary">Precision Performance</span>
+</div>
+<h2 class="font-display-lg text-display-lg mb-md leading-tight text-secondary">RENT THE GEAR <br/> THE PROS USE.</h2>
+<p class="font-body-lg text-body-lg text-on-surface-variant mb-lg max-w-xl">
+                    High-stakes gaming requires high-performance gear. Get elite-tier keyboards, mice, and rigs delivered to your doorstep. Flexible rentals for serious competitors.
+                </p>
+<div class="flex gap-md">
+<button class="bg-secondary-container text-on-secondary-container px-xl py-md font-label-md text-label-md neon-glow-secondary active:scale-95 transition-all">
+                        EXPLORE CATALOG
+                    </button>
+<button class="border border-primary text-primary px-xl py-md font-label-md text-label-md active:scale-95 transition-all">
+                        HOW IT WORKS
+                    </button>
+</div>
+</div>
+<!-- Side Deco -->
+<div class="absolute right-0 bottom-0 p-gutter hidden lg:block opacity-20">
+<div class="font-technical-sm text-technical-sm text-right leading-loose border-r border-primary pr-md">
+                    STATUS: READY<br/>
+                    LATENCY: 0.2MS<br/>
+                    ENCRYPTION: ACTIVE<br/>
+                    UID: GH-9920-X
+                </div>
+</div>
+</section>
+<!-- Best Rated Section: Bento Grid -->
+<section class="py-xl px-gutter max-w-7xl mx-auto">
+<div class="flex justify-between items-end mb-lg">
+<div>
+<span class="font-technical-sm text-technical-sm text-primary uppercase">Elite Selection</span>
+<h3 class="font-headline-lg text-headline-lg text-secondary">Best Rated Gear</h3>
+</div>
+<a class="font-label-md text-label-md text-primary flex items-center gap-xs group" href="#">
+                    VIEW ALL CATEGORIES 
+                    <span class="material-symbols-outlined group-hover:translate-x-1 transition-transform">arrow_forward</span>
+</a>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-6 gap-md">
+<!-- Large Featured Card -->
+<div class="md:col-span-2 lg:col-span-3 glass-panel p-md relative group cursor-pointer overflow-hidden">
+<span class="absolute top-md right-md font-technical-sm text-technical-sm bg-surface-container-highest px-xs py-base border border-outline-variant">ID: MK-721</span>
+<div class="h-64 mb-md flex items-center justify-center">
+<img class="max-h-full transition-transform duration-500 group-hover:scale-110" data-alt="A top-down view of a high-performance mechanical gaming keyboard with RGB lighting. The lighting is an intense electric blue glow. The keyboard is black, matte-textured, and sits on a clean dark surface. The image is crisp, professional, and has a high-tech studio feel with minimal depth of field." src="https://lh3.googleusercontent.com/aida-public/AB6AXuD3jxDiCN54NngSiQQ3F2zFwDCGpfVV8_L3zua3KD0CvpIqN5SHWAl3x8Xn3sZuZy27w1vZjx4QGvUmKImOOW65R0IrzdoONKgJqUhpGSgOk64g-e3cwZ_FLhIK1ZZvsW8-xONjRMTzLU2SGfVnnLUkG9lnlOAU-1PRtGwBLImnCEy3n5fv2lav4Rt86mvGDY_zgZSPtxoW_SVopB2pEyDa1-Jtx5SAH6BsCYP4mmweISC4li-Z-6H73wdsj6u8Nj96JI9CLeiXyQ"/>
+</div>
+<div>
+<div class="flex items-center gap-xs mb-xs">
+<span class="material-symbols-outlined text-secondary-fixed text-[18px]" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="font-label-md text-label-md text-on-surface">4.9/5.0</span>
+</div>
+<h4 class="font-headline-md text-headline-md text-secondary">Apex Pro TKL Wireless</h4>
+<p class="font-body-md text-body-md text-on-surface-variant mb-md">OmniPoint 2.0 Adjustable HyperProcessing Switches.</p>
+<div class="flex justify-between items-center">
+<span class="font-headline-md text-headline-md text-primary">$4.99<span class="text-label-md">/day</span></span>
+<span class="text-secondary-fixed border border-secondary-fixed px-sm py-base font-technical-sm text-technical-sm uppercase">Available</span>
+</div>
+</div>
+</div>
+<!-- Secondary Card -->
+<div class="md:col-span-2 lg:col-span-3 glass-panel p-md relative group cursor-pointer overflow-hidden">
+<span class="absolute top-md right-md font-technical-sm text-technical-sm bg-surface-container-highest px-xs py-base border border-outline-variant">ID: MO-442</span>
+<div class="h-64 mb-md flex items-center justify-center">
+<img class="max-h-full transition-transform duration-500 group-hover:scale-110" data-alt="A futuristic wireless gaming mouse with a minimalist, honeycomb design and subtle neon purple underglow. It is positioned diagonally on a dark slate surface. The lighting is focused and moody, highlighting the ergonomic curves and high-tech plastic finish of the device." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDzRTFL-4WrlebU2iWdZD2KJgcw_2D7de4tHC28JpciSQ_CEZ9xHp2e1xvwwQ6KAL6OzMw6y0Py2p9knJSczIWLUVcylHzgybToiUsMoYpBpnyti0KZTtoguSPs2z_mSJZAx_9ZCl3I89yZqq35hNawokhqjimMzfGNPD0rwd25J56g-VulMIAsWlkCceF4oYohUdHB0kmtPNZp7zmV09UxTWBwLruJhGwXox2C_t0IkrY1Ao_vWoarzZEVGB-C4UQH4VptkecUsg"/>
+</div>
+<div>
+<div class="flex items-center gap-xs mb-xs">
+<span class="material-symbols-outlined text-secondary-fixed text-[18px]" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="font-label-md text-label-md text-on-surface">4.8/5.0</span>
+</div>
+<h4 class="font-headline-md text-headline-md text-secondary">Superlight 2 Lightspeed</h4>
+<p class="font-body-md text-body-md text-on-surface-variant mb-md">Hybrid Optical-Mechanical Switches for precision.</p>
+<div class="flex justify-between items-center">
+<span class="font-headline-md text-headline-md text-primary">$2.50<span class="text-label-md">/day</span></span>
+<span class="text-on-surface-variant border border-outline-variant px-sm py-base font-technical-sm text-technical-sm uppercase">Rented</span>
+</div>
+</div>
+</div>
+<!-- Three smaller cards -->
+<div class="md:col-span-2 glass-panel p-md cursor-pointer hover:bg-surface-container-high transition-colors">
+<div class="h-40 flex items-center justify-center mb-sm">
+<img class="max-h-full" data-alt="Premium over-ear gaming headphones with a carbon fiber texture and neon blue accents on the earcups. The headset is captured in a high-contrast environment with sharp, hard-light shadows that emphasize its professional build quality and technical aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCC7JPjymMN14fbbNNOOMs43YdeWU5m0lzz4F9TUHw-cPaYBw3YD7NwEQ2FNe8mYL8mkZ_mFY_KQdXijtPhxvMRz84iP_zi_RKgyTcBkgtrfE_mXC1kyJ5nOpazd6E3jQEIMaJrI1cjRaACUNUjBe3kD6VbtwXW074g_Vp4vv_M9rrOKiOokqlf97Zv803zFKGV-osTNEjROKNsBPlkYpc3HgrBsz1ZfkdTQzX2-TF7Q--Iqr5dMGiKv7Jsu511UsSAAEMCupkubw"/>
+</div>
+<h5 class="font-label-md text-label-md text-secondary">Nova Pro Wireless</h5>
+<span class="font-technical-sm text-technical-sm text-primary">$6.00/day</span>
+</div>
+<div class="md:col-span-2 glass-panel p-md cursor-pointer hover:bg-surface-container-high transition-colors">
+<div class="h-40 flex items-center justify-center mb-sm">
+<img class="max-h-full" data-alt="A sleek black 240Hz gaming monitor with an ultra-thin bezel, showing a vivid, abstract neon wallpaper. The monitor is seen from a slight angle, highlighting its slim profile and the professional dark metallic stand in a moody, low-light studio setting." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCtsoltVbeo6_gYFNOAKYAjmw7yxhdpuBG56xytZ-4WiO3YezvjPOQRklkG2KFk8LLTQE_F5vjLx1FqBajJEhIKnvWGXyfbYcIxu1hnoPIvWu9Vz-UThWfibb7ctxWuv1gN__fmE1ym8sHpdpK8QHVM8vQ_4T1FZk5vCP5ZP1_Z_KSgW2pHq_a-BIQbAvJI2RrPLPKH7MyTRCNctc6d37oUMZci2EOoiZmEGd1CgIsMmcAscUPUF8fK0SABe7hUZ3SWFqENcNGgkw"/>
+</div>
+<h5 class="font-label-md text-label-md text-secondary">Swift OLED 240Hz</h5>
+<span class="font-technical-sm text-technical-sm text-primary">$15.00/day</span>
+</div>
+<div class="md:col-span-2 glass-panel p-md cursor-pointer hover:bg-surface-container-high transition-colors">
+<div class="h-40 flex items-center justify-center mb-sm relative">
+<span class="absolute top-0 right-0 text-[10px] bg-on-tertiary-container text-tertiary-container px-1 font-technical-sm">HOT</span>
+<img class="max-h-full" data-alt="A custom high-end PC rig with transparent tempered glass panels, showcasing glowing liquid cooling tubes and vibrant ARGB fans. The internal components are neatly organized, looking like a powerful, futuristic engine in a dark, high-performance environment." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBtbbvZsfhw9VeV-T-r6qQxxDPd6s5Pfa3vlWJ5rsF_TUbtwbw5220OdsNO47c0eS4uFKpBLYj_WMwCRRsuWfIGGcDQkQ1icv6KIrDPJfZzTyg0E3S2RvP2mD5xg5yKybx_Ctbdam9ElSQx68t1TFwy1KlbpGCX9s8ERHZO7rsurLu5RBlyMu3WUFwdeLJpB7gER6jB-bpHBq498kUYtwCwp743DiPS7q5VlxIThoQHT3vH3w03tFL3gN9fvGemMABGaUVYPEVUFw"/>
+</div>
+<h5 class="font-label-md text-label-md text-secondary">Titan RTX Pro Rig</h5>
+<span class="font-technical-sm text-technical-sm text-primary">$45.00/day</span>
+</div>
+</div>
+</section>
+<!-- Rental Bundles Section -->
+<section class="py-xl bg-surface-container-lowest">
+<div class="px-gutter max-w-7xl mx-auto">
+<div class="text-center mb-xl">
+<h3 class="font-headline-lg text-headline-lg text-secondary mb-xs">Rental Bundles</h3>
+<p class="font-body-md text-body-md text-on-surface-variant max-w-2xl mx-auto">Curated sets designed for specific competitive environments. Save 20% on weekly rentals.</p>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-lg">
+<!-- Bundle 1 -->
+<div class="flex flex-col border border-outline-variant bg-surface relative">
+<div class="h-48 overflow-hidden relative">
+<img class="w-full h-full object-cover grayscale brightness-50" data-alt="A collection of professional gaming peripherals laid out neatly on a dark desk: a mechanical keyboard, a wireless mouse, and a headset. The lighting is cold and clinical, with blue glow from the devices providing the only color in an otherwise monochromatic, high-tech setting." src="https://lh3.googleusercontent.com/aida-public/AB6AXuChhIysoNgKSrNjOfF71S2atVq4cbcVLatm4sou-D30mfeScPfxR_iAcW8UkeDEMqLj26nUCszhF-OuSHpbs1kKs3TYYGs08qtri7HJxrqWZx0iD3RLEw5nIFYFu3c4S2NBcG7VcSUbvdDjyTkY9IF0yWL4jw7pc7UKdqW_OTYCfPXjVicFat9s3EMkhpaM0KDVG2Rqu9DLhwCfR0cXgofbuskwLvWg4GiE2xVEq6V2EkTSr4iYC02tx-AUQ3Vhj_cGKCWzyXzCzA"/>
+<div class="absolute inset-0 flex items-center justify-center">
+<h4 class="font-headline-md text-headline-md text-secondary tracking-widest uppercase">THE ENTRY PACK</h4>
+</div>
+</div>
+<div class="p-md flex-grow flex flex-col">
+<ul class="mb-lg space-y-sm font-body-md text-body-md text-on-surface-variant">
+<li class="flex items-center gap-sm"><span class="material-symbols-outlined text-primary text-[18px]">check_circle</span> SteelSeries Apex 5</li>
+<li class="flex items-center gap-sm"><span class="material-symbols-outlined text-primary text-[18px]">check_circle</span> Logitech G305</li>
+<li class="flex items-center gap-sm"><span class="material-symbols-outlined text-primary text-[18px]">check_circle</span> HyperX Cloud II</li>
+</ul>
+<div class="mt-auto pt-md border-t border-outline-variant flex justify-between items-center">
+<div class="flex flex-col">
+<span class="font-technical-sm text-technical-sm text-on-surface-variant line-through">$12.00</span>
+<span class="font-headline-md text-headline-md text-secondary">$8.99<span class="text-label-md">/day</span></span>
+</div>
+<button class="bg-primary text-on-primary px-md py-xs font-label-md text-label-md active:scale-95 transition-transform">SELECT</button>
+</div>
+</div>
+</div>
+<!-- Bundle 2 -->
+<div class="flex flex-col border-2 border-secondary-fixed bg-surface relative shadow-[0_0_30px_rgba(195,244,0,0.15)] scale-105 z-10">
+<div class="absolute -top-3 left-1/2 -translate-x-1/2 bg-secondary-fixed text-on-secondary-fixed px-sm py-base font-technical-sm text-technical-sm uppercase font-bold">MOST POPULAR</div>
+<div class="h-48 overflow-hidden relative">
+<img class="w-full h-full object-cover grayscale brightness-50" data-alt="A top-tier gaming monitor and keyboard setup with vibrant green and yellow toxic-themed RGB lighting. The environment is a dark gaming lair with soft green ambient glow. The image focuses on the harmony of the gear components working together for a pro-level aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDm_AxaamRKos3aHsv26AguZ4SW3j2q8Vq8eiMtNZ0wYL053062c_2k7vz_7E9azvo2xf81uwN-Gd65qXtzpoc0aUwc_Q_CzyIiSZcBIGIuDqZcSaG1gYZtM33Ammdz5lu9rSYN2MzutK8MPF53iBYZNvtfnQw7FaSDOvwrSam2M-5Ozo9eb7PNBwz-j6vzI3UX5RswJqTCtnSBKYY1tGHMMSmd0nhZzR1Ar57X6iAbY6uDiBJeU6P46BIFbIKybXOQt98g0dA8RQ"/>
+<div class="absolute inset-0 flex items-center justify-center">
+<h4 class="font-headline-md text-headline-md text-secondary tracking-widest uppercase">PRO BUNDLE</h4>
+</div>
+</div>
+<div class="p-md flex-grow flex flex-col">
+<ul class="mb-lg space-y-sm font-body-md text-body-md text-on-surface-variant">
+<li class="flex items-center gap-sm"><span class="material-symbols-outlined text-secondary-fixed text-[18px]">check_circle</span> Huntsman V3 Pro TKL</li>
+<li class="flex items-center gap-sm"><span class="material-symbols-outlined text-secondary-fixed text-[18px]">check_circle</span> DeathAdder V3 Pro</li>
+<li class="flex items-center gap-sm"><span class="material-symbols-outlined text-secondary-fixed text-[18px]">check_circle</span> BlackShark V2 Pro</li>
+</ul>
+<div class="mt-auto pt-md border-t border-outline-variant flex justify-between items-center">
+<div class="flex flex-col">
+<span class="font-technical-sm text-technical-sm text-on-surface-variant line-through">$22.00</span>
+<span class="font-headline-md text-headline-md text-secondary">$14.99<span class="text-label-md">/day</span></span>
+</div>
+<button class="bg-secondary-container text-on-secondary-container px-md py-xs font-label-md text-label-md active:scale-95 transition-transform">SELECT</button>
+</div>
+</div>
+</div>
+<!-- Bundle 3 -->
+<div class="flex flex-col border border-outline-variant bg-surface relative">
+<div class="h-48 overflow-hidden relative">
+<img class="w-full h-full object-cover grayscale brightness-50" data-alt="A futuristic gaming station with a wrap-around multi-monitor setup and a high-end flight stick and throttle system. The room is dark, illuminated by white and cyan neon strips. The scene feels like a spaceship cockpit or a world-class simulator environment." src="https://lh3.googleusercontent.com/aida-public/AB6AXuD5RM8nlBRvXpi8yEuldOEfbA1_StUTPvYEvPmJkirLPFkbSWVgY7Mov10APA6dPiioMo3e1vVdMozzhgaDOqa0_habul7I0dB1jiEtg8utdEPsWCnagHOmNCerjvmdQBnYRhep1MQB3q-VeipWMeoXgM6CG9rgv6o6x6p02Ir3DAyfaDUhPlFu55u_gl27H4w0GegY7-ZqJIFts4_EWqw2Jg5Z_mt4NPUrWVNRkwjycbuGc5OYEJ5SfIqOp4spZ8ZizkcEjX-CTA"/>
+<div class="absolute inset-0 flex items-center justify-center">
+<h4 class="font-headline-md text-headline-md text-secondary tracking-widest uppercase">STREAMER KIT</h4>
+</div>
+</div>
+<div class="p-md flex-grow flex flex-col">
+<ul class="mb-lg space-y-sm font-body-md text-body-md text-on-surface-variant">
+<li class="flex items-center gap-sm"><span class="material-symbols-outlined text-primary text-[18px]">check_circle</span> Shure SM7B + Boom Arm</li>
+<li class="flex items-center gap-sm"><span class="material-symbols-outlined text-primary text-[18px]">check_circle</span> Elgato Stream Deck MK.2</li>
+<li class="flex items-center gap-sm"><span class="material-symbols-outlined text-primary text-[18px]">check_circle</span> Facecam Pro 4K</li>
+</ul>
+<div class="mt-auto pt-md border-t border-outline-variant flex justify-between items-center">
+<div class="flex flex-col">
+<span class="font-technical-sm text-technical-sm text-on-surface-variant line-through">$29.00</span>
+<span class="font-headline-md text-headline-md text-secondary">$19.99<span class="text-label-md">/day</span></span>
+</div>
+<button class="bg-primary text-on-primary px-md py-xs font-label-md text-label-md active:scale-95 transition-transform">SELECT</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- How it Works Section -->
+<section class="py-xl px-gutter max-w-5xl mx-auto">
+<div class="text-center mb-xl">
+<span class="font-technical-sm text-technical-sm text-primary uppercase">Simplified Process</span>
+<h3 class="font-headline-lg text-headline-lg text-secondary">How it Works</h3>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-4 gap-md relative">
+<!-- Connectors -->
+<div class="hidden md:block absolute top-10 left-0 w-full h-[1px] bg-outline-variant z-0"></div>
+<div class="relative z-10 flex flex-col items-center text-center">
+<div class="w-20 h-20 bg-surface border border-primary flex items-center justify-center mb-md neon-glow-primary">
+<span class="material-symbols-outlined text-primary text-[32px]">inventory_2</span>
+</div>
+<h5 class="font-label-md text-label-md text-secondary mb-xs">1. SELECT GEAR</h5>
+<p class="font-technical-sm text-technical-sm text-on-surface-variant">Browse our elite catalog of tested professional equipment.</p>
+</div>
+<div class="relative z-10 flex flex-col items-center text-center">
+<div class="w-20 h-20 bg-surface border border-primary flex items-center justify-center mb-md">
+<span class="material-symbols-outlined text-primary text-[32px]">calendar_month</span>
+</div>
+<h5 class="font-label-md text-label-md text-secondary mb-xs">2. BOOK DATES</h5>
+<p class="font-technical-sm text-technical-sm text-on-surface-variant">Choose your rental period. Flexible terms from 3 to 90 days.</p>
+</div>
+<div class="relative z-10 flex flex-col items-center text-center">
+<div class="w-20 h-20 bg-surface border border-primary flex items-center justify-center mb-md">
+<span class="material-symbols-outlined text-primary text-[32px]">local_shipping</span>
+</div>
+<h5 class="font-label-md text-label-md text-secondary mb-xs">3. FAST DELIVERY</h5>
+<p class="font-technical-sm text-technical-sm text-on-surface-variant">Next-day shipping in a secure, technical-grade protective case.</p>
+</div>
+<div class="relative z-10 flex flex-col items-center text-center">
+<div class="w-20 h-20 bg-surface border border-primary flex items-center justify-center mb-md">
+<span class="material-symbols-outlined text-primary text-[32px]">replay</span>
+</div>
+<h5 class="font-label-md text-label-md text-secondary mb-xs">4. EASY RETURN</h5>
+<p class="font-technical-sm text-technical-sm text-on-surface-variant">Drop it at any partner location using our pre-paid label.</p>
+</div>
+</div>
+</section>
+<!-- Newsletter / Trust Section -->
+<section class="py-xl px-gutter bg-surface-container-high border-y border-outline-variant">
+<div class="max-w-4xl mx-auto flex flex-col md:flex-row items-center gap-lg">
+<div class="flex-1">
+<h4 class="font-headline-md text-headline-md text-secondary mb-xs">Stay in the Loop</h4>
+<p class="font-body-md text-body-md text-on-surface-variant">Get notified about new drops, pro team partnerships, and exclusive flash deals.</p>
+</div>
+<div class="flex-1 w-full">
+<div class="flex border-b border-primary pb-xs">
+<input class="bg-transparent border-none focus:ring-0 text-secondary w-full font-technical-sm uppercase tracking-widest" placeholder="ENTER YOUR EMAIL" type="email"/>
+<button class="material-symbols-outlined text-primary px-sm">arrow_forward</button>
+</div>
+<p class="mt-xs font-technical-sm text-[10px] text-on-surface-variant opacity-50 uppercase">Secured by 256-bit gaming-grade encryption</p>
+</div>
+</div>
+</section>
+</main>
+<!-- Footer Component -->
+<footer class="w-full py-xl px-gutter flex flex-col items-center gap-md text-center bg-surface-container-highest dark:bg-surface-container-highest border-t border-outline-variant">
+<h2 class="font-headline-md text-headline-md text-primary">PRO GEAR HUB</h2>
+<nav class="flex flex-wrap justify-center gap-md">
+<a class="font-technical-sm text-technical-sm text-on-surface-variant hover:text-secondary-fixed-dim underline transition-all duration-300" href="#">About Us</a>
+<a class="font-technical-sm text-technical-sm text-on-surface-variant hover:text-secondary-fixed-dim underline transition-all duration-300" href="#">Terms of Service</a>
+<a class="font-technical-sm text-technical-sm text-on-surface-variant hover:text-secondary-fixed-dim underline transition-all duration-300" href="#">Privacy Policy</a>
+<a class="font-technical-sm text-technical-sm text-on-surface-variant hover:text-secondary-fixed-dim underline transition-all duration-300" href="#">Rental Guide</a>
+<a class="font-technical-sm text-technical-sm text-on-surface-variant hover:text-secondary-fixed-dim underline transition-all duration-300" href="#">Contact Support</a>
+</nav>
+<div class="flex gap-md mt-md">
+<span class="material-symbols-outlined text-on-surface-variant cursor-pointer hover:text-primary">share</span>
+<span class="material-symbols-outlined text-on-surface-variant cursor-pointer hover:text-primary">language</span>
+<span class="material-symbols-outlined text-on-surface-variant cursor-pointer hover:text-primary">security</span>
+</div>
+<p class="font-technical-sm text-technical-sm text-on-surface opacity-60 mt-lg">© 2024 PRO GEAR HUB. Precision Performance Rented.</p>
+</footer>
+<!-- SideNavBar (Mobile Trigger Hidden) -->
+<div class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-md" id="mobile-menu">
+<aside class="flex flex-col h-full py-md bg-surface dark:bg-surface border-r border-outline-variant w-64">
+<div class="px-md mb-lg">
+<h3 class="font-headline-md text-headline-md text-primary">PRO HUB</h3>
+</div>
+<nav class="flex-grow">
+<div class="bg-secondary-container text-on-secondary-container rounded-lg mx-2 flex items-center p-sm gap-sm cursor-pointer mb-xs">
+<span class="material-symbols-outlined">category</span>
+<span class="font-label-md text-label-md">All Gear</span>
+</div>
+<div class="text-on-surface-variant hover:bg-surface-container-high rounded-lg mx-2 flex items-center p-sm gap-sm cursor-pointer mb-xs transition-all">
+<span class="material-symbols-outlined">fiber_new</span>
+<span class="font-label-md text-label-md">New Arrivals</span>
+</div>
+<div class="text-on-surface-variant hover:bg-surface-container-high rounded-lg mx-2 flex items-center p-sm gap-sm cursor-pointer mb-xs transition-all">
+<span class="material-symbols-outlined">star</span>
+<span class="font-label-md text-label-md">Best Sellers</span>
+</div>
+<div class="text-on-surface-variant hover:bg-surface-container-high rounded-lg mx-2 flex items-center p-sm gap-sm cursor-pointer mb-xs transition-all">
+<span class="material-symbols-outlined">local_offer</span>
+<span class="font-label-md text-label-md">Deals</span>
+</div>
+<div class="text-on-surface-variant hover:bg-surface-container-high rounded-lg mx-2 flex items-center p-sm gap-sm cursor-pointer mb-xs transition-all">
+<span class="material-symbols-outlined">inventory_2</span>
+<span class="font-label-md text-label-md">Pro Bundles</span>
+</div>
+</nav>
+<div class="mt-auto px-md pb-md">
+<button class="w-full bg-primary-container text-on-primary-container py-xs font-label-md mb-md">Upgrade to Pro</button>
+<div class="flex flex-col gap-xs border-t border-outline-variant pt-md">
+<div class="flex items-center gap-sm text-on-surface-variant text-label-md py-xs"><span class="material-symbols-outlined">help</span> Support</div>
+<div class="flex items-center gap-sm text-on-surface-variant text-label-md py-xs"><span class="material-symbols-outlined">settings</span> Settings</div>
+</div>
+</div>
+</aside>
+</div>
+<script>
+        // Micro-interactions and effects
+        document.querySelectorAll('.glass-panel').forEach(panel => {
+            panel.addEventListener('mousemove', (e) => {
+                const rect = panel.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                panel.style.setProperty('--mouse-x', `${x}px`);
+                panel.style.setProperty('--mouse-y', `${y}px`);
+                // Add a subtle rotation effect
+                const rotateX = (y - rect.height/2) / 20;
+                const rotateY = (x - rect.width/2) / -20;
+                panel.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
+            });
+
+            panel.addEventListener('mouseleave', () => {
+                panel.style.transform = 'perspective(1000px) rotateX(0deg) rotateY(0deg)';
+            });
+        });
+    </script>
+</body></html>

@@ -1,0 +1,471 @@
+<!DOCTYPE html><html class="dark" lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Manrope:wght@600;700;800&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "surface-tint": "#0c56d0",
+                    "surface": "#f8f9fb",
+                    "outline-variant": "#c3c6d6",
+                    "background": "#f8f9fb",
+                    "surface-container-lowest": "#ffffff",
+                    "error-container": "#ffdad6",
+                    "inverse-primary": "#b2c5ff",
+                    "error": "#ba1a1a",
+                    "secondary-fixed": "#ffdbc8",
+                    "primary": "#003d9b",
+                    "tertiary-fixed-dim": "#b4c6f3",
+                    "surface-dim": "#d9dadc",
+                    "outline": "#737685",
+                    "on-surface": "#191c1e",
+                    "on-tertiary-fixed": "#051a3e",
+                    "on-tertiary": "#ffffff",
+                    "on-secondary-fixed-variant": "#753400",
+                    "on-tertiary-container": "#c1d2ff",
+                    "surface-bright": "#f8f9fb",
+                    "secondary-fixed-dim": "#ffb68b",
+                    "inverse-surface": "#2e3132",
+                    "on-error-container": "#93000a",
+                    "secondary-container": "#fb7800",
+                    "surface-container-high": "#e7e8ea",
+                    "on-primary": "#ffffff",
+                    "on-primary-container": "#c4d2ff",
+                    "surface-variant": "#e1e2e4",
+                    "on-secondary-fixed": "#321200",
+                    "on-background": "#191c1e",
+                    "inverse-on-surface": "#f0f1f3",
+                    "primary-fixed": "#dae2ff",
+                    "on-tertiary-fixed-variant": "#35466c",
+                    "surface-container": "#edeef0",
+                    "surface-container-highest": "#e1e2e4",
+                    "tertiary-fixed": "#d8e2ff",
+                    "tertiary-container": "#495a81",
+                    "on-surface-variant": "#434654",
+                    "on-secondary-container": "#592600",
+                    "on-secondary": "#ffffff",
+                    "tertiary": "#314368",
+                    "primary-fixed-dim": "#b2c5ff",
+                    "secondary": "#994700",
+                    "on-primary-fixed": "#001848",
+                    "surface-container-low": "#f3f4f6",
+                    "on-error": "#ffffff",
+                    "on-primary-fixed-variant": "#0040a2",
+                    "primary-container": "#0052cc"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "stack-sm": "8px",
+                    "stack-lg": "32px",
+                    "stack-md": "16px",
+                    "margin-mobile": "16px",
+                    "gutter": "24px",
+                    "base": "8px",
+                    "margin-desktop": "48px",
+                    "container-max": "1280px"
+            },
+            "fontFamily": {
+                    "body-sm": ["Inter"],
+                    "label-md": ["Inter"],
+                    "label-sm": ["Inter"],
+                    "headline-md": ["Manrope"],
+                    "body-lg": ["Inter"],
+                    "headline-xl": ["Manrope"],
+                    "body-md": ["Inter"],
+                    "headline-lg": ["Manrope"],
+                    "headline-lg-mobile": ["Manrope"]
+            },
+            "fontSize": {
+                    "body-sm": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                    "label-md": ["14px", {"lineHeight": "16px", "fontWeight": "600"}],
+                    "label-sm": ["12px", {"lineHeight": "14px", "fontWeight": "500"}],
+                    "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                    "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
+                    "headline-xl": ["48px", {"lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "headline-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "700"}],
+                    "headline-lg-mobile": ["24px", {"lineHeight": "32px", "fontWeight": "700"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .neon-hover {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .neon-hover:hover {
+            box-shadow: 0 0 20px rgba(12, 86, 208, 0.4), 0 0 40px rgba(12, 86, 208, 0.2);
+            border-color: #0c56d0;
+            transform: translateY(-4px);
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #434654;
+            border-radius: 10px;
+        }
+        .glass-effect {
+            backdrop-filter: blur(8px);
+            background: rgba(25, 28, 30, 0.8);
+        }
+    </style>
+</head>
+<body class="bg-inverse-surface text-on-surface selection:bg-secondary-container selection:text-on-secondary-container min-h-screen">
+<!-- Top Navigation Bar -->
+<header class="w-full top-0 sticky bg-surface-container-high dark:bg-surface-container-high shadow-md border-b border-outline z-50"><div class="flex items-center justify-between px-margin-desktop py-4 max-w-container-max mx-auto">
+<div class="font-headline-md text-headline-md font-bold text-secondary-container dark:text-secondary-fixed">Cyber Nexus</div>
+<nav class="hidden md:flex items-center gap-stack-lg">
+<a class="font-label-md text-label-md font-bold text-on-surface-variant dark:text-on-surface-variant hover:text-primary transition-colors duration-200" href="#">Home</a>
+<a class="font-label-md text-label-md font-bold text-primary dark:text-primary-fixed-dim border-b-2 border-primary pb-1" href="#">Browse Gear</a>
+<a class="font-label-md text-label-md font-bold text-on-surface-variant dark:text-on-surface-variant hover:text-primary transition-colors duration-200" href="#">Support</a>
+</nav>
+<div class="flex items-center gap-stack-md">
+<div class="relative group hidden sm:block">
+<input class="bg-surface-container-high text-on-surface text-body-sm px-4 py-2 rounded-full border border-outline-variant focus:ring-2 focus:ring-primary w-48 lg:w-64 transition-all" placeholder="Search gear..." type="text">
+<span class="material-symbols-outlined absolute right-3 top-2 text-on-surface-variant" style="font-size: 20px;">search</span>
+</div>
+<button class="material-symbols-outlined text-on-surface-variant hover:text-primary transition-colors">shopping_cart</button>
+<button class="material-symbols-outlined text-on-surface-variant hover:text-primary transition-colors">account_circle</button>
+</div>
+</div></header>
+<main class="max-w-container-max mx-auto px-margin-desktop py-stack-lg flex flex-col md:flex-row gap-gutter">
+<!-- Filters Sidebar -->
+<aside class="w-full md:w-64 shrink-0 flex flex-col gap-stack-lg"><div class="flex flex-col gap-stack-md bg-surface-container-lowest p-4 rounded-xl border border-outline">
+<h3 class="font-label-md text-label-md text-primary uppercase tracking-wider font-bold">Category</h3>
+<div class="flex flex-col gap-2">
+<label class="flex items-center gap-3 cursor-pointer group">
+<input checked="" class="rounded border-outline bg-transparent text-primary focus:ring-primary w-5 h-5" type="checkbox">
+<span class="font-body-md text-body-md text-on-surface font-bold group-hover:text-primary transition-colors">All Gear</span>
+</label>
+<label class="flex items-center gap-3 cursor-pointer group">
+<input class="rounded border-outline bg-transparent text-primary focus:ring-primary w-5 h-5" type="checkbox">
+<span class="font-body-md text-body-md text-on-surface-variant group-hover:text-primary transition-colors">Mice</span>
+</label>
+<label class="flex items-center gap-3 cursor-pointer group">
+<input class="rounded border-outline bg-transparent text-primary focus:ring-primary w-5 h-5" type="checkbox">
+<span class="font-body-md text-body-md text-on-surface-variant group-hover:text-primary transition-colors">Keyboards</span>
+</label>
+<label class="flex items-center gap-3 cursor-pointer group">
+<input class="rounded border-outline bg-transparent text-primary focus:ring-primary w-5 h-5" type="checkbox">
+<span class="font-body-md text-body-md text-on-surface-variant group-hover:text-primary transition-colors">Headsets</span>
+</label>
+</div>
+</div>
+<div class="flex flex-col gap-stack-md bg-surface-container-lowest p-4 rounded-xl border border-outline">
+<h3 class="font-label-md text-label-md text-primary uppercase tracking-wider font-bold">Brand</h3>
+<div class="flex flex-col gap-2">
+<label class="flex items-center gap-3 cursor-pointer group">
+<input class="rounded border-outline bg-transparent text-primary focus:ring-primary w-5 h-5" type="checkbox">
+<span class="font-body-md text-body-md text-on-surface-variant group-hover:text-primary transition-colors">Razer</span>
+</label>
+<label class="flex items-center gap-3 cursor-pointer group">
+<input class="rounded border-outline bg-transparent text-primary focus:ring-primary w-5 h-5" type="checkbox">
+<span class="font-body-md text-body-md text-on-surface-variant group-hover:text-primary transition-colors">Logitech</span>
+</label>
+<label class="flex items-center gap-3 cursor-pointer group">
+<input class="rounded border-outline bg-transparent text-primary focus:ring-primary w-5 h-5" type="checkbox">
+<span class="font-body-md text-body-md text-on-surface-variant group-hover:text-primary transition-colors">SteelSeries</span>
+</label>
+</div>
+</div>
+<div class="flex flex-col gap-stack-md bg-surface-container-lowest p-4 rounded-xl border border-outline">
+<h3 class="font-label-md text-label-md text-primary uppercase tracking-wider font-bold">Price Range</h3>
+<input class="w-full accent-primary h-2 bg-surface-container rounded-lg appearance-none cursor-pointer" max="50" min="5" step="1" type="range">
+<div class="flex justify-between text-body-sm font-bold text-on-surface">
+<span class="">$5/day</span>
+<span class="">$50/day</span>
+</div>
+</div>
+<div class="bg-secondary-container text-on-secondary-container rounded-xl p-4 mt-4 border border-primary shadow-md">
+<div class="flex items-center gap-2 mb-2">
+<span class="material-symbols-outlined">verified</span>
+<span class="font-label-md text-label-md font-bold">Quality Check</span>
+</div>
+<p class="font-body-sm text-body-sm">All professional gear is sanitized and performance-tested before every rental delivery.</p>
+</div></aside>
+<!-- Product Grid -->
+<section class="flex-1">
+<div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-stack-lg gap-4">
+<div>
+<h1 class="font-headline-lg text-headline-lg text-on-surface mb-2">Professional Gaming Gear</h1>
+<p class="font-body-md text-body-md text-on-surface-variant">Level up your gameplay with industry-standard hardware.</p>
+</div>
+<div class="flex items-center gap-2 bg-surface-container rounded-lg px-4 py-2 border border-outline-variant">
+<span class="font-label-sm text-label-sm text-on-surface-variant">Sort By:</span>
+<select class="bg-transparent border-none text-label-sm font-label-sm text-on-surface focus:ring-0 p-0 cursor-pointer">
+<option>Featured</option>
+<option>Price: Low to High</option>
+<option>Price: High to Low</option>
+<option>Rating</option>
+</select>
+</div>
+</div>
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-gutter">
+<!-- Card 1 -->
+<div class="neon-hover bg-surface-container-lowest rounded-xl overflow-hidden flex flex-col border border-outline-variant group">
+<div class="relative h-64 overflow-hidden bg-surface-container">
+<img class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" data-alt="A sleek professional gaming mouse with customizable RGB lighting glowing electric blue against a clean dark surface. The design is modern and ergonomic, shot with shallow depth of field in a studio setting. High-quality textures and professional lighting emphasize the premium build quality of the hardware for a Corporate Modern aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuB_JXJMvFn_jJQuXn-5vplk-MfnTXRTZDvZdb11E9l3z02G1If29mvN7olXVR9jdKP4WbSwJhLhKTmPJal3lh6_YkelMriKM-NCvxoBaXBp51Ck_yfvvHiePDG8D2BFEYxpkzhzJHIwlunXwlzDndlJu7xzRRl53FUtUDeAL3q2-iNa51zKmHcWKam9mBEFnqtluvPKgn7g2-ERPJx5uKLdaBsvEUkMxIcQ0CEzrkrO1m048BCHGGFyoveE_W3w8PKRyKa3-Hw9uA">
+<div class="absolute top-3 left-3 flex flex-col gap-2">
+<span class="bg-secondary-container text-on-secondary-container px-3 py-1 rounded-full font-label-sm text-label-sm">Verified Gear</span>
+<span class="bg-green-600 text-white px-3 py-1 rounded-full font-label-sm text-label-sm flex items-center gap-1 shadow-md">
+<span class="material-symbols-outlined" style="font-size: 14px;">check_circle</span> Available
+                            </span>
+</div>
+</div>
+<div class="p-stack-md flex flex-col flex-1">
+<div class="flex justify-between items-start mb-2">
+<div>
+<p class="text-on-surface-variant font-label-sm text-label-sm uppercase tracking-tighter">Logitech</p>
+<h3 class="font-headline-md text-headline-md text-on-surface">Pro X Superlight 2</h3>
+</div>
+<div class="text-right">
+<p class="text-primary font-headline-md text-headline-md">$12<span class="text-body-sm font-body-sm">/day</span></p>
+</div>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant mb-stack-md flex-1">Ultralight gaming mouse with LIGHTSPEED wireless technology and HERO 2 sensor.</p>
+<div class="flex items-center gap-2 mt-auto">
+<button class="flex-1 bg-secondary-container text-on-secondary-container py-3 rounded-lg font-label-md text-label-md hover:opacity-90 transition-opacity active:scale-95 transition-transform">Rent Now</button>
+<button class="p-3 border border-outline rounded-lg text-primary hover:bg-primary-fixed transition-colors">
+<span class="material-symbols-outlined">compare_arrows</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Card 2 -->
+<div class="neon-hover bg-surface-container-lowest rounded-xl overflow-hidden flex flex-col border border-outline-variant group">
+<div class="relative h-64 overflow-hidden bg-surface-container">
+<img class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" data-alt="A high-end mechanical gaming keyboard with vibrant RGB backlighting showing electric blue and white tones. The keycaps are crisp and well-defined, captured in a clean professional gaming setup environment. The mood is focused and reliable, reflecting technical proficiency and high-end manufacturing standards." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAYE6tlUctNq7StlGIfALj7Ef8U0ZJNRGQ8tF6GZHjdy7-0Ih7WpqTZewbVUwLQ3dDnpmvmDISEKlY-9iGgm1mkytXDT50RFFNNE3lyt6LThMARahAC_fsGQMD2_F1UsIIBnQ8C3YZFcwKq3CymMuo2QpvHtlIvagodqijv31UyQeDNmDRf1_eBtwp_pRGxiWfj462RH0PqA_NC7KQALXySXLseEFaV97UrOpnbbR_RTfN0Cw8jTUwyHrAuPcsoC0tKgSPmSXta_Q">
+<div class="absolute top-3 left-3 flex flex-col gap-2">
+<span class="bg-secondary-container text-on-secondary-container px-3 py-1 rounded-full font-label-sm text-label-sm">Verified Gear</span>
+<span class="bg-outline text-white px-3 py-1 rounded-full font-label-sm text-label-sm flex items-center gap-1 shadow-md">
+<span class="material-symbols-outlined" style="font-size: 14px;">schedule</span> In Use
+                            </span>
+</div>
+</div>
+<div class="p-stack-md flex flex-col flex-1 opacity-90">
+<div class="flex justify-between items-start mb-2">
+<div>
+<p class="text-on-surface-variant font-label-sm text-label-sm uppercase tracking-tighter">Razer</p>
+<h3 class="font-headline-md text-headline-md text-on-surface">Huntsman V3 Pro TKL</h3>
+</div>
+<div class="text-right">
+<p class="text-primary font-headline-md text-headline-md">$18<span class="text-body-sm font-body-sm">/day</span></p>
+</div>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant mb-stack-md flex-1">Analog optical gaming keyboard with rapid trigger mode for maximum responsiveness.</p>
+<div class="flex items-center gap-2 mt-auto">
+<button class="flex-1 bg-outline text-on-surface-variant py-3 rounded-lg font-label-md text-label-md cursor-not-allowed">Join Waitlist</button>
+<button class="p-3 border border-outline rounded-lg text-primary hover:bg-primary-fixed transition-colors">
+<span class="material-symbols-outlined">compare_arrows</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Card 3 -->
+<div class="neon-hover bg-surface-container-lowest rounded-xl overflow-hidden flex flex-col border border-outline-variant group">
+<div class="relative h-64 overflow-hidden bg-surface-container">
+<img class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" data-alt="Modern professional wireless gaming headset with padded ear cups and a sleek microphone. The lighting is cool-toned with electric blue accents against a neutral background. The shot is high-key and minimalist, emphasizing the comfort and reliability of the premium equipment for competitive players." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCY0rsXb5TT_tZ_r_jrRLATw3_WlhHaLA-WuYcA2Gp3SWf-Sv24Xo8cY8C_q3Ao3-TmAfh3jh45s0L-f7L-_Lwo3WMjsa4NMXaXZaB1YtqAcVdHpaHN3bl_OUOCYq4LXFBUNmSFY6EHAb49-wJ_4moRIBl--LXZorqez5gfgtpBRobFlwIyscdoSm8QnHP0ouk-2cW4WhTt8_kRm_hcpsX7c4ljv1V7NKRz2qXR6MiI3wYcb_kBRIBgIjsM991omQYxAX1rimLR_w">
+<div class="absolute top-3 left-3 flex flex-col gap-2">
+<span class="bg-secondary-container text-on-secondary-container px-3 py-1 rounded-full font-label-sm text-label-sm">Verified Gear</span>
+<span class="bg-green-600 text-white px-3 py-1 rounded-full font-label-sm text-label-sm flex items-center gap-1 shadow-md">
+<span class="material-symbols-outlined" style="font-size: 14px;">check_circle</span> Available
+                            </span>
+</div>
+</div>
+<div class="p-stack-md flex flex-col flex-1">
+<div class="flex justify-between items-start mb-2">
+<div>
+<p class="text-on-surface-variant font-label-sm text-label-sm uppercase tracking-tighter">SteelSeries</p>
+<h3 class="font-headline-md text-headline-md text-on-surface">Arctis Nova Pro</h3>
+</div>
+<div class="text-right">
+<p class="text-primary font-headline-md text-headline-md">$20<span class="text-body-sm font-body-sm">/day</span></p>
+</div>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant mb-stack-md flex-1">Ultimate spatial audio and active noise cancellation for total immersion.</p>
+<div class="flex items-center gap-2 mt-auto">
+<button class="flex-1 bg-secondary-container text-on-secondary-container py-3 rounded-lg font-label-md text-label-md hover:opacity-90 transition-opacity active:scale-95 transition-transform">Rent Now</button>
+<button class="p-3 border border-outline rounded-lg text-primary hover:bg-primary-fixed transition-colors">
+<span class="material-symbols-outlined">compare_arrows</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Card 4 -->
+<div class="neon-hover bg-surface-container-lowest rounded-xl overflow-hidden flex flex-col border border-outline-variant group">
+<div class="relative h-64 overflow-hidden bg-surface-container">
+<img class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" data-alt="A collection of professional gaming peripherals laid out on a clean dark desk with subtle blue ambient lighting. The shot uses a flat-lay perspective with high contrast, showcasing the premium build of multiple keyboards and mice. The style is systematic and catalog-like, highlighting professional gear diversity." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCIhUVOjKLqoe_lVPEZgd4tWMgffn1efKL2IF5nn7DE7lfP6mqIN6vEwzCMDlzaRXyXNThiy-zmZV90aDHxCGsRTUcEFTfkLAUwkO7hMfz291QNyxTJZiov0pa7rEsrJqGBx7f1Am2R8z0-OO0vyRNBbrZovnGRnJxpSbB9zTGuC4vjqAWd1UEPXPFda7HAMk68i4HVXkiFH-Tan_eNytjjBGgK0ZPKQQfIvHBQjezjb4D_M6KfgQhJiiRgFIjJ7Wlm1RML9NfDGA">
+<div class="absolute top-3 left-3 flex flex-col gap-2">
+<span class="bg-secondary-container text-on-secondary-container px-3 py-1 rounded-full font-label-sm text-label-sm">Verified Gear</span>
+<span class="bg-green-600 text-white px-3 py-1 rounded-full font-label-sm text-label-sm flex items-center gap-1 shadow-md">
+<span class="material-symbols-outlined" style="font-size: 14px;">check_circle</span> Available
+                            </span>
+</div>
+</div>
+<div class="p-stack-md flex flex-col flex-1">
+<div class="flex justify-between items-start mb-2">
+<div>
+<p class="text-on-surface-variant font-label-sm text-label-sm uppercase tracking-tighter">Logitech</p>
+<h3 class="font-headline-md text-headline-md text-on-surface">G915 Lightspeed</h3>
+</div>
+<div class="text-right">
+<p class="text-primary font-headline-md text-headline-md">$15<span class="text-body-sm font-body-sm">/day</span></p>
+</div>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant mb-stack-md flex-1">Low-profile mechanical switches with high-performance LIGHTSPEED wireless.</p>
+<div class="flex items-center gap-2 mt-auto">
+<button class="flex-1 bg-secondary-container text-on-secondary-container py-3 rounded-lg font-label-md text-label-md hover:opacity-90 transition-opacity active:scale-95 transition-transform">Rent Now</button>
+<button class="p-3 border border-outline rounded-lg text-primary hover:bg-primary-fixed transition-colors">
+<span class="material-symbols-outlined">compare_arrows</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Card 5 -->
+<div class="neon-hover bg-surface-container-lowest rounded-xl overflow-hidden flex flex-col border border-outline-variant group">
+<div class="relative h-64 overflow-hidden bg-surface-container">
+<img class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" data-alt="A top-down view of a premium black gaming mousepad with a sleek mouse sitting on it. The scene is illuminated by neon blue light, emphasizing a high-tech atmosphere. The aesthetic is clean and corporate, focusing on the utility and performance of the gaming setup in a modern professional context." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAqZjXnGVzFrjI81-a8TNH0WQqkSSb6bMdSTP3RW-Wd8aBnjgLARnRYO-3hjMLNKqdyha0StLMOagfFIbP1RetJQouBYT_XOHHG8d2ltulTZNm4MS5g6xJKBxYu_SYVfp2mHUHFfRBTvR1UL8ZS_Ggaf23onN_fg69tJ2hHnEBg7hvdCdXdbA0TZXMbIkAys5WaB-V4rrm8lR74WStOqdYQxVKl0eUQDSkDco-a33wewPeyg5L8-fOcdG8HYukhZYerKQnDeHBanQ">
+<div class="absolute top-3 left-3 flex flex-col gap-2">
+<span class="bg-secondary-container text-on-secondary-container px-3 py-1 rounded-full font-label-sm text-label-sm">Verified Gear</span>
+<span class="bg-green-600 text-white px-3 py-1 rounded-full font-label-sm text-label-sm flex items-center gap-1 shadow-md">
+<span class="material-symbols-outlined" style="font-size: 14px;">check_circle</span> Available
+                            </span>
+</div>
+</div>
+<div class="p-stack-md flex flex-col flex-1">
+<div class="flex justify-between items-start mb-2">
+<div>
+<p class="text-on-surface-variant font-label-sm text-label-sm uppercase tracking-tighter">Razer</p>
+<h3 class="font-headline-md text-headline-md text-on-surface">DeathAdder V3 Pro</h3>
+</div>
+<div class="text-right">
+<p class="text-primary font-headline-md text-headline-md">$10<span class="text-body-sm font-body-sm">/day</span></p>
+</div>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant mb-stack-md flex-1">Iconic ergonomic mouse refined with ultra-lightweight design and pro-grade performance.</p>
+<div class="flex items-center gap-2 mt-auto">
+<button class="flex-1 bg-secondary-container text-on-secondary-container py-3 rounded-lg font-label-md text-label-md hover:opacity-90 transition-opacity active:scale-95 transition-transform">Rent Now</button>
+<button class="p-3 border border-outline rounded-lg text-primary hover:bg-primary-fixed transition-colors">
+<span class="material-symbols-outlined">compare_arrows</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Card 6 -->
+<div class="neon-hover bg-surface-container-lowest rounded-xl overflow-hidden flex flex-col border border-outline-variant group">
+<div class="relative h-64 overflow-hidden bg-surface-container">
+<img class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" data-alt="A professional gamer in a dark room wearing high-end headphones with a blue light glow. The focus is on the headset's sleek design and the player's concentration. The lighting is dramatic and moody, reflecting a high-stakes competitive esports environment with premium professional-grade gear." src="https://lh3.googleusercontent.com/aida-public/AB6AXuC3ZFrFiUdi_e48n4ug8yL9MWQQKEoG6r4qIxr4Q3aJ75msUB4O5byz6xGbOWcP4ABXX806jjRz_LuubTkM7_H6SnPiH5kIQFMMDK-Q34OpZzCxZdK6a-eEkGlvvvFyWgq0pUUPL8cj0oPntR2RTPMrFki5dRR1_hBx6Z6qOHsSA6KIfyiWcObYwODKuaVvknkpVMhq7i-OZbm0gA9id6iFCiZh0hAg5X6WSJpm5vlC6tuE2CTnyml-IAAqL3LC9FGH4u_2F6rgoQ">
+<div class="absolute top-3 left-3 flex flex-col gap-2">
+<span class="bg-secondary-container text-on-secondary-container px-3 py-1 rounded-full font-label-sm text-label-sm">Verified Gear</span>
+<span class="bg-outline text-white px-3 py-1 rounded-full font-label-sm text-label-sm flex items-center gap-1 shadow-md">
+<span class="material-symbols-outlined" style="font-size: 14px;">schedule</span> In Use
+                            </span>
+</div>
+</div>
+<div class="p-stack-md flex flex-col flex-1 opacity-90">
+<div class="flex justify-between items-start mb-2">
+<div>
+<p class="text-on-surface-variant font-label-sm text-label-sm uppercase tracking-tighter">Logitech</p>
+<h3 class="font-headline-md text-headline-md text-on-surface">Pro X 2 Wireless</h3>
+</div>
+<div class="text-right">
+<p class="text-primary font-headline-md text-headline-md">$16<span class="text-body-sm font-body-sm">/day</span></p>
+</div>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant mb-stack-md flex-1">Graphite gaming headset featuring Graphene drivers for unprecedented clarity.</p>
+<div class="flex items-center gap-2 mt-auto">
+<button class="flex-1 bg-outline text-on-surface-variant py-3 rounded-lg font-label-md text-label-md cursor-not-allowed">Join Waitlist</button>
+<button class="p-3 border border-outline rounded-lg text-primary hover:bg-primary-fixed transition-colors">
+<span class="material-symbols-outlined">compare_arrows</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+<!-- Pagination -->
+<div class="mt-stack-lg flex justify-center items-center gap-2"><button class="p-2 rounded-lg border-2 border-outline bg-surface-container-lowest hover:bg-primary hover:text-white transition-all disabled:opacity-50" disabled="">
+<span class="material-symbols-outlined">chevron_left</span>
+</button>
+<button class="w-10 h-10 rounded-lg bg-primary text-white font-bold text-label-md shadow-md">1</button>
+<button class="w-10 h-10 rounded-lg border-2 border-outline bg-surface-container-lowest hover:bg-primary hover:text-white font-bold text-label-md transition-all">2</button>
+<button class="w-10 h-10 rounded-lg border-2 border-outline bg-surface-container-lowest hover:bg-primary hover:text-white font-bold text-label-md transition-all">3</button>
+<span class="px-2 font-bold text-on-surface">...</span>
+<button class="w-10 h-10 rounded-lg border-2 border-outline bg-surface-container-lowest hover:bg-primary hover:text-white font-bold text-label-md transition-all">12</button>
+<button class="p-2 rounded-lg border-2 border-outline bg-surface-container-lowest hover:bg-primary hover:text-white transition-all">
+<span class="material-symbols-outlined">chevron_right</span>
+</button></div>
+</section>
+</main>
+<!-- Footer -->
+<footer class="w-full bottom-0 bg-surface-container-lowest dark:bg-surface-container-lowest py-stack-lg border-t border-outline"><div class="max-w-container-max mx-auto px-margin-desktop flex flex-col md:flex-row justify-between items-center gap-base">
+<div class="font-headline-lg text-headline-lg text-on-surface mb-4 md:mb-0">Cyber Nexus</div>
+<div class="flex flex-wrap justify-center gap-stack-md mb-4 md:mb-0">
+<a class="font-body-sm text-body-sm text-on-surface-variant hover:text-primary font-bold transition-colors" href="#">Terms of Service</a>
+<a class="font-body-sm text-body-sm text-on-surface-variant hover:text-primary font-bold transition-colors" href="#">Privacy Policy</a>
+<a class="font-body-sm text-body-sm text-on-surface-variant hover:text-primary font-bold transition-colors" href="#">Insurance Details</a>
+<a class="font-body-sm text-body-sm text-on-surface-variant hover:text-primary font-bold transition-colors" href="#">Contact Us</a>
+</div>
+<div class="font-body-sm text-body-sm text-on-surface-variant text-center md:text-right">
+                © 2024 Cyber Nexus. All Rights Reserved. Professional Grade Gear.
+            </div>
+</div></footer>
+<!-- Bottom Nav for Mobile -->
+<nav class="md:hidden fixed bottom-0 left-0 right-0 glass-effect border-t border-outline-variant z-50 flex justify-around items-center py-3">
+<button class="flex flex-col items-center gap-1 text-on-surface-variant">
+<span class="material-symbols-outlined">home</span>
+<span class="font-label-sm text-label-sm">Home</span>
+</button>
+<button class="flex flex-col items-center gap-1 text-primary">
+<span class="material-symbols-outlined">grid_view</span>
+<span class="font-label-sm text-label-sm">Browse</span>
+</button>
+<button class="flex flex-col items-center gap-1 text-on-surface-variant">
+<span class="material-symbols-outlined">shopping_cart</span>
+<span class="font-label-sm text-label-sm">Cart</span>
+</button>
+<button class="flex flex-col items-center gap-1 text-on-surface-variant">
+<span class="material-symbols-outlined">person</span>
+<span class="font-label-sm text-label-sm">Profile</span>
+</button>
+</nav>
+<script>
+        // Simple interactivity for demonstration
+        document.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+            checkbox.addEventListener('change', (e) => {
+                const label = e.target.nextElementSibling;
+                if(e.target.checked) {
+                    label.classList.add('text-primary');
+                    label.classList.remove('text-on-surface-variant');
+                } else {
+                    label.classList.remove('text-primary');
+                    label.classList.add('text-on-surface-variant');
+                }
+            });
+        });
+
+        // Add electric blue hover sound or vibration effect via console for "vibe"
+        document.querySelectorAll('.neon-hover').forEach(card => {
+            card.addEventListener('mouseenter', () => {
+                // Subtle interaction logic could go here
+            });
+        });
+    </script>
+
+
+</body></html>

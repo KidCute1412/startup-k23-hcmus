@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Cyber Nexus | Cyber-Mechanical Keyboard</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Manrope:wght@600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        .neon-accent {
+            text-shadow: 0 0 10px rgba(251, 120, 0, 0.4);
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 20px;
+            width: 20px;
+            border-radius: 50%;
+            background: #fb7800;
+            cursor: pointer;
+            box-shadow: 0 0 10px rgba(251, 120, 0, 0.5);
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "surface-tint": "#0c56d0",
+                      "surface": "#f8f9fb",
+                      "outline-variant": "#c3c6d6",
+                      "background": "#f8f9fb",
+                      "surface-container-lowest": "#ffffff",
+                      "error-container": "#ffdad6",
+                      "inverse-primary": "#b2c5ff",
+                      "error": "#ba1a1a",
+                      "secondary-fixed": "#ffdbc8",
+                      "primary": "#003d9b",
+                      "tertiary-fixed-dim": "#b4c6f3",
+                      "surface-dim": "#d9dadc",
+                      "outline": "#737685",
+                      "on-surface": "#191c1e",
+                      "on-tertiary-fixed": "#051a3e",
+                      "on-tertiary": "#ffffff",
+                      "on-secondary-fixed-variant": "#753400",
+                      "on-tertiary-container": "#c1d2ff",
+                      "surface-bright": "#f8f9fb",
+                      "secondary-fixed-dim": "#ffb68b",
+                      "inverse-surface": "#2e3132",
+                      "on-error-container": "#93000a",
+                      "secondary-container": "#fb7800",
+                      "surface-container-high": "#e7e8ea",
+                      "on-primary": "#ffffff",
+                      "on-primary-container": "#c4d2ff",
+                      "surface-variant": "#e1e2e4",
+                      "on-secondary-fixed": "#321200",
+                      "on-background": "#191c1e",
+                      "inverse-on-surface": "#f0f1f3",
+                      "primary-fixed": "#dae2ff",
+                      "on-tertiary-fixed-variant": "#35466c",
+                      "surface-container": "#edeef0",
+                      "surface-container-highest": "#e1e2e4",
+                      "tertiary-fixed": "#d8e2ff",
+                      "tertiary-container": "#495a81",
+                      "on-surface-variant": "#434654",
+                      "on-secondary-container": "#592600",
+                      "on-secondary": "#ffffff",
+                      "tertiary": "#314368",
+                      "primary-fixed-dim": "#b2c5ff",
+                      "secondary": "#994700",
+                      "on-primary-fixed": "#001848",
+                      "surface-container-low": "#f3f4f6",
+                      "on-error": "#ffffff",
+                      "on-primary-fixed-variant": "#0040a2",
+                      "primary-container": "#0052cc"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "stack-sm": "8px",
+                      "stack-lg": "32px",
+                      "stack-md": "16px",
+                      "margin-mobile": "16px",
+                      "gutter": "24px",
+                      "base": "8px",
+                      "margin-desktop": "48px",
+                      "container-max": "1280px"
+              },
+              "fontFamily": {
+                      "body-sm": ["Inter"],
+                      "label-md": ["Inter"],
+                      "label-sm": ["Inter"],
+                      "headline-md": ["Manrope"],
+                      "body-lg": ["Inter"],
+                      "headline-xl": ["Manrope"],
+                      "body-md": ["Inter"],
+                      "headline-lg": ["Manrope"],
+                      "headline-lg-mobile": ["Manrope"]
+              },
+              "fontSize": {
+                      "body-sm": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                      "label-md": ["14px", {"lineHeight": "16px", "fontWeight": "600"}],
+                      "label-sm": ["12px", {"lineHeight": "14px", "fontWeight": "500"}],
+                      "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                      "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
+                      "headline-xl": ["48px", {"lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                      "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                      "headline-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "700"}],
+                      "headline-lg-mobile": ["24px", {"lineHeight": "32px", "fontWeight": "700"}]
+              }
+            },
+          },
+        }
+      </script>
+</head>
+<body class="bg-surface text-on-surface selection:bg-secondary-container selection:text-on-secondary-container">
+<!-- Top Navigation Bar -->
+<header class="w-full top-0 sticky bg-surface-container-lowest shadow-sm z-50 border-b border-outline-variant">
+<nav class="flex items-center justify-between px-margin-desktop py-4 max-w-container-max mx-auto">
+<div class="font-headline-md text-headline-md font-bold text-secondary-container">Cyber Nexus</div>
+<div class="hidden md:flex gap-gutter items-center">
+<a class="font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors duration-200" href="#">Home</a>
+<a class="font-label-md text-label-md text-primary border-b-2 border-primary pb-1" href="#">Browse Gear</a>
+<a class="font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors duration-200" href="#">Support</a>
+</div>
+<div class="flex items-center gap-stack-md">
+<button class="material-symbols-outlined text-primary active:opacity-80">shopping_cart</button>
+<button class="material-symbols-outlined text-primary active:opacity-80">account_circle</button>
+</div>
+</nav>
+</header>
+<main class="max-w-container-max mx-auto px-margin-desktop py-stack-lg">
+<!-- Breadcrumb -->
+<nav class="mb-stack-md flex items-center gap-2 font-label-sm text-label-sm text-outline">
+<span>Browse Gear</span>
+<span class="material-symbols-outlined text-[14px]">chevron_right</span>
+<span>Keyboards</span>
+<span class="material-symbols-outlined text-[14px]">chevron_right</span>
+<span class="text-on-surface">Cyber-Mechanical X1</span>
+</nav>
+<div class="grid grid-cols-12 gap-gutter">
+<!-- Left: Gallery & Specs -->
+<div class="col-span-12 lg:col-span-7 space-y-stack-lg">
+<!-- Gallery Section -->
+<div class="grid grid-cols-4 gap-stack-md">
+<div class="col-span-4 aspect-video rounded-xl overflow-hidden bg-inverse-surface relative group">
+<img class="w-full h-full object-cover" data-alt="A close-up shot of a high-end mechanical keyboard featuring translucent keycaps and intense neon orange and cyan LED backlighting. The setting is a dark, futuristic gaming station with brushed metal surfaces and soft ambient lens flares. The lighting highlights the intricate cyber-mechanical textures of the chassis, creating a high-contrast, professional e-sports aesthetic with deep shadows and vibrant glow." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBkfr04zeXz-ueSQg5PjL3SU-yHZBR69jdNQt4O86T3_TW4FYdeQ6WTFcwkX0qsqao0uvkV-OThBPi4tzhkOUXJWlPGPNwLfftjxbE0Uo15QDUgaRRj8kHS1lxov3UndRJsoBFKCcrrGYTFSx9kdHqx0pCqydR8gXgTpB0jczjfzDSeRkI1XIAFXN3LzJg86iKAi0pqo09BlCOLxxNZ-4ypN4cgPZvAUrVpH3W9kPiNn4TsgitzErHUmROG7aLbU-dpjbOKzZ33bw"/>
+<div class="absolute top-4 left-4 bg-secondary-container text-white px-3 py-1 rounded-full text-label-sm font-bold shadow-lg">
+                            VERIFIED GEAR
+                        </div>
+</div>
+<div class="aspect-square rounded-lg overflow-hidden border-2 border-primary">
+<img class="w-full h-full object-cover opacity-90" data-alt="Detailed macro photography of mechanical switches on a cyber keyboard, showing the complex internal springs and gold-plated contacts under a vibrant purple neon light. The style is clean and technical, emphasizing precision engineering for professional gaming. Soft bokeh in the background focuses attention on the sharp edges of the hardware." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAKrDep1BLUFzzIxWf0x6UD-K4DO7jVm4IJeljjKUnTYKPnkEdgYI-_OvYv7Z0iqIgBPZcns7ZSzLD-oMGfI6EgiQCkK-YnaDrM7jwFCnNjDv5BgUr2vLOkPuYuxpPtV1kGRtC-PGicjWf1mKJkmj_yRFQrOlV9X_rkNfz-T3k4e2UC5cH7pQUKV4DsLVR-FgpKs6dRQ7Y3yHiqMExLVwUotMJNxtpq3rQdENhI5XF2mduLS7OR5Ma3ClDg1J7MIqsR7r1Cga70Zw"/>
+</div>
+<div class="aspect-square rounded-lg overflow-hidden hover:opacity-100 opacity-60 transition-opacity cursor-pointer">
+<img class="w-full h-full object-cover" data-alt="Side profile of a sleek keyboard with an aluminum frame, showcasing the ergonomic curve and the intense RGB strip light running along its base. The lighting is a cool blue, reflecting off a polished obsidian desk surface. The atmosphere is professional and ultra-modern, characteristic of a high-tier gaming peripheral catalog." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDvCr0fqli5atH1W0RDrcn5mt2OOcwBq6VSMaidMT_8dfzm8VLE_A1GQcz7z2q_96MDp1-EphOhrWMCxqV4kRxp2A9UwOPVjfE0TUkn_NShjDjurLVClxTdytEVQhQ_x68J4xptphSG0URHL-zu7paUkDKcH8Ss4QKOhP3IUA49Y7RWSLCXAK2pIWREq6N6icJKqjm4Az8TbPMI4kRtnSmvX4sRlUiYhEcnkIRixDWLgJeYGP8AoJW6OMHh694XV7x9ujaeQtnQDA"/>
+</div>
+<div class="aspect-square rounded-lg overflow-hidden hover:opacity-100 opacity-60 transition-opacity cursor-pointer">
+<img class="w-full h-full object-cover" data-alt="A cinematic top-down view of a complete gaming setup featuring the cyber-mechanical keyboard, a precision mouse, and a wide-screen monitor displaying complex code. The room is dark with subtle atmospheric fog, illuminated only by the orange and teal glow of the equipment. The visual style is Corporate Modern, focusing on reliability and top-tier performance." src="https://lh3.googleusercontent.com/aida-public/AB6AXuD3rHiVShYCNLMl4NrhRCf_HyQhTUajNiIKnco8llOtSfAr5GftjBhBEa9_fvFz47NirpbirEpZL_wbNaXHAc-CtIH_NAk6uMjx71LjiehOMdmNdRRFAqOtOMuj1HgnlWcsf_aFHvgYPzO4aRaqInR7Xix2dV3xt6wbWH3Wp4j6GiPUr6flrMAhNME7OS19FK54Im_7wvC79spxS6EKf0nUAK5SIvtuYPPoIJ8W2fKOCkwlGonFHrt3nu24aKoZxLepQcvFDSJXvw"/>
+</div>
+<div class="aspect-square rounded-lg overflow-hidden bg-surface-container-high flex items-center justify-center cursor-pointer hover:bg-surface-container-highest transition-colors">
+<span class="material-symbols-outlined text-outline">add_photo_alternate</span>
+</div>
+</div>
+<!-- Technical Specs Bento -->
+<div class="grid grid-cols-2 gap-stack-md">
+<div class="bg-surface-container-low p-stack-md rounded-xl border border-outline-variant">
+<div class="flex items-center gap-2 mb-2 text-primary">
+<span class="material-symbols-outlined">bolt</span>
+<h3 class="font-label-md text-label-md">Performance</h3>
+</div>
+<ul class="space-y-1 font-body-sm text-body-sm text-on-surface-variant">
+<li class="flex justify-between"><span>Polling Rate</span> <span class="font-bold">8000Hz</span></li>
+<li class="flex justify-between"><span>Response Time</span> <span class="font-bold">0.125ms</span></li>
+</ul>
+</div>
+<div class="bg-surface-container-low p-stack-md rounded-xl border border-outline-variant">
+<div class="flex items-center gap-2 mb-2 text-primary">
+<span class="material-symbols-outlined">settings_input_component</span>
+<h3 class="font-label-md text-label-md">Hardware</h3>
+</div>
+<ul class="space-y-1 font-body-sm text-body-sm text-on-surface-variant">
+<li class="flex justify-between"><span>Switches</span> <span class="font-bold">Optic-Linear</span></li>
+<li class="flex justify-between"><span>Keycaps</span> <span class="font-bold">PBT Double-shot</span></li>
+</ul>
+</div>
+</div>
+<!-- Comparison Table -->
+<div class="overflow-hidden rounded-xl border border-outline-variant">
+<table class="w-full text-left font-body-sm text-body-sm">
+<thead class="bg-surface-container-high font-label-md text-on-surface">
+<tr>
+<th class="p-stack-md">Spec Category</th>
+<th class="p-stack-md">Cyber-Mechanical X1</th>
+<th class="p-stack-md">Standard Pro</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant">
+<tr class="bg-white">
+<td class="p-stack-md font-medium">Actuation Force</td>
+<td class="p-stack-md text-primary font-bold">45g (Adjustable)</td>
+<td class="p-stack-md text-outline">55g (Fixed)</td>
+</tr>
+<tr class="bg-surface-container-lowest">
+<td class="p-stack-md font-medium">Programmable Layers</td>
+<td class="p-stack-md text-primary font-bold">Infinite (Cloud Sync)</td>
+<td class="p-stack-md text-outline">3 Layers</td>
+</tr>
+<tr class="bg-white">
+<td class="p-stack-md font-medium">Chassis Material</td>
+<td class="p-stack-md text-primary font-bold">Aircraft Aluminum</td>
+<td class="p-stack-md text-outline">Hardened Plastic</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<!-- Right: Action Sidebar -->
+<div class="col-span-12 lg:col-span-5">
+<div class="sticky top-24 space-y-stack-md">
+<div class="bg-surface-container-lowest p-stack-lg rounded-xl shadow-sm border border-outline-variant">
+<div class="flex justify-between items-start mb-2">
+<h1 class="font-headline-lg text-headline-lg text-on-surface leading-tight">Cyber-Mechanical X1 "Obsidian" Edition</h1>
+<span class="bg-green-100 text-green-800 px-2 py-1 rounded text-[10px] font-bold uppercase">Available</span>
+</div>
+<div class="flex items-center gap-1 text-secondary mb-4">
+<span class="material-symbols-outlined text-[18px]" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined text-[18px]" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined text-[18px]" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined text-[18px]" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined text-[18px]" style="font-variation-settings: 'FILL' 0;">star</span>
+<span class="text-body-sm font-medium ml-2 text-outline">(128 Reviews)</span>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant mb-stack-lg">
+                            Engineered for high-stakes competition. Featuring zero-latency optical switches and a monolithic aluminum frame. Integrated neon light-sync API.
+                        </p>
+<div class="border-t border-outline-variant pt-stack-md mb-stack-lg">
+<div class="flex justify-between items-baseline mb-4">
+<span class="font-label-md text-label-md text-outline">Rental Rate</span>
+<div class="text-right">
+<span class="font-headline-md text-headline-md text-on-surface">$12.50</span>
+<span class="font-body-sm text-body-sm text-outline">/ day</span>
+</div>
+</div>
+<!-- Duration Selector -->
+<div class="space-y-stack-md mb-stack-lg">
+<div class="flex justify-between items-center">
+<label class="font-label-md text-label-md text-on-surface">Duration (Days)</label>
+<span class="font-headline-md text-headline-md text-secondary-container" id="days-display">15 Days</span>
+</div>
+<input class="w-full h-2 bg-surface-container-highest rounded-lg appearance-none cursor-pointer" id="duration-slider" max="30" min="1" type="range" value="15"/>
+<div class="flex justify-between font-label-sm text-label-sm text-outline px-1">
+<span>1 Day</span>
+<span>30 Days</span>
+</div>
+</div>
+<div class="bg-surface-container rounded-lg p-stack-md flex justify-between items-center mb-stack-lg">
+<span class="font-label-md text-label-md">Total for Rental</span>
+<span class="font-headline-md text-headline-md text-primary" id="total-price">$187.50</span>
+</div>
+<button class="w-full bg-secondary-container text-white py-4 rounded-lg font-label-md text-label-md hover:bg-secondary transition-all transform active:scale-95 shadow-md shadow-secondary-container/20">
+                                Add to Rental
+                            </button>
+</div>
+<div class="space-y-3">
+<div class="flex items-center gap-3 p-3 bg-blue-50 rounded-lg border border-blue-100">
+<span class="material-symbols-outlined text-primary">verified_user</span>
+<div>
+<p class="font-label-md text-label-md text-primary">Insurance Included</p>
+<p class="text-[11px] text-primary/70">Full coverage for mechanical failures</p>
+</div>
+</div>
+<div class="flex items-center gap-3 p-3 bg-green-50 rounded-lg border border-green-100">
+<span class="material-symbols-outlined text-green-700">high_quality</span>
+<div>
+<p class="font-label-md text-label-md text-green-700">Quality Checked</p>
+<p class="text-[11px] text-green-700/70">Sanitized and tested yesterday</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Additional Info Links -->
+<div class="flex gap-4 px-4">
+<button class="flex-1 flex items-center justify-center gap-2 font-label-sm text-label-sm text-outline hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-[18px]">share</span> Share Gear
+                        </button>
+<button class="flex-1 flex items-center justify-center gap-2 font-label-sm text-label-sm text-outline hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-[18px]">favorite</span> Add to List
+                        </button>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Footer -->
+<footer class="w-full bg-inverse-surface mt-stack-lg">
+<div class="flex flex-col md:flex-row justify-between items-center px-margin-desktop py-stack-lg gap-base max-w-container-max mx-auto">
+<div class="font-headline-lg text-headline-lg text-surface-container-lowest">Cyber Nexus</div>
+<div class="flex gap-stack-md">
+<a class="font-body-sm text-body-sm text-surface-variant hover:text-primary-fixed transition-colors" href="#">Terms of Service</a>
+<a class="font-body-sm text-body-sm text-surface-variant hover:text-primary-fixed transition-colors" href="#">Privacy Policy</a>
+<a class="font-body-sm text-body-sm text-surface-variant hover:text-primary-fixed transition-colors" href="#">Contact Us</a>
+</div>
+<div class="font-body-sm text-body-sm text-surface">© 2024 Cyber Nexus. All Rights Reserved. Professional Grade Gear.</div>
+</div>
+</footer>
+<script>
+        const slider = document.getElementById('duration-slider');
+        const display = document.getElementById('days-display');
+        const totalPrice = document.getElementById('total-price');
+        const rate = 12.50;
+
+        slider.addEventListener('input', (e) => {
+            const days = e.target.value;
+            display.textContent = `${days} Day${days > 1 ? 's' : ''}`;
+            totalPrice.textContent = `$${(days * rate).toFixed(2)}`;
+        });
+
+        // Simple Micro-interaction for gallery
+        const thumbnails = document.querySelectorAll('.aspect-square.rounded-lg');
+        thumbnails.forEach(thumb => {
+            thumb.addEventListener('click', () => {
+                thumbnails.forEach(t => t.classList.remove('border-2', 'border-primary'));
+                thumb.classList.add('border-2', 'border-primary');
+            });
+        });
+    </script>
+</body></html>
