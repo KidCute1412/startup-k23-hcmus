@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gear Up | Catalog</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+    
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        background: '#0f172a',
+                        surface: '#1e293b',
+                        'surface-dim': '#020617',
+                        primary: '#8b5cf6',
+                        secondary: '#06b6d4',
+                        on_bg: '#f8fafc',
+                        on_surface: '#e2e8f0',
+                        muted: '#94a3b8'
+                    },
+                    fontFamily: {
+                        heading: ['Rajdhani', 'sans-serif'],
+                        body: ['Inter', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #0f172a;
+            color: #f8fafc;
+            font-family: 'Inter', sans-serif;
+            overflow-x: hidden;
+        }
+        h1, h2, h3, h4, .nav-logo {
+            font-family: 'Rajdhani', sans-serif;
+        }
+        .glass-panel {
+            background: rgba(30, 41, 59, 0.6);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(139, 92, 246, 0.2);
+        }
+        .neon-text-primary { text-shadow: 0 0 10px rgba(139, 92, 246, 0.7); }
+        .neon-text-secondary { text-shadow: 0 0 10px rgba(6, 182, 212, 0.7); }
+        .neon-glow-primary { box-shadow: 0 0 15px rgba(139, 92, 246, 0.5); }
+        .clip-edges { clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px); }
+        
+        /* Custom scrollbar for filters */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #0f172a; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #8b5cf6; }
+    </style>
+</head>
+<body class="antialiased selection:bg-primary selection:text-white">
+
+    <!-- Navigation -->
+    <nav class="w-full z-50 glass-panel border-b border-primary/30 sticky top-0">
+        <div class="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
+            <div class="flex items-center gap-2">
+                <span class="material-symbols-outlined text-primary text-3xl" style="font-variation-settings: 'FILL' 1;">bolt</span>
+                <span class="nav-logo text-3xl font-bold tracking-wider text-white uppercase neon-text-primary">Gear<span class="text-secondary">Up</span></span>
+            </div>
+            
+            <div class="hidden md:flex gap-8 text-sm font-semibold tracking-widest uppercase">
+                <a href="#" class="text-muted hover:text-white transition-colors duration-300">Home</a>
+                <a href="#" class="text-primary hover:text-white transition-colors duration-300">Catalog</a>
+                <a href="#" class="text-muted hover:text-secondary transition-colors duration-300">Pricing</a>
+            </div>
+
+            <div class="flex items-center gap-4">
+                <button class="material-symbols-outlined text-muted hover:text-white transition">shopping_cart</button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Header Banner -->
+    <header class="bg-surface-dim border-b border-white/5 py-12 relative overflow-hidden">
+        <div class="absolute inset-0 bg-primary/5"></div>
+        <div class="max-w-7xl mx-auto px-6 relative z-10 flex flex-col md:flex-row justify-between items-center gap-6">
+            <div>
+                <h1 class="text-4xl md:text-5xl font-bold uppercase tracking-wide neon-text-primary mb-2">The Arsenal</h1>
+                <p class="text-muted text-lg">Deploy the best hardware available.</p>
+            </div>
+            <div class="flex items-center gap-2 border border-primary/30 bg-surface/50 px-4 py-2 clip-edges w-full md:w-auto">
+                <span class="material-symbols-outlined text-primary">search</span>
+                <input type="text" placeholder="Search components..." class="bg-transparent border-none text-white focus:ring-0 w-full md:w-64">
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-6 py-12 grid grid-cols-1 lg:grid-cols-4 gap-8">
+        
+        <!-- Sidebar Filters -->
+        <aside class="hidden lg:block col-span-1 space-y-8">
+            <!-- Filter Category -->
+            <div class="glass-panel p-6 border-white/10">
+                <h3 class="text-xl font-bold uppercase tracking-wider mb-4 text-white">Categories</h3>
+                <div class="space-y-3">
+                    <label class="flex items-center gap-3 cursor-pointer group">
+                        <input type="checkbox" checked class="form-checkbox bg-transparent border-primary text-primary focus:ring-primary focus:ring-offset-0 rounded-sm">
+                        <span class="text-sm text-on_surface group-hover:text-primary transition-colors">All Gear</span>
+                    </label>
+                    <label class="flex items-center gap-3 cursor-pointer group">
+                        <input type="checkbox" class="form-checkbox bg-transparent border-muted text-primary focus:ring-primary focus:ring-offset-0 rounded-sm">
+                        <span class="text-sm text-muted group-hover:text-white transition-colors">Graphics Cards (GPUs)</span>
+                    </label>
+                    <label class="flex items-center gap-3 cursor-pointer group">
+                        <input type="checkbox" class="form-checkbox bg-transparent border-muted text-primary focus:ring-primary focus:ring-offset-0 rounded-sm">
+                        <span class="text-sm text-muted group-hover:text-white transition-colors">Custom Systems</span>
+                    </label>
+                    <label class="flex items-center gap-3 cursor-pointer group">
+                        <input type="checkbox" class="form-checkbox bg-transparent border-muted text-primary focus:ring-primary focus:ring-offset-0 rounded-sm">
+                        <span class="text-sm text-muted group-hover:text-white transition-colors">Monitors</span>
+                    </label>
+                    <label class="flex items-center gap-3 cursor-pointer group">
+                        <input type="checkbox" class="form-checkbox bg-transparent border-muted text-primary focus:ring-primary focus:ring-offset-0 rounded-sm">
+                        <span class="text-sm text-muted group-hover:text-white transition-colors">Peripherals</span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Filter Brand -->
+            <div class="glass-panel p-6 border-white/10">
+                <h3 class="text-xl font-bold uppercase tracking-wider mb-4 text-white">Brands</h3>
+                <div class="space-y-3">
+                    <label class="flex items-center gap-3 cursor-pointer group">
+                        <input type="checkbox" class="form-checkbox bg-transparent border-muted text-secondary focus:ring-secondary focus:ring-offset-0 rounded-sm">
+                        <span class="text-sm text-muted group-hover:text-secondary transition-colors">NVIDIA</span>
+                    </label>
+                    <label class="flex items-center gap-3 cursor-pointer group">
+                        <input type="checkbox" class="form-checkbox bg-transparent border-muted text-secondary focus:ring-secondary focus:ring-offset-0 rounded-sm">
+                        <span class="text-sm text-muted group-hover:text-secondary transition-colors">AMD</span>
+                    </label>
+                    <label class="flex items-center gap-3 cursor-pointer group">
+                        <input type="checkbox" class="form-checkbox bg-transparent border-muted text-secondary focus:ring-secondary focus:ring-offset-0 rounded-sm">
+                        <span class="text-sm text-muted group-hover:text-secondary transition-colors">SteelSeries</span>
+                    </label>
+                    <label class="flex items-center gap-3 cursor-pointer group">
+                        <input type="checkbox" class="form-checkbox bg-transparent border-muted text-secondary focus:ring-secondary focus:ring-offset-0 rounded-sm">
+                        <span class="text-sm text-muted group-hover:text-secondary transition-colors">Logitech G</span>
+                    </label>
+                </div>
+            </div>
+
+            <button class="w-full bg-surface-dim border border-muted text-white py-3 uppercase tracking-widest text-sm font-bold hover:border-white transition-colors">Reset Filters</button>
+        </aside>
+
+        <!-- Product Grid -->
+        <div class="col-span-1 lg:col-span-3">
+            <div class="flex justify-between items-center mb-6">
+                <span class="text-sm text-muted">Showing 24 items</span>
+                <div class="flex items-center gap-2">
+                    <span class="text-sm text-muted uppercase tracking-wider">Sort:</span>
+                    <select class="bg-surface-dim border border-white/10 text-white text-sm focus:ring-primary focus:border-primary">
+                        <option>Recommended</option>
+                        <option>Price: Low to High</option>
+                        <option>Price: High to Low</option>
+                        <option>Newest Arrivals</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                <!-- Product 1 -->
+                <div class="glass-panel group border-white/10 hover:border-primary/50 transition-colors duration-300">
+                    <div class="relative h-56 bg-surface-dim overflow-hidden p-4 flex justify-center items-center">
+                        <img src="https://images.unsplash.com/photo-1587202372634-32705e3bf49c?auto=format&fit=crop&q=80&w=500" alt="RTX 4090" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500">
+                        <span class="absolute top-3 left-3 bg-primary/20 text-primary border border-primary/50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider clip-edges">GPU</span>
+                    </div>
+                    <div class="p-5">
+                        <h3 class="text-lg font-bold mb-1 group-hover:text-primary transition-colors line-clamp-1">NVIDIA RTX 4090 OC</h3>
+                        <p class="text-xs text-muted mb-4">24GB GDDR6X</p>
+                        <div class="flex justify-between items-end border-t border-white/10 pt-4">
+                            <div>
+                                <span class="text-lg font-bold text-white">$15.00</span>
+                                <span class="text-xs text-muted">/day</span>
+                            </div>
+                            <button class="bg-primary text-white px-4 py-1 text-sm font-bold uppercase tracking-wider clip-edges hover:bg-primary/80 transition-colors">Rent</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Product 2 -->
+                <div class="glass-panel group border-white/10 hover:border-secondary/50 transition-colors duration-300">
+                    <div class="relative h-56 bg-surface-dim overflow-hidden p-4 flex justify-center items-center">
+                        <img src="https://images.unsplash.com/photo-1587202372775-e229f172b9d7?auto=format&fit=crop&q=80&w=500" alt="Custom PC" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500">
+                        <span class="absolute top-3 left-3 bg-secondary/20 text-secondary border border-secondary/50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider clip-edges">System</span>
+                    </div>
+                    <div class="p-5">
+                        <h3 class="text-lg font-bold mb-1 group-hover:text-secondary transition-colors line-clamp-1">Project: Void</h3>
+                        <p class="text-xs text-muted mb-4">i7-13700K / 4070 Ti</p>
+                        <div class="flex justify-between items-end border-t border-white/10 pt-4">
+                            <div>
+                                <span class="text-lg font-bold text-white">$35.00</span>
+                                <span class="text-xs text-muted">/day</span>
+                            </div>
+                            <button class="bg-surface hover:bg-secondary border border-white/10 text-white px-4 py-1 text-sm font-bold uppercase tracking-wider clip-edges transition-colors">Rent</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Product 3 -->
+                <div class="glass-panel group border-white/10 hover:border-primary/50 transition-colors duration-300">
+                    <div class="relative h-56 bg-surface-dim overflow-hidden p-4 flex justify-center items-center">
+                        <img src="https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?auto=format&fit=crop&q=80&w=500" alt="Monitor" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500">
+                        <span class="absolute top-3 left-3 bg-primary/20 text-primary border border-primary/50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider clip-edges">Display</span>
+                        <span class="absolute top-3 right-3 bg-yellow-500/20 text-yellow-400 border border-yellow-500/50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider clip-edges">240Hz</span>
+                    </div>
+                    <div class="p-5">
+                        <h3 class="text-lg font-bold mb-1 group-hover:text-primary transition-colors line-clamp-1">Odyssey G7 27"</h3>
+                        <p class="text-xs text-muted mb-4">1440p / 240Hz / 1ms</p>
+                        <div class="flex justify-between items-end border-t border-white/10 pt-4">
+                            <div>
+                                <span class="text-lg font-bold text-white">$8.50</span>
+                                <span class="text-xs text-muted">/day</span>
+                            </div>
+                            <button class="bg-surface hover:bg-primary border border-white/10 text-white px-4 py-1 text-sm font-bold uppercase tracking-wider clip-edges transition-colors">Rent</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Product 4 -->
+                <div class="glass-panel group border-white/10 hover:border-primary/50 transition-colors duration-300">
+                    <div class="relative h-56 bg-surface-dim overflow-hidden p-4 flex justify-center items-center">
+                        <img src="https://images.unsplash.com/photo-1615663245857-ac1eeb536628?auto=format&fit=crop&q=80&w=500" alt="Mouse" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500">
+                        <span class="absolute top-3 left-3 bg-primary/20 text-primary border border-primary/50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider clip-edges">Peripheral</span>
+                    </div>
+                    <div class="p-5">
+                        <h3 class="text-lg font-bold mb-1 group-hover:text-primary transition-colors line-clamp-1">G Pro X Superlight</h3>
+                        <p class="text-xs text-muted mb-4">Ultra-lightweight Wireless</p>
+                        <div class="flex justify-between items-end border-t border-white/10 pt-4">
+                            <div>
+                                <span class="text-lg font-bold text-white">$3.00</span>
+                                <span class="text-xs text-muted">/day</span>
+                            </div>
+                            <button class="bg-surface hover:bg-primary border border-white/10 text-white px-4 py-1 text-sm font-bold uppercase tracking-wider clip-edges transition-colors">Rent</button>
+                        </div>
+                    </div>
+                </div>
+                
+                 <!-- Product 5 -->
+                 <div class="glass-panel group border-white/10 hover:border-primary/50 transition-colors duration-300">
+                    <div class="relative h-56 bg-surface-dim overflow-hidden p-4 flex justify-center items-center">
+                        <img src="https://images.unsplash.com/photo-1618366712010-f4ae9c647dcb?auto=format&fit=crop&q=80&w=500" alt="Headset" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500">
+                        <span class="absolute top-3 left-3 bg-primary/20 text-primary border border-primary/50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider clip-edges">Audio</span>
+                    </div>
+                    <div class="p-5">
+                        <h3 class="text-lg font-bold mb-1 group-hover:text-primary transition-colors line-clamp-1">BlackShark V2 Pro</h3>
+                        <p class="text-xs text-muted mb-4">Esports Wireless Headset</p>
+                        <div class="flex justify-between items-end border-t border-white/10 pt-4">
+                            <div>
+                                <span class="text-lg font-bold text-white">$4.50</span>
+                                <span class="text-xs text-muted">/day</span>
+                            </div>
+                            <button class="bg-surface hover:bg-primary border border-white/10 text-white px-4 py-1 text-sm font-bold uppercase tracking-wider clip-edges transition-colors">Rent</button>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Pagination -->
+            <div class="flex justify-center mt-12 gap-2">
+                <button class="bg-surface-dim border border-white/10 text-white px-4 py-2 hover:border-primary transition-colors">&lt;</button>
+                <button class="bg-primary text-white border border-primary px-4 py-2">1</button>
+                <button class="bg-surface-dim border border-white/10 text-white px-4 py-2 hover:border-primary transition-colors">2</button>
+                <button class="bg-surface-dim border border-white/10 text-white px-4 py-2 hover:border-primary transition-colors">3</button>
+                <button class="bg-surface-dim border border-white/10 text-white px-4 py-2 hover:border-primary transition-colors">&gt;</button>
+            </div>
+        </div>
+    </main>
+
+</body>
+</html>
