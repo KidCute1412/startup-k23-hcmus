@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html class="dark scroll-smooth" lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+  <title>Vanguard Elite | Royal Edition High-End Custom Gear</title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,400&family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+  <script>
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            vanguard: {
+              dark: {
+                bg: '#090B10', // Imperial Dark Navy
+                surf: '#111420', // Royal Slate Surface
+                surfDim: '#0B0D15',
+                surfBright: '#1A1E30',
+                border: '#2C3248',
+                text: '#F3EFE0', // Warm Alabaster
+                textMuted: '#8E98B0'
+              },
+              light: {
+                bg: '#FAF9F6', // Alabaster White
+                surf: '#FFFFFF',
+                surfDim: '#F3EFE0',
+                surfBright: '#FFFFFF',
+                border: '#E5E0D8',
+                text: '#1C1F26',
+                textMuted: '#7A808F'
+              },
+              primary: '#D4AF37', // Imperial Gold
+              secondary: '#AA7C11', // Royal Amber / Bronze
+              accent: '#800020' // Burgundy Red
+            }
+          },
+          fontFamily: {
+            display: ['Playfair Display', 'serif'],
+            body: ['Plus Jakarta Sans', 'sans-serif']
+          },
+          borderRadius: {
+            'v-sm': '2px',
+            'v-md': '4px',
+            'v-lg': '8px',
+            'v-xl': '0px'
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+    .font-display {
+      font-family: 'Playfair Display', serif;
+    }
+    .glow-gradient {
+      background: linear-gradient(135deg, rgba(212, 175, 55, 0.1) 0%, rgba(170, 124, 17, 0.05) 100%);
+    }
+    .text-gradient {
+      background: linear-gradient(135deg, #D4AF37 0%, #AA7C11 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    
+    /* --- ROYAL ANIMATIONS --- */
+    
+    /* Royal Smooth transitions with premium cubic-bezier */
+    .royal-transition {
+      transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    
+    /* Gold Metallic Shimmer Effect */
+    .gold-shimmer {
+      position: relative;
+      overflow: hidden;
+    }
+    .gold-shimmer::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -150%;
+      width: 50%;
+      height: 100%;
+      background: linear-gradient(
+        to right,
+        rgba(255, 255, 255, 0) 0%,
+        rgba(212, 175, 55, 0.4) 50%,
+        rgba(255, 255, 255, 0) 100%
+      );
+      transform: skewX(-25deg);
+      pointer-events: none;
+    }
+    .gold-shimmer:hover::after {
+      left: 150%;
+      transition: all 1.4s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    /* Soft ambient card glow on hover */
+    .dark .royal-glow:hover {
+      box-shadow: 0 25px 50px -12px rgba(212, 175, 55, 0.25);
+    }
+    .royal-glow:hover {
+      box-shadow: 0 25px 50px -12px rgba(170, 124, 17, 0.15);
+    }
+  </style>
+</head>
+<body class="bg-[#FAF9F6] dark:bg-[#090B10] text-[#1C1F26] dark:text-[#F3EFE0] transition-colors duration-300 min-h-screen flex flex-col">
+
+  <!-- Header/Navigation -->
+  <header class="sticky top-0 z-50 bg-[#FAF9F6]/90 dark:bg-[#090B10]/95 backdrop-blur-md border-b border-[#E5E0D8] dark:border-vanguard-dark-border transition-colors duration-300">
+    <div class="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between py-4">
+      <!-- Logo -->
+      <a href="./code.html" class="flex items-center gap-2 group">
+        <span class="w-8 h-8 rounded-sm bg-gradient-to-tr from-vanguard-primary to-vanguard-secondary flex items-center justify-center text-[#090B10] font-bold font-display shadow-md">V</span>
+        <span class="font-display font-semibold text-xl tracking-wider text-[#1C1F26] dark:text-[#F3EFE0] transition-all">VANGUARD <span class="text-vanguard-primary font-light">ELITE</span></span>
+      </a>
+
+      <!-- Menu Items -->
+      <nav class="hidden md:flex items-center gap-10 font-display text-xs uppercase tracking-widest font-semibold">
+        <a href="./code.html" class="text-vanguard-primary border-b border-vanguard-primary pb-1">Trang Chủ</a>
+        <a href="../Product%20List%20Page/code.html" class="text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted hover:text-vanguard-light-text dark:hover:text-vanguard-dark-text transition-colors pb-1">Sản Phẩm</a>
+        <a href="#" class="text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted hover:text-vanguard-light-text dark:hover:text-vanguard-dark-text transition-colors pb-1">Atelier (Custom)</a>
+        <a href="#" class="text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted hover:text-vanguard-light-text dark:hover:text-vanguard-dark-text transition-colors pb-1">Thuê Thượng Lưu</a>
+      </nav>
+
+      <!-- Right controls -->
+      <div class="flex items-center gap-4">
+        <!-- Dark/Light Theme Switcher -->
+        <button id="theme-toggle" class="p-2 rounded-full hover:bg-slate-200 dark:hover:bg-vanguard-dark-surfBright transition-colors text-[#1C1F26] dark:text-[#F3EFE0]" aria-label="Toggle dark mode">
+          <span id="theme-icon" class="material-symbols-outlined block">light_mode</span>
+        </button>
+
+        <!-- Cart Icon -->
+        <a href="#" class="p-2 rounded-full hover:bg-slate-200 dark:hover:bg-vanguard-dark-surfBright transition-colors relative text-[#1C1F26] dark:text-[#F3EFE0]">
+          <span class="material-symbols-outlined">shopping_bag</span>
+          <span class="absolute top-1 right-1 w-2.5 h-2.5 rounded-full bg-vanguard-primary border border-white dark:border-[#090B10]"></span>
+        </a>
+
+        <!-- Menu mobile button -->
+        <button class="md:hidden p-2 text-[#1C1F26] dark:text-[#F3EFE0]">
+          <span class="material-symbols-outlined">menu</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="flex-grow">
+    <!-- Hero Section -->
+    <section class="relative overflow-hidden py-20 lg:py-32 px-6 border-b border-[#E5E0D8] dark:border-vanguard-dark-border bg-gradient-to-b from-transparent to-slate-100/50 dark:to-[#0B0D15]/30">
+      <!-- Royal background graphics -->
+      <div class="absolute -top-40 -right-40 w-96 h-96 rounded-full bg-vanguard-primary/5 blur-[120px]"></div>
+      <div class="absolute -bottom-20 -left-20 w-80 h-80 rounded-full bg-vanguard-secondary/5 blur-[100px]"></div>
+
+      <div class="max-w-7xl mx-auto grid lg:grid-cols-12 gap-16 items-center">
+        <!-- Content -->
+        <div class="lg:col-span-6 text-left space-y-8 z-10">
+          <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-vanguard-primary/30 bg-vanguard-primary/5 text-xs font-display uppercase tracking-widest font-semibold text-vanguard-primary">
+            <span class="w-1.5 h-1.5 rounded-full bg-vanguard-primary animate-pulse"></span>
+            Heritage & Precision Craftsmanship
+          </div>
+          
+          <h1 class="font-display font-bold text-4xl sm:text-5xl lg:text-6xl tracking-wide leading-[1.15]">
+            Bảo Vật Công Nghệ,<br>
+            <span class="text-gradient font-normal italic">Kiến Tạo Đẳng Cấp</span>
+          </h1>
+          
+          <p class="text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted text-lg max-w-xl font-light leading-relaxed">
+            Nơi những thiết bị ngoại vi vượt ra khỏi định nghĩa công cụ thông thường, trở thành những tác phẩm nghệ thuật hoàng gia từ gỗ óc chó Thụy Sĩ, đồng thau mạ vàng và sợi carbon siêu nhẹ.
+          </p>
+
+          <div class="flex flex-wrap gap-4 pt-4">
+            <a href="../Product%20List%20Page/code.html" class="gold-shimmer px-8 py-4 bg-gradient-to-r from-vanguard-primary to-vanguard-secondary text-[#090B10] font-display uppercase tracking-wider text-xs font-bold rounded-sm shadow-lg transition-all hover:scale-[1.03] royal-transition">
+              Khám Phá Bộ Sưu Tập
+            </a>
+            <a href="#" class="px-8 py-4 bg-transparent hover:bg-vanguard-primary hover:text-[#090B10] border border-vanguard-primary text-vanguard-primary font-display uppercase tracking-wider text-xs font-bold rounded-sm royal-transition">
+              Đặt Chế Tác Riêng (Bespoke)
+            </a>
+          </div>
+        </div>
+
+        <!-- Visual Hero (Royal Keyboard Image) -->
+        <div class="lg:col-span-6 relative flex justify-center items-center">
+          <div class="royal-glow royal-transition relative w-full max-w-lg aspect-[4/3] rounded-sm border border-vanguard-primary/30 p-2 bg-[#FAF9F6] dark:bg-[#111420] shadow-2xl hover:-translate-y-2">
+            <div class="gold-shimmer w-full h-full">
+              <!-- Actual Unsplash Image of a premium mechanical custom keyboard -->
+              <img class="w-full h-full object-cover rounded-sm border border-[#E5E0D8] dark:border-vanguard-dark-border" src="https://images.unsplash.com/photo-1618384887929-16ec33fab9ef?auto=format&fit=crop&w=800&q=80" alt="Royal Custom Keyboard">
+            </div>
+            <div class="absolute bottom-4 right-4 bg-[#090B10]/85 backdrop-blur-md border border-vanguard-primary/30 px-4 py-2 text-[10px] tracking-widest uppercase text-vanguard-primary font-display font-semibold">
+              Vanguard Atelier Edition
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Categories Section (Royal Gallery style) -->
+    <section class="py-24 px-6 max-w-7xl mx-auto">
+      <div class="flex flex-col md:flex-row justify-between items-start md:items-end mb-16 border-b border-[#E5E0D8] dark:border-vanguard-dark-border pb-6">
+        <div>
+          <span class="text-xs uppercase tracking-widest text-vanguard-primary font-semibold font-display">Collections</span>
+          <h2 class="font-display font-bold text-3xl md:text-4xl mt-2">Phân Nhóm Hoàng Gia</h2>
+        </div>
+        <a href="../Product%20List%20Page/code.html" class="group flex items-center gap-1 font-display font-bold text-xs uppercase tracking-widest text-vanguard-primary hover:underline mt-4 md:mt-0">
+          Xem tất cả <span class="material-symbols-outlined text-sm group-hover:translate-x-1 transition-transform">arrow_forward</span>
+        </a>
+      </div>
+
+      <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-8">
+        <!-- Category Card 1 -->
+        <a href="../Product%20List%20Page/code.html" class="royal-glow royal-transition group block relative overflow-hidden aspect-[3/4] bg-[#FAF9F6] dark:bg-[#111420] border border-[#E5E0D8] dark:border-vanguard-dark-border hover:border-vanguard-primary hover:-translate-y-2">
+          <img class="absolute inset-0 w-full h-full object-cover opacity-80 group-hover:scale-105 transition-transform duration-1000" src="https://images.unsplash.com/photo-1595225476474-87563907a212?auto=format&fit=crop&w=600&q=80" alt="Mechanical Keyboards">
+          <div class="absolute inset-0 bg-gradient-to-t from-[#090B10] via-transparent to-transparent"></div>
+          <div class="absolute bottom-6 left-6 right-6">
+            <span class="text-[9px] uppercase tracking-widest text-vanguard-primary font-display font-bold">Category 01</span>
+            <h3 class="font-display font-bold text-xl text-[#F3EFE0] mt-1">Bàn Phím Chế Tác</h3>
+          </div>
+        </a>
+
+        <!-- Category Card 2 -->
+        <a href="../Product%20List%20Page/code.html" class="royal-glow royal-transition group block relative overflow-hidden aspect-[3/4] bg-[#FAF9F6] dark:bg-[#111420] border border-[#E5E0D8] dark:border-vanguard-dark-border hover:border-vanguard-primary hover:-translate-y-2">
+          <img class="absolute inset-0 w-full h-full object-cover opacity-80 group-hover:scale-105 transition-transform duration-1000" src="https://images.unsplash.com/photo-1615663245857-ac93bb7c39e7?auto=format&fit=crop&w=600&q=80" alt="Premium Mice">
+          <div class="absolute inset-0 bg-gradient-to-t from-[#090B10] via-transparent to-transparent"></div>
+          <div class="absolute bottom-6 left-6 right-6">
+            <span class="text-[9px] uppercase tracking-widest text-vanguard-primary font-display font-bold">Category 02</span>
+            <h3 class="font-display font-bold text-xl text-[#F3EFE0] mt-1">Chuột Quý Tộc</h3>
+          </div>
+        </a>
+
+        <!-- Category Card 3 -->
+        <a href="../Product%20List%20Page/code.html" class="royal-glow royal-transition group block relative overflow-hidden aspect-[3/4] bg-[#FAF9F6] dark:bg-[#111420] border border-[#E5E0D8] dark:border-vanguard-dark-border hover:border-vanguard-primary hover:-translate-y-2">
+          <img class="absolute inset-0 w-full h-full object-cover opacity-80 group-hover:scale-105 transition-transform duration-1000" src="https://images.unsplash.com/photo-1546435770-a3e426bf472b?auto=format&fit=crop&w=600&q=80" alt="Audiophile Audio">
+          <div class="absolute inset-0 bg-gradient-to-t from-[#090B10] via-transparent to-transparent"></div>
+          <div class="absolute bottom-6 left-6 right-6">
+            <span class="text-[9px] uppercase tracking-widest text-vanguard-primary font-display font-bold">Category 03</span>
+            <h3 class="font-display font-bold text-xl text-[#F3EFE0] mt-1">Tai Nghe Hi-End</h3>
+          </div>
+        </a>
+
+        <!-- Category Card 4 -->
+        <a href="../Product%20List%20Page/code.html" class="royal-glow royal-transition group block relative overflow-hidden aspect-[3/4] bg-[#FAF9F6] dark:bg-[#111420] border border-[#E5E0D8] dark:border-vanguard-dark-border hover:border-vanguard-primary hover:-translate-y-2">
+          <img class="absolute inset-0 w-full h-full object-cover opacity-80 group-hover:scale-105 transition-transform duration-1000" src="https://images.unsplash.com/photo-1603481588273-2f908a9a7a1b?auto=format&fit=crop&w=600&q=80" alt="Luxury Setup">
+          <div class="absolute inset-0 bg-gradient-to-t from-[#090B10] via-transparent to-transparent"></div>
+          <div class="absolute bottom-6 left-6 right-6">
+            <span class="text-[9px] uppercase tracking-widest text-vanguard-primary font-display font-bold">Category 04</span>
+            <h3 class="font-display font-bold text-xl text-[#F3EFE0] mt-1">Thiết Lập Không Gian</h3>
+          </div>
+        </a>
+      </div>
+    </section>
+
+    <!-- Bespoke Customization Builder Banner -->
+    <section class="py-12 px-6 max-w-7xl mx-auto">
+      <div class="border border-vanguard-primary/40 rounded-sm p-8 md:p-16 grid md:grid-cols-12 gap-12 items-center bg-[#111420] text-[#F3EFE0] relative overflow-hidden shadow-2xl">
+        <div class="absolute -top-40 -left-40 w-96 h-96 bg-vanguard-primary/5 rounded-full blur-[100px]"></div>
+        
+        <div class="md:col-span-8 space-y-6">
+          <span class="px-3 py-1 text-[10px] font-bold font-display uppercase tracking-widest bg-vanguard-primary text-[#090B10] rounded-sm">Bespoke Atelier</span>
+          <h2 class="font-display font-bold text-3xl md:text-5xl tracking-wide leading-tight">Chương Trình Đo Ni Đóng Giày Cho Góc Máy Của Bạn</h2>
+          <p class="text-vanguard-dark-textMuted max-w-xl font-light text-base">
+            Lựa chọn gỗ nguyên khối sồi đỏ, đá cẩm thạch trắng Carrara hoặc các tấm đồng thau khắc hoa văn hoàng gia phục hưng để chế tác nên chiếc bàn phím chỉ thuộc về duy nhất bản thân bạn.
+          </p>
+          <a href="#" class="gold-shimmer inline-flex items-center gap-2 px-8 py-4 bg-vanguard-primary text-[#090B10] hover:bg-vanguard-secondary font-display uppercase tracking-widest text-xs font-bold rounded-sm transition-all hover:scale-[1.03] royal-transition">
+            Khởi tạo bản vẽ <span class="material-symbols-outlined text-sm">architecture</span>
+          </a>
+        </div>
+        <div class="md:col-span-4 relative flex justify-center">
+          <span class="material-symbols-outlined text-[10rem] text-vanguard-primary/30 animate-pulse">workspace_premium</span>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Footer -->
+  <footer class="border-t border-[#E5E0D8] dark:border-vanguard-dark-border bg-[#FAF9F6] dark:bg-[#0B0D15] transition-colors py-16 px-6 text-xs text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted font-light">
+    <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-8">
+      <div class="space-y-2">
+        <p class="font-display font-semibold text-sm tracking-widest text-[#1C1F26] dark:text-[#F3EFE0]">&copy; 2026 VANGUARD ELITE. ALL RIGHTS RESERVED.</p>
+        <p class="text-[10px]">Trải nghiệm thương mại điện tử và dịch vụ chế tác thiết bị Hi-end cao cấp dành riêng cho giới thượng lưu.</p>
+      </div>
+      <div class="flex gap-8 font-display uppercase tracking-widest font-semibold">
+        <a href="#" class="hover:text-vanguard-primary transition-colors">Điều khoản</a>
+        <a href="#" class="hover:text-vanguard-primary transition-colors">Bảo mật</a>
+        <a href="#" class="hover:text-vanguard-primary transition-colors">Hỗ trợ quý tộc</a>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Theme Switcher Logic Script -->
+  <script>
+    const themeToggleBtn = document.getElementById('theme-toggle');
+    const themeIcon = document.getElementById('theme-icon');
+    const htmlEl = document.documentElement;
+
+    if (localStorage.getItem('color-theme') === 'light' || (!('color-theme' in localStorage) && !window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+      htmlEl.classList.remove('dark');
+      themeIcon.textContent = 'dark_mode';
+    } else {
+      htmlEl.classList.add('dark');
+      themeIcon.textContent = 'light_mode';
+    }
+
+    themeToggleBtn.addEventListener('click', function() {
+      if (htmlEl.classList.contains('dark')) {
+        htmlEl.classList.remove('dark');
+        localStorage.setItem('color-theme', 'light');
+        themeIcon.textContent = 'dark_mode';
+      } else {
+        htmlEl.classList.add('dark');
+        localStorage.setItem('color-theme', 'dark');
+        themeIcon.textContent = 'light_mode';
+      }
+    });
+  </script>
+</body>
+</html>

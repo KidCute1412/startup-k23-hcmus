@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html class="dark scroll-smooth" lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+  <title>Vanguard Apex Pro | Royal Custom Keyboard Showcase</title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,400&family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+  <script>
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            vanguard: {
+              dark: {
+                bg: '#090B10', // Imperial Dark Navy
+                surf: '#111420', // Royal Slate Surface
+                surfDim: '#0B0D15',
+                surfBright: '#1A1E30',
+                border: '#2C3248',
+                text: '#F3EFE0', // Warm Alabaster
+                textMuted: '#8E98B0'
+              },
+              light: {
+                bg: '#FAF9F6', // Alabaster White
+                surf: '#FFFFFF',
+                surfDim: '#F3EFE0',
+                surfBright: '#FFFFFF',
+                border: '#E5E0D8',
+                text: '#1C1F26',
+                textMuted: '#7A808F'
+              },
+              primary: '#D4AF37', // Imperial Gold
+              secondary: '#AA7C11', // Royal Amber / Bronze
+              accent: '#800020' // Burgundy Red
+            }
+          },
+          fontFamily: {
+            display: ['Playfair Display', 'serif'],
+            body: ['Plus Jakarta Sans', 'sans-serif']
+          },
+          borderRadius: {
+            'v-sm': '2px',
+            'v-md': '4px',
+            'v-lg': '8px',
+            'v-xl': '0px'
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+    .font-display {
+      font-family: 'Playfair Display', serif;
+    }
+    .glow-gradient {
+      background: linear-gradient(135deg, rgba(212, 175, 55, 0.1) 0%, rgba(170, 124, 17, 0.05) 100%);
+    }
+    .text-gradient {
+      background: linear-gradient(135deg, #D4AF37 0%, #AA7C11 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    
+    /* --- ROYAL ANIMATIONS --- */
+    
+    /* Royal Smooth transitions with premium cubic-bezier */
+    .royal-transition {
+      transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    
+    /* Gold Metallic Shimmer Effect */
+    .gold-shimmer {
+      position: relative;
+      overflow: hidden;
+    }
+    .gold-shimmer::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -150%;
+      width: 50%;
+      height: 100%;
+      background: linear-gradient(
+        to right,
+        rgba(255, 255, 255, 0) 0%,
+        rgba(212, 175, 55, 0.4) 50%,
+        rgba(255, 255, 255, 0) 100%
+      );
+      transform: skewX(-25deg);
+      pointer-events: none;
+    }
+    .gold-shimmer:hover::after {
+      left: 150%;
+      transition: all 1.4s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    /* Soft ambient card glow on hover */
+    .dark .royal-glow:hover {
+      box-shadow: 0 25px 50px -12px rgba(212, 175, 55, 0.25);
+    }
+    .royal-glow:hover {
+      box-shadow: 0 25px 50px -12px rgba(170, 124, 17, 0.15);
+    }
+  </style>
+</head>
+<body class="bg-[#FAF9F6] dark:bg-[#090B10] text-[#1C1F26] dark:text-[#F3EFE0] transition-colors duration-300 min-h-screen flex flex-col">
+
+  <!-- Header/Navigation -->
+  <header class="sticky top-0 z-50 bg-[#FAF9F6]/90 dark:bg-[#090B10]/95 backdrop-blur-md border-b border-[#E5E0D8] dark:border-vanguard-dark-border transition-colors duration-300">
+    <div class="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between py-4">
+      <!-- Logo -->
+      <a href="../Front%20Page/code.html" class="flex items-center gap-2 group">
+        <span class="w-8 h-8 rounded-sm bg-gradient-to-tr from-vanguard-primary to-vanguard-secondary flex items-center justify-center text-[#090B10] font-bold font-display shadow-md">V</span>
+        <span class="font-display font-semibold text-xl tracking-wider text-[#1C1F26] dark:text-[#F3EFE0] transition-all">VANGUARD <span class="text-vanguard-primary font-light">ELITE</span></span>
+      </a>
+
+      <!-- Menu Items -->
+      <nav class="hidden md:flex items-center gap-10 font-display text-xs uppercase tracking-widest font-semibold">
+        <a href="../Front%20Page/code.html" class="text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted hover:text-vanguard-light-text dark:hover:text-vanguard-dark-text transition-colors pb-1">Trang Chủ</a>
+        <a href="../Product%20List%20Page/code.html" class="text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted hover:text-vanguard-light-text dark:hover:text-vanguard-dark-text transition-colors pb-1">Sản Phẩm</a>
+        <a href="#" class="text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted hover:text-vanguard-light-text dark:hover:text-vanguard-dark-text transition-colors pb-1">Atelier (Custom)</a>
+        <a href="#" class="text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted hover:text-vanguard-light-text dark:hover:text-vanguard-dark-text transition-colors pb-1">Thuê Thượng Lưu</a>
+      </nav>
+
+      <!-- Right controls -->
+      <div class="flex items-center gap-4">
+        <!-- Dark/Light Theme Switcher -->
+        <button id="theme-toggle" class="p-2 rounded-full hover:bg-slate-200 dark:hover:bg-vanguard-dark-surfBright transition-colors text-[#1C1F26] dark:text-[#F3EFE0]" aria-label="Toggle dark mode">
+          <span id="theme-icon" class="material-symbols-outlined block">light_mode</span>
+        </button>
+
+        <!-- Cart Icon -->
+        <a href="#" class="p-2 rounded-full hover:bg-slate-200 dark:hover:bg-vanguard-dark-surfBright transition-colors relative text-[#1C1F26] dark:text-[#F3EFE0]">
+          <span class="material-symbols-outlined">shopping_bag</span>
+          <span class="absolute top-1 right-1 w-2.5 h-2.5 rounded-full bg-vanguard-primary border border-white dark:border-[#090B10]"></span>
+        </a>
+
+        <!-- Menu mobile button -->
+        <button class="md:hidden p-2 text-[#1C1F26] dark:text-[#F3EFE0]">
+          <span class="material-symbols-outlined">menu</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Showcase Section -->
+  <main class="flex-grow max-w-7xl w-full mx-auto px-6 py-10">
+    <!-- Breadcrumbs -->
+    <nav class="flex text-xs uppercase tracking-widest text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted gap-2 mb-8 font-display">
+      <a href="../Front%20Page/code.html" class="hover:underline">Home</a>
+      <span>/</span>
+      <a href="../Product%20List%20Page/code.html" class="hover:underline">Bản Chế Tác</a>
+      <span>/</span>
+      <span class="text-vanguard-primary font-semibold">Vanguard Apex Pro</span>
+    </nav>
+
+    <div class="grid lg:grid-cols-12 gap-16">
+      <!-- Product visual presentation -->
+      <div class="lg:col-span-6 space-y-6">
+        <!-- Image Container -->
+        <div class="royal-glow royal-transition w-full aspect-[4/3] rounded-sm border border-vanguard-primary/40 bg-white dark:bg-[#111420] p-3 shadow-2xl relative overflow-hidden">
+          <div class="gold-shimmer w-full h-full">
+            <img class="w-full h-full object-cover rounded-sm" src="https://images.unsplash.com/photo-1618384887929-16ec33fab9ef?auto=format&fit=crop&w=800&q=80" alt="Vanguard Apex Pro Detail">
+          </div>
+        </div>
+
+        <!-- Thumbnails -->
+        <div class="grid grid-cols-4 gap-4">
+          <div class="aspect-square bg-white dark:bg-[#111420] rounded-sm border-2 border-vanguard-primary overflow-hidden p-1 cursor-pointer">
+            <img class="w-full h-full object-cover rounded-sm" src="https://images.unsplash.com/photo-1618384887929-16ec33fab9ef?auto=format&fit=crop&w=200&q=80" alt="Thumb 1">
+          </div>
+          <div class="aspect-square bg-white dark:bg-[#111420] rounded-sm border border-[#E5E0D8] dark:border-vanguard-dark-border overflow-hidden p-1 cursor-pointer hover:border-vanguard-primary transition-colors">
+            <img class="w-full h-full object-cover rounded-sm" src="https://images.unsplash.com/photo-1595225476474-87563907a212?auto=format&fit=crop&w=200&q=80" alt="Thumb 2">
+          </div>
+          <div class="aspect-square bg-white dark:bg-[#111420] rounded-sm border border-[#E5E0D8] dark:border-vanguard-dark-border overflow-hidden p-1 cursor-pointer hover:border-vanguard-primary transition-colors">
+            <img class="w-full h-full object-cover rounded-sm" src="https://images.unsplash.com/photo-1632292224971-0d45778bd364?auto=format&fit=crop&w=200&q=80" alt="Thumb 3">
+          </div>
+          <div class="aspect-square bg-white dark:bg-[#111420] rounded-sm border border-[#E5E0D8] dark:border-vanguard-dark-border overflow-hidden p-1 cursor-pointer hover:border-vanguard-primary transition-colors">
+            <img class="w-full h-full object-cover rounded-sm" src="https://images.unsplash.com/photo-1603481588273-2f908a9a7a1b?auto=format&fit=crop&w=200&q=80" alt="Thumb 4">
+          </div>
+        </div>
+      </div>
+
+      <!-- Product Meta/Customizer Panel -->
+      <div class="lg:col-span-6 space-y-8">
+        <!-- Title and Rating -->
+        <div class="space-y-4">
+          <span class="px-3 py-1 text-[10px] font-bold font-display uppercase tracking-widest bg-vanguard-primary text-[#090B10] rounded-sm">Masterpiece Series</span>
+          <h1 class="font-display font-bold text-3xl md:text-5xl leading-tight">Vanguard Apex Pro</h1>
+          
+          <div class="flex items-center gap-4 text-xs uppercase tracking-widest text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted font-display">
+            <div class="flex items-center text-vanguard-primary">
+              <span class="material-symbols-outlined text-base fill-current">star</span>
+              <span class="material-symbols-outlined text-base fill-current">star</span>
+              <span class="material-symbols-outlined text-base fill-current">star</span>
+              <span class="material-symbols-outlined text-base fill-current">star</span>
+              <span class="material-symbols-outlined text-base fill-current">star</span>
+              <span class="font-bold ml-2 text-[#1C1F26] dark:text-[#F3EFE0]">5.0</span>
+            </div>
+            <span>|</span>
+            <span>120 lượt kiểm định</span>
+          </div>
+        </div>
+
+        <!-- Pricing -->
+        <div class="p-6 bg-slate-100 dark:bg-[#111420] rounded-sm border border-[#E5E0D8] dark:border-vanguard-dark-border flex items-center justify-between shadow-sm">
+          <div>
+            <span class="text-[10px] uppercase tracking-widest text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted font-display">Giá Trị Sở Hữu</span>
+            <p class="text-3xl font-display font-bold text-vanguard-primary mt-1">6,500,000đ</p>
+          </div>
+          <div class="text-right">
+            <span class="text-[10px] uppercase tracking-widest text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted font-display">Đăng Ký Trải Nghiệm</span>
+            <p class="text-xl font-display font-semibold text-vanguard-secondary mt-1">65,000đ/ngày</p>
+          </div>
+        </div>
+
+        <!-- Interactive Customizer options -->
+        <div class="space-y-6">
+          <!-- Switch Selection -->
+          <div class="space-y-3">
+            <label class="font-display font-semibold text-xs uppercase tracking-wider text-vanguard-primary">1. Lựa chọn chất liệu vỏ case:</label>
+            <div class="grid grid-cols-3 gap-4">
+              <button class="royal-transition p-4 text-left border-2 border-vanguard-primary bg-vanguard-primary/5 rounded-sm space-y-1 hover:border-vanguard-primary">
+                <p class="text-xs font-bold font-display text-vanguard-primary">Swiss Walnut</p>
+                <p class="text-[10px] text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted">Gỗ óc chó Thượng hạng</p>
+              </button>
+              <button class="royal-transition p-4 text-left border border-[#E5E0D8] dark:border-vanguard-dark-border rounded-sm space-y-1 hover:border-vanguard-primary">
+                <p class="text-xs font-bold font-display">Carrara Marble</p>
+                <p class="text-[10px] text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted">Đá cẩm thạch trắng Ý</p>
+              </button>
+              <button class="royal-transition p-4 text-left border border-[#E5E0D8] dark:border-vanguard-dark-border rounded-sm space-y-1 hover:border-vanguard-primary">
+                <p class="text-xs font-bold font-display">Polished Brass</p>
+                <p class="text-[10px] text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted">Đồng thau đánh bóng</p>
+              </button>
+            </div>
+          </div>
+
+          <!-- Color options keycaps -->
+          <div class="space-y-3">
+            <label class="font-display font-semibold text-xs uppercase tracking-wider text-vanguard-primary">2. Đá quý đính kèm:</label>
+            <div class="flex items-center gap-4">
+              <button class="w-8 h-8 rounded-full border-2 border-vanguard-primary bg-amber-700 flex items-center justify-center" aria-label="Amber gem">
+                <span class="w-4 h-4 bg-vanguard-primary rounded-full"></span>
+              </button>
+              <button class="w-8 h-8 rounded-full border border-[#E5E0D8] dark:border-vanguard-dark-border bg-red-800" aria-label="Ruby gem"></button>
+              <button class="w-8 h-8 rounded-full border border-[#E5E0D8] dark:border-vanguard-dark-border bg-emerald-800" aria-label="Emerald gem"></button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Call to Actions -->
+        <div class="flex gap-4 pt-4">
+          <button class="gold-shimmer flex-grow py-4 bg-gradient-to-r from-vanguard-primary to-vanguard-secondary text-[#090B10] font-display uppercase tracking-widest text-xs font-bold rounded-sm shadow-lg transition-all hover:scale-[1.02] royal-transition">
+            Yêu cầu chế tác (Order Now)
+          </button>
+          <button class="royal-transition px-6 py-4 bg-transparent hover:bg-[#111420] border border-vanguard-primary text-vanguard-primary font-display font-bold rounded-sm" aria-label="Add to wishlist">
+            <span class="material-symbols-outlined block">favorite</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Specifications Details Table -->
+    <section class="py-16 mt-16 border-t border-[#E5E0D8] dark:border-vanguard-dark-border">
+      <h2 class="font-display font-bold text-2xl uppercase tracking-wider mb-8">Hồ Sơ Chế Tác</h2>
+      <div class="overflow-hidden border border-[#E5E0D8] dark:border-vanguard-dark-border rounded-sm">
+        <table class="w-full text-left border-collapse text-sm">
+          <tbody>
+            <tr class="bg-slate-100 dark:bg-[#0B0D15] border-b border-[#E5E0D8] dark:border-vanguard-dark-border">
+              <td class="p-5 font-semibold font-display w-1/3 uppercase tracking-wider text-xs">Vật liệu lõi</td>
+              <td class="p-5 text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted">Tấm đồng thau nguyên khối dày 3mm mạ vàng 18K</td>
+            </tr>
+            <tr class="border-b border-[#E5E0D8] dark:border-vanguard-dark-border">
+              <td class="p-5 font-semibold font-display uppercase tracking-wider text-xs">Loại Gỗ vỏ</td>
+              <td class="p-5 text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted">瑞士胡桃木 Swiss Walnut, sấy khô tự nhiên 24 tháng</td>
+            </tr>
+            <tr class="bg-slate-100 dark:bg-[#0B0D15] border-b border-[#E5E0D8] dark:border-vanguard-dark-border">
+              <td class="p-5 font-semibold font-display uppercase tracking-wider text-xs">Phương thức đấu nối</td>
+              <td class="p-5 text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted">Cáp Type-C bọc dù dệt thủ công kim chỉ vàng</td>
+            </tr>
+            <tr class="border-b border-[#E5E0D8] dark:border-vanguard-dark-border">
+              <td class="p-5 font-semibold font-display uppercase tracking-wider text-xs">Đệm lót tiêu âm</td>
+              <td class="p-5 text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted">Da thuộc cao cấp từ miền Nam nước Pháp</td>
+            </tr>
+            <tr>
+              <td class="p-5 font-semibold font-display uppercase tracking-wider text-xs">Nghệ nhân thực hiện</td>
+              <td class="p-5 text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted">Atelier Master Craftsman (Chứng nhận độc bản kèm chữ ký khắc laser)</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <!-- Footer -->
+  <footer class="border-t border-[#E5E0D8] dark:border-vanguard-dark-border bg-[#FAF9F6] dark:bg-[#0B0D15] transition-colors py-16 px-6 text-xs text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted font-light">
+    <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-8">
+      <div class="space-y-2">
+        <p class="font-display font-semibold text-sm tracking-widest text-[#1C1F26] dark:text-[#F3EFE0]">&copy; 2026 VANGUARD ELITE. ALL RIGHTS RESERVED.</p>
+        <p class="text-[10px]">Trải nghiệm thương mại điện tử và dịch vụ chế tác thiết bị Hi-end cao cấp dành riêng cho giới thượng lưu.</p>
+      </div>
+      <div class="flex gap-8 font-display uppercase tracking-widest font-semibold">
+        <a href="#" class="hover:text-vanguard-primary transition-colors">Điều khoản</a>
+        <a href="#" class="hover:text-vanguard-primary transition-colors">Bảo mật</a>
+        <a href="#" class="hover:text-vanguard-primary transition-colors">Hỗ trợ quý tộc</a>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Theme Switcher Logic Script -->
+  <script>
+    const themeToggleBtn = document.getElementById('theme-toggle');
+    const themeIcon = document.getElementById('theme-icon');
+    const htmlEl = document.documentElement;
+
+    if (localStorage.getItem('color-theme') === 'light' || (!('color-theme' in localStorage) && !window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+      htmlEl.classList.remove('dark');
+      themeIcon.textContent = 'dark_mode';
+    } else {
+      htmlEl.classList.add('dark');
+      themeIcon.textContent = 'light_mode';
+    }
+
+    themeToggleBtn.addEventListener('click', function() {
+      if (htmlEl.classList.contains('dark')) {
+        htmlEl.classList.remove('dark');
+        localStorage.setItem('color-theme', 'light');
+        themeIcon.textContent = 'dark_mode';
+      } else {
+        htmlEl.classList.add('dark');
+        localStorage.setItem('color-theme', 'dark');
+        themeIcon.textContent = 'light_mode';
+      }
+    });
+  </script>
+</body>
+</html>

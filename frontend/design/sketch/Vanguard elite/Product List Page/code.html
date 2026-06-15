@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html class="dark scroll-smooth" lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+  <title>Vanguard Elite | High-End Product Catalog (Royal Edition)</title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,400&family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+  <script>
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            vanguard: {
+              dark: {
+                bg: '#090B10', // Imperial Dark Navy
+                surf: '#111420', // Royal Slate Surface
+                surfDim: '#0B0D15',
+                surfBright: '#1A1E30',
+                border: '#2C3248',
+                text: '#F3EFE0', // Warm Alabaster
+                textMuted: '#8E98B0'
+              },
+              light: {
+                bg: '#FAF9F6', // Alabaster White
+                surf: '#FFFFFF',
+                surfDim: '#F3EFE0',
+                surfBright: '#FFFFFF',
+                border: '#E5E0D8',
+                text: '#1C1F26',
+                textMuted: '#7A808F'
+              },
+              primary: '#D4AF37', // Imperial Gold
+              secondary: '#AA7C11', // Royal Amber / Bronze
+              accent: '#800020' // Burgundy Red
+            }
+          },
+          fontFamily: {
+            display: ['Playfair Display', 'serif'],
+            body: ['Plus Jakarta Sans', 'sans-serif']
+          },
+          borderRadius: {
+            'v-sm': '2px',
+            'v-md': '4px',
+            'v-lg': '8px',
+            'v-xl': '0px'
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+    .font-display {
+      font-family: 'Playfair Display', serif;
+    }
+    .glow-gradient {
+      background: linear-gradient(135deg, rgba(212, 175, 55, 0.1) 0%, rgba(170, 124, 17, 0.05) 100%);
+    }
+    .text-gradient {
+      background: linear-gradient(135deg, #D4AF37 0%, #AA7C11 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    
+    /* --- ROYAL ANIMATIONS --- */
+    
+    /* Royal Smooth transitions with premium cubic-bezier */
+    .royal-transition {
+      transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    
+    /* Gold Metallic Shimmer Effect */
+    .gold-shimmer {
+      position: relative;
+      overflow: hidden;
+    }
+    .gold-shimmer::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -150%;
+      width: 50%;
+      height: 100%;
+      background: linear-gradient(
+        to right,
+        rgba(255, 255, 255, 0) 0%,
+        rgba(212, 175, 55, 0.4) 50%,
+        rgba(255, 255, 255, 0) 100%
+      );
+      transform: skewX(-25deg);
+      pointer-events: none;
+    }
+    .gold-shimmer:hover::after {
+      left: 150%;
+      transition: all 1.4s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    /* Soft ambient card glow on hover */
+    .dark .royal-glow:hover {
+      box-shadow: 0 25px 50px -12px rgba(212, 175, 55, 0.25);
+    }
+    .royal-glow:hover {
+      box-shadow: 0 25px 50px -12px rgba(170, 124, 17, 0.15);
+    }
+  </style>
+</head>
+<body class="bg-[#FAF9F6] dark:bg-[#090B10] text-[#1C1F26] dark:text-[#F3EFE0] transition-colors duration-300 min-h-screen flex flex-col">
+
+  <!-- Header/Navigation -->
+  <header class="sticky top-0 z-50 bg-[#FAF9F6]/90 dark:bg-[#090B10]/95 backdrop-blur-md border-b border-[#E5E0D8] dark:border-vanguard-dark-border transition-colors duration-300">
+    <div class="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between py-4">
+      <!-- Logo -->
+      <a href="../Front%20Page/code.html" class="flex items-center gap-2 group">
+        <span class="w-8 h-8 rounded-sm bg-gradient-to-tr from-vanguard-primary to-vanguard-secondary flex items-center justify-center text-[#090B10] font-bold font-display shadow-md">V</span>
+        <span class="font-display font-semibold text-xl tracking-wider text-[#1C1F26] dark:text-[#F3EFE0] transition-all">VANGUARD <span class="text-vanguard-primary font-light">ELITE</span></span>
+      </a>
+
+      <!-- Menu Items -->
+      <nav class="hidden md:flex items-center gap-10 font-display text-xs uppercase tracking-widest font-semibold">
+        <a href="../Front%20Page/code.html" class="text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted hover:text-vanguard-light-text dark:hover:text-vanguard-dark-text transition-colors pb-1">Trang Chủ</a>
+        <a href="./code.html" class="text-vanguard-primary border-b border-vanguard-primary pb-1">Sản Phẩm</a>
+        <a href="#" class="text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted hover:text-vanguard-light-text dark:hover:text-vanguard-dark-text transition-colors pb-1">Atelier (Custom)</a>
+        <a href="#" class="text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted hover:text-vanguard-light-text dark:hover:text-vanguard-dark-text transition-colors pb-1">Thuê Thượng Lưu</a>
+      </nav>
+
+      <!-- Right controls -->
+      <div class="flex items-center gap-4">
+        <!-- Dark/Light Theme Switcher -->
+        <button id="theme-toggle" class="p-2 rounded-full hover:bg-slate-200 dark:hover:bg-vanguard-dark-surfBright transition-colors text-[#1C1F26] dark:text-[#F3EFE0]" aria-label="Toggle dark mode">
+          <span id="theme-icon" class="material-symbols-outlined block">light_mode</span>
+        </button>
+
+        <!-- Cart Icon -->
+        <a href="#" class="p-2 rounded-full hover:bg-slate-200 dark:hover:bg-vanguard-dark-surfBright transition-colors relative text-[#1C1F26] dark:text-[#F3EFE0]">
+          <span class="material-symbols-outlined">shopping_bag</span>
+          <span class="absolute top-1 right-1 w-2.5 h-2.5 rounded-full bg-vanguard-primary border border-white dark:border-[#090B10]"></span>
+        </a>
+
+        <!-- Menu mobile button -->
+        <button class="md:hidden p-2 text-[#1C1F26] dark:text-[#F3EFE0]">
+          <span class="material-symbols-outlined">menu</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Title banner -->
+  <div class="py-12 bg-slate-100 dark:bg-[#0B0D15] border-b border-[#E5E0D8] dark:border-vanguard-dark-border">
+    <div class="max-w-7xl mx-auto px-6">
+      <span class="text-xs uppercase tracking-widest text-vanguard-primary font-semibold font-display">Elite Catalog</span>
+      <h1 class="font-display font-bold text-3xl md:text-5xl mt-2">Bảo Vật Atelier</h1>
+      <p class="text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted mt-2">Lựa chọn những kiệt tác công nghệ chế tác giới hạn.</p>
+    </div>
+  </div>
+
+  <!-- Content section -->
+  <main class="flex-grow max-w-7xl w-full mx-auto px-6 py-12 grid md:grid-cols-4 gap-12">
+    <!-- Filters Sidebar -->
+    <aside class="md:col-span-1 space-y-8">
+      <div class="bg-white dark:bg-[#111420] p-6 rounded-sm border border-[#E5E0D8] dark:border-vanguard-dark-border space-y-6">
+        <div>
+          <h2 class="font-display font-bold text-base uppercase tracking-widest mb-4 flex items-center justify-between">
+            Bộ Lọc
+            <span class="material-symbols-outlined text-sm text-vanguard-primary">filter_alt</span>
+          </h2>
+          <hr class="border-[#E5E0D8] dark:border-vanguard-dark-border">
+        </div>
+
+        <!-- Categories -->
+        <div class="space-y-3">
+          <h3 class="font-display font-semibold text-xs uppercase tracking-wider">Danh Mục</h3>
+          <div class="space-y-2 text-sm text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted">
+            <label class="flex items-center gap-2 hover:text-vanguard-light-text dark:hover:text-vanguard-dark-text cursor-pointer">
+              <input type="checkbox" checked class="rounded-sm border-[#E5E0D8] dark:border-vanguard-dark-border bg-transparent text-vanguard-primary focus:ring-vanguard-primary">
+              Tất Cả
+            </label>
+            <label class="flex items-center gap-2 hover:text-vanguard-light-text dark:hover:text-vanguard-dark-text cursor-pointer">
+              <input type="checkbox" class="rounded-sm border-[#E5E0D8] dark:border-vanguard-dark-border bg-transparent text-vanguard-primary focus:ring-vanguard-primary">
+              Bàn Phím Chế Tác
+            </label>
+            <label class="flex items-center gap-2 hover:text-vanguard-light-text dark:hover:text-vanguard-dark-text cursor-pointer">
+              <input type="checkbox" class="rounded-sm border-[#E5E0D8] dark:border-vanguard-dark-border bg-transparent text-vanguard-primary focus:ring-vanguard-primary">
+              Chuột Thượng Lưu
+            </label>
+            <label class="flex items-center gap-2 hover:text-vanguard-light-text dark:hover:text-vanguard-dark-text cursor-pointer">
+              <input type="checkbox" class="rounded-sm border-[#E5E0D8] dark:border-vanguard-dark-border bg-transparent text-vanguard-primary focus:ring-vanguard-primary">
+              Âm Thanh Hi-End
+            </label>
+          </div>
+        </div>
+
+        <!-- Options -->
+        <div class="space-y-3">
+          <h3 class="font-display font-semibold text-xs uppercase tracking-wider">Cấp Độ Chế Tác</h3>
+          <div class="space-y-2 text-sm text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted">
+            <label class="flex items-center gap-2 cursor-pointer">
+              <input type="radio" name="custom-opt" checked class="border-[#E5E0D8] dark:border-vanguard-dark-border bg-transparent text-vanguard-primary focus:ring-vanguard-primary">
+              Bản Sẵn Có (Pre-built)
+            </label>
+            <label class="flex items-center gap-2 cursor-pointer">
+              <input type="radio" name="custom-opt" class="border-[#E5E0D8] dark:border-vanguard-dark-border bg-transparent text-vanguard-primary focus:ring-vanguard-primary">
+              Đo Ni Chế Tác (Bespoke)
+            </label>
+            <label class="flex items-center gap-2 cursor-pointer">
+              <input type="radio" name="custom-opt" class="border-[#E5E0D8] dark:border-vanguard-dark-border bg-transparent text-vanguard-primary focus:ring-vanguard-primary">
+              Bộ Sưu Tập Giới Hạn
+            </label>
+          </div>
+        </div>
+
+        <!-- Price range -->
+        <div class="space-y-3">
+          <h3 class="font-display font-semibold text-xs uppercase tracking-wider">Ngân Sách (VNĐ)</h3>
+          <input type="range" min="1000000" max="100000000" value="50000000" class="w-full accent-vanguard-primary bg-slate-200 dark:bg-vanguard-dark-surfBright appearance-none h-1 cursor-pointer">
+          <div class="flex items-center justify-between text-xs text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted">
+            <span>1M VNĐ</span>
+            <span>100M VNĐ</span>
+          </div>
+        </div>
+
+        <button class="gold-shimmer w-full py-3 bg-gradient-to-r from-vanguard-primary to-vanguard-secondary text-[#090B10] font-display uppercase tracking-widest text-xs font-bold rounded-sm shadow transition-all hover:scale-[1.02] royal-transition">
+          Áp Dụng
+        </button>
+      </div>
+    </aside>
+
+    <!-- Product Grid Panel -->
+    <section class="md:col-span-3 space-y-8">
+      <!-- Grid controls -->
+      <div class="flex items-center justify-between bg-white dark:bg-[#111420] p-4 border border-[#E5E0D8] dark:border-vanguard-dark-border rounded-sm">
+        <span class="text-xs uppercase tracking-widest text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted">Hiển thị 6 tuyệt phẩm</span>
+        
+        <div class="flex items-center gap-2">
+          <label for="sort-select" class="text-xs uppercase tracking-widest text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted">Sắp xếp:</label>
+          <select id="sort-select" class="bg-transparent border-[#E5E0D8] dark:border-vanguard-dark-border text-xs uppercase tracking-widest rounded-sm p-1.5 focus:border-vanguard-primary focus:ring-vanguard-primary text-vanguard-light-text dark:text-vanguard-dark-text">
+            <option>Mặc định</option>
+            <option>Giá trị tăng dần</option>
+            <option>Giá trị giảm dần</option>
+            <option>Đánh giá hoàng gia</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Products Grid -->
+      <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-8">
+        
+        <!-- Product 1 -->
+        <div class="royal-glow royal-transition bg-white dark:bg-[#111420] border border-[#E5E0D8] dark:border-vanguard-dark-border rounded-sm overflow-hidden shadow hover:-translate-y-2">
+          <div class="gold-shimmer aspect-video relative overflow-hidden bg-[#FAF9F6] dark:bg-[#1C1F26] border-b border-[#E5E0D8] dark:border-vanguard-dark-border">
+            <span class="absolute top-2 left-2 px-2 py-0.5 text-[9px] font-display font-bold uppercase tracking-widest bg-vanguard-primary text-[#090B10] rounded-sm z-10">Bespoke</span>
+            <img class="w-full h-full object-cover" src="https://images.unsplash.com/photo-1618384887929-16ec33fab9ef?auto=format&fit=crop&w=600&q=80" alt="Vanguard Apex Pro">
+          </div>
+          <div class="p-5 space-y-4">
+            <div class="flex justify-between items-start">
+              <div>
+                <a href="../Product%20Detail%20Page/code.html" class="font-display font-bold text-lg hover:text-vanguard-primary transition-colors">Vanguard Apex Pro</a>
+                <p class="text-xs text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted mt-1">Bàn phím cơ gỗ óc chó Thuỵ Sĩ</p>
+              </div>
+              <div class="flex items-center text-vanguard-primary">
+                <span class="material-symbols-outlined text-sm fill-current">star</span>
+                <span class="text-xs font-bold ml-1">5.0</span>
+              </div>
+            </div>
+            <div class="flex items-baseline gap-2">
+              <span class="text-lg font-bold font-display text-vanguard-primary">6,500,000đ</span>
+            </div>
+            <a href="../Product%20Detail%20Page/code.html" class="gold-shimmer block text-center py-2.5 border border-vanguard-primary text-vanguard-primary hover:bg-vanguard-primary hover:text-[#090B10] text-xs font-display uppercase tracking-widest font-bold transition-all royal-transition">
+              Xem Chi Tiết
+            </a>
+          </div>
+        </div>
+
+        <!-- Product 2 -->
+        <div class="royal-glow royal-transition bg-white dark:bg-[#111420] border border-[#E5E0D8] dark:border-vanguard-dark-border rounded-sm overflow-hidden shadow hover:-translate-y-2">
+          <div class="gold-shimmer aspect-video relative overflow-hidden bg-[#FAF9F6] dark:bg-[#1C1F26] border-b border-[#E5E0D8] dark:border-vanguard-dark-border">
+            <span class="absolute top-2 left-2 px-2 py-0.5 text-[9px] font-display font-bold uppercase tracking-widest bg-vanguard-accent text-white rounded-sm z-10">Royal Tier</span>
+            <img class="w-full h-full object-cover" src="https://images.unsplash.com/photo-1615663245857-ac93bb7c39e7?auto=format&fit=crop&w=600&q=80" alt="Carbon M1">
+          </div>
+          <div class="p-5 space-y-4">
+            <div class="flex justify-between items-start">
+              <div>
+                <a href="../Product%20Detail%20Page/code.html" class="font-display font-bold text-lg hover:text-vanguard-primary transition-colors">Carbon M1 Gold</a>
+                <p class="text-xs text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted mt-1">Chuột mạ vàng 18K siêu nhẹ</p>
+              </div>
+              <div class="flex items-center text-vanguard-primary">
+                <span class="material-symbols-outlined text-sm fill-current">star</span>
+                <span class="text-xs font-bold ml-1">4.9</span>
+              </div>
+            </div>
+            <div class="flex items-baseline gap-2">
+              <span class="text-lg font-bold font-display text-vanguard-primary">12,990,000đ</span>
+            </div>
+            <a href="../Product%20Detail%20Page/code.html" class="gold-shimmer block text-center py-2.5 border border-vanguard-primary text-vanguard-primary hover:bg-vanguard-primary hover:text-[#090B10] text-xs font-display uppercase tracking-widest font-bold transition-all royal-transition">
+              Xem Chi Tiết
+            </a>
+          </div>
+        </div>
+
+        <!-- Product 3 -->
+        <div class="royal-glow royal-transition bg-white dark:bg-[#111420] border border-[#E5E0D8] dark:border-vanguard-dark-border rounded-sm overflow-hidden shadow hover:-translate-y-2">
+          <div class="gold-shimmer aspect-video relative overflow-hidden bg-[#FAF9F6] dark:bg-[#1C1F26] border-b border-[#E5E0D8] dark:border-vanguard-dark-border">
+            <img class="w-full h-full object-cover" src="https://images.unsplash.com/photo-1546435770-a3e426bf472b?auto=format&fit=crop&w=600&q=80" alt="Aether V2">
+          </div>
+          <div class="p-5 space-y-4">
+            <div class="flex justify-between items-start">
+              <div>
+                <a href="../Product%20Detail%20Page/code.html" class="font-display font-bold text-lg hover:text-vanguard-primary transition-colors">Aether Royal V2</a>
+                <p class="text-xs text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted mt-1">Tai nghe tĩnh điện vỏ gỗ</p>
+              </div>
+              <div class="flex items-center text-vanguard-primary">
+                <span class="material-symbols-outlined text-sm fill-current">star</span>
+                <span class="text-xs font-bold ml-1">5.0</span>
+              </div>
+            </div>
+            <div class="flex items-baseline gap-2">
+              <span class="text-lg font-bold font-display text-vanguard-primary">18,500,000đ</span>
+            </div>
+            <a href="../Product%20Detail%20Page/code.html" class="gold-shimmer block text-center py-2.5 border border-vanguard-primary text-vanguard-primary hover:bg-vanguard-primary hover:text-[#090B10] text-xs font-display uppercase tracking-widest font-bold transition-all royal-transition">
+              Xem Chi Tiết
+            </a>
+          </div>
+        </div>
+
+        <!-- Product 4 -->
+        <div class="royal-glow royal-transition bg-white dark:bg-[#111420] border border-[#E5E0D8] dark:border-vanguard-dark-border rounded-sm overflow-hidden shadow hover:-translate-y-2">
+          <div class="gold-shimmer aspect-video relative overflow-hidden bg-[#FAF9F6] dark:bg-[#1C1F26] border-b border-[#E5E0D8] dark:border-vanguard-dark-border">
+            <img class="w-full h-full object-cover" src="https://images.unsplash.com/photo-1595225476474-87563907a212?auto=format&fit=crop&w=600&q=80" alt="Aura Keycaps">
+          </div>
+          <div class="p-5 space-y-4">
+            <div class="flex justify-between items-start">
+              <div>
+                <a href="../Product%20Detail%20Page/code.html" class="font-display font-bold text-lg hover:text-vanguard-primary transition-colors">Imperial Keycaps</a>
+                <p class="text-xs text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted mt-1">Bộ keycap đồng thau & xà cừ</p>
+              </div>
+              <div class="flex items-center text-vanguard-primary">
+                <span class="material-symbols-outlined text-sm fill-current">star</span>
+                <span class="text-xs font-bold ml-1">4.8</span>
+              </div>
+            </div>
+            <div class="flex items-baseline gap-2">
+              <span class="text-lg font-bold font-display text-vanguard-primary">3,200,000đ</span>
+            </div>
+            <a href="../Product%20Detail%20Page/code.html" class="gold-shimmer block text-center py-2.5 border border-vanguard-primary text-vanguard-primary hover:bg-vanguard-primary hover:text-[#090B10] text-xs font-display uppercase tracking-widest font-bold transition-all royal-transition">
+              Xem Chi Tiết
+            </a>
+          </div>
+        </div>
+
+        <!-- Product 5 -->
+        <div class="royal-glow royal-transition bg-white dark:bg-[#111420] border border-[#E5E0D8] dark:border-vanguard-dark-border rounded-sm overflow-hidden shadow hover:-translate-y-2">
+          <div class="gold-shimmer aspect-video relative overflow-hidden bg-[#FAF9F6] dark:bg-[#1C1F26] border-b border-[#E5E0D8] dark:border-vanguard-dark-border">
+            <img class="w-full h-full object-cover" src="https://images.unsplash.com/photo-1632292224971-0d45778bd364?auto=format&fit=crop&w=600&q=80" alt="Deskmat Shift">
+          </div>
+          <div class="p-5 space-y-4">
+            <div class="flex justify-between items-start">
+              <div>
+                <a href="../Product%20Detail%20Page/code.html" class="font-display font-bold text-lg hover:text-vanguard-primary transition-colors">Artisan Silk Deskmat</a>
+                <p class="text-xs text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted mt-1">Thảm trải bàn tơ tằm dệt tay</p>
+              </div>
+              <div class="flex items-center text-vanguard-primary">
+                <span class="material-symbols-outlined text-sm fill-current">star</span>
+                <span class="text-xs font-bold ml-1">4.9</span>
+              </div>
+            </div>
+            <div class="flex items-baseline gap-2">
+              <span class="text-lg font-bold font-display text-vanguard-primary">2,500,000đ</span>
+            </div>
+            <a href="../Product%20Detail%20Page/code.html" class="gold-shimmer block text-center py-2.5 border border-vanguard-primary text-vanguard-primary hover:bg-vanguard-primary hover:text-[#090B10] text-xs font-display uppercase tracking-widest font-bold transition-all royal-transition">
+              Xem Chi Tiết
+            </a>
+          </div>
+        </div>
+
+        <!-- Product 6 -->
+        <div class="royal-glow royal-transition bg-white dark:bg-[#111420] border border-[#E5E0D8] dark:border-vanguard-dark-border rounded-sm overflow-hidden shadow hover:-translate-y-2">
+          <div class="gold-shimmer aspect-video relative overflow-hidden bg-[#FAF9F6] dark:bg-[#1C1F26] border-b border-[#E5E0D8] dark:border-vanguard-dark-border">
+            <span class="absolute top-2 left-2 px-2 py-0.5 text-[9px] font-display font-bold uppercase tracking-widest bg-vanguard-accent text-white rounded-sm z-10">Limited 10/10</span>
+            <img class="w-full h-full object-cover" src="https://images.unsplash.com/photo-1587202372775-e229f172b9d7?auto=format&fit=crop&w=600&q=80" alt="Overdrive Rig">
+          </div>
+          <div class="p-5 space-y-4">
+            <div class="flex justify-between items-start">
+              <div>
+                <a href="../Product%20Detail%20Page/code.html" class="font-display font-bold text-lg hover:text-vanguard-primary transition-colors">Vanguard Sovereign Rig</a>
+                <p class="text-xs text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted mt-1">Hệ thống PC nước vỏ đồng thau nguyên khối</p>
+              </div>
+              <div class="flex items-center text-vanguard-primary">
+                <span class="material-symbols-outlined text-sm fill-current">star</span>
+                <span class="text-xs font-bold ml-1">5.0</span>
+              </div>
+            </div>
+            <div class="flex items-baseline gap-2">
+              <span class="text-lg font-bold font-display text-vanguard-primary">150,000,000đ</span>
+            </div>
+            <a href="../Product%20Detail%20Page/code.html" class="gold-shimmer block text-center py-2.5 border border-vanguard-primary text-vanguard-primary hover:bg-vanguard-primary hover:text-[#090B10] text-xs font-display uppercase tracking-widest font-bold transition-all royal-transition">
+              Xem Chi Tiết
+            </a>
+          </div>
+        </div>
+
+      </div>
+    </section>
+  </main>
+
+  <!-- Footer -->
+  <footer class="border-t border-[#E5E0D8] dark:border-vanguard-dark-border bg-[#FAF9F6] dark:bg-[#0B0D15] transition-colors py-16 px-6 text-xs text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted font-light">
+    <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-8">
+      <div class="space-y-2">
+        <p class="font-display font-semibold text-sm tracking-widest text-[#1C1F26] dark:text-[#F3EFE0]">&copy; 2026 VANGUARD ELITE. ALL RIGHTS RESERVED.</p>
+        <p class="text-[10px]">Trải nghiệm thương mại điện tử và dịch vụ chế tác thiết bị Hi-end cao cấp dành riêng cho giới thượng lưu.</p>
+      </div>
+      <div class="flex gap-8 font-display uppercase tracking-widest font-semibold">
+        <a href="#" class="hover:text-vanguard-primary transition-colors">Điều khoản</a>
+        <a href="#" class="hover:text-vanguard-primary transition-colors">Bảo mật</a>
+        <a href="#" class="hover:text-vanguard-primary transition-colors">Hỗ trợ quý tộc</a>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Theme Switcher Logic Script -->
+  <script>
+    const themeToggleBtn = document.getElementById('theme-toggle');
+    const themeIcon = document.getElementById('theme-icon');
+    const htmlEl = document.documentElement;
+
+    if (localStorage.getItem('color-theme') === 'light' || (!('color-theme' in localStorage) && !window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+      htmlEl.classList.remove('dark');
+      themeIcon.textContent = 'dark_mode';
+    } else {
+      htmlEl.classList.add('dark');
+      themeIcon.textContent = 'light_mode';
+    }
+
+    themeToggleBtn.addEventListener('click', function() {
+      if (htmlEl.classList.contains('dark')) {
+        htmlEl.classList.remove('dark');
+        localStorage.setItem('color-theme', 'light');
+        themeIcon.textContent = 'dark_mode';
+      } else {
+        htmlEl.classList.add('dark');
+        localStorage.setItem('color-theme', 'dark');
+        themeIcon.textContent = 'light_mode';
+      }
+    });
+  </script>
+</body>
+</html>
