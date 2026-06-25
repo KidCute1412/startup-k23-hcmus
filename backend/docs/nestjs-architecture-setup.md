@@ -73,6 +73,7 @@ backend/
 ## 🛠️ 2. Step-by-Step Initial Setup Guide
 
 ### Step 2.1: Initialize NestJS inside the `backend` folder
+
 If the `backend` folder is already initialized or empty, you can run the NestJS CLI inside it:
 
 ```bash
@@ -101,11 +102,53 @@ npm i -D @types/passport-jwt @types/bcrypt
 ```
 
 ### Step 2.3: Initialize Prisma Database Client
+
 Run this to create the Prisma schema file:
+
 ```bash
 npx prisma init
 ```
+
 This creates a `prisma/schema.prisma` file. You can configure your PostgreSQL connection string in the generated `.env` file.
+
+### Step 2.4: Apply Prisma schema and seed the database
+
+Before running the commands below, make sure your `DATABASE_URL` is set in the project's `.env` and your database server is running.
+
+Run the following commands to generate the Prisma client, apply the schema to the database, and seed initial data from `prisma/seed.ts`:
+
+```bash
+# Generate the Prisma client (required after editing schema.prisma)
+npx prisma generate
+
+# Create and apply a migration (development):
+npx prisma migrate dev --name init
+
+# Alternatively, push the schema directly (no migration history, use for quick dev setups):
+npx prisma db push
+
+# Run the TypeScript seed script directly (requires ts-node installed)
+npx ts-node prisma/seed.ts
+
+# Optional: open Prisma Studio to inspect seeded data
+npx prisma studio
+```
+
+If you prefer to run the seed step through an npm script, add a script to `package.json` such as:
+
+```json
+"scripts": {
+  "prisma:seed": "ts-node prisma/seed.ts"
+}
+```
+
+Then run:
+
+```bash
+npm run prisma:seed
+```
+
+Note: If your seed file is compiled JavaScript (for example, `dist/prisma/seed.js`), run it with `node` instead of `ts-node`.
 
 ---
 
@@ -114,6 +157,7 @@ This creates a `prisma/schema.prisma` file. You can configure your PostgreSQL co
 ### 3.1 Standardizing API Responses
 
 According to `api.md` and the acceptance criteria in `tasks-week1.md`, error responses must be standardized as:
+
 ```json
 {
   "success": false,
@@ -125,10 +169,17 @@ According to `api.md` and the acceptance criteria in `tasks-week1.md`, error res
 ```
 
 #### A. Global Error Filter (`src/common/filters/http-exception.filter.ts`)
+
 Create this file to intercept all HTTP Exceptions (e.g., `BadRequestException`, `UnauthorizedException`) and format them correctly:
 
 ```typescript
-import { ExceptionFilter, Catch, ArgumentsHost, HttpException, HttpStatus } from '@nestjs/common';
+import {
+  ExceptionFilter,
+  Catch,
+  ArgumentsHost,
+  HttpException,
+  HttpStatus,
+} from '@nestjs/common';
 import { Response } from 'express';
 
 @Catch()
@@ -136,7 +187,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
   catch(exception: any, host: ArgumentsHost) {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
-    
+
     let status = HttpStatus.INTERNAL_SERVER_ERROR;
     let message = 'Internal server error';
     let errorCode = 'INTERNAL_SERVER_ERROR';
@@ -144,15 +195,17 @@ export class HttpExceptionFilter implements ExceptionFilter {
     if (exception instanceof HttpException) {
       status = exception.getStatus();
       const exceptionResponse = exception.getResponse() as any;
-      
-      message = typeof exceptionResponse === 'object' 
-        ? exceptionResponse.message || exception.message 
-        : exceptionResponse;
+
+      message =
+        typeof exceptionResponse === 'object'
+          ? exceptionResponse.message || exception.message
+          : exceptionResponse;
 
       // Map HTTP status to custom error codes if desired, or default to status name
-      errorCode = typeof exceptionResponse === 'object' && exceptionResponse.error
-        ? exceptionResponse.error.toUpperCase().replace(/\s+/g, '_')
-        : HttpStatus[status];
+      errorCode =
+        typeof exceptionResponse === 'object' && exceptionResponse.error
+          ? exceptionResponse.error.toUpperCase().replace(/\s+/g, '_')
+          : HttpStatus[status];
     } else {
       // Log generic errors for server administration
       console.error(exception);
@@ -170,11 +223,18 @@ export class HttpExceptionFilter implements ExceptionFilter {
 ```
 
 #### B. Global Success Transformation Interceptor
+
 To automate wrapping standard successful outcomes inside `{"success": true, "data": ...}`:
 
 Create `src/common/interceptors/transform.interceptor.ts`:
+
 ```typescript
-import { Injectable, NestInterceptor, ExecutionContext, CallHandler } from '@nestjs/common';
+import {
+  Injectable,
+  NestInterceptor,
+  ExecutionContext,
+  CallHandler,
+} from '@nestjs/common';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 
@@ -184,8 +244,14 @@ export interface ApiResponse<T> {
 }
 
 @Injectable()
-export class TransformInterceptor<T> implements NestInterceptor<T, ApiResponse<T>> {
-  intercept(context: ExecutionContext, next: CallHandler): Observable<ApiResponse<T>> {
+export class TransformInterceptor<T> implements NestInterceptor<
+  T,
+  ApiResponse<T>
+> {
+  intercept(
+    context: ExecutionContext,
+    next: CallHandler,
+  ): Observable<ApiResponse<T>> {
     return next.handle().pipe(
       map((data) => ({
         success: true,
@@ -199,6 +265,7 @@ export class TransformInterceptor<T> implements NestInterceptor<T, ApiResponse<T
 ---
 
 ### 3.2 Prisma Service Config (`src/prisma/prisma.service.ts`)
+
 Wrap Prisma Client inside a NestJS service to handle connections cleanly:
 
 ```typescript
@@ -206,7 +273,10 @@ import { Injectable, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
 import { PrismaClient } from '@prisma/client';
 
 @Injectable()
-export class PrismaService extends PrismaClient implements OnModuleInit, OnModuleDestroy {
+export class PrismaService
+  extends PrismaClient
+  implements OnModuleInit, OnModuleDestroy
+{
   async onModuleInit() {
     await this.$connect();
   }
@@ -220,6 +290,7 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
 ---
 
 ### 3.3 Registering Filters, Pipes, and Interceptors Globally (`src/main.ts`)
+
 Update your `main.ts` file to wire these utilities:
 
 ```typescript
@@ -241,8 +312,8 @@ async function bootstrap() {
   // Wire Validation globally for body payload validations (Task 2 DTO validates)
   app.useGlobalPipes(
     new ValidationPipe({
-      whitelist: true,            // Strips out non-dto defined properties
-      transform: true,            // Converts types automatically (e.g. string to number in pagination)
+      whitelist: true, // Strips out non-dto defined properties
+      transform: true, // Converts types automatically (e.g. string to number in pagination)
       forbidNonWhitelisted: true,
     }),
   );
@@ -261,10 +332,15 @@ bootstrap();
 ---
 
 ### 3.4 Setting up Passport JWT Auth Guard (`src/common/guards/jwt-auth.guard.ts`)
+
 Create a custom JWT Guard extending the standard passport-jwt strategy:
 
 ```typescript
-import { Injectable, ExecutionContext, UnauthorizedException } from '@nestjs/common';
+import {
+  Injectable,
+  ExecutionContext,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 
 @Injectable()
@@ -276,7 +352,10 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
 
   handleRequest(err, user, info) {
     if (err || !user) {
-      throw err || new UnauthorizedException('Invalid or expired authentication token');
+      throw (
+        err ||
+        new UnauthorizedException('Invalid or expired authentication token')
+      );
     }
     return user;
   }
@@ -284,6 +363,7 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
 ```
 
 Then, design your `JwtStrategy` under `src/modules/auth/strategies/jwt.strategy.ts` extracting the bearer token:
+
 ```typescript
 import { Injectable } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';

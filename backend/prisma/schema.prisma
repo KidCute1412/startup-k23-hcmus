@@ -1,8 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Get a free hosted Postgres database in seconds: `npx create-db`
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -11,13 +6,691 @@ datasource db {
   provider = "postgresql"
 }
 
+// =============================================================
+// ENUMS
+// =============================================================
+
+enum UserRole {
+  renter
+  lender
+  admin
+
+  @@map("user_role")
+}
+
+enum KycStatusType {
+  pending
+  verified
+  rejected
+
+  @@map("kyc_status_type")
+}
+
+enum GearStatusType {
+  available
+  rented
+  maintenance
+  delisted
+
+  @@map("gear_status_type")
+}
+
+enum ApprovalStatusType {
+  pending
+  approved
+  rejected
+
+  @@map("approval_status_type")
+}
+
+enum WalletStatusType {
+  active
+  suspended
+  expired
+  closed
+
+  @@map("wallet_status_type")
+}
+
+enum CreditTxType {
+  limit_granted
+  deposit_lock
+  deposit_release
+  rental_fee_charge
+  compensation
+  debt_repay
+  limit_adjustment
+
+  @@map("credit_tx_type")
+}
+
+enum CreditDirection {
+  in
+  out
+
+  @@map("credit_direction")
+}
+
+enum CreditRefType {
+  rental_order
+  credit_usage
+  dispute
+
+  @@map("credit_ref_type")
+}
+
+enum CreditTxStatus {
+  pending
+  success
+  failed
+  reversed
+
+  @@map("credit_tx_status")
+}
+
+enum OrderStatusType {
+  pending_confirm
+  confirmed
+  delivering
+  active
+  returning
+  completed
+  cancelled
+  disputed
+
+  @@map("order_status_type")
+}
+
+enum DepositTypeEnum {
+  traditional
+  credit_line
+
+  @@map("deposit_type_enum")
+}
+
+enum EscrowSourceType {
+  renter_cash
+  credit_line
+
+  @@map("escrow_source_type")
+}
+
+enum EscrowStatusType {
+  locked
+  pending_return
+  released
+  compensated
+
+  @@map("escrow_status_type")
+}
+
+enum PaymentTypeEnum {
+  rental_fee
+  deposit
+  credit_fee
+  refund
+  compensation
+  withdrawal
+
+  @@map("payment_type_enum")
+}
+
+enum PaymentMethodEnum {
+  momo
+  vnpay
+  bank_transfer
+  credit_line
+
+  @@map("payment_method_enum")
+}
+
+enum PaymentStatusEnum {
+  pending
+  success
+  failed
+  refunded
+
+  @@map("payment_status_enum")
+}
+
+enum MessageTypeEnum {
+  text
+  image
+  video
+
+  @@map("message_type_enum")
+}
+
+enum ProofStageEnum {
+  pre_shipment
+  post_received
+  pre_return
+  post_returned
+
+  @@map("proof_stage_enum")
+}
+
+enum ProofTypeEnum {
+  image
+  video
+
+  @@map("proof_type_enum")
+}
+
+enum DisputeStatusType {
+  open
+  under_review
+  resolved
+  closed
+
+  @@map("dispute_status_type")
+}
+
+enum ReporterRoleEnum {
+  renter
+  lender
+
+  @@map("reporter_role_enum")
+}
+
+enum DisputeReasonEnum {
+  device_not_as_described
+  device_faulty
+  missing_accessory
+  device_damaged
+  component_replaced
+  other
+
+  @@map("dispute_reason_enum")
+}
+
+enum ResolutionTypeEnum {
+  refund
+  deposit_deduct
+  compensation
+  account_ban
+  no_action
+
+  @@map("resolution_type_enum")
+}
+
+enum ReviewTargetType {
+  gear
+  lender
+  renter
+
+  @@map("review_target_type")
+}
+
+enum MembershipStatusType {
+  active
+  expired
+  cancelled
+
+  @@map("membership_status_type")
+}
+
+enum LenderWalletStatus {
+  active
+  suspended
+  closed
+
+  @@map("lender_wallet_status")
+}
+
+enum LenderTxType {
+  income
+  withdrawal
+  compensation
+  fee_deduction
+
+  @@map("lender_tx_type")
+}
+
+// =============================================================
+// MODELS
+// =============================================================
+
 model User {
-  id                  String   @id @default(uuid())
-  email               String   @unique
-  passwordHash        String   @map("password_hash")
-  hashedRefreshToken  String?  @map("hashed_refresh_token")
-  createdAt           DateTime @default(now()) @map("created_at")
-  updatedAt           DateTime @updatedAt @map("updated_at")
+  id            String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  email         String        @unique @db.VarChar(255)
+  phone         String?       @db.VarChar(20)
+  password_hash String        @db.VarChar(255)
+  full_name     String?       @db.VarChar(255)
+  cccd          String?       @db.VarChar(20)
+  avatar_url    String?
+  bio           String?
+  rating        Float         @default(0)
+  address       String?
+  total_reviews Int           @default(0)
+  role          UserRole      @default(renter)
+  kyc_status    KycStatusType @default(pending)
+  is_active     Boolean       @default(true)
+  created_at    DateTime      @default(now())
+  updated_at    DateTime      @default(now()) @updatedAt
+
+  // Relations
+  gears_as_lender          Gear[]                  @relation("LenderGears")
+  gears_approved           Gear[]                  @relation("ApprovedGears")
+  gear_price_history       GearPriceHistory[]
+  mutux_wallet             MutuxWallet?
+  lender_wallet            LenderWallet?
+  rental_orders_as_renter  RentalOrder[]           @relation("RenterOrders")
+  rental_orders_as_lender  RentalOrder[]           @relation("LenderOrders")
+  payments                 Payment[]
+  rental_proofs            RentalProof[]
+  conversations_as_renter  Conversation[]          @relation("RenterConversations")
+  conversations_as_lender  Conversation[]          @relation("LenderConversations")
+  messages                 Message[]
+  disputes_reported        Dispute[]               @relation("ReportedDisputes")
+  disputes_resolved        Dispute[]               @relation("ResolvedDisputes")
+  dispute_evidences        DisputeEvidence[]
+  reviews_given            Review[]                @relation("ReviewerReviews")
+  reviews_received         Review[]                @relation("TargetReviews")
+  notifications            Notification[]
+  user_memberships         UserMembership[]
+  bank_accounts            BankAccount[]
 
   @@map("users")
+}
+
+model GearCategory {
+  id          String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  parent_id   String?        @db.Uuid
+  name        String         @db.VarChar(255)
+  slug        String         @unique @db.VarChar(255)
+  description String?
+
+  parent      GearCategory?  @relation("CategoryChildren", fields: [parent_id], references: [id], onDelete: SetNull)
+  children    GearCategory[] @relation("CategoryChildren")
+  gears       Gear[]
+
+  @@map("gear_categories")
+}
+
+model Gear {
+  id                 String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  lender_id          String             @db.Uuid
+  category_id        String?            @db.Uuid
+  name               String             @db.VarChar(255)
+  brand              String?            @db.VarChar(100)
+  model              String?            @db.VarChar(100)
+  serial_number      String?            @db.VarChar(100)
+  description        String?
+  specifications     Json?
+  value              Decimal?           @db.Decimal(15, 2)
+  rent_price_per_day Decimal            @db.Decimal(15, 2)
+  status             GearStatusType     @default(available)
+  approval_status    ApprovalStatusType @default(pending)
+  approved_by        String?            @db.Uuid
+  approved_at        DateTime?
+  created_at         DateTime           @default(now())
+  updated_at         DateTime           @default(now()) @updatedAt
+
+  lender             User               @relation("LenderGears", fields: [lender_id], references: [id], onDelete: Cascade)
+  category           GearCategory?      @relation(fields: [category_id], references: [id], onDelete: SetNull)
+  approver           User?              @relation("ApprovedGears", fields: [approved_by], references: [id], onDelete: SetNull)
+  price_history      GearPriceHistory[]
+  media              GearMedia[]
+  rental_orders      RentalOrder[]
+
+  @@index([lender_id], name: "idx_gears_lender_id")
+  @@index([category_id], name: "idx_gears_category_id")
+  @@index([status], name: "idx_gears_status")
+  @@map("gears")
+}
+
+model GearPriceHistory {
+  id                     String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  gear_id                String   @db.Uuid
+  changed_by             String   @db.Uuid
+  old_rent_price_per_day Decimal  @db.Decimal(15, 2)
+  new_rent_price_per_day Decimal  @db.Decimal(15, 2)
+  reason                 String?
+  changed_at             DateTime @default(now())
+
+  gear    Gear @relation(fields: [gear_id], references: [id], onDelete: Cascade)
+  changer User @relation(fields: [changed_by], references: [id], onDelete: Cascade)
+
+  @@map("gear_price_history")
+}
+
+model GearMedia {
+  id         String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  gear_id    String  @db.Uuid
+  type       String  @db.VarChar(20)
+  url        String
+  is_primary Boolean @default(false)
+  sort_order Int     @default(0)
+
+  gear Gear @relation(fields: [gear_id], references: [id], onDelete: Cascade)
+
+  @@map("gear_media")
+}
+
+model CreditPartner {
+  id            String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name          String        @db.VarChar(255)
+  api_endpoint  String?
+  is_active     Boolean       @default(true)
+
+  mutux_wallets MutuxWallet[]
+
+  @@map("credit_partners")
+}
+
+model MutuxWallet {
+  id                String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id           String           @unique @db.Uuid
+  credit_partner_id String?          @db.Uuid
+  total_limit       Decimal          @default(0) @db.Decimal(15, 2)
+  display_balance   Decimal          @default(0) @db.Decimal(15, 2)
+  locked_balance    Decimal          @default(0) @db.Decimal(15, 2)
+  outstanding_debt  Decimal          @default(0) @db.Decimal(15, 2)
+  status            WalletStatusType @default(active)
+  partner_ref_id    String?          @db.VarChar(255)
+  approved_at       DateTime?
+  expired_at        DateTime?
+  updated_at        DateTime         @default(now()) @updatedAt
+
+  user           User              @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  credit_partner CreditPartner?    @relation(fields: [credit_partner_id], references: [id], onDelete: SetNull)
+  transactions   CreditTransaction[]
+
+  @@map("mutux_wallets")
+}
+
+model CreditTransaction {
+  id                     String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  mutux_wallet_id        String         @db.Uuid
+  type                   CreditTxType
+  amount                 Decimal        @db.Decimal(15, 2)
+  display_balance_before Decimal        @db.Decimal(15, 2)
+  display_balance_after  Decimal        @db.Decimal(15, 2)
+  direction              CreditDirection
+  ref_type               CreditRefType?
+  ref_id                 String?        @db.Uuid
+  note                   String?
+  status                 CreditTxStatus @default(pending)
+  created_at             DateTime       @default(now())
+
+  mutux_wallet MutuxWallet @relation(fields: [mutux_wallet_id], references: [id], onDelete: Cascade)
+
+  @@index([mutux_wallet_id], name: "idx_credit_tx_wallet")
+  @@map("credit_transactions")
+}
+
+model RentalOrder {
+  id                         String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  order_code                 String          @unique @db.VarChar(50)
+  renter_id                  String          @db.Uuid
+  gear_id                    String          @db.Uuid
+  lender_id                  String          @db.Uuid
+  start_date                 DateTime        @db.Date
+  end_date                   DateTime        @db.Date
+  duration_days              Int
+  snapped_rent_price_per_day Decimal         @db.Decimal(15, 2)
+  rental_fee                 Decimal         @db.Decimal(15, 2)
+  deposit_amount             Decimal         @db.Decimal(15, 2)
+  deposit_type               DepositTypeEnum @default(traditional)
+  status                     OrderStatusType @default(pending_confirm)
+  shipping_address           String?
+  shipping_name              String?         @db.VarChar(255)
+  shipping_phone             String?         @db.VarChar(20)
+  lender_shipped_at          DateTime?
+  renter_received_at         DateTime?
+  renter_returned_at         DateTime?
+  lender_received_back_at    DateTime?
+  created_at                 DateTime        @default(now())
+  updated_at                 DateTime        @default(now()) @updatedAt
+
+  renter                    User                   @relation("RenterOrders", fields: [renter_id], references: [id], onDelete: Restrict)
+  gear                      Gear                   @relation(fields: [gear_id], references: [id], onDelete: Restrict)
+  lender                    User                   @relation("LenderOrders", fields: [lender_id], references: [id], onDelete: Restrict)
+  escrow_wallet             EscrowWallet?
+  payments                  Payment[]
+  rental_proofs             RentalProof[]
+  conversations             Conversation[]
+  disputes                  Dispute[]
+  reviews                   Review[]
+  lender_wallet_transactions LenderWalletTransaction[]
+
+  @@index([renter_id], name: "idx_rental_orders_renter")
+  @@index([lender_id], name: "idx_rental_orders_lender")
+  @@index([gear_id], name: "idx_rental_orders_gear")
+  @@index([status], name: "idx_rental_orders_status")
+  @@map("rental_orders")
+}
+
+model EscrowWallet {
+  id              String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  rental_order_id String           @unique @db.Uuid
+  amount          Decimal          @db.Decimal(15, 2)
+  source          EscrowSourceType
+  status          EscrowStatusType @default(locked)
+  locked_at       DateTime         @default(now())
+  released_at     DateTime?
+  updated_at      DateTime         @default(now()) @updatedAt
+
+  rental_order RentalOrder @relation(fields: [rental_order_id], references: [id], onDelete: Cascade)
+
+  @@map("escrow_wallets")
+}
+
+model Payment {
+  id              String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  rental_order_id String?           @db.Uuid
+  user_id         String            @db.Uuid
+  type            PaymentTypeEnum
+  amount          Decimal           @db.Decimal(15, 2)
+  method          PaymentMethodEnum
+  status          PaymentStatusEnum @default(pending)
+  transaction_ref String?           @db.VarChar(255)
+  paid_at         DateTime?
+  created_at      DateTime          @default(now())
+
+  rental_order RentalOrder? @relation(fields: [rental_order_id], references: [id], onDelete: SetNull)
+  user         User         @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([rental_order_id], name: "idx_payments_order")
+  @@map("payments")
+}
+
+model RentalProof {
+  id              String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  rental_order_id String         @db.Uuid
+  uploaded_by     String         @db.Uuid
+  stage           ProofStageEnum
+  proof_type      ProofTypeEnum
+  file_url        String
+  note            String?
+  uploaded_at     DateTime       @default(now())
+
+  rental_order RentalOrder @relation(fields: [rental_order_id], references: [id], onDelete: Cascade)
+  uploader     User        @relation(fields: [uploaded_by], references: [id], onDelete: Cascade)
+
+  @@map("rental_proofs")
+}
+
+model Conversation {
+  id              String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  rental_order_id String?   @db.Uuid
+  renter_id       String    @db.Uuid
+  lender_id       String    @db.Uuid
+  last_message_at DateTime?
+  created_at      DateTime  @default(now())
+
+  rental_order RentalOrder? @relation(fields: [rental_order_id], references: [id], onDelete: SetNull)
+  renter       User         @relation("RenterConversations", fields: [renter_id], references: [id], onDelete: Cascade)
+  lender       User         @relation("LenderConversations", fields: [lender_id], references: [id], onDelete: Cascade)
+  messages     Message[]
+
+  @@map("conversations")
+}
+
+model Message {
+  id              String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  conversation_id String          @db.Uuid
+  sender_id       String          @db.Uuid
+  type            MessageTypeEnum @default(text)
+  content         String?
+  media_url       String?
+  is_deleted      Boolean         @default(false)
+  created_at      DateTime        @default(now())
+
+  conversation Conversation @relation(fields: [conversation_id], references: [id], onDelete: Cascade)
+  sender       User         @relation(fields: [sender_id], references: [id], onDelete: Cascade)
+
+  @@index([conversation_id], name: "idx_messages_conversation")
+  @@map("messages")
+}
+
+model Dispute {
+  id              String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  rental_order_id String             @db.Uuid
+  reported_by     String             @db.Uuid
+  reporter_role   ReporterRoleEnum
+  reason          DisputeReasonEnum
+  description     String?
+  status          DisputeStatusType  @default(open)
+  resolved_by     String?            @db.Uuid
+  resolution_note String?
+  resolution_type ResolutionTypeEnum?
+  deduct_amount   Decimal?           @db.Decimal(15, 2)
+  created_at      DateTime           @default(now())
+  resolved_at     DateTime?
+
+  rental_order RentalOrder       @relation(fields: [rental_order_id], references: [id], onDelete: Cascade)
+  reporter     User              @relation("ReportedDisputes", fields: [reported_by], references: [id], onDelete: Cascade)
+  resolver     User?             @relation("ResolvedDisputes", fields: [resolved_by], references: [id], onDelete: SetNull)
+  evidences    DisputeEvidence[]
+
+  @@map("disputes")
+}
+
+model DisputeEvidence {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  dispute_id  String   @db.Uuid
+  uploaded_by String   @db.Uuid
+  media_type  String   @db.VarChar(20)
+  url         String
+  uploaded_at DateTime @default(now())
+
+  dispute  Dispute @relation(fields: [dispute_id], references: [id], onDelete: Cascade)
+  uploader User    @relation(fields: [uploaded_by], references: [id], onDelete: Cascade)
+
+  @@map("dispute_evidences")
+}
+
+model Review {
+  id              String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  rental_order_id String           @db.Uuid
+  reviewer_id     String           @db.Uuid
+  target_id       String           @db.Uuid
+  target_type     ReviewTargetType
+  rating          Int
+  comment         String?
+  created_at      DateTime         @default(now())
+
+  rental_order RentalOrder @relation(fields: [rental_order_id], references: [id], onDelete: Cascade)
+  reviewer     User        @relation("ReviewerReviews", fields: [reviewer_id], references: [id], onDelete: Cascade)
+  target       User        @relation("TargetReviews", fields: [target_id], references: [id], onDelete: Cascade)
+
+  @@map("reviews")
+}
+
+model Notification {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id    String   @db.Uuid
+  title      String   @db.VarChar(255)
+  body       String?
+  type       String?  @db.VarChar(100)
+  ref_type   String?  @db.VarChar(100)
+  ref_id     String?  @db.Uuid
+  is_read    Boolean  @default(false)
+  created_at DateTime @default(now())
+
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([user_id], name: "idx_notifications_user")
+  @@map("notifications")
+}
+
+model MembershipPlan {
+  id                      String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name                    String   @db.VarChar(255)
+  price                   Decimal  @db.Decimal(15, 2)
+  duration_days           Int
+  rental_discount_rate    Float    @default(0)
+  credit_fee_discount_rate Float   @default(0)
+  priority_access         Boolean  @default(false)
+
+  user_memberships UserMembership[]
+
+  @@map("membership_plans")
+}
+
+model UserMembership {
+  id         String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id    String               @db.Uuid
+  plan_id    String               @db.Uuid
+  start_date DateTime             @db.Date
+  end_date   DateTime             @db.Date
+  status     MembershipStatusType @default(active)
+  created_at DateTime             @default(now())
+
+  user User           @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  plan MembershipPlan @relation(fields: [plan_id], references: [id], onDelete: Restrict)
+
+  @@map("user_memberships")
+}
+
+model LenderWallet {
+  id              String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  lender_id       String             @unique @db.Uuid
+  balance         Decimal            @default(0) @db.Decimal(15, 2)
+  total_withdrawn Decimal            @default(0) @db.Decimal(15, 2)
+  status          LenderWalletStatus @default(active)
+  created_at      DateTime           @default(now())
+  updated_at      DateTime           @default(now()) @updatedAt
+
+  lender       User                    @relation(fields: [lender_id], references: [id], onDelete: Cascade)
+  transactions LenderWalletTransaction[]
+
+  @@map("lender_wallets")
+}
+
+model LenderWalletTransaction {
+  id               String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  lender_wallet_id String       @db.Uuid
+  rental_order_id  String?      @db.Uuid
+  type             LenderTxType
+  amount           Decimal      @db.Decimal(15, 2)
+  balance_before   Decimal      @db.Decimal(15, 2)
+  balance_after    Decimal      @db.Decimal(15, 2)
+  note             String?
+  created_at       DateTime     @default(now())
+
+  lender_wallet LenderWallet @relation(fields: [lender_wallet_id], references: [id], onDelete: Cascade)
+  rental_order  RentalOrder? @relation(fields: [rental_order_id], references: [id], onDelete: SetNull)
+
+  @@index([lender_wallet_id], name: "idx_lender_tx_wallet")
+  @@map("lender_wallet_transactions")
+}
+
+model BankAccount {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id        String   @db.Uuid
+  bank_name      String   @db.VarChar(255)
+  bank_code      String?  @db.VarChar(20)
+  account_number String   @db.VarChar(50)
+  account_holder String   @db.VarChar(255)
+  is_default     Boolean  @default(false)
+  is_verified    Boolean  @default(false)
+  created_at     DateTime @default(now())
+  updated_at     DateTime @default(now()) @updatedAt
+
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@map("bank_accounts")
 }
