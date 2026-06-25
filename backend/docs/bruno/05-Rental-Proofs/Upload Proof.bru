@@ -1,0 +1,20 @@
+meta {
+  name: Upload Proof
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/rental-orders/:id/proofs
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "stage": "pre_shipment",
+    "proofType": "image",
+    "fileUrl": "https://...",
+    "note": "Hộp đầy đủ cáp và keycap"
+  }
+}

@@ -1,0 +1,23 @@
+meta {
+  name: Create Rental Order
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/rental-orders
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "gearId": "uuid",
+    "startDate": "2026-06-15",
+    "endDate": "2026-06-20",
+    "depositType": "credit_line",
+    "shippingAddress": "123 Đường ABC, Quận 1, TP. HCM",
+    "shippingName": "Nguyễn Văn A",
+    "shippingPhone": "0987654321"
+  }
+}

@@ -1,0 +1,21 @@
+meta {
+  name: Submit Review
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/reviews
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "rentalOrderId": "uuid",
+    "targetId": "uuid",
+    "targetType": "gear",
+    "rating": 5,
+    "comment": "Rất tốt"
+  }
+}

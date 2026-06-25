@@ -1,0 +1,25 @@
+meta {
+  name: Submit Dispute
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/disputes
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "rentalOrderId": "uuid",
+    "reason": "device_damaged",
+    "description": "Bàn phím bị nứt góc nhôm",
+    "evidences": [
+      {
+        "mediaType": "image",
+        "url": "https://..."
+      }
+    ]
+  }
+}

@@ -1,0 +1,15 @@
+meta {
+  name: Upload Media
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/media/upload
+  body: multipart-form
+  auth: inherit
+}
+
+body:multipart-form {
+  file: @file()
+}

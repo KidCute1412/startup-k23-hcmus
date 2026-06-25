@@ -1,0 +1,11 @@
+meta {
+  name: Get Gears
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/gears?page=1&limit=10&search=&categoryId=&minPrice=&maxPrice=
+  body: none
+  auth: none
+}

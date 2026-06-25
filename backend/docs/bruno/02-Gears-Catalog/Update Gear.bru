@@ -1,0 +1,18 @@
+meta {
+  name: Update Gear
+  type: http
+  seq: 5
+}
+
+put {
+  url: {{baseUrl}}/gears/:id
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "name": "Bàn phím cơ Keychron Q1 Pro V2",
+    "rentPricePerDay": 85000
+  }
+}

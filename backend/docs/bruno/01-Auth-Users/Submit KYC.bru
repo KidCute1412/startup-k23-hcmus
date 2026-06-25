@@ -1,0 +1,20 @@
+meta {
+  name: Submit KYC
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{baseUrl}}/users/me/kyc
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "cccd": "012345678912",
+    "frontCardUrl": "https://...",
+    "backCardUrl": "https://...",
+    "portraitUrl": "https://..."
+  }
+}

@@ -1,0 +1,11 @@
+meta {
+  name: Get Rental Orders
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/rental-orders?role=renter&status=pending_confirm&page=1&limit=10
+  body: none
+  auth: inherit
+}

@@ -1,0 +1,18 @@
+meta {
+  name: IPN Webhook
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/payments/webhook/:method
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "amount": 500000,
+    "partnerCode": "MOMO"
+  }
+}

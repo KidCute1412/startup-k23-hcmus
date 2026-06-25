@@ -1,0 +1,11 @@
+meta {
+  name: Get Proofs
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/rental-orders/:id/proofs
+  body: none
+  auth: inherit
+}
