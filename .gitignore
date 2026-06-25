@@ -43,3 +43,5 @@ backend/docs/tasks
 # --- Bruno ---
 .bru-state/
 *.user.bru
+
+*.http

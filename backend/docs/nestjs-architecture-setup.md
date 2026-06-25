@@ -129,6 +129,8 @@ npx prisma db push
 
 # Run the TypeScript seed script directly (requires ts-node installed)
 npx ts-node prisma/seed.ts
+# or
+npx prisma db seed
 
 # Optional: open Prisma Studio to inspect seeded data
 npx prisma studio

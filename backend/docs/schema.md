@@ -12,6 +12,7 @@ erDiagram
         string    email
         string    phone
         string    password_hash
+        string    hashed_reset_token 
         string    full_name
         string    cccd
         string    avatar_url

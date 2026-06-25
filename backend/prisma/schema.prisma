@@ -256,6 +256,7 @@ model User {
   email         String        @unique @db.VarChar(255)
   phone         String?       @db.VarChar(20)
   password_hash String        @db.VarChar(255)
+  hashedRefreshToken  String?  @map("hashed_refresh_token")
   full_name     String?       @db.VarChar(255)
   cccd          String?       @db.VarChar(20)
   avatar_url    String?
