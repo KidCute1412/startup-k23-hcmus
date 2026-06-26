@@ -1,0 +1,11 @@
+meta {
+  name: Simulate Topup Success
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{baseUrl}}/wallets/topups/:id/simulate-success
+  body: none
+  auth: inherit
+}

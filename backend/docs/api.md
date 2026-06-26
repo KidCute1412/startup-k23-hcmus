@@ -162,15 +162,52 @@ HTTP Status: `400`, `401`, `403`, `404`, `422`, `500`.
 
 ---
 
-### 3.3 Wallets (2 APIs)
+### 3.3 Wallets (4 APIs)
 
-#### [GET] `/wallets/mutux` (Thông tin Ví trả sau - Renter)
+#### [GET] `/wallets/renter` (Thông tin ví ảo của Renter)
 * **Headers**: `Authorization: Bearer <token>`
-* **Success (200)**: Trả về hạn mức khả dụng (`displayBalance`), hạn mức bị khóa (`lockedBalance`), dư nợ (`outstandingDebt`).
+* **Mô tả**: Trả về số dư ví ảo dùng để thanh toán phí thuê, lock cọc truyền thống và nhận refund trong môi trường demo.
+* **Success (200)**:
+  ```json
+  {
+    "success": true,
+    "data": {
+      "availableBalance": 1500000,
+      "lockedBalance": 500000,
+      "currency": "VND"
+    }
+  }
+  ```
 
-#### [GET] `/wallets/lender` (Thông tin Ví thu nhập & Yêu cầu rút tiền - Lender)
+#### [POST] `/wallets/topups/checkout` (Tạo phiên nạp tiền ví ảo - PayOS mock)
 * **Headers**: `Authorization: Bearer <token>`
-* **Mô tả**: Vừa trả về số dư thu nhập, vừa nhận yêu cầu rút tiền trực tiếp (Lender gửi thông tin ngân hàng trong body mà không cần tạo CRUD tài khoản ngân hàng riêng).
+* **Mô tả**: Tạo top-up intent để nạp tiền vào ví ảo. Với MVP demo, PayOS chỉ được mô phỏng ở mức checkout/callback shape, không xử lý tiền thật.
+* **Body**:
+  ```json
+  {
+    "amount": 500000,
+    "method": "payos"
+  }
+  ```
+* **Success (200)**:
+  ```json
+  {
+    "success": true,
+    "data": {
+      "topupId": "uuid",
+      "checkoutUrl": "http://localhost:3000/mock-payos?topupId=uuid",
+      "status": "pending"
+    }
+  }
+  ```
+
+#### [GET] `/wallets/mutux` (Thông tin Ví trả sau / Credit Line - Renter)
+* **Headers**: `Authorization: Bearer <token>`
+* **Success (200)**: Trả về hạn mức khả dụng (`displayBalance`), hạn mức bị khóa (`lockedBalance`), dư nợ (`outstandingDebt`). Ví này chỉ dùng để bảo đảm cọc khi `depositType = credit_line`.
+
+#### [GET] `/wallets/lender` (Thông tin Ví thu nhập ảo & Yêu cầu rút tiền - Lender)
+* **Headers**: `Authorization: Bearer <token>`
+* **Mô tả**: Trả về số dư thu nhập ảo của lender. Với MVP demo, withdraw chỉ ghi nhận request/trạng thái, không chuyển khoản ngân hàng thật.
 * **Trường hợp Yêu cầu rút tiền (POST `/wallets/lender/withdraw`):**
   - **Body**:
     ```json
@@ -195,7 +232,7 @@ HTTP Status: `400`, `401`, `403`, `404`, `422`, `500`.
     "gearId": "uuid",
     "startDate": "2026-06-15",
     "endDate": "2026-06-20",
-    "depositType": "credit_line", // "credit_line" (Ví Mutux) hoặc "traditional" (Tiền thật)
+    "depositType": "credit_line", // "credit_line" (hạn mức Ví Mutux) hoặc "traditional" (lock từ ví ảo renter)
     "shippingAddress": "123 Đường ABC, Quận 1, TP. HCM",
     "shippingName": "Nguyễn Văn A",
     "shippingPhone": "0987654321"
@@ -233,22 +270,53 @@ HTTP Status: `400`, `401`, `403`, `404`, `422`, `500`.
 
 ---
 
-### 3.6 Payments (2 APIs)
+### 3.6 Payments & Mock Webhook (2 APIs)
 
-#### [POST] `/payments/checkout` (Tạo phiên thanh toán tiền thuê/cọc truyền thống)
-* **Headers**: `Authorization: Bearer <token>`
-* **Body**:
+#### [POST] `/payments/webhook/payos` (Webhook mock nhận kết quả top-up ví ảo - Public API)
+* **Mô tả**: Nhận callback theo shape PayOS để xác nhận top-up ví ảo. Đây là flow demo, không xử lý tiền thật. Webhook/callback hợp lệ sẽ cộng số dư vào `/wallets/renter` và ghi ledger nội bộ.
+* **Auth**: none
+* **Body mẫu**:
   ```json
   {
-    "rentalOrderId": "uuid",
-    "paymentType": "rental_fee", // "rental_fee" hoặc "deposit"
-    "method": "vnpay" // "momo" | "vnpay" | "bank_transfer"
+    "code": "00",
+    "desc": "success",
+    "success": true,
+    "data": {
+      "orderCode": 123456,
+      "amount": 500000,
+      "description": "TOPUP-123456",
+      "reference": "MOCK-PAYOS-REF-001",
+      "paymentLinkId": "mock-payment-link-id",
+      "code": "00",
+      "desc": "Thành công"
+    },
+    "signature": "mock-signature"
   }
   ```
-* **Success (200)**: Trả về `checkoutUrl` để client chuyển hướng người dùng đi thanh toán.
+* **Success (200)**:
+  ```json
+  {
+    "success": true,
+    "message": "Top-up processed"
+  }
+  ```
 
-#### [POST] `/payments/webhook/:method` (Webhook nhận thông báo IPN từ đối tác - Public API)
-* **Success (200)**: Xử lý nội bộ để cập nhật trạng thái đơn hàng (`confirmed` sau khi renter trả đủ tiền thuê/cọc truyền thống), trả phản hồi chuẩn theo đối tác MoMo/VNPay.
+#### [POST] `/wallets/topups/:id/simulate-success` (Local helper để giả lập webhook top-up)
+* **Headers**: `Authorization: Bearer <token>`
+* **Mô tả**: Endpoint tiện ích cho demo/local. Khi gọi sẽ giả lập callback thành công cho top-up pending, cộng số dư ví ảo và đảm bảo idempotency. Không expose endpoint này ở production.
+* **Success (200)**:
+  ```json
+  {
+    "success": true,
+    "data": {
+      "topupId": "uuid",
+      "status": "success",
+      "walletBalance": 1500000
+    }
+  }
+  ```
+
+> Lưu ý: API cũ `POST /payments/checkout` với `rentalOrderId/paymentType` không còn là flow chính cho MVP demo. Order payment được xử lý bằng debit/lock ví nội bộ, không charge gateway trực tiếp.
 
 ---
 

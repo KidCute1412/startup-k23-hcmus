@@ -1,18 +1,29 @@
 meta {
-  name: IPN Webhook
+  name: Mock PayOS Webhook
   type: http
   seq: 2
 }
 
 post {
-  url: {{baseUrl}}/payments/webhook/:method
+  url: {{baseUrl}}/payments/webhook/payos
   body: json
   auth: none
 }
 
 body:json {
   {
-    "amount": 500000,
-    "partnerCode": "MOMO"
+    "code": "00",
+    "desc": "success",
+    "success": true,
+    "data": {
+      "orderCode": 123456,
+      "amount": 500000,
+      "description": "TOPUP-123456",
+      "reference": "MOCK-PAYOS-REF-001",
+      "paymentLinkId": "mock-payment-link-id",
+      "code": "00",
+      "desc": "Thành công"
+    },
+    "signature": "mock-signature"
   }
 }
