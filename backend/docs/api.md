@@ -2,6 +2,10 @@
 
 Tài liệu này đặc tả toàn bộ hệ thống RESTful API được thiết kế tinh gọn (Lean MVP) cho ứng dụng **Mutux** dựa trên thiết kế cơ sở dữ liệu (ERD) và luồng tài chính tối giản.
 
+## Tài liệu liên quan
+
+- [Task 6 – Basic Rental Order APIs Plan](./task-6-rental-order-basic-apis-plan.md): kế hoạch implement chi tiết cho `POST /api/v1/rental-orders` và `GET /api/v1/rental-orders`.
+
 ---
 
 ## 1. Quy chuẩn chung (Global Standards)
