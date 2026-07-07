@@ -1,6 +1,48 @@
-# Rules
-- Write all code comments in English.
-- Ask for clarification if a prompt is unclear.
-- Answer briefly and correctly.
-- Always answer with 'Hi babe!'
-- Must re-check the code you wrote before giving it to the user.
+# Mutux Agent Rules
+
+## Project Context
+- Project name: Mutux, a startup project for renting gaming gear with a NestJS/Prisma backend, Bruno API collection, LaTeX reports, and frontend design sketches.
+- Backend source lives in `backend/src`.
+- Prisma schema lives in `backend/prisma/schema.prisma`.
+- Backend product/API docs live in `backend/docs`.
+- Weekly report material lives in `docs/PA0` through `docs/PA5`.
+- Frontend design sketches live in `frontend/design/sketch`.
+- Local project skills are indexed in `.agents/SKILLS.md` and implemented under `.agents/skills/*/SKILL.md`.
+
+## Communication
+- Answer in the user's language unless they request otherwise.
+- Be concise, but include enough implementation detail for code changes, test results, and known risks.
+- Ask for clarification only when the request cannot be resolved from repo context and a wrong assumption would be risky.
+- Do not force a fixed greeting or informal phrase in every response.
+
+## Skill Routing
+- Check `.agents/SKILLS.md` when a task could involve multiple skills.
+- For backend endpoint/module work, use `backend-api-implementer`.
+- For Prisma schema, migrations, seed, or relation work, use `prisma-data-model-guardian`.
+- For API docs, Bruno, response shape, status code, or route mismatch review, use `api-contract-reviewer`.
+- For rental order lifecycle, proofs, escrow, or order permissions, use `rental-order-workflow-specialist`.
+- For wallet, payment, credit line, mock PayOS, ledger, or idempotency work, use `wallet-payment-flow-specialist`.
+- For admin KYC, gear approval, dispute resolution, or admin-only authorization, use `admin-operations-specialist`.
+- For PA0-PA5 LaTeX reports, use `startup-report-writer`.
+- For product UI, marketplace screens, or design sketch work, use `frontend-ux-designer`.
+
+## Coding Standards
+- Write code comments in English.
+- Follow existing patterns before introducing new abstractions.
+- Prefer typed DTOs and validation over accepting unstructured `any` data.
+- Keep API payload keys in camelCase and URL paths in kebab-case.
+- Keep Prisma model fields and enum values aligned with `backend/prisma/schema.prisma`.
+- Preserve the global response shape produced by `TransformInterceptor` and `HttpExceptionFilter`.
+- Do not bypass authentication/authorization silently; if a guard is intentionally disabled for demo work, call it out.
+
+## Documentation Workflow
+- Keep LaTeX content in the relevant `docs/PA*/sections` files rather than putting large content directly in `main.tex`.
+- Maintain Vietnamese UTF-8 text in reports.
+- Keep bibliography entries in each PA folder's `references.bib`.
+- Avoid generated PDF or build artifact churn unless the task explicitly needs regenerated outputs.
+
+## Review Checklist
+- Re-check edited files before reporting completion.
+- For code changes, run the narrowest meaningful verification and report the exact command.
+- Mention any skipped verification.
+- Preserve unrelated user changes in the worktree.
