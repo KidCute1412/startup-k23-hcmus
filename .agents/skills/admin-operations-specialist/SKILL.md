@@ -10,7 +10,7 @@ description: Implement or review Mutux admin operations such as KYC approval, ge
 - `backend/docs/schema.md`
 - `backend/prisma/schema.prisma`
 - Auth guards/strategies under `backend/src/common/guards` and `backend/src/modules/auth`
-- User, gear, dispute, wallet, and rental order modules
+- User, gear, dispute, wallet, and rental order modules when present; if a module is missing, read the closest established modules such as `auth`, `gears`, `users`, or `categories` plus relevant docs.
 
 ## Workflow
 1. Verify the endpoint is admin-only and cannot be called by renter/lender users.
@@ -20,5 +20,8 @@ description: Implement or review Mutux admin operations such as KYC approval, ge
 5. Avoid irreversible state changes without checking the current state transition is valid.
 
 ## Quality Gates
+- From `backend`, run `npm run lint` after implementation when TypeScript changed. It currently runs with `--fix`, so in review or plan-only work list it as follow-up verification rather than executing it.
+- Run `npm run test` for service/domain authorization or transition logic.
+- Run `npm run test:e2e` when routes, guards, or module wiring changed.
 - Add e2e tests for admin-only access.
 - Include negative cases for non-admin users and invalid current statuses.

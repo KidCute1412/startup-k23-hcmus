@@ -21,5 +21,7 @@ description: Maintain Mutux Prisma schema, relations, enums, mapped table names,
 
 ## Quality Gates
 - Run Prisma validation/generation when schema changes.
-- Run backend tests that touch affected models.
+- From `backend`, run `npm run lint` after implementation when generated/client-facing TypeScript changed. It currently runs with `--fix`, so in review or plan-only work list it as follow-up verification rather than executing it.
+- Run `npm run test` for service/domain logic that touches affected models.
+- Run `npm run test:e2e` when route, guard, or module wiring depends on the model change.
 - For wallet/order schema changes, include at least one workflow-level verification path.

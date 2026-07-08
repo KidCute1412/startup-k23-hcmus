@@ -1,0 +1,81 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+}
+
+html.dark {
+  color-scheme: dark;
+}
+
+body {
+  min-height: 100vh;
+  background: #faf9f6;
+  color: #1c1f26;
+  font-family: var(--font-body), sans-serif;
+}
+
+.dark body {
+  background: #090b10;
+  color: #f3efe0;
+}
+
+::selection {
+  background: rgba(212, 175, 55, 0.32);
+}
+
+@layer components {
+  .text-gradient {
+    background: linear-gradient(135deg, #d4af37 0%, #aa7c11 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .gold-shimmer {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .gold-shimmer::after {
+    content: "";
+    position: absolute;
+    inset-block: 0;
+    left: -150%;
+    width: 50%;
+    background: linear-gradient(
+      to right,
+      rgba(255, 255, 255, 0) 0%,
+      rgba(212, 175, 55, 0.38) 50%,
+      rgba(255, 255, 255, 0) 100%
+    );
+    transform: skewX(-25deg);
+    pointer-events: none;
+  }
+
+  .gold-shimmer:hover::after {
+    left: 150%;
+    transition: left 1.4s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .royal-glow {
+    transition: transform 700ms cubic-bezier(0.16, 1, 0.3, 1),
+      border-color 700ms cubic-bezier(0.16, 1, 0.3, 1),
+      box-shadow 700ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .royal-glow:hover {
+    box-shadow: 0 25px 50px -20px rgba(170, 124, 17, 0.22);
+  }
+
+  .dark .royal-glow:hover {
+    box-shadow: 0 25px 50px -18px rgba(212, 175, 55, 0.28);
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}

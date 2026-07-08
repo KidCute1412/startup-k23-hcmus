@@ -10,7 +10,7 @@ description: Implement or review Mutux wallet and payment flows, including rente
 - `backend/docs/order-lifecycle-payment-design.md`
 - `backend/docs/api.md`
 - `backend/prisma/schema.prisma`
-- Wallet, payment, rental order, and escrow code
+- Wallet, payment, rental order, and escrow code when present; if a module is missing, read the closest established modules such as `auth`, `gears`, `users`, or `categories` plus relevant docs.
 
 ## Workflow
 1. Treat balance updates and transaction records as one atomic business operation.
@@ -21,6 +21,9 @@ description: Implement or review Mutux wallet and payment flows, including rente
 6. Keep demo/mock PayOS behavior explicit and separate from real payment gateway behavior.
 
 ## Quality Gates
+- From `backend`, run `npm run lint` after implementation when TypeScript changed. It currently runs with `--fix`, so in review or plan-only work list it as follow-up verification rather than executing it.
+- Run `npm run test` for service/domain financial logic.
+- Run `npm run test:e2e` when routes, guards, webhooks, or module wiring changed.
 - Add tests for balance-before/balance-after correctness.
 - Include duplicate webhook or repeated simulate-success verification.
 - Include insufficient funds/credit checks where relevant.

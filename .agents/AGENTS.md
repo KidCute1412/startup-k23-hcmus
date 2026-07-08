@@ -1,12 +1,13 @@
 # Mutux Agent Rules
 
 ## Project Context
-- Project name: Mutux, a startup project for renting gaming gear with a NestJS/Prisma backend, Bruno API collection, LaTeX reports, and frontend design sketches.
+- Project name: Mutux, a startup project for renting gaming gear with a NestJS/Prisma backend, Bruno API collection, LaTeX reports, a Next.js frontend app, and frontend design sketches.
 - Backend source lives in `backend/src`.
 - Prisma schema lives in `backend/prisma/schema.prisma`.
 - Backend product/API docs live in `backend/docs`.
 - Weekly report material lives in `docs/PA0` through `docs/PA5`.
-- Frontend design sketches live in `frontend/design/sketch`.
+- Frontend source lives in `frontend/src/app`; frontend design sketches live in `frontend/design/sketch`.
+- `frontend/design/sketch/Vanguard elite` is the default and mandatory frontend design source unless the user explicitly asks for another direction.
 - Local project skills are indexed in `.agents/SKILLS.md` and implemented under `.agents/skills/*/SKILL.md`.
 
 ## Communication
@@ -14,6 +15,12 @@
 - Be concise, but include enough implementation detail for code changes, test results, and known risks.
 - Ask for clarification only when the request cannot be resolved from repo context and a wrong assumption would be risky.
 - Do not force a fixed greeting or informal phrase in every response.
+
+## Mandatory Skill Use
+- Before non-trivial work, classify the task using `.agents/SKILLS.md`.
+- Read the relevant `.agents/skills/*/SKILL.md` before inspecting or editing project files for that task.
+- State which skill or skills are being used in the working update or final response.
+- Combine skills when the task crosses domains; do not rely on only one skill for coupled backend, Prisma, API contract, order, wallet, admin, frontend, or report work.
 
 ## Skill Routing
 - Check `.agents/SKILLS.md` when a task could involve multiple skills.
@@ -24,7 +31,7 @@
 - For wallet, payment, credit line, mock PayOS, ledger, or idempotency work, use `wallet-payment-flow-specialist`.
 - For admin KYC, gear approval, dispute resolution, or admin-only authorization, use `admin-operations-specialist`.
 - For PA0-PA5 LaTeX reports, use `startup-report-writer`.
-- For product UI, marketplace screens, or design sketch work, use `frontend-ux-designer`.
+- For product UI, marketplace screens, Next.js frontend work, or design sketch work, use `frontend-ux-designer` and follow `frontend/design/sketch/Vanguard elite` by default.
 
 ## Coding Standards
 - Write code comments in English.
