@@ -20,6 +20,8 @@ export const metadata: Metadata = {
     "Marketplace thuê bàn phím, chuột, tai nghe và setup gaming hi-end theo phong cách Vanguard Elite.",
 };
 
+import { CartProvider } from "@/features/cart/cart-context";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -28,11 +30,13 @@ export default function RootLayout({
   return (
     <html lang="vi" className="dark scroll-smooth" suppressHydrationWarning>
       <body className={`${display.variable} ${body.variable} font-body`}>
-        <div className="flex min-h-screen flex-col bg-vanguard-light-bg text-vanguard-light-text transition-colors duration-300 dark:bg-vanguard-dark-bg dark:text-vanguard-dark-text">
-          <Header />
-          <main className="flex-1">{children}</main>
-          <Footer />
-        </div>
+        <CartProvider>
+          <div className="flex min-h-screen flex-col bg-vanguard-light-bg text-vanguard-light-text transition-colors duration-300 dark:bg-vanguard-dark-bg dark:text-vanguard-dark-text">
+            <Header />
+            <main className="flex-1">{children}</main>
+            <Footer />
+          </div>
+        </CartProvider>
       </body>
     </html>
   );

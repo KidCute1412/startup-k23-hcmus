@@ -1,17 +1,42 @@
-import { CalendarDays, CheckCircle2, Heart, ShieldCheck, Star } from "lucide-react";
+"use client";
+
+import { CalendarDays, CheckCircle2, Heart, ShieldCheck, Star, ShoppingCart, Zap } from "lucide-react";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
-import { LinkButton } from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/field";
 import { StatRow } from "@/components/ui/stat-row";
 import { formatCurrency } from "@/lib/format";
+import { useCart } from "@/features/cart/cart-context";
 import { availabilityLabel, availabilityTone } from "./availability";
 import type { Gear } from "./types";
+
+function dateOffset(days: number) {
+  const value = new Date();
+  value.setDate(value.getDate() + days);
+  return value.toISOString().slice(0, 10);
+}
 
 type ProductDetailProps = {
   gear: Gear;
 };
 
 export function ProductDetail({ gear }: ProductDetailProps) {
+  const router = useRouter();
+  const { addToCart } = useCart();
+  const [startDate, setStartDate] = useState(dateOffset(1));
+  const [endDate, setEndDate] = useState(dateOffset(3));
+
+  const handleAddToCart = () => {
+    addToCart({ id: `${gear.id}-${startDate}-${endDate}`, gear, startDate, endDate });
+  };
+
+  const handleRentNow = () => {
+    handleAddToCart();
+    router.push("/checkout");
+  };
   return (
     <div className="space-y-8">
       <div className="space-y-4">
@@ -85,14 +110,44 @@ export function ProductDetail({ gear }: ProductDetailProps) {
         </Card>
       </div>
 
+      <Card className="grid gap-4 p-5 sm:grid-cols-2">
+        <label className="grid gap-2 text-sm">
+          <span className="font-display text-xs font-semibold uppercase tracking-wider">
+            Ngày bắt đầu
+          </span>
+          <Input
+            type="date"
+            value={startDate}
+            onChange={(e) => setStartDate(e.target.value)}
+          />
+        </label>
+        <label className="grid gap-2 text-sm">
+          <span className="font-display text-xs font-semibold uppercase tracking-wider">
+            Ngày trả
+          </span>
+          <Input
+            type="date"
+            value={endDate}
+            onChange={(e) => setEndDate(e.target.value)}
+          />
+        </label>
+      </Card>
+
       <div className="flex flex-col gap-3 sm:flex-row">
-        <LinkButton
-          href={`/rentals/new?gearId=${gear.slug}`}
+        <Button
+          onClick={handleAddToCart}
           className="flex-1"
-          icon={<CalendarDays size={15} />}
+          icon={<ShoppingCart size={15} />}
         >
-          Yêu cầu thuê
-        </LinkButton>
+          Thêm vào giỏ
+        </Button>
+        <Button
+          onClick={handleRentNow}
+          className="flex-1 bg-vanguard-secondary hover:bg-vanguard-secondary/90 text-vanguard-dark-bg"
+          icon={<Zap size={15} />}
+        >
+          Thuê ngay
+        </Button>
         <button
           type="button"
           className="inline-flex min-h-11 items-center justify-center rounded-v-sm border border-vanguard-primary px-5 py-3 text-vanguard-primary transition-colors hover:bg-vanguard-primary hover:text-vanguard-dark-bg"

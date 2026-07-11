@@ -1,11 +1,12 @@
 "use client";
 
-import { Menu, ShoppingBag, WalletCards, X } from "lucide-react";
+import { Menu, ShoppingBag, ShoppingCart, WalletCards, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { cn } from "@/lib/cn";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
+import { useCart } from "@/features/cart/cart-context";
 
 const navItems = [
   { href: "/", label: "Trang chủ" },
@@ -17,6 +18,7 @@ const navItems = [
 export function Header() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
+  const { totalItems } = useCart();
 
   return (
     <header className="sticky top-0 z-50 border-b border-vanguard-light-border bg-vanguard-light-bg/90 backdrop-blur-md transition-colors dark:border-vanguard-dark-border dark:bg-vanguard-dark-bg/95">
@@ -66,13 +68,25 @@ export function Header() {
             <WalletCards size={18} />
           </Link>
           <Link
+            href="/cart"
+            className="relative inline-flex size-10 items-center justify-center rounded-full text-vanguard-light-text transition-colors hover:bg-vanguard-light-surfDim dark:text-vanguard-dark-text dark:hover:bg-vanguard-dark-surfBright"
+            aria-label="Giỏ hàng"
+            title="Giỏ hàng"
+          >
+            <ShoppingCart size={18} />
+            {totalItems > 0 && (
+              <span className="absolute -right-1 -top-1 flex size-5 items-center justify-center rounded-full border-2 border-vanguard-light-bg bg-vanguard-primary text-[10px] font-bold text-vanguard-dark-bg dark:border-vanguard-dark-bg">
+                {totalItems}
+              </span>
+            )}
+          </Link>
+          <Link
             href="/orders"
             className="relative inline-flex size-10 items-center justify-center rounded-full text-vanguard-light-text transition-colors hover:bg-vanguard-light-surfDim dark:text-vanguard-dark-text dark:hover:bg-vanguard-dark-surfBright"
             aria-label="Đơn thuê"
             title="Đơn thuê"
           >
             <ShoppingBag size={18} />
-            <span className="absolute right-2 top-2 size-2.5 rounded-full border border-white bg-vanguard-primary dark:border-vanguard-dark-bg" />
           </Link>
           <button
             type="button"

@@ -6,25 +6,17 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input, Textarea } from "@/components/ui/field";
-import type { Gear } from "@/features/catalog/types";
 import { PricingSummary } from "./pricing-summary";
 import type { RentalRequestDraft } from "./types";
+import { useCart, type CartItem } from "@/features/cart/cart-context";
 
 type RentalRequestFormProps = {
-  gear: Gear;
+  items: CartItem[];
 };
 
-function dateOffset(days: number) {
-  const value = new Date();
-  value.setDate(value.getDate() + days);
-  return value.toISOString().slice(0, 10);
-}
-
-export function RentalRequestForm({ gear }: RentalRequestFormProps) {
-  const [draft, setDraft] = useState<RentalRequestDraft>({
-    gearId: gear.id,
-    startDate: dateOffset(1),
-    endDate: dateOffset(3),
+export function RentalRequestForm({ items }: RentalRequestFormProps) {
+  const { clearCart } = useCart();
+  const [draft, setDraft] = useState<Omit<RentalRequestDraft, "gearId" | "startDate" | "endDate">>({
     depositType: "credit-line",
     shippingName: "",
     shippingPhone: "",
@@ -47,7 +39,7 @@ export function RentalRequestForm({ gear }: RentalRequestFormProps) {
           <div>
             <Badge>Rental Draft</Badge>
             <h1 className="mt-3 font-display text-3xl font-bold">
-              Yêu cầu thuê {gear.name}
+              Yêu cầu thuê ({items.length} thiết bị)
             </h1>
           </div>
         </div>
@@ -57,35 +49,9 @@ export function RentalRequestForm({ gear }: RentalRequestFormProps) {
           onSubmit={(event) => {
             event.preventDefault();
             setSubmitted(true);
+            clearCart();
           }}
         >
-          <div className="grid gap-4 sm:grid-cols-2">
-            <label className="grid gap-2 text-sm">
-              <span className="font-display text-xs font-semibold uppercase tracking-wider">
-                Ngày bắt đầu
-              </span>
-              <Input
-                type="date"
-                value={draft.startDate}
-                onChange={(event) =>
-                  setDraft((value) => ({ ...value, startDate: event.target.value }))
-                }
-              />
-            </label>
-            <label className="grid gap-2 text-sm">
-              <span className="font-display text-xs font-semibold uppercase tracking-wider">
-                Ngày trả
-              </span>
-              <Input
-                type="date"
-                value={draft.endDate}
-                onChange={(event) =>
-                  setDraft((value) => ({ ...value, endDate: event.target.value }))
-                }
-              />
-            </label>
-          </div>
-
           <fieldset className="grid gap-3">
             <legend className="font-display text-xs font-semibold uppercase tracking-wider">
               Hình thức cọc
@@ -180,9 +146,7 @@ export function RentalRequestForm({ gear }: RentalRequestFormProps) {
       </Card>
 
       <PricingSummary
-        gear={gear}
-        startDate={draft.startDate}
-        endDate={draft.endDate}
+        items={items}
         depositType={draft.depositType}
       />
     </div>
