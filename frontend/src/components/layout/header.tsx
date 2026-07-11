@@ -25,11 +25,11 @@ export function Header() {
       <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-4 py-4 sm:px-6">
         <Link href="/" className="flex items-center gap-2">
           <span className="flex size-8 items-center justify-center rounded-v-sm bg-gold-metal font-display font-bold text-vanguard-dark-bg shadow-md">
-            V
+            M
           </span>
           <span className="font-display text-lg font-semibold tracking-wider sm:text-xl">
-            VANGUARD{" "}
-            <span className="font-light text-vanguard-primary">ELITE</span>
+            Mutux{" "}
+            <span className="font-light text-vanguard-primary">GEAR</span>
           </span>
         </Link>
 

@@ -6,7 +6,7 @@ export function Footer() {
       <div className="mx-auto flex max-w-7xl flex-col gap-8 md:flex-row md:items-center md:justify-between">
         <div className="space-y-2">
           <p className="font-display text-sm font-semibold tracking-widest text-vanguard-light-text dark:text-vanguard-dark-text">
-            © 2026 VANGUARD ELITE.
+            © 2026 Mutux.
           </p>
           <p className="max-w-2xl text-[11px] leading-5">
             Trải nghiệm thuê thiết bị gaming hi-end, kiểm định minh bạch và ví
