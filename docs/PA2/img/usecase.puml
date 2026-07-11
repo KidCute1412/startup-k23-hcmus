@@ -1,0 +1,52 @@
+@startuml
+left to right direction
+skinparam packageStyle rectangle
+skinparam monochrome false
+skinparam shadowing false
+skinparam defaultFontName Arial
+
+actor "Người thuê (Renter)" as R
+actor "Người cho thuê (Lender)" as L
+actor "Quản trị viên (Admin)" as A
+
+rectangle "Hệ thống Mutux" {
+  usecase "Đăng ký & Đăng nhập" as UC1
+  usecase "Xác thực danh tính (KYC)" as UC2
+  usecase "Quản lý Ví (Nạp/Rút)" as UC3
+  
+  usecase "Tìm kiếm & Lọc thiết bị" as UC4
+  usecase "Đặt thuê thiết bị" as UC5
+  usecase "Thanh toán (Cọc & Tiền thuê)" as UC6
+  usecase "Xác nhận nhận/trả & Đánh giá" as UC7
+  
+  usecase "Đăng tải thiết bị" as UC8
+  usecase "Duyệt yêu cầu thuê" as UC9
+  usecase "Xác nhận giao/nhận lại" as UC10
+  
+  usecase "Phê duyệt KYC" as UC11
+  usecase "Phê duyệt thiết bị" as UC12
+  usecase "Giải quyết tranh chấp" as UC13
+  usecase "Quản lý giao dịch" as UC14
+}
+
+R --> UC1
+R --> UC2
+R --> UC3
+R --> UC4
+R --> UC5
+R --> UC6
+R --> UC7
+
+UC1 <-- L
+UC2 <-- L
+UC3 <-- L
+UC8 <-- L
+UC9 <-- L
+UC10 <-- L
+
+A --> UC11
+A --> UC12
+A --> UC13
+A --> UC14
+
+@enduml
