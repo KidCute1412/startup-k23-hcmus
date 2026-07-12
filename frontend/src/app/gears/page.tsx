@@ -18,14 +18,14 @@ export default function GearsPage({ searchParams }: GearsPageProps) {
       <section className="border-b border-vanguard-light-border bg-vanguard-light-surfDim px-4 py-12 dark:border-vanguard-dark-border dark:bg-vanguard-dark-surfDim sm:px-6">
         <div className="mx-auto max-w-7xl">
           <p className="font-display text-xs font-semibold uppercase tracking-widest text-vanguard-primary">
-            Elite Catalog
+            Danh sách gear
           </p>
           <h1 className="mt-2 font-display text-4xl font-bold md:text-5xl">
-            Bảo vật Atelier
+            Gaming Gear hợp giá
           </h1>
           <p className="mt-3 max-w-2xl text-sm leading-6 text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted">
-            Lựa chọn gear chế tác giới hạn, có giá thuê theo ngày, cọc rõ ràng
-            và chủ gear đã xác thực.
+            Lựa chọn gear phù hợp nhu cầu, có giá thuê theo ngày, cọc rõ ràng
+            và chủ gear đã xác thực sản phẩm.
           </p>
         </div>
       </section>
