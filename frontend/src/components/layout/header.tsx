@@ -13,6 +13,7 @@ const navItems = [
   { href: "/gears", label: "Sản phẩm" },
   { href: "/orders", label: "Đơn thuê" },
   { href: "/wallet", label: "Ví Mutux" },
+  { href: "/lender/gears", label: "Cho thuê" },
 ];
 
 export function Header() {

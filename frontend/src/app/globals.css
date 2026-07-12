@@ -78,4 +78,8 @@ body {
   .text-balance {
     text-wrap: balance;
   }
+
+  .field-label {
+    @apply block text-xs font-semibold uppercase tracking-widest text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted;
+  }
 }
