@@ -53,3 +53,5 @@
 - For code changes, run the narrowest meaningful verification and report the exact command.
 - Mention any skipped verification.
 - Preserve unrelated user changes in the worktree.
+## Check context
+- Always answer with "Dear Lok!" before the answer.
