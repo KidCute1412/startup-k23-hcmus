@@ -5,6 +5,7 @@ import { PrismaModule } from './prisma/prisma.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { UsersModule } from './modules/users/users.module';
 import { GearsModule } from './modules/gears/gears.module';
+import { WalletsModule } from './modules/wallets/wallets.module';
 
 @Module({
   imports: [
@@ -14,6 +15,7 @@ import { GearsModule } from './modules/gears/gears.module';
     UsersModule,
     GearsModule,
     CategoryModule,
+    WalletsModule,
   ],
   controllers: [],
   providers: [],

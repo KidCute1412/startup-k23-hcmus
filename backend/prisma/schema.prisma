@@ -247,6 +247,19 @@ enum LenderTxType {
   @@map("lender_tx_type")
 }
 
+enum TopupStatusType {
+  pending
+  success
+  failed
+}
+
+enum WithdrawalStatusType {
+  pending
+  approved
+  rejected
+  completed
+}
+
 // =============================================================
 // MODELS
 // =============================================================
@@ -275,6 +288,7 @@ model User {
   gears_approved           Gear[]                  @relation("ApprovedGears")
   gear_price_history       GearPriceHistory[]
   mutux_wallet             MutuxWallet?
+  renter_wallet            RenterWallet?
   lender_wallet            LenderWallet?
   rental_orders_as_renter  RentalOrder[]           @relation("RenterOrders")
   rental_orders_as_lender  RentalOrder[]           @relation("LenderOrders")
@@ -334,6 +348,7 @@ model Gear {
   price_history      GearPriceHistory[]
   media              GearMedia[]
   rental_orders      RentalOrder[]
+  reviews            Review[]
 
   @@index([lender_id], name: "idx_gears_lender_id")
   @@index([category_id], name: "idx_gears_category_id")
@@ -432,6 +447,8 @@ model RentalOrder {
   duration_days              Int
   snapped_rent_price_per_day Decimal         @db.Decimal(15, 2)
   rental_fee                 Decimal         @db.Decimal(15, 2)
+  base_rental_fee            Decimal         @default(0) @db.Decimal(15, 2)
+  discount_amount            Decimal         @default(0) @db.Decimal(15, 2)
   deposit_amount             Decimal         @db.Decimal(15, 2)
   deposit_type               DepositTypeEnum @default(traditional)
   status                     OrderStatusType @default(pending_confirm)
@@ -587,7 +604,7 @@ model Review {
   id              String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   rental_order_id String           @db.Uuid
   reviewer_id     String           @db.Uuid
-  target_id       String           @db.Uuid
+  target_id       String?          @db.Uuid
   target_type     ReviewTargetType
   rating          Int
   comment         String?
@@ -595,9 +612,71 @@ model Review {
 
   rental_order RentalOrder @relation(fields: [rental_order_id], references: [id], onDelete: Cascade)
   reviewer     User        @relation("ReviewerReviews", fields: [reviewer_id], references: [id], onDelete: Cascade)
-  target       User        @relation("TargetReviews", fields: [target_id], references: [id], onDelete: Cascade)
+  target       User?        @relation("TargetReviews", fields: [target_user_id], references: [id], onDelete: Cascade)
+  target_user_id String? @db.Uuid
+  target_gear_id String? @db.Uuid
+  gear          Gear? @relation(fields: [target_gear_id], references: [id], onDelete: Cascade)
 
   @@map("reviews")
+  @@unique([rental_order_id, reviewer_id, target_type])
+}
+
+model RenterWallet {
+  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id String @unique @db.Uuid
+  balance Decimal @default(0) @db.Decimal(15,2)
+  locked_balance Decimal @default(0) @db.Decimal(15,2)
+  status WalletStatusType @default(active)
+  created_at DateTime @default(now())
+  updated_at DateTime @default(now()) @updatedAt
+  user User @relation(fields:[user_id], references:[id], onDelete:Cascade)
+  transactions RenterWalletTransaction[]
+  topups WalletTopup[]
+  @@map("renter_wallets")
+}
+
+model RenterWalletTransaction {
+  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  wallet_id String @db.Uuid
+  type String @db.VarChar(40)
+  amount Decimal @db.Decimal(15,2)
+  balance_before Decimal @db.Decimal(15,2)
+  balance_after Decimal @db.Decimal(15,2)
+  reference String? @unique @db.VarChar(255)
+  created_at DateTime @default(now())
+  wallet RenterWallet @relation(fields:[wallet_id], references:[id], onDelete:Cascade)
+  @@index([wallet_id])
+  @@map("renter_wallet_transactions")
+}
+
+model WalletTopup {
+  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  wallet_id String @db.Uuid
+  amount Decimal @db.Decimal(15,2)
+  order_code String @unique @db.VarChar(80)
+  provider_reference String? @unique @db.VarChar(255)
+  status TopupStatusType @default(pending)
+  created_at DateTime @default(now())
+  completed_at DateTime?
+  wallet RenterWallet @relation(fields:[wallet_id], references:[id], onDelete:Cascade)
+  @@index([wallet_id, status])
+  @@map("wallet_topups")
+}
+
+model Withdrawal {
+  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  lender_wallet_id String @db.Uuid
+  amount Decimal @db.Decimal(15,2)
+  status WithdrawalStatusType @default(pending)
+  bank_code String? @db.VarChar(20)
+  account_number String @db.VarChar(50)
+  account_holder String @db.VarChar(255)
+  resolved_by String? @db.Uuid
+  resolved_at DateTime?
+  created_at DateTime @default(now())
+  lender_wallet LenderWallet @relation(fields:[lender_wallet_id], references:[id], onDelete:Cascade)
+  @@index([lender_wallet_id, status])
+  @@map("withdrawals")
 }
 
 model Notification {
@@ -657,6 +736,7 @@ model LenderWallet {
 
   lender       User                    @relation(fields: [lender_id], references: [id], onDelete: Cascade)
   transactions LenderWalletTransaction[]
+  withdrawals Withdrawal[]
 
   @@map("lender_wallets")
 }

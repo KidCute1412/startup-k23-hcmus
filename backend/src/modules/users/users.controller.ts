@@ -1,4 +1,4 @@
-import { Controller, Get, Body, Patch, UseGuards, Req } from '@nestjs/common';
+import { Controller, Get, Body, Patch, Post, UseGuards, Req } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 
@@ -16,5 +16,11 @@ export class UsersController {
   @Patch('me')
   async updateProfile(@Req() req: any, @Body() updateData: any) {
     return this.usersService.update(req.user.id, updateData);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('me/kyc')
+  async submitKyc(@Req() req: any, @Body() body: { cccd: string }) {
+    return this.usersService.update(req.user.id, { cccd: body.cccd, kyc_status: 'pending' });
   }
 }
