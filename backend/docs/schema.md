@@ -329,11 +329,9 @@ erDiagram
     withdrawals {
         uuid      id PK
         uuid      lender_wallet_id FK
+        uuid      bank_account_id FK
         decimal   amount
         string    status
-        string    bank_code
-        string    account_number
-        string    account_holder
         uuid      resolved_by
         timestamp resolved_at
         timestamp created_at
@@ -354,6 +352,7 @@ erDiagram
 
     %% RELATIONSHIPS
     users ||--o{ bank_accounts : owns
+    bank_accounts ||--o{ withdrawals : receives
     users ||--o| mutux_wallets : holds
     users ||--o| renter_wallets : owns
     users ||--o| lender_wallets : owns
@@ -477,7 +476,7 @@ erDiagram
 | `notifications` | index `user_id` |
 | `lender_wallets` | `lender_id` unique |
 | `lender_wallet_transactions` | index `lender_wallet_id` |
-| `withdrawals` | index `(lender_wallet_id, status)` |
+| `withdrawals` | index `(lender_wallet_id, status)`, index `bank_account_id` |
 
 ---
 
@@ -513,4 +512,4 @@ erDiagram
 | `LenderWalletStatus` | `lender_wallet_status` | `active`, `suspended`, `closed` |
 | `LenderTxType` | `lender_tx_type` | `income`, `withdrawal`, `compensation`, `fee_deduction` |
 | `TopupStatusType` | `TopupStatusType` | `pending`, `success`, `failed` |
-| `WithdrawalStatusType` | `WithdrawalStatusType` | `pending`, `approved`, `rejected`, `completed` |
+| `WithdrawalStatusType` | `withdrawal_status_type` | `pending`, `approved`, `rejected`, `completed` |
