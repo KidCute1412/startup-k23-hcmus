@@ -6,6 +6,7 @@ import { AuthModule } from './modules/auth/auth.module';
 import { UsersModule } from './modules/users/users.module';
 import { GearsModule } from './modules/gears/gears.module';
 import { WalletsModule } from './modules/wallets/wallets.module';
+import { RentalOrdersModule } from './modules/rental-orders/rental-orders.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { WalletsModule } from './modules/wallets/wallets.module';
     GearsModule,
     CategoryModule,
     WalletsModule,
+    RentalOrdersModule,
   ],
   controllers: [],
   providers: [],

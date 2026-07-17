@@ -243,13 +243,23 @@ HTTP Status: `400`, `401`, `403`, `404`, `422`, `500`.
   }
   ```
 * **Success (201)**: Tạo order ở trạng thái `pending_confirm` chờ Lender xác nhận.
+* **Business rules**:
+  - `gear.approval_status` phải là `approved` và gear phải đang `available`; nếu không trả `400 GEAR_NOT_AVAILABLE`.
+  - `startDate` phải nhỏ hơn `endDate`; nếu không trả `400 INVALID_DATE_RANGE`.
+  - Không được có order khác cùng gear, có status khác `cancelled`/`completed`, bị giao nhau trong khoảng thuê; nếu không trả `409 GEAR_UNAVAILABLE_FOR_PERIOD`.
+  - `lenderId` luôn được lấy từ `gear.lender_id`, không nhận từ request body.
+  - `duration_days = endDate - startDate` theo khoảng ngày nửa mở `[startDate, endDate)`; `rentalFee = snappedRentPricePerDay × durationDays`.
+  - `snappedRentPricePerDay` lưu lại giá `rent_price_per_day` tại thời điểm tạo order. `depositAmount` lấy `gear.value`, hoặc `rentalFee × 2` khi gear chưa có `value`.
+* **Response data**: gồm `status = pending_confirm`, `lender_id`, `duration_days`, `snapped_rent_price_per_day`, `rental_fee` và `deposit_amount` đã được server tính toán.
 
 #### [GET] `/rental-orders` (Danh sách đơn thuê của tôi)
 * **Query Params**: `role` (renter hoặc lender), `status`, `page`, `limit`
-* **Success (200)**: Trả về danh sách đơn kèm phân trang.
+* **Auth scope**: renter chỉ xem order có `renter_id = req.user.id`; lender chỉ xem order có `lender_id = req.user.id`; admin xem tất cả order. Ownership được quyết định từ JWT, không tin `role` do client gửi.
+* **Success (200)**: Trả về `{ "success": true, "data": [...], "meta": { "total": 0, "page": 1, "limit": 10, "totalPages": 0 } }`. Có thể lọc `status` (ví dụ `?status=confirmed&page=1&limit=10`).
 
 #### [GET] `/rental-orders/:id` (Chi tiết đơn thuê)
 * **Success (200)**: Trả về chi tiết đơn, thông tin người thuê, người cho thuê, thiết bị và thông tin khiếu nại/tranh chấp đính kèm (nếu đơn hàng đang ở trạng thái `disputed`).
+* **Authorization**: chỉ renter, lender liên quan hoặc admin được xem; user khác nhận `403 FORBIDDEN`.
 
 ---
 
