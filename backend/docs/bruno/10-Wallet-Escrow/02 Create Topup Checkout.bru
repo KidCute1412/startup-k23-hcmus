@@ -1,0 +1,34 @@
+meta {
+  name: Create Topup Checkout For Webhook
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/wallets/topups/checkout
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "amount": 500000
+  }
+}
+
+script:post-response {
+  if (res.status === 201 || res.status === 200) {
+    const topup = res.body.data || res.body;
+    bru.setEnvVar("topupId", topup.id);
+    bru.setEnvVar("topupOrderCode", topup.order_code);
+    bru.setEnvVar("topupAmount", String(topup.amount));
+  }
+}
+
+tests {
+  test("creates pending topup", function() {
+    expect([200, 201]).to.include(res.status);
+    expect(res.body.data || res.body).to.have.property("id");
+    expect(res.body.data || res.body).to.have.property("order_code");
+  });
+}

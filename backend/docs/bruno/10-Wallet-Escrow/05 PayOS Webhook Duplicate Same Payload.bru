@@ -1,0 +1,37 @@
+meta {
+  name: PayOS Webhook Duplicate Same Payload
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{baseUrl}}/payments/webhook/payos
+  body: json
+  auth: none
+}
+
+headers {
+  x-payos-signature: {{payosSignature}}
+}
+
+body:json {
+  {
+    "orderCode": "{{topupOrderCode}}",
+    "data": {
+      "reference": "{{payosReference}}"
+    }
+  }
+}
+
+vars:pre-request {
+  topupOrderCode: TOPUP-1784369292344-1535
+  payosReference: PAYOS-REF-TEST-001
+}
+
+tests {
+  test("duplicate webhook returns current successful topup", function() {
+    expect([200, 201]).to.include(res.status);
+    expect(res.body.data || res.body).to.have.property("status", "success");
+  });
+}
+​

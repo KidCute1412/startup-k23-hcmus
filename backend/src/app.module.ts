@@ -7,6 +7,7 @@ import { UsersModule } from './modules/users/users.module';
 import { GearsModule } from './modules/gears/gears.module';
 import { WalletsModule } from './modules/wallets/wallets.module';
 import { RentalOrdersModule } from './modules/rental-orders/rental-orders.module';
+import { EscrowModule } from './modules/escrow/escrow.module';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { RentalOrdersModule } from './modules/rental-orders/rental-orders.module
     CategoryModule,
     WalletsModule,
     RentalOrdersModule,
+    EscrowModule,
   ],
   controllers: [],
   providers: [],

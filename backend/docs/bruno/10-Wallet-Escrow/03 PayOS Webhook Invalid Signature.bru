@@ -1,0 +1,36 @@
+meta {
+  name: PayOS Webhook Invalid Signature
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/payments/webhook/payos
+  body: json
+  auth: none
+}
+
+headers {
+  x-payos-signature: invalid-signature
+}
+
+body:json {
+  {
+    "orderCode": "{{topupOrderCode}}",
+    "data": {
+      "reference": "PAYOS-INVALID-SIGNATURE-REF"
+    }
+  }
+}
+
+vars:pre-request {
+  topupOrderCode: d4494404-25d7-4f75-adb8-a49137cee07f
+}
+
+tests {
+  test("returns 401 INVALID_SIGNATURE", function() {
+    expect(res.status).to.equal(401);
+    expect(res.body.error.code).to.equal("INVALID_SIGNATURE");
+  });
+}
+​

@@ -1,0 +1,23 @@
+meta {
+  name: Topup Checkout Amount Zero
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/wallets/topups/checkout
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "amount": 0
+  }
+}
+
+tests {
+  test("returns 400 for amount = 0", function() {
+    expect(res.status).to.equal(400);
+  });
+}
