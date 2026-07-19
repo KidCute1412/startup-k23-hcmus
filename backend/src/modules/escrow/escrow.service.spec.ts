@@ -7,7 +7,7 @@ interface EscrowRecord {
   id: string;
   rental_order_id: string;
   amount: Prisma.Decimal;
-  source: 'renter_cash';
+  source: 'renter_cash' | 'credit_line';
   status: 'locked';
 }
 
@@ -26,15 +26,34 @@ interface EscrowState {
     balance: Prisma.Decimal;
     locked_balance: Prisma.Decimal;
   };
+  creditWallet: {
+    id: string;
+    user_id: string;
+    display_balance: Prisma.Decimal;
+    locked_balance: Prisma.Decimal;
+    status: 'active' | 'suspended';
+    expired_at: Date | null;
+  } | null;
   transactions: Map<string, object>;
+  creditTransactions: object[];
 }
 
 interface EscrowTransactionMock {
   $queryRaw: jest.Mock;
   rentalOrder: { findUnique: jest.Mock };
   escrowWallet: { findUnique: jest.Mock; create: jest.Mock };
-  renterWallet: { findUnique: jest.Mock; update: jest.Mock };
+  renterWallet: {
+    findUnique: jest.Mock;
+    findUniqueOrThrow: jest.Mock;
+    update: jest.Mock;
+  };
   renterWalletTransaction: { findUnique: jest.Mock; create: jest.Mock };
+  mutuxWallet: {
+    findUnique: jest.Mock;
+    findUniqueOrThrow: jest.Mock;
+    update: jest.Mock;
+  };
+  creditTransaction: { create: jest.Mock };
 }
 
 interface EscrowPrismaMock {
@@ -45,6 +64,7 @@ describe('EscrowService', () => {
   const orderId = '30000000-0000-0000-0000-000000000001';
   const renterId = '00000000-0000-0000-0000-000000000001';
   const walletId = '10000000-0000-0000-0000-000000000001';
+  const creditWalletId = '50000000-0000-0000-0000-000000000001';
 
   let prisma: EscrowPrismaMock;
   let tx: EscrowTransactionMock;
@@ -68,7 +88,16 @@ describe('EscrowService', () => {
         balance: new Prisma.Decimal(600000),
         locked_balance: new Prisma.Decimal(0),
       },
+      creditWallet: {
+        id: creditWalletId,
+        user_id: renterId,
+        display_balance: new Prisma.Decimal(500000),
+        locked_balance: new Prisma.Decimal(0),
+        status: 'active',
+        expired_at: null,
+      },
       transactions: new Map<string, object>(),
+      creditTransactions: [],
     };
     tx = {
       $queryRaw: jest.fn().mockResolvedValue([]),
@@ -93,6 +122,7 @@ describe('EscrowService', () => {
       },
       renterWallet: {
         findUnique: jest.fn(async () => ({ ...state.wallet })),
+        findUniqueOrThrow: jest.fn(async () => ({ ...state.wallet })),
         update: jest.fn(async ({ data }) => {
           state.wallet.balance = data.balance;
           state.wallet.locked_balance = data.locked_balance;
@@ -105,6 +135,27 @@ describe('EscrowService', () => {
         ),
         create: jest.fn(async ({ data }) => {
           state.transactions.set(data.reference, data);
+          return data;
+        }),
+      },
+      mutuxWallet: {
+        findUnique: jest.fn(async () =>
+          state.creditWallet ? { id: state.creditWallet.id } : null,
+        ),
+        findUniqueOrThrow: jest.fn(async () => {
+          if (!state.creditWallet) throw new Error('Credit wallet not found');
+          return { ...state.creditWallet };
+        }),
+        update: jest.fn(async ({ data }) => {
+          if (!state.creditWallet) throw new Error('Credit wallet not found');
+          state.creditWallet.display_balance = data.display_balance;
+          state.creditWallet.locked_balance = data.locked_balance;
+          return state.creditWallet;
+        }),
+      },
+      creditTransaction: {
+        create: jest.fn(async ({ data }) => {
+          state.creditTransactions.push(data);
           return data;
         }),
       },
@@ -171,5 +222,81 @@ describe('EscrowService', () => {
     expect(tx.renterWallet.update).toHaveBeenCalledTimes(1);
     expect(state.wallet.balance).toEqual(new Prisma.Decimal(500000));
     expect(state.wallet.locked_balance).toEqual(new Prisma.Decimal(400000));
+  });
+
+  it('locks a credit-line deposit while debiting only the rental fee from cash', async () => {
+    state.order.deposit_type = 'credit_line';
+    state.wallet.balance = new Prisma.Decimal(200000);
+
+    const result = await service.lock(orderId);
+
+    expect(result).toEqual({
+      escrowId: 'escrow-id',
+      orderId,
+      amount: 400000,
+      source: 'credit_line',
+      status: 'locked',
+    });
+    expect(state.wallet.balance).toEqual(new Prisma.Decimal(100000));
+    expect(state.wallet.locked_balance).toEqual(new Prisma.Decimal(0));
+    expect(state.creditWallet?.display_balance).toEqual(
+      new Prisma.Decimal(100000),
+    );
+    expect(state.creditWallet?.locked_balance).toEqual(
+      new Prisma.Decimal(400000),
+    );
+    expect(tx.creditTransaction.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        mutux_wallet_id: creditWalletId,
+        type: 'deposit_lock',
+        amount: new Prisma.Decimal(400000),
+        display_balance_before: new Prisma.Decimal(500000),
+        display_balance_after: new Prisma.Decimal(100000),
+        direction: 'out',
+        ref_type: 'rental_order',
+        ref_id: orderId,
+        status: 'success',
+      }),
+    });
+  });
+
+  it('rolls back a credit-line lock when cash cannot cover the rental fee', async () => {
+    state.order.deposit_type = 'credit_line';
+    state.wallet.balance = new Prisma.Decimal(50000);
+
+    await expect(service.lock(orderId)).rejects.toMatchObject({
+      status: 400,
+      response: { error: 'INSUFFICIENT_CASH' },
+    });
+    expect(tx.renterWallet.update).not.toHaveBeenCalled();
+    expect(tx.mutuxWallet.update).not.toHaveBeenCalled();
+    expect(tx.escrowWallet.create).not.toHaveBeenCalled();
+  });
+
+  it('rolls back a credit-line lock when available credit is insufficient', async () => {
+    state.order.deposit_type = 'credit_line';
+    state.creditWallet!.display_balance = new Prisma.Decimal(300000);
+
+    await expect(service.lock(orderId)).rejects.toMatchObject({
+      status: 400,
+      response: { error: 'INSUFFICIENT_CREDIT' },
+    });
+    expect(tx.renterWallet.update).not.toHaveBeenCalled();
+    expect(tx.mutuxWallet.update).not.toHaveBeenCalled();
+    expect(tx.creditTransaction.create).not.toHaveBeenCalled();
+    expect(tx.escrowWallet.create).not.toHaveBeenCalled();
+  });
+
+  it('returns the existing credit-line escrow without debiting either wallet twice', async () => {
+    state.order.deposit_type = 'credit_line';
+
+    const first = await service.lock(orderId);
+    const second = await service.lock(orderId);
+
+    expect(second).toEqual(first);
+    expect(tx.renterWallet.update).toHaveBeenCalledTimes(1);
+    expect(tx.mutuxWallet.update).toHaveBeenCalledTimes(1);
+    expect(tx.creditTransaction.create).toHaveBeenCalledTimes(1);
+    expect(tx.escrowWallet.create).toHaveBeenCalledTimes(1);
   });
 });

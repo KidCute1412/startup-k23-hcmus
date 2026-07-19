@@ -1,5 +1,5 @@
 import type { INestApplication } from '@nestjs/common';
-import { OrderStatusType } from '@prisma/client';
+import { DepositTypeEnum, OrderStatusType } from '@prisma/client';
 import request from 'supertest';
 import { App } from 'supertest/types';
 import { PrismaService } from '../src/prisma/prisma.service';
@@ -75,6 +75,22 @@ describeIntegration('Rental order transitions (PostgreSQL integration)', () => {
         { user_id: poorRenterId, balance: 300_000 },
       ],
     });
+    await prisma.mutuxWallet.createMany({
+      data: [
+        {
+          user_id: renterId,
+          total_limit: 1_000_000,
+          display_balance: 1_000_000,
+          status: 'active',
+        },
+        {
+          user_id: poorRenterId,
+          total_limit: 300_000,
+          display_balance: 300_000,
+          status: 'active',
+        },
+      ],
+    });
 
     lenderToken = createJwt(lenderId, 'lender');
     renterToken = createJwt(renterId, 'renter');
@@ -83,6 +99,7 @@ describeIntegration('Rental order transitions (PostgreSQL integration)', () => {
   async function createOrder(
     ownerId: string,
     status = OrderStatusType.pending_confirm,
+    depositType = DepositTypeEnum.traditional,
   ) {
     const id = newId();
     return prisma.rentalOrder.create({
@@ -99,7 +116,7 @@ describeIntegration('Rental order transitions (PostgreSQL integration)', () => {
         rental_fee: 100_000,
         base_rental_fee: 100_000,
         deposit_amount: 400_000,
-        deposit_type: 'traditional',
+        deposit_type: depositType,
         status,
       },
     });
@@ -201,6 +218,128 @@ describeIntegration('Rental order transitions (PostgreSQL integration)', () => {
       .patch(`/api/v1/rental-orders/${order.id}/cancel`)
       .set('Authorization', `Bearer ${poorRenterToken}`)
       .expect(200);
+  });
+
+  it('confirms a credit-line order with cash fee debit, credit lock, escrow, and ledgers', async () => {
+    const order = await createOrder(
+      renterId,
+      OrderStatusType.pending_confirm,
+      DepositTypeEnum.credit_line,
+    );
+    const cashBefore = await prisma.renterWallet.findUniqueOrThrow({
+      where: { user_id: renterId },
+    });
+    const creditBefore = await prisma.mutuxWallet.findUniqueOrThrow({
+      where: { user_id: renterId },
+    });
+
+    await request(app.getHttpServer())
+      .patch(`/api/v1/rental-orders/${order.id}/confirm`)
+      .set('Authorization', `Bearer ${lenderToken}`)
+      .expect(200);
+
+    expect(
+      await prisma.rentalOrder.findUniqueOrThrow({ where: { id: order.id } }),
+    ).toMatchObject({ status: OrderStatusType.confirmed });
+    expect(
+      await prisma.escrowWallet.findUniqueOrThrow({
+        where: { rental_order_id: order.id },
+      }),
+    ).toMatchObject({
+      amount: order.deposit_amount,
+      source: 'credit_line',
+      status: 'locked',
+    });
+    const cashAfter = await prisma.renterWallet.findUniqueOrThrow({
+      where: { user_id: renterId },
+    });
+    expect(cashAfter.balance).toEqual(
+      cashBefore.balance.minus(order.rental_fee),
+    );
+    expect(cashAfter.locked_balance).toEqual(cashBefore.locked_balance);
+    const creditAfter = await prisma.mutuxWallet.findUniqueOrThrow({
+      where: { user_id: renterId },
+    });
+    expect(creditAfter.display_balance).toEqual(
+      creditBefore.display_balance.minus(order.deposit_amount),
+    );
+    expect(creditAfter.locked_balance).toEqual(
+      creditBefore.locked_balance.plus(order.deposit_amount),
+    );
+    expect(
+      await prisma.creditTransaction.count({
+        where: {
+          mutux_wallet_id: creditAfter.id,
+          type: 'deposit_lock',
+          ref_type: 'rental_order',
+          ref_id: order.id,
+          status: 'success',
+        },
+      }),
+    ).toBe(1);
+    expect(
+      await prisma.renterWalletTransaction.count({
+        where: { reference: `LOCK-${order.id}` },
+      }),
+    ).toBe(1);
+
+    await request(app.getHttpServer())
+      .patch(`/api/v1/rental-orders/${order.id}/confirm`)
+      .set('Authorization', `Bearer ${lenderToken}`)
+      .expect(400);
+    expect(
+      await prisma.creditTransaction.count({ where: { ref_id: order.id } }),
+    ).toBe(1);
+  });
+
+  it('keeps a credit-line order pending and rolls back cash when credit is insufficient', async () => {
+    const order = await createOrder(
+      poorRenterId,
+      OrderStatusType.pending_confirm,
+      DepositTypeEnum.credit_line,
+    );
+    const cashBefore = await prisma.renterWallet.findUniqueOrThrow({
+      where: { user_id: poorRenterId },
+    });
+    const creditBefore = await prisma.mutuxWallet.findUniqueOrThrow({
+      where: { user_id: poorRenterId },
+    });
+
+    const response = await request(app.getHttpServer())
+      .patch(`/api/v1/rental-orders/${order.id}/confirm`)
+      .set('Authorization', `Bearer ${lenderToken}`)
+      .expect(400);
+
+    expect(response.body).toMatchObject({
+      error: { code: 'INSUFFICIENT_CREDIT' },
+    });
+    expect(
+      await prisma.rentalOrder.findUniqueOrThrow({ where: { id: order.id } }),
+    ).toMatchObject({ status: OrderStatusType.pending_confirm });
+    expect(
+      await prisma.renterWallet.findUniqueOrThrow({
+        where: { user_id: poorRenterId },
+      }),
+    ).toMatchObject({
+      balance: cashBefore.balance,
+      locked_balance: cashBefore.locked_balance,
+    });
+    expect(
+      await prisma.mutuxWallet.findUniqueOrThrow({
+        where: { user_id: poorRenterId },
+      }),
+    ).toMatchObject({
+      display_balance: creditBefore.display_balance,
+      locked_balance: creditBefore.locked_balance,
+    });
+    expect(
+      await prisma.escrowWallet.count({
+        where: { rental_order_id: order.id },
+      }),
+    ).toBe(0);
+    expect(
+      await prisma.creditTransaction.count({ where: { ref_id: order.id } }),
+    ).toBe(0);
   });
 
   it('lets the renter cancel an untouched pending order', async () => {

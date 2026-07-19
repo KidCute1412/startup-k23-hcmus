@@ -3,7 +3,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { DepositTypeEnum, Prisma } from '@prisma/client';
+import { DepositTypeEnum, Prisma, WalletStatusType } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { EscrowResult, IEscrowService } from './escrow.service.interface';
 
@@ -21,12 +21,6 @@ export class EscrowService implements IEscrowService {
 
       if (!order) throw new NotFoundException('Order not found');
       if (order.escrow_wallet) return this.toResult(order.escrow_wallet);
-      if (order.deposit_type !== DepositTypeEnum.traditional) {
-        throw new BadRequestException({
-          error: 'UNSUPPORTED_DEPOSIT_TYPE',
-          message: 'Only traditional deposit lock is supported',
-        });
-      }
 
       const reference = `LOCK-${orderId}`;
       const existingTransaction = await tx.renterWalletTransaction.findUnique({
@@ -44,18 +38,25 @@ export class EscrowService implements IEscrowService {
         });
       }
 
-      const wallet = await tx.renterWallet.findUnique({
+      const walletReference = await tx.renterWallet.findUnique({
         where: { user_id: order.renter_id },
+        select: { id: true },
       });
-      if (!wallet)
+      if (!walletReference)
         throw new BadRequestException({
           error: 'INSUFFICIENT_CASH',
           message: 'INSUFFICIENT_CASH',
         });
-      await tx.$queryRaw`SELECT id FROM renter_wallets WHERE id = ${wallet.id}::uuid FOR UPDATE`;
+      await tx.$queryRaw`SELECT id FROM renter_wallets WHERE id = ${walletReference.id}::uuid FOR UPDATE`;
+      const wallet = await tx.renterWallet.findUniqueOrThrow({
+        where: { id: walletReference.id },
+      });
 
       const availableBalance = wallet.balance.minus(wallet.locked_balance);
-      const requiredCash = order.deposit_amount.plus(order.rental_fee);
+      const requiredCash =
+        order.deposit_type === DepositTypeEnum.traditional
+          ? order.deposit_amount.plus(order.rental_fee)
+          : order.rental_fee;
       if (availableBalance.lessThan(requiredCash)) {
         throw new BadRequestException({
           error: 'INSUFFICIENT_CASH',
@@ -63,10 +64,60 @@ export class EscrowService implements IEscrowService {
         });
       }
 
+      let creditWallet:
+        | {
+            id: string;
+            display_balance: Prisma.Decimal;
+            locked_balance: Prisma.Decimal;
+          }
+        | undefined;
+      let creditDisplayBalanceAfter: Prisma.Decimal | undefined;
+      let creditLockedBalanceAfter: Prisma.Decimal | undefined;
+
+      if (order.deposit_type === DepositTypeEnum.credit_line) {
+        const creditWalletReference = await tx.mutuxWallet.findUnique({
+          where: { user_id: order.renter_id },
+          select: { id: true },
+        });
+        if (!creditWalletReference) {
+          throw new BadRequestException({
+            error: 'INSUFFICIENT_CREDIT',
+            message: 'INSUFFICIENT_CREDIT',
+          });
+        }
+
+        await tx.$queryRaw`SELECT id FROM mutux_wallets WHERE id = ${creditWalletReference.id}::uuid FOR UPDATE`;
+        const lockedCreditWallet = await tx.mutuxWallet.findUniqueOrThrow({
+          where: { id: creditWalletReference.id },
+        });
+        const creditUnavailable =
+          lockedCreditWallet.status !== WalletStatusType.active ||
+          (lockedCreditWallet.expired_at !== null &&
+            lockedCreditWallet.expired_at <= new Date());
+        if (
+          creditUnavailable ||
+          lockedCreditWallet.display_balance.lessThan(order.deposit_amount)
+        ) {
+          throw new BadRequestException({
+            error: 'INSUFFICIENT_CREDIT',
+            message: 'INSUFFICIENT_CREDIT',
+          });
+        }
+
+        creditWallet = lockedCreditWallet;
+        creditDisplayBalanceAfter = lockedCreditWallet.display_balance.minus(
+          order.deposit_amount,
+        );
+        creditLockedBalanceAfter = lockedCreditWallet.locked_balance.plus(
+          order.deposit_amount,
+        );
+      }
+
       const balanceAfter = wallet.balance.minus(order.rental_fee);
-      const lockedBalanceAfter = wallet.locked_balance.plus(
-        order.deposit_amount,
-      );
+      const lockedBalanceAfter =
+        order.deposit_type === DepositTypeEnum.traditional
+          ? wallet.locked_balance.plus(order.deposit_amount)
+          : wallet.locked_balance;
 
       await tx.renterWallet.update({
         where: { id: wallet.id },
@@ -85,11 +136,43 @@ export class EscrowService implements IEscrowService {
           reference,
         },
       });
+
+      if (
+        creditWallet &&
+        creditDisplayBalanceAfter &&
+        creditLockedBalanceAfter
+      ) {
+        await tx.mutuxWallet.update({
+          where: { id: creditWallet.id },
+          data: {
+            display_balance: creditDisplayBalanceAfter,
+            locked_balance: creditLockedBalanceAfter,
+          },
+        });
+        await tx.creditTransaction.create({
+          data: {
+            mutux_wallet_id: creditWallet.id,
+            type: 'deposit_lock',
+            amount: order.deposit_amount,
+            display_balance_before: creditWallet.display_balance,
+            display_balance_after: creditDisplayBalanceAfter,
+            direction: 'out',
+            ref_type: 'rental_order',
+            ref_id: order.id,
+            note: `Lock deposit for rental order ${order.id}`,
+            status: 'success',
+          },
+        });
+      }
+
       const escrow = await tx.escrowWallet.create({
         data: {
           rental_order_id: order.id,
           amount: order.deposit_amount,
-          source: 'renter_cash',
+          source:
+            order.deposit_type === DepositTypeEnum.credit_line
+              ? 'credit_line'
+              : 'renter_cash',
           status: 'locked',
         },
       });

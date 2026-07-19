@@ -69,7 +69,7 @@ HTTP Status: `400`, `401`, `403`, `404`, `422`, `500`.
 
 ---
 
-## 3. Danh sách APIs Tinh gọn (26 Endpoints)
+## 3. Danh sách APIs Tinh gọn (37 Endpoints)
 
 ### 3.1 Auth & Users (5 APIs)
 
@@ -163,7 +163,7 @@ HTTP Status: `400`, `401`, `403`, `404`, `422`, `500`.
 
 ---
 
-### 3.3 Wallets (4 APIs)
+### 3.3 Wallets (5 APIs)
 
 #### [GET] `/wallets/renter` (Thông tin ví ảo của Renter)
 * **Headers**: `Authorization: Bearer <token>`
@@ -263,9 +263,13 @@ HTTP Status: `400`, `401`, `403`, `404`, `422`, `500`.
 * **Actor**: chỉ lender của order; renter hoặc user khác nhận `403 FORBIDDEN`.
 * **Transition**: `pending_confirm` → `confirmed`.
 * **Escrow**: gọi `EscrowService.lock(orderId)` trước khi đổi trạng thái. Chỉ khi lock thành công mới cập nhật order; lock tạo `EscrowWallet` ở trạng thái `locked`.
+  - `traditional`: debit `rental_fee` từ ví renter và chuyển `deposit_amount` sang `locked_balance` của ví renter.
+  - `credit_line`: debit `rental_fee` từ ví renter, giảm `mutux_wallets.display_balance`, tăng `mutux_wallets.locked_balance` và ghi `credit_transactions(type = deposit_lock)` cho tiền cọc.
 * **Errors**:
   - `400 INVALID_TRANSITION` nếu order không còn ở `pending_confirm`; escrow không được gọi cho transition không hợp lệ.
-  - Lỗi từ escrow, ví dụ `400 INSUFFICIENT_CASH`, được trả nguyên trạng và order vẫn ở `pending_confirm`.
+  - `400 INSUFFICIENT_CASH` nếu ví renter không đủ trả `rental_fee` và phần cọc tiền mặt (nếu dùng `traditional`).
+  - `400 INSUFFICIENT_CREDIT` nếu ví hạn mức không tồn tại, không active, hết hạn hoặc không đủ `deposit_amount`.
+  - Lỗi từ escrow được trả nguyên trạng; mọi cập nhật ví, credit ledger và escrow đều rollback, order vẫn ở `pending_confirm`.
 * **Success (200)**: trả về order với `status = confirmed`.
 
 #### [PATCH] `/rental-orders/:id/ship` (Lender xác nhận đã giao hàng)
