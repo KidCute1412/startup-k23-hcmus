@@ -19,7 +19,7 @@ import { RentalOrdersController } from '../src/modules/rental-orders/rental-orde
 import { RentalOrdersRepository } from '../src/modules/rental-orders/rental-orders.repository';
 import { RentalOrdersService } from '../src/modules/rental-orders/rental-orders.service';
 
-describe('RentalOrdersController (e2e)', () => {
+describe('RentalOrdersController (HTTP)', () => {
   let app: INestApplication<App>;
   let currentUser: { id: string; role: UserRole };
   let repository: {

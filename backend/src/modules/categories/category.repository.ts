@@ -6,7 +6,11 @@ import { GearCategory } from '@prisma/client';
 export class CategoryRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  async create(data: { name: string; slug: string; parentId?: string }): Promise<GearCategory> {
+  async create(data: {
+    name: string;
+    slug: string;
+    parentId?: string;
+  }): Promise<GearCategory> {
     return this.prisma.gearCategory.create({
       data: {
         name: data.name,
@@ -24,7 +28,10 @@ export class CategoryRepository {
     return this.prisma.gearCategory.findUnique({ where: { id } });
   }
 
-  async update(id: string, data: { name?: string; slug?: string; parentId?: string }): Promise<GearCategory> {
+  async update(
+    id: string,
+    data: { name?: string; slug?: string; parentId?: string },
+  ): Promise<GearCategory> {
     return this.prisma.gearCategory.update({
       where: { id },
       data: {

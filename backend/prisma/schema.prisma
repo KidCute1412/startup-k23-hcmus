@@ -281,6 +281,9 @@ model User {
   total_reviews      Int           @default(0)
   role               UserRole      @default(renter)
   kyc_status         KycStatusType @default(pending)
+  kyc_rejection_reason String?
+  kyc_reviewed_by    String?       @db.Uuid
+  kyc_reviewed_at    DateTime?
   is_active          Boolean       @default(true)
   created_at         DateTime      @default(now())
   updated_at         DateTime      @default(now()) @updatedAt
@@ -288,6 +291,8 @@ model User {
   // Relations
   gears_as_lender         Gear[]             @relation("LenderGears")
   gears_approved          Gear[]             @relation("ApprovedGears")
+  kyc_reviews_performed   User[]             @relation("KycReviewer")
+  kyc_reviewer            User?              @relation("KycReviewer", fields: [kyc_reviewed_by], references: [id], onDelete: SetNull)
   gear_price_history      GearPriceHistory[]
   mutux_wallet            MutuxWallet?
   renter_wallet           RenterWallet?

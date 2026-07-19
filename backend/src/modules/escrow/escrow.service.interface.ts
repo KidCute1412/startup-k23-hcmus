@@ -1,5 +1,9 @@
 export type EscrowSource = 'renter_cash' | 'credit_line';
-export type EscrowStatus = 'locked' | 'pending_return' | 'released' | 'compensated';
+export type EscrowStatus =
+  | 'locked'
+  | 'pending_return'
+  | 'released'
+  | 'compensated';
 
 export interface EscrowResult {
   escrowId: string;

@@ -16,8 +16,8 @@ async function bootstrap() {
   // Wire Validation globally
   app.useGlobalPipes(
     new ValidationPipe({
-      whitelist: true,            // Strips out non-dto defined properties
-      transform: true,            // Converts types automatically
+      whitelist: true, // Strips out non-dto defined properties
+      transform: true, // Converts types automatically
       forbidNonWhitelisted: true,
     }),
   );
@@ -30,4 +30,7 @@ async function bootstrap() {
   await app.listen(port);
   console.log(`Application is running on: http://localhost:${port}/api/v1`);
 }
-bootstrap();
+void bootstrap().catch((error: unknown) => {
+  console.error('Application bootstrap failed', error);
+  process.exitCode = 1;
+});

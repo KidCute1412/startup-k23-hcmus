@@ -96,3 +96,14 @@ Nest is an MIT-licensed open source project. It can grow thanks to the sponsors 
 ## License
 
 Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+# Backend tests
+
+Use `start.bat` at the repository root for normal local development. It starts the app against `mutux_db`.
+
+To run all database-backed integration tests, open a terminal in `backend` and run:
+
+```powershell
+npm run test:integration
+```
+
+The command starts PostgreSQL locally when needed, creates the separate `mutux_test` database if it does not exist, resets it with Prisma migrations, and runs every `*.integration-spec.ts` suite serially. It refuses any URL other than `mutux_test` and never changes `mutux_db`. Use `npm test` for unit tests, `npm run test:http` for mock-backed HTTP tests, and `npm run test:all` for the full local gate.

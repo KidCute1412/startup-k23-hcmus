@@ -4,15 +4,8 @@ meta {
   seq: 1
 }
 
-patch {
-  url: {{baseUrl}}/admin/users/:id/kyc
-  body: json
+post {
+  url: {{baseUrl}}/admin/kyc/:id/approve
+  body: none
   auth: inherit
-}
-
-body:json {
-  {
-    "status": "verified",
-    "note": "Thông tin không khớp với ảnh chân dung"
-  }
 }

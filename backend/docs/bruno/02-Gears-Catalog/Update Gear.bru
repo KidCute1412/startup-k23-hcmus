@@ -4,7 +4,7 @@ meta {
   seq: 5
 }
 
-put {
+patch {
   url: {{baseUrl}}/gears/:id
   body: json
   auth: inherit
@@ -12,7 +12,7 @@ put {
 
 body:json {
   {
-    "name": "Bàn phím cơ Keychron Q1 Pro V2",
+    "name": "Keychron Q1 Pro V2",
     "rentPricePerDay": 85000
   }
 }

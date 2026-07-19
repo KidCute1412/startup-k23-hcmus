@@ -1,6 +1,17 @@
-import { Controller, Get, Body, Patch, Post, UseGuards, Req } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Body,
+  Patch,
+  Post,
+  UseGuards,
+  Req,
+} from '@nestjs/common';
 import { UsersService } from './users.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
+import type { AuthenticatedRequest } from '../../common/types/authentication';
+import { SubmitKycDto } from './dto/submit-kyc.dto';
+import { UpdateUserDto } from './dto/update-user.dto';
 
 @Controller('users')
 export class UsersController {
@@ -8,19 +19,34 @@ export class UsersController {
 
   @UseGuards(JwtAuthGuard)
   @Get('me')
-  async getProfile(@Req() req: any) {
+  async getProfile(@Req() req: AuthenticatedRequest) {
     return this.usersService.findOne(req.user.id);
   }
 
   @UseGuards(JwtAuthGuard)
   @Patch('me')
-  async updateProfile(@Req() req: any, @Body() updateData: any) {
-    return this.usersService.update(req.user.id, updateData);
+  async updateProfile(
+    @Req() req: AuthenticatedRequest,
+    @Body() updateData: UpdateUserDto,
+  ) {
+    return this.usersService.update(req.user.id, {
+      phone: updateData.phone,
+      full_name: updateData.fullName,
+      avatar_url: updateData.avatarUrl,
+      bio: updateData.bio,
+      address: updateData.address,
+    });
   }
 
   @UseGuards(JwtAuthGuard)
   @Post('me/kyc')
-  async submitKyc(@Req() req: any, @Body() body: { cccd: string }) {
-    return this.usersService.update(req.user.id, { cccd: body.cccd, kyc_status: 'pending' });
+  async submitKyc(
+    @Req() req: AuthenticatedRequest,
+    @Body() body: SubmitKycDto,
+  ) {
+    return this.usersService.update(req.user.id, {
+      cccd: body.cccd,
+      kyc_status: 'pending',
+    });
   }
 }

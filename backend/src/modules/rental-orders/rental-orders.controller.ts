@@ -10,19 +10,11 @@ import {
   Req,
   UseGuards,
 } from '@nestjs/common';
-import { Request } from 'express';
-import { UserRole } from '@prisma/client';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
+import type { AuthenticatedRequest } from '../../common/types/authentication';
 import { CreateRentalOrderDto } from './dto/create-rental-order.dto';
 import { GetRentalOrdersQueryDto } from './dto/get-rental-orders-query.dto';
 import { RentalOrdersService } from './rental-orders.service';
-
-interface AuthenticatedRequest extends Request {
-  user: {
-    id: string;
-    role: UserRole;
-  };
-}
 
 @UseGuards(JwtAuthGuard)
 @Controller('rental-orders')

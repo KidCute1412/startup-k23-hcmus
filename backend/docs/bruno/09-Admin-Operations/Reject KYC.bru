@@ -1,0 +1,17 @@
+meta {
+  name: Reject KYC
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/admin/kyc/:id/reject
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "reason": "Identity document is unreadable"
+  }
+}

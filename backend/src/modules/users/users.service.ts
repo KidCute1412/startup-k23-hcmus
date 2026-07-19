@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { UsersRepository } from './users.repository';
+import type { Prisma } from '@prisma/client';
 
 @Injectable()
 export class UsersService {
@@ -13,7 +14,7 @@ export class UsersService {
     return this.usersRepository.findByEmail(email);
   }
 
-  async update(id: string, data: any) {
+  async update(id: string, data: Prisma.UserUncheckedUpdateInput) {
     return this.usersRepository.update(id, data);
   }
 }

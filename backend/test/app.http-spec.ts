@@ -7,7 +7,7 @@ import { HttpExceptionFilter } from '../src/common/filters/http-exception.filter
 import { TransformInterceptor } from '../src/common/interceptors/transform.interceptor';
 import { PrismaService } from '../src/prisma/prisma.service';
 
-describe('AppModule (e2e)', () => {
+describe('AppModule (HTTP)', () => {
   let app: INestApplication<App>;
 
   beforeAll(async () => {

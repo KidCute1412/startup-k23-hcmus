@@ -15,8 +15,12 @@ export class AuthService {
   async generateTokens(userId: string, email: string, role: string) {
     const payload = { id: userId, email, role };
 
-    const accessTokenSecret = this.configService.get<string>('JWT_SECRET') || 'fallbackSecretTokenForWeek1Dev';
-    const refreshTokenSecret = this.configService.get<string>('JWT_REFRESH_SECRET') || 'fallbackRefreshSecretTokenForWeek1Dev';
+    const accessTokenSecret =
+      this.configService.get<string>('JWT_SECRET') ||
+      'fallbackSecretTokenForWeek1Dev';
+    const refreshTokenSecret =
+      this.configService.get<string>('JWT_REFRESH_SECRET') ||
+      'fallbackRefreshSecretTokenForWeek1Dev';
 
     const [accessToken, refreshToken] = await Promise.all([
       this.jwtService.signAsync(payload, {
@@ -36,7 +40,9 @@ export class AuthService {
   }
 
   async updateRefreshToken(userId: string, refreshToken: string | null) {
-    const hashedRefreshToken = refreshToken ? await bcrypt.hash(refreshToken, 10) : null;
+    const hashedRefreshToken = refreshToken
+      ? await bcrypt.hash(refreshToken, 10)
+      : null;
     await this.prisma.user.update({
       where: { id: userId },
       data: { hashedRefreshToken },
@@ -52,7 +58,10 @@ export class AuthService {
       throw new UnauthorizedException('Access denied / Token invalid');
     }
 
-    const isMatched = await bcrypt.compare(refreshToken, user.hashedRefreshToken);
+    const isMatched = await bcrypt.compare(
+      refreshToken,
+      user.hashedRefreshToken,
+    );
     if (!isMatched) {
       throw new UnauthorizedException('Access denied / Token mismatch');
     }

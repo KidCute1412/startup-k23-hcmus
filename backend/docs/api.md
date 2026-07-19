@@ -151,18 +151,15 @@ HTTP Status: `400`, `401`, `403`, `404`, `422`, `500`.
     "description": "Bàn phím vỏ nhôm nguyên khối...",
     "specifications": { "layout": "75%", "switchType": "Banana" },
     "value": 4500000,
-    "rentPricePerDay": 80000,
-    "media": [
-      { "url": "https://...", "type": "image", "isPrimary": true }
-    ]
+    "rentPricePerDay": 80000
   }
   ```
-* **Success (210 Created)**: Thiết bị được tạo ở trạng thái `pending` (chờ Admin duyệt).
+* **Success (201)**: Thiết bị được tạo ở trạng thái `pending` (chờ Admin duyệt). `lenderId` luôn lấy từ JWT và lender phải có KYC `verified`.
 
-#### [PUT] `/gears/:id` (Lender cập nhật hoặc gỡ thiết bị)
+#### [PATCH] `/gears/:id` (Lender cập nhật hoặc gỡ thiết bị)
 * **Headers**: `Authorization: Bearer <token>`
 * **Body**: Truyền các trường cần cập nhật hoặc đổi trạng thái `status` sang `delisted` để gỡ thiết bị.
-* **Success (200)**: Cập nhật thành công.
+* **Success (200)**: Cập nhật thành công. Chỉ lender sở hữu gear được sửa; sửa gear đã `approved` sẽ đưa gear về `pending` để duyệt lại.
 
 ---
 
@@ -380,29 +377,28 @@ HTTP Status: `400`, `401`, `403`, `404`, `422`, `500`.
 
 ---
 
-### 3.9 Admin Operations (3 APIs)
-*Giúp Admin vận hành, phê duyệt và xử lý tranh chấp.*
+### 3.9 Admin Operations
+*Tất cả endpoint yêu cầu JWT có `role = admin`; thiếu token trả `401`, role khác trả `403 ADMIN_ONLY`.*
 
-#### [PATCH] `/admin/users/:id/kyc` (Phê duyệt/Từ chối KYC người dùng)
+#### [POST] `/admin/kyc/:id/approve`
+* **Headers**: `Authorization: Bearer <token>` (Admin)
+* **Success (201)**: Chuyển KYC `pending` sang `verified`, lưu admin review và thời điểm review. Gọi lại trên KYC đã `verified` là idempotent.
+
+#### [POST] `/admin/kyc/:id/reject`
 * **Headers**: `Authorization: Bearer <token>` (Admin)
 * **Body**:
   ```json
-  {
-    "status": "verified", // Hoặc "rejected"
-    "note": "Thông tin không khớp với ảnh chân dung" // Nếu từ chối
-  }
+  { "reason": "Thông tin không khớp với ảnh chân dung" }
   ```
-* **Success (200)**: Đã cập nhật trạng thái KYC của user.
+* **Success (201)**: Chuyển KYC `pending` sang `rejected`, lưu lý do và admin review. User phải gửi lại KYC trước khi có thể được duyệt khác trạng thái.
 
-#### [PATCH] `/admin/gears/:id/approve` (Phê duyệt hiển thị thiết bị)
+#### [POST] `/admin/gears/:id/approve`
 * **Headers**: `Authorization: Bearer <token>` (Admin)
-* **Body**:
-  ```json
-  {
-    "status": "approved" // Hoặc "rejected"
-  }
-  ```
-* **Success (200)**: Thiết bị đã được duyệt và hiển thị trên Catalog.
+* **Success (201)**: Chuyển gear `pending` sang `approved`, lưu `approvedBy` và `approvedAt`. Gear chỉ xuất hiện ở catalog công khai khi đồng thời `approved` và `available`; gọi approve lặp lại không đổi timestamp.
+
+#### [POST] `/admin/gears/:id/reject`
+* **Headers**: `Authorization: Bearer <token>` (Admin)
+* **Success (201)**: Chuyển gear `pending` hoặc `approved` sang `rejected`, lưu admin review và loại gear khỏi catalog công khai.
 
 #### [POST] `/admin/disputes/:id/resolve` (Giải quyết tranh chấp đơn thuê)
 * **Headers**: `Authorization: Bearer <token>` (Admin)

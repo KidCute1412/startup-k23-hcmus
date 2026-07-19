@@ -12,12 +12,17 @@
     "start:dev": "nest start --watch",
     "start:debug": "nest start --debug --watch",
     "start:prod": "node dist/main",
-    "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
+    "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --max-warnings 0",
+    "lint:fix": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
-    "test:e2e": "jest --config ./test/jest-e2e.json"
+    "test:http": "jest --config ./test/jest-http.json",
+    "test:integration": "node ./scripts/run-integration-tests.mjs",
+    "test:all": "npm run lint && npm test -- --runInBand && npm run test:http -- --runInBand && npm run test:integration && npm run build",
+    "test:e2e": "npm run test:http",
+    "test:integration:admin": "npm run test:integration"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.1",

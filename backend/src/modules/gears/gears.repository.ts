@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
-import { Gear } from '@prisma/client';
+import { Gear, Prisma } from '@prisma/client';
 
 interface FindAllOptions {
   page: number;
@@ -12,13 +12,19 @@ interface FindAllOptions {
 export class GearsRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  async create(data: any): Promise<Gear> {
+  async create(data: Prisma.GearUncheckedCreateInput): Promise<Gear> {
     return this.prisma.gear.create({ data });
   }
 
-  async findAll(options: FindAllOptions): Promise<{ data: Gear[]; total: number }> {
+  async findAll(
+    options: FindAllOptions,
+  ): Promise<{ data: Gear[]; total: number }> {
     const { page, limit, categoryId } = options;
-    const where = categoryId ? { category_id: categoryId } : {};
+    const where = {
+      approval_status: 'approved' as const,
+      status: 'available' as const,
+      ...(categoryId ? { category_id: categoryId } : {}),
+    };
     const [data, total] = await Promise.all([
       this.prisma.gear.findMany({
         where,
@@ -31,10 +37,23 @@ export class GearsRepository {
   }
 
   async findById(id: string): Promise<Gear | null> {
-    return this.prisma.gear.findUnique({ where: { id } });
+    return this.prisma.gear.findFirst({
+      where: { id, approval_status: 'approved', status: 'available' },
+    });
   }
 
-  async update(id: string, data: any): Promise<Gear> {
+  async findByIdForLender(id: string, lenderId: string): Promise<Gear | null> {
+    return this.prisma.gear.findFirst({ where: { id, lender_id: lenderId } });
+  }
+
+  async findUserById(id: string) {
+    return this.prisma.user.findUnique({ where: { id } });
+  }
+
+  async update(
+    id: string,
+    data: Prisma.GearUncheckedUpdateInput,
+  ): Promise<Gear> {
     return this.prisma.gear.update({ where: { id }, data });
   }
 

@@ -6,7 +6,11 @@ import { GearCategory } from '@prisma/client';
 export class CategoryService {
   constructor(private readonly categoryRepository: CategoryRepository) {}
 
-  async create(data: { name: string; slug: string; parentId?: string }): Promise<GearCategory> {
+  async create(data: {
+    name: string;
+    slug: string;
+    parentId?: string;
+  }): Promise<GearCategory> {
     return this.categoryRepository.create(data);
   }
 
@@ -18,7 +22,10 @@ export class CategoryService {
     return this.categoryRepository.findById(id);
   }
 
-  async update(id: string, data: { name?: string; slug?: string; parentId?: string }): Promise<GearCategory> {
+  async update(
+    id: string,
+    data: { name?: string; slug?: string; parentId?: string },
+  ): Promise<GearCategory> {
     return this.categoryRepository.update(id, data);
   }
 
