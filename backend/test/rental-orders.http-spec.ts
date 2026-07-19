@@ -15,6 +15,7 @@ import { App } from 'supertest/types';
 import { HttpExceptionFilter } from '../src/common/filters/http-exception.filter';
 import { JwtAuthGuard } from '../src/common/guards/jwt-auth.guard';
 import { TransformInterceptor } from '../src/common/interceptors/transform.interceptor';
+import { EscrowService } from '../src/modules/escrow/escrow.service';
 import { RentalOrdersController } from '../src/modules/rental-orders/rental-orders.controller';
 import { RentalOrdersRepository } from '../src/modules/rental-orders/rental-orders.repository';
 import { RentalOrdersService } from '../src/modules/rental-orders/rental-orders.service';
@@ -29,7 +30,9 @@ describe('RentalOrdersController (HTTP)', () => {
     create: jest.Mock;
     findAll: jest.Mock;
     findById: jest.Mock;
+    transition: jest.Mock;
   };
+  let escrowService: { lock: jest.Mock };
 
   beforeEach(async () => {
     currentUser = { id: 'renter-id', role: UserRole.renter };
@@ -51,6 +54,10 @@ describe('RentalOrdersController (HTTP)', () => {
         ),
       findAll: jest.fn().mockResolvedValue({ data: [], total: 0 }),
       findById: jest.fn(),
+      transition: jest.fn(),
+    };
+    escrowService = {
+      lock: jest.fn().mockResolvedValue({ escrowId: 'escrow-id' }),
     };
 
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -58,6 +65,7 @@ describe('RentalOrdersController (HTTP)', () => {
       providers: [
         RentalOrdersService,
         { provide: RentalOrdersRepository, useValue: repository },
+        { provide: EscrowService, useValue: escrowService },
       ],
     })
       .overrideGuard(JwtAuthGuard)
@@ -152,6 +160,139 @@ describe('RentalOrdersController (HTTP)', () => {
         code: 'FORBIDDEN',
         message: 'You do not have permission to view this rental order',
       },
+    });
+  });
+
+  it('PATCH confirm returns 403 FORBIDDEN when called by the renter', async () => {
+    repository.findById.mockResolvedValue({
+      id: 'order-id',
+      renter_id: 'renter-id',
+      lender_id: 'lender-id',
+      status: OrderStatusType.pending_confirm,
+    });
+
+    const response = await request(app.getHttpServer())
+      .patch('/api/v1/rental-orders/order-id/confirm')
+      .expect(403);
+
+    expect(response.body).toMatchObject({
+      success: false,
+      error: { code: 'FORBIDDEN' },
+    });
+    expect(escrowService.lock).not.toHaveBeenCalled();
+  });
+
+  it('PATCH return returns 403 FORBIDDEN when called by the lender', async () => {
+    currentUser = { id: 'lender-id', role: UserRole.lender };
+    repository.findById.mockResolvedValue({
+      id: 'order-id',
+      renter_id: 'renter-id',
+      lender_id: 'lender-id',
+      status: OrderStatusType.active,
+    });
+
+    const response = await request(app.getHttpServer())
+      .patch('/api/v1/rental-orders/order-id/return')
+      .expect(403);
+
+    expect(response.body).toMatchObject({
+      success: false,
+      error: { code: 'FORBIDDEN' },
+    });
+  });
+
+  it('PATCH confirm returns 400 INVALID_TRANSITION from delivering', async () => {
+    currentUser = { id: 'lender-id', role: UserRole.lender };
+    repository.findById.mockResolvedValue({
+      id: 'order-id',
+      renter_id: 'renter-id',
+      lender_id: 'lender-id',
+      status: OrderStatusType.delivering,
+    });
+
+    const response = await request(app.getHttpServer())
+      .patch('/api/v1/rental-orders/order-id/confirm')
+      .expect(400);
+
+    expect(response.body).toMatchObject({
+      success: false,
+      error: { code: 'INVALID_TRANSITION' },
+    });
+    expect(escrowService.lock).not.toHaveBeenCalled();
+  });
+
+  it('exposes the complete transition route sequence', async () => {
+    const order: Record<string, unknown> & {
+      id: string;
+      renter_id: string;
+      lender_id: string;
+      status: OrderStatusType;
+    } = {
+      id: 'order-id',
+      renter_id: 'renter-id',
+      lender_id: 'lender-id',
+      status: OrderStatusType.pending_confirm,
+    };
+    repository.findById.mockImplementation(() => Promise.resolve({ ...order }));
+    repository.transition.mockImplementation(
+      (
+        _id: string,
+        expectedStatus: OrderStatusType,
+        data: Record<string, unknown> & { status: OrderStatusType },
+      ) => {
+        if (order.status !== expectedStatus) return Promise.resolve(null);
+        Object.assign(order, data);
+        return Promise.resolve({ ...order });
+      },
+    );
+
+    currentUser = { id: 'lender-id', role: UserRole.lender };
+    await request(app.getHttpServer())
+      .patch('/api/v1/rental-orders/order-id/confirm')
+      .expect(200);
+    await request(app.getHttpServer())
+      .patch('/api/v1/rental-orders/order-id/ship')
+      .expect(200);
+
+    currentUser = { id: 'renter-id', role: UserRole.renter };
+    await request(app.getHttpServer())
+      .patch('/api/v1/rental-orders/order-id/confirm-receipt')
+      .expect(200);
+    await request(app.getHttpServer())
+      .patch('/api/v1/rental-orders/order-id/return')
+      .expect(200);
+
+    currentUser = { id: 'lender-id', role: UserRole.lender };
+    const response = await request(app.getHttpServer())
+      .patch('/api/v1/rental-orders/order-id/confirm-return')
+      .expect(200);
+
+    expect(response.body).toMatchObject({
+      success: true,
+      data: { status: OrderStatusType.completed },
+    });
+    expect(escrowService.lock).toHaveBeenCalledTimes(1);
+  });
+
+  it('exposes the renter cancel route', async () => {
+    repository.findById.mockResolvedValue({
+      id: 'order-id',
+      renter_id: 'renter-id',
+      lender_id: 'lender-id',
+      status: OrderStatusType.pending_confirm,
+    });
+    repository.transition.mockResolvedValue({
+      id: 'order-id',
+      status: OrderStatusType.cancelled,
+    });
+
+    const response = await request(app.getHttpServer())
+      .patch('/api/v1/rental-orders/order-id/cancel')
+      .expect(200);
+
+    expect(response.body).toMatchObject({
+      success: true,
+      data: { status: OrderStatusType.cancelled },
     });
   });
 

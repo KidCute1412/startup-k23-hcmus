@@ -1,0 +1,11 @@
+meta {
+  name: Cancel Rental Order
+  type: http
+  seq: 6
+}
+
+patch {
+  url: {{baseUrl}}/rental-orders/80000000-0000-0000-0000-000000000004/cancel
+  body: none
+  auth: inherit
+}

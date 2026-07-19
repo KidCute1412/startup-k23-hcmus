@@ -223,7 +223,7 @@ HTTP Status: `400`, `401`, `403`, `404`, `422`, `500`.
 
 ---
 
-### 3.4 Rental Orders (3 APIs)
+### 3.4 Rental Orders (9 APIs)
 
 #### [POST] `/rental-orders` (Tạo yêu cầu thuê thiết bị - Renter)
 * **Headers**: `Authorization: Bearer <token>`
@@ -257,6 +257,52 @@ HTTP Status: `400`, `401`, `403`, `404`, `422`, `500`.
 #### [GET] `/rental-orders/:id` (Chi tiết đơn thuê)
 * **Success (200)**: Trả về chi tiết đơn, thông tin người thuê, người cho thuê, thiết bị và thông tin khiếu nại/tranh chấp đính kèm (nếu đơn hàng đang ở trạng thái `disputed`).
 * **Authorization**: chỉ renter, lender liên quan hoặc admin được xem; user khác nhận `403 FORBIDDEN`.
+
+#### [PATCH] `/rental-orders/:id/confirm` (Lender xác nhận đơn)
+* **Headers**: `Authorization: Bearer <token>`
+* **Actor**: chỉ lender của order; renter hoặc user khác nhận `403 FORBIDDEN`.
+* **Transition**: `pending_confirm` → `confirmed`.
+* **Escrow**: gọi `EscrowService.lock(orderId)` trước khi đổi trạng thái. Chỉ khi lock thành công mới cập nhật order; lock tạo `EscrowWallet` ở trạng thái `locked`.
+* **Errors**:
+  - `400 INVALID_TRANSITION` nếu order không còn ở `pending_confirm`; escrow không được gọi cho transition không hợp lệ.
+  - Lỗi từ escrow, ví dụ `400 INSUFFICIENT_CASH`, được trả nguyên trạng và order vẫn ở `pending_confirm`.
+* **Success (200)**: trả về order với `status = confirmed`.
+
+#### [PATCH] `/rental-orders/:id/ship` (Lender xác nhận đã giao hàng)
+* **Headers**: `Authorization: Bearer <token>`
+* **Actor**: chỉ lender của order.
+* **Transition**: `confirmed` → `delivering`.
+* **Side effect**: cập nhật `lender_shipped_at` bằng thời điểm hiện tại.
+* **Success (200)**: trả về order với `status = delivering`.
+
+#### [PATCH] `/rental-orders/:id/cancel` (Renter hủy yêu cầu thuê)
+* **Headers**: `Authorization: Bearer <token>`
+* **Actor**: chỉ renter của order.
+* **Transition**: `pending_confirm` → `cancelled`.
+* **Success (200)**: trả về order với `status = cancelled`.
+
+#### [PATCH] `/rental-orders/:id/confirm-receipt` (Renter xác nhận đã nhận hàng)
+* **Headers**: `Authorization: Bearer <token>`
+* **Actor**: chỉ renter của order.
+* **Transition**: `delivering` → `active`.
+* **Side effect**: cập nhật `renter_received_at` bằng thời điểm hiện tại.
+* **Success (200)**: trả về order với `status = active`.
+
+#### [PATCH] `/rental-orders/:id/return` (Renter xác nhận đã gửi trả)
+* **Headers**: `Authorization: Bearer <token>`
+* **Actor**: chỉ renter của order; lender hoặc user khác nhận `403 FORBIDDEN`.
+* **Transition**: `active` → `returning`.
+* **Side effect**: cập nhật `renter_returned_at` bằng thời điểm hiện tại.
+* **Success (200)**: trả về order với `status = returning`.
+
+#### [PATCH] `/rental-orders/:id/confirm-return` (Lender xác nhận đã nhận lại gear)
+* **Headers**: `Authorization: Bearer <token>`
+* **Actor**: chỉ lender của order.
+* **Transition**: `returning` → `completed`.
+* **Side effect**: cập nhật `lender_received_back_at` bằng thời điểm hiện tại. Việc gọi `EscrowService.release()` được kích hoạt ở W3.1, chưa thuộc endpoint trong task này.
+* **Success (200)**: trả về order với `status = completed`.
+
+Với năm endpoint không gọi escrow, nếu trạng thái hiện tại không đúng trạng thái nguồn thì API trả `400 INVALID_TRANSITION`. Mọi endpoint trả `404 NOT_FOUND` khi order không tồn tại và dùng response wrapper toàn cục `{ "success": true, "data": ... }` hoặc `{ "success": false, "error": ... }`.
 
 ---
 
