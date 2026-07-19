@@ -8,6 +8,7 @@ import { GearsModule } from './modules/gears/gears.module';
 import { WalletsModule } from './modules/wallets/wallets.module';
 import { RentalOrdersModule } from './modules/rental-orders/rental-orders.module';
 import { AdminModule } from './modules/admin/admin.module';
+import { EscrowModule } from './modules/escrow/escrow.module';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { AdminModule } from './modules/admin/admin.module';
     WalletsModule,
     RentalOrdersModule,
     AdminModule,
+    EscrowModule,
   ],
   controllers: [],
   providers: [],

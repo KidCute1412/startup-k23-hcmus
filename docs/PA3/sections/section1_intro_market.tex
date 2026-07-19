@@ -1,8 +1,33 @@
 % !TeX root = ../main.tex
-\section{Phân tích Thị trường và Phân khúc Khách hàng}
 
-\subsection{Xác định Thị trường Mục tiêu}
+\section{Thị trường mục tiêu}
 
-\subsection{Phân khúc Khách hàng Trọng tâm}
-\subsubsection{Phân khúc Khách hàng thuê thiết bị}
-\subsubsection{Phân khúc Đối tác cho thuê thiết bị}
+\subsection{Thị trường mục tiêu phía người thuê}
+
+Đối với phía người thuê, thị trường mục tiêu của \projectname{} không phải là toàn bộ người chơi game hoặc toàn bộ người dùng thiết bị công nghệ, mà là nhóm người có \textbf{nhu cầu trải nghiệm thiết bị giá trị cao trong thời gian ngắn}, có rào cản tài chính khi mua mới và có thể tiếp cận bằng các kênh cộng đồng mà nhóm dự án đủ năng lực triển khai. Trọng tâm ban đầu là khu vực đô thị có mật độ sinh viên, lập trình viên trẻ làm việc nhiều giờ trước máy tính và game thủ bán chuyên cao, đặc biệt tại các cụm trường đại học, ký túc xá, câu lạc bộ esports, phòng máy và cộng đồng công nghệ trực tuyến.
+
+Về quy mô nhu cầu, đây là thị trường ngách nhưng có tính tập trung cao. Một bộ gaming gear hoặc thiết bị làm việc chất lượng tốt thường có giá từ vài triệu đến hơn mười triệu đồng, trong khi nhiều người dùng chỉ cần sử dụng trong một giai đoạn ngắn: thử trước khi mua, chuẩn bị giải đấu, làm dự án nội dung, hoặc thay thế thiết bị hỏng đột xuất. Vì vậy, \projectname{} ưu tiên nhóm có tần suất phát sinh nhu cầu rõ ràng, sẵn sàng trả phí thuê theo ngày/tuần và đủ động lực hoàn tất các bước xác minh, đặt cọc, nhận bàn giao.
+
+Đặc điểm chung của người thuê mục tiêu gồm: am hiểu cơ bản về thiết bị, thường tham khảo đánh giá trước khi quyết định, nhạy cảm với chi phí mua mới nhưng vẫn coi trọng trải nghiệm thực tế, và có xu hướng chia sẻ nhận xét trong cộng đồng. Đây là nhóm phù hợp cho giai đoạn MVP vì họ vừa có nhu cầu đủ đau, vừa có khả năng phản hồi nhanh để \projectname{} cải thiện danh mục thiết bị, chính sách ký quỹ và quy trình bàn giao.
+
+\subsection{Thị trường mục tiêu phía người cho thuê}
+
+\section{Phân khúc khách hàng trọng tâm}
+\subsection{Phân khúc khách hàng thuê thiết bị}
+
+
+
+\begin{longtable}{@{}p{0.22\textwidth}p{0.22\textwidth}p{0.24\textwidth}p{0.20\textwidth}@{}}
+\toprule
+\textbf{Phân khúc} & \textbf{Use case chính} & \textbf{Pain level và buying power} & \textbf{Reachability} \\
+\midrule
+\endhead
+Học sinh, sinh viên chơi game & Thuê chuột, bàn phím, tai nghe gaming để trải nghiệm, chơi cùng bạn bè, tham gia giải phong trào hoặc thử trước khi mua. & Đau ở mức cao do ngân sách hạn chế, sợ mua nhầm thiết bị và thường cần thuyết phục gia đình hoặc tự dùng tiền tiết kiệm. Khả năng trả tiền theo từng đơn nhỏ phù hợp với thuê ngắn ngày. & Dễ tiếp cận qua câu lạc bộ esports, nhóm lớp, ký túc xá, Discord, Facebook group trường và hoạt động demo trực tiếp. \\
+Lập trình viên trẻ làm việc nhiều giờ trước máy tính & Thuê bàn phím cơ, chuột công thái học, kê tay hoặc tai nghe chống ồn để thử trong môi trường làm việc thật trước khi đầu tư. & Đau ở mức trung bình đến cao vì chọn sai thiết bị ảnh hưởng năng suất, cổ tay, vai gáy và sự tập trung khi làm việc 8--10 tiếng/ngày. Có khả năng tự chi trả tốt hơn nhóm sinh viên. & Tiếp cận qua cộng đồng lập trình viên, nhóm công nghệ tại trường/công ty, Discord, Facebook group ngành IT và nội dung desk setup cho developer. \\
+Game thủ bán chuyên và đội/CLB esports & Thuê gear chuẩn thi đấu trong giai đoạn luyện tập, giải đấu ngắn ngày hoặc khi thiết bị cá nhân gặp sự cố. & Đau ở mức rất cao trong thời điểm trước giải vì thiết bị ảnh hưởng trực tiếp đến thành tích. Người trả tiền có thể là cá nhân, đội nhóm hoặc CLB. & Tiếp cận qua giải đấu sinh viên, phòng máy, đội tuyển trường, admin cộng đồng esports và quan hệ đối tác sự kiện. \\
+\bottomrule
+\end{longtable}
+
+Trong ba nhóm trên, \textbf{học sinh, sinh viên chơi game tại khu vực trường đại học} là phân khúc ưu tiên của MVP. Lý do là nhu cầu thuê đủ rõ, mật độ tập trung cao, chi phí tiếp cận thấp và khả năng tạo phản hồi/truyền miệng nhanh. Nhóm lập trình viên trẻ và game thủ bán chuyên được xem là phân khúc mở rộng có chọn lọc: lập trình viên có khả năng chi trả tốt hơn nhưng phân tán hơn, còn game thủ bán chuyên có pain level rất cao nhưng nhu cầu thường theo mùa giải.
+\subsection{Phân khúc đối tác cho thuê thiết bị}
+

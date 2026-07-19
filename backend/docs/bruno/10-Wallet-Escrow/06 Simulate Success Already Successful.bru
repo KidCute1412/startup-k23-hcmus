@@ -1,0 +1,22 @@
+meta {
+  name: Simulate Success Already Successful
+  type: http
+  seq: 6
+}
+
+post {
+  url: {{baseUrl}}/wallets/topups/{{completedTopupId}}/simulate-success
+  body: none
+  auth: inherit
+}
+
+vars:pre-request {
+  completedTopupId: d4494404-25d7-4f75-adb8-a49137cee07f
+}
+
+tests {
+  test("returns current successful topup", function() {
+    expect([200, 201]).to.include(res.status);
+    expect(res.body.data || res.body).to.have.property("status", "success");
+  });
+}

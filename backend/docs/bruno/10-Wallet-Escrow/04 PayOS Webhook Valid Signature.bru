@@ -1,0 +1,60 @@
+meta {
+  name: PayOS Webhook Valid Signature
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{baseUrl}}/payments/webhook/payos
+  body: json
+  auth: none
+}
+
+headers {
+  x-payos-signature: {{payosSignature}}
+}
+
+body:json {
+  {
+    "orderCode": "{{topupOrderCode}}",
+    "data": {
+      "reference": "{{payosReference}}"
+    }
+  }
+}
+
+vars:pre-request {
+  topupOrderCode: TOPUP-1784369292344-1535
+  payosReference: PAYOS-REF-1721290000000
+}
+
+script:pre-request {
+  const crypto = require("crypto");
+  const secret = bru.getEnvVar("PAYOS_WEBHOOK_SECRET") || "test-secret";
+  const reference = `PAYOS-REF-${Date.now()}`;
+  const payload = JSON.stringify({
+    orderCode: bru.getEnvVar("topupOrderCode"),
+    data: { reference }
+  });
+  
+  bru.setEnvVar("payosReference", reference);
+  bru.setEnvVar(
+    "payosSignature",
+    crypto.createHmac("sha256", secret).update(payload).digest("hex")
+  );
+}
+
+script:post-response {
+  if (res.status === 201 || res.status === 200) {
+    const topup = res.body.data || res.body;
+    bru.setEnvVar("completedTopupId", topup.id);
+  }
+}
+
+tests {
+  test("completes topup", function() {
+    expect([200, 201]).to.include(res.status);
+    expect(res.body.data || res.body).to.have.property("status", "success");
+  });
+}
+​

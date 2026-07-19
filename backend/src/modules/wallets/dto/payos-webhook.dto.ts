@@ -39,6 +39,10 @@ export class PayosWebhookDataDto {
 
 export class PayosWebhookDto {
   @IsOptional()
+  @IsNumber()
+  orderCode?: number;
+
+  @IsOptional()
   @IsString()
   code?: string;
 

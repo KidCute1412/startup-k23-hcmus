@@ -13,6 +13,7 @@ export interface RefreshJwtPayload extends JwtPayload {
 
 export interface AuthenticatedRequest extends Request {
   user: JwtPayload;
+  rawBody?: Buffer;
 }
 
 export interface RefreshAuthenticatedRequest extends Request {

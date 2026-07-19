@@ -2,6 +2,7 @@ import {
   Body,
   Controller,
   Get,
+  Headers,
   Param,
   Post,
   Req,
@@ -21,6 +22,7 @@ export class WalletsController {
   get(@Req() req: AuthenticatedRequest) {
     return this.service.getRenter(req.user.id);
   }
+
   @UseGuards(JwtAuthGuard)
   @Post('wallets/topups/checkout')
   checkout(
@@ -29,13 +31,19 @@ export class WalletsController {
   ) {
     return this.service.checkout(req.user.id, body.amount);
   }
+
   @UseGuards(JwtAuthGuard)
   @Post('wallets/topups/:id/simulate-success')
   simulate(@Req() req: AuthenticatedRequest, @Param('id') id: string) {
     return this.service.completeTopup(id, req.user.id);
   }
+
   @Post('payments/webhook/payos')
-  webhook(@Body() body: PayosWebhookDto) {
-    return this.service.webhook(body);
+  webhook(
+    @Body() body: PayosWebhookDto,
+    @Headers('x-payos-signature') signature: string | undefined,
+    @Req() req: AuthenticatedRequest,
+  ) {
+    return this.service.webhook(body, signature, req.rawBody);
   }
 }
