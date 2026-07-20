@@ -220,7 +220,7 @@ describeIntegration('Rental order transitions (PostgreSQL integration)', () => {
       .expect(200);
   });
 
-  it('confirms a credit-line order with cash fee debit, credit lock, escrow, and ledgers', async () => {
+  it('confirms a credit-line order with credit lock, escrow, and no cash wallet change', async () => {
     const order = await createOrder(
       renterId,
       OrderStatusType.pending_confirm,
@@ -253,9 +253,7 @@ describeIntegration('Rental order transitions (PostgreSQL integration)', () => {
     const cashAfter = await prisma.renterWallet.findUniqueOrThrow({
       where: { user_id: renterId },
     });
-    expect(cashAfter.balance).toEqual(
-      cashBefore.balance.minus(order.rental_fee),
-    );
+    expect(cashAfter.balance).toEqual(cashBefore.balance);
     expect(cashAfter.locked_balance).toEqual(cashBefore.locked_balance);
     const creditAfter = await prisma.mutuxWallet.findUniqueOrThrow({
       where: { user_id: renterId },
@@ -266,6 +264,22 @@ describeIntegration('Rental order transitions (PostgreSQL integration)', () => {
     expect(creditAfter.locked_balance).toEqual(
       creditBefore.locked_balance.plus(order.deposit_amount),
     );
+    const creditTransaction = await prisma.creditTransaction.findFirstOrThrow({
+      where: {
+        mutux_wallet_id: creditAfter.id,
+        type: 'deposit_lock',
+        ref_type: 'rental_order',
+        ref_id: order.id,
+        status: 'success',
+      },
+    });
+    expect(creditTransaction).toMatchObject({
+      direction: 'out',
+      display_balance_before: creditBefore.display_balance,
+      display_balance_after: creditBefore.display_balance.minus(
+        order.deposit_amount,
+      ),
+    });
     expect(
       await prisma.creditTransaction.count({
         where: {
@@ -281,7 +295,7 @@ describeIntegration('Rental order transitions (PostgreSQL integration)', () => {
       await prisma.renterWalletTransaction.count({
         where: { reference: `LOCK-${order.id}` },
       }),
-    ).toBe(1);
+    ).toBe(0);
 
     await request(app.getHttpServer())
       .patch(`/api/v1/rental-orders/${order.id}/confirm`)
@@ -331,6 +345,54 @@ describeIntegration('Rental order transitions (PostgreSQL integration)', () => {
     ).toMatchObject({
       display_balance: creditBefore.display_balance,
       locked_balance: creditBefore.locked_balance,
+    });
+    expect(
+      await prisma.escrowWallet.count({
+        where: { rental_order_id: order.id },
+      }),
+    ).toBe(0);
+    expect(
+      await prisma.creditTransaction.count({ where: { ref_id: order.id } }),
+    ).toBe(0);
+  });
+
+  it('uses total limit minus locked balance and outstanding debt for credit availability', async () => {
+    const constrainedRenterId = newId();
+    await prisma.user.create({
+      data: {
+        id: constrainedRenterId,
+        email: `constrained-renter-${constrainedRenterId}@integration.test`,
+        password_hash: 'x',
+        role: 'renter',
+        kyc_status: 'verified',
+      },
+    });
+    await prisma.renterWallet.create({
+      data: { user_id: constrainedRenterId, balance: 10_000_000 },
+    });
+    await prisma.mutuxWallet.create({
+      data: {
+        user_id: constrainedRenterId,
+        total_limit: 500_000,
+        display_balance: 500_000,
+        locked_balance: 200_000,
+        outstanding_debt: 100_000,
+        status: 'active',
+      },
+    });
+    const order = await createOrder(
+      constrainedRenterId,
+      OrderStatusType.pending_confirm,
+      DepositTypeEnum.credit_line,
+    );
+
+    const response = await request(app.getHttpServer())
+      .patch(`/api/v1/rental-orders/${order.id}/confirm`)
+      .set('Authorization', `Bearer ${lenderToken}`)
+      .expect(400);
+
+    expect(response.body).toMatchObject({
+      error: { code: 'INSUFFICIENT_CREDIT' },
     });
     expect(
       await prisma.escrowWallet.count({
