@@ -45,6 +45,54 @@ export const authService = {
     }
   },
 
+  async register(email: string, password: string, fullName: string): Promise<{ success: boolean; message: string }> {
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api/v1'}/auth/register`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password, fullName }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || (data && 'success' in data && !data.success)) {
+        throw new Error(data.error?.message || 'Đăng ký thất bại.');
+      }
+
+      return { success: true, message: data.message || 'Đăng ký thành công.' };
+    } catch (error) {
+      console.error('Register error:', error);
+      throw error;
+    }
+  },
+
+  async changePassword(oldPassword: string, newPassword: string): Promise<{ success: boolean; message: string }> {
+    try {
+      const token = this.getToken();
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api/v1'}/auth/change-password`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token || ''}`,
+        },
+        body: JSON.stringify({ oldPassword, newPassword }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || (data && 'success' in data && !data.success)) {
+        throw new Error(data.error?.message || 'Đổi mật khẩu thất bại.');
+      }
+
+      return { success: true, message: data.message || 'Đổi mật khẩu thành công.' };
+    } catch (error) {
+      console.error('Change password error:', error);
+      throw error;
+    }
+  },
+
   logout(): void {
     if (typeof window !== 'undefined') {
       localStorage.removeItem('token');
@@ -67,4 +115,5 @@ export const authService = {
     return null;
   }
 };
+
 

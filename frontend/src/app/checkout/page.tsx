@@ -1,27 +1,15 @@
-"use client";
+import { Metadata } from "next";
+import { CheckoutClient } from "@/features/checkout/checkout-client";
 
-import { useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { RentalRequestForm } from "@/features/rentals/rental-request-form";
-import { useCart } from "@/features/cart/cart-context";
+export const metadata: Metadata = {
+  title: "Thanh toán đơn thuê | Mutux GEAR",
+  description: "Hoàn tất thông tin giao nhận và tiến hành thanh toán cọc đơn thuê gear gaming.",
+};
 
 export default function CheckoutPage() {
-  const { items, totalItems } = useCart();
-  const router = useRouter();
-
-  useEffect(() => {
-    if (totalItems === 0) {
-      router.push("/cart");
-    }
-  }, [totalItems, router]);
-
-  if (totalItems === 0) {
-    return null; // Will redirect
-  }
-
   return (
     <section className="mx-auto max-w-7xl px-4 py-10 sm:px-6">
-      <RentalRequestForm items={items} />
+      <CheckoutClient />
     </section>
   );
 }
