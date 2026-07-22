@@ -7,7 +7,7 @@ interface EscrowRecord {
   id: string;
   rental_order_id: string;
   amount: Prisma.Decimal;
-  source: 'renter_cash';
+  source: 'renter_cash' | 'credit_line';
   status: 'locked';
 }
 
@@ -26,15 +26,36 @@ interface EscrowState {
     balance: Prisma.Decimal;
     locked_balance: Prisma.Decimal;
   };
+  creditWallet: {
+    id: string;
+    user_id: string;
+    total_limit: Prisma.Decimal;
+    display_balance: Prisma.Decimal;
+    locked_balance: Prisma.Decimal;
+    outstanding_debt: Prisma.Decimal;
+    status: 'active' | 'suspended';
+    expired_at: Date | null;
+  } | null;
   transactions: Map<string, object>;
+  creditTransactions: object[];
 }
 
 interface EscrowTransactionMock {
   $queryRaw: jest.Mock;
   rentalOrder: { findUnique: jest.Mock };
   escrowWallet: { findUnique: jest.Mock; create: jest.Mock };
-  renterWallet: { findUnique: jest.Mock; update: jest.Mock };
+  renterWallet: {
+    findUnique: jest.Mock;
+    findUniqueOrThrow: jest.Mock;
+    update: jest.Mock;
+  };
   renterWalletTransaction: { findUnique: jest.Mock; create: jest.Mock };
+  mutuxWallet: {
+    findUnique: jest.Mock;
+    findUniqueOrThrow: jest.Mock;
+    update: jest.Mock;
+  };
+  creditTransaction: { create: jest.Mock };
 }
 
 interface EscrowPrismaMock {
@@ -45,11 +66,13 @@ describe('EscrowService', () => {
   const orderId = '30000000-0000-0000-0000-000000000001';
   const renterId = '00000000-0000-0000-0000-000000000001';
   const walletId = '10000000-0000-0000-0000-000000000001';
+  const creditWalletId = '50000000-0000-0000-0000-000000000001';
 
   let prisma: EscrowPrismaMock;
   let tx: EscrowTransactionMock;
   let state: EscrowState;
   let transactionQueue: Promise<unknown>;
+  let reconciliation: { checkCreditLineBalance: jest.Mock };
   let service: EscrowService;
 
   beforeEach(() => {
@@ -68,7 +91,18 @@ describe('EscrowService', () => {
         balance: new Prisma.Decimal(600000),
         locked_balance: new Prisma.Decimal(0),
       },
+      creditWallet: {
+        id: creditWalletId,
+        user_id: renterId,
+        total_limit: new Prisma.Decimal(500000),
+        display_balance: new Prisma.Decimal(500000),
+        locked_balance: new Prisma.Decimal(0),
+        outstanding_debt: new Prisma.Decimal(0),
+        status: 'active',
+        expired_at: null,
+      },
       transactions: new Map<string, object>(),
+      creditTransactions: [],
     };
     tx = {
       $queryRaw: jest.fn().mockResolvedValue([]),
@@ -93,6 +127,7 @@ describe('EscrowService', () => {
       },
       renterWallet: {
         findUnique: jest.fn(async () => ({ ...state.wallet })),
+        findUniqueOrThrow: jest.fn(async () => ({ ...state.wallet })),
         update: jest.fn(async ({ data }) => {
           state.wallet.balance = data.balance;
           state.wallet.locked_balance = data.locked_balance;
@@ -108,15 +143,50 @@ describe('EscrowService', () => {
           return data;
         }),
       },
+      mutuxWallet: {
+        findUnique: jest.fn(async () =>
+          state.creditWallet ? { id: state.creditWallet.id } : null,
+        ),
+        findUniqueOrThrow: jest.fn(async () => {
+          if (!state.creditWallet) throw new Error('Credit wallet not found');
+          return { ...state.creditWallet };
+        }),
+        update: jest.fn(async ({ data }) => {
+          if (!state.creditWallet) throw new Error('Credit wallet not found');
+          state.creditWallet.display_balance = data.display_balance;
+          state.creditWallet.locked_balance = data.locked_balance;
+          return state.creditWallet;
+        }),
+      },
+      creditTransaction: {
+        create: jest.fn(async ({ data }) => {
+          state.creditTransactions.push(data);
+          return data;
+        }),
+      },
     };
     transactionQueue = Promise.resolve();
+    reconciliation = {
+      checkCreditLineBalance: jest.fn().mockResolvedValue(undefined),
+    };
     prisma = {
       $transaction: jest.fn((callback) => {
-        transactionQueue = transactionQueue.then(() => callback(tx));
+        transactionQueue = transactionQueue.then(async () => {
+          const snapshot = cloneState(state);
+          try {
+            return await callback(tx);
+          } catch (error) {
+            state = snapshot;
+            throw error;
+          }
+        });
         return transactionQueue;
       }),
     };
-    service = new EscrowService(prisma as unknown as PrismaService);
+    service = new EscrowService(
+      prisma as unknown as PrismaService,
+      reconciliation,
+    );
   });
 
   it('rolls back traditional lock with INSUFFICIENT_CASH when available cash is below required cash', async () => {
@@ -172,4 +242,147 @@ describe('EscrowService', () => {
     expect(state.wallet.balance).toEqual(new Prisma.Decimal(500000));
     expect(state.wallet.locked_balance).toEqual(new Prisma.Decimal(400000));
   });
+
+  it('locks a credit-line deposit without changing the renter cash wallet', async () => {
+    state.order.deposit_type = 'credit_line';
+    state.wallet.balance = new Prisma.Decimal(200000);
+
+    const result = await service.lock(orderId);
+
+    expect(result).toEqual({
+      escrowId: 'escrow-id',
+      orderId,
+      amount: 400000,
+      source: 'credit_line',
+      status: 'locked',
+    });
+    expect(state.wallet.balance).toEqual(new Prisma.Decimal(200000));
+    expect(state.wallet.locked_balance).toEqual(new Prisma.Decimal(0));
+    expect(tx.renterWallet.update).not.toHaveBeenCalled();
+    expect(tx.renterWalletTransaction.create).not.toHaveBeenCalled();
+    expect(state.creditWallet?.display_balance).toEqual(
+      new Prisma.Decimal(100000),
+    );
+    expect(state.creditWallet?.locked_balance).toEqual(
+      new Prisma.Decimal(400000),
+    );
+    expect(tx.creditTransaction.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        mutux_wallet_id: creditWalletId,
+        type: 'deposit_lock',
+        amount: new Prisma.Decimal(400000),
+        display_balance_before: new Prisma.Decimal(500000),
+        display_balance_after: new Prisma.Decimal(100000),
+        direction: 'out',
+        ref_type: 'rental_order',
+        ref_id: orderId,
+        status: 'success',
+      }),
+    });
+    expect(reconciliation.checkCreditLineBalance).toHaveBeenCalledWith(
+      tx,
+      creditWalletId,
+    );
+  });
+
+  it('does not require a renter cash wallet for a credit-line lock', async () => {
+    state.order.deposit_type = 'credit_line';
+    tx.renterWallet.findUnique.mockResolvedValueOnce(null);
+
+    await expect(service.lock(orderId)).resolves.toMatchObject({
+      orderId,
+      source: 'credit_line',
+      status: 'locked',
+    });
+    expect(tx.renterWallet.findUnique).not.toHaveBeenCalled();
+    expect(tx.renterWallet.update).not.toHaveBeenCalled();
+  });
+
+  it('rolls back a credit-line lock when available credit is insufficient', async () => {
+    state.order.deposit_type = 'credit_line';
+    state.creditWallet!.total_limit = new Prisma.Decimal(500000);
+    state.creditWallet!.locked_balance = new Prisma.Decimal(200000);
+    state.creditWallet!.outstanding_debt = new Prisma.Decimal(100000);
+    state.creditWallet!.display_balance = new Prisma.Decimal(500000);
+
+    await expect(service.lock(orderId)).rejects.toMatchObject({
+      status: 400,
+      response: { error: 'INSUFFICIENT_CREDIT' },
+    });
+    expect(tx.renterWallet.update).not.toHaveBeenCalled();
+    expect(tx.mutuxWallet.update).not.toHaveBeenCalled();
+    expect(tx.creditTransaction.create).not.toHaveBeenCalled();
+    expect(tx.escrowWallet.create).not.toHaveBeenCalled();
+  });
+
+  it('rolls back wallet, credit transaction, and escrow when reconciliation detects a ledger imbalance', async () => {
+    state.order.deposit_type = 'credit_line';
+    reconciliation.checkCreditLineBalance.mockRejectedValueOnce({
+      status: 400,
+      response: { error: 'LEDGER_IMBALANCE_ERROR' },
+    });
+
+    await expect(service.lock(orderId)).rejects.toMatchObject({
+      status: 400,
+      response: { error: 'LEDGER_IMBALANCE_ERROR' },
+    });
+    expect(state.wallet.balance).toEqual(new Prisma.Decimal(600000));
+    expect(state.wallet.locked_balance).toEqual(new Prisma.Decimal(0));
+    expect(state.creditWallet?.display_balance).toEqual(
+      new Prisma.Decimal(500000),
+    );
+    expect(state.creditWallet?.locked_balance).toEqual(new Prisma.Decimal(0));
+    expect(state.creditTransactions).toHaveLength(0);
+    expect(state.order.escrow_wallet).toBeNull();
+  });
+
+  it('returns the existing credit-line escrow without debiting either wallet twice', async () => {
+    state.order.deposit_type = 'credit_line';
+
+    const first = await service.lock(orderId);
+    const second = await service.lock(orderId);
+
+    expect(second).toEqual(first);
+    expect(tx.renterWallet.update).not.toHaveBeenCalled();
+    expect(tx.renterWalletTransaction.create).not.toHaveBeenCalled();
+    expect(tx.mutuxWallet.update).toHaveBeenCalledTimes(1);
+    expect(tx.creditTransaction.create).toHaveBeenCalledTimes(1);
+    expect(tx.escrowWallet.create).toHaveBeenCalledTimes(1);
+  });
 });
+
+function cloneState(state: EscrowState): EscrowState {
+  return {
+    order: {
+      ...state.order,
+      rental_fee: new Prisma.Decimal(state.order.rental_fee),
+      deposit_amount: new Prisma.Decimal(state.order.deposit_amount),
+      escrow_wallet: state.order.escrow_wallet
+        ? {
+            ...state.order.escrow_wallet,
+            amount: new Prisma.Decimal(state.order.escrow_wallet.amount),
+          }
+        : null,
+    },
+    wallet: {
+      ...state.wallet,
+      balance: new Prisma.Decimal(state.wallet.balance),
+      locked_balance: new Prisma.Decimal(state.wallet.locked_balance),
+    },
+    creditWallet: state.creditWallet
+      ? {
+          ...state.creditWallet,
+          total_limit: new Prisma.Decimal(state.creditWallet.total_limit),
+          display_balance: new Prisma.Decimal(
+            state.creditWallet.display_balance,
+          ),
+          locked_balance: new Prisma.Decimal(state.creditWallet.locked_balance),
+          outstanding_debt: new Prisma.Decimal(
+            state.creditWallet.outstanding_debt,
+          ),
+        }
+      : null,
+    transactions: new Map(state.transactions),
+    creditTransactions: [...state.creditTransactions],
+  };
+}

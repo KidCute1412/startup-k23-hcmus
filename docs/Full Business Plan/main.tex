@@ -1,0 +1,212 @@
+\documentclass[12pt,a4paper]{article}
+
+% --- Font & Vietnamese support ---
+\usepackage[utf8]{inputenc}
+\usepackage[vietnamese]{babel}
+\usepackage[T5]{fontenc}
+\usepackage{tgpagella}
+
+% --- Page Layout ---
+\usepackage{geometry}
+\geometry{
+    a4paper,
+    top=25mm,
+    bottom=25mm,
+    left=30mm,
+    right=20mm,
+    headheight=14.5pt
+}
+
+% --- Colors ---
+\usepackage{xcolor}
+\definecolor{primary}{RGB}{26, 54, 93}
+\definecolor{secondary}{RGB}{74, 85, 104}
+\definecolor{accent}{RGB}{49, 151, 149}
+\definecolor{bgcode}{RGB}{247, 250, 252}
+
+\newcommand{\schoolfont}{\fontsize{15}{18}\selectfont}
+\newcommand{\facultyfont}{\fontsize{13}{16}\selectfont}
+
+% --- Navigation & Links ---
+\usepackage{hyperref}
+\hypersetup{
+    colorlinks=true,
+    linkcolor=primary,
+    filecolor=accent,
+    urlcolor=accent,
+    citecolor=primary,
+    pdftitle={Bao cao do an},
+    pdfpagemode=FullScreen
+}
+\usepackage{bookmark}
+
+% --- Headers & Footers ---
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\textsl{\small Đồ án Khởi nghiệp - K23}}
+\fancyfoot[C]{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+\renewcommand{\footrulewidth}{0.4pt}
+
+% --- Typography ---
+\usepackage{titlesec}
+\titleformat{\section}
+  {\normalfont\large\bfseries\color{primary}}{\thesection.}{0.5em}{}
+\titleformat{\subsection}
+  {\normalfont\normalsize\bfseries\color{secondary}}{\thesubsection.}{0.5em}{}
+\titleformat{\subsubsection}
+  {\normalfont\normalsize\bfseries\itshape\color{secondary}}{\thesubsubsection.}{0.5em}{}
+
+% --- Utilities ---
+\usepackage{graphicx}
+\usepackage{tikz}
+\usetikzlibrary{calc, arrows.meta}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{longtable}
+\usepackage{amsmath}
+\usepackage{listings}
+\usepackage{caption}
+\usepackage{float}
+
+\lstset{
+    backgroundcolor=\color{bgcode},
+    basicstyle=\ttfamily\small,
+    breakatwhitespace=false,
+    breaklines=true,
+    captionpos=b,
+    keepspaces=true,
+    numbers=left,
+    numberstyle=\tiny\color{secondary},
+    showspaces=false,
+    showstringspaces=false,
+    showtabs=false,
+    tabsize=2,
+    frame=single,
+    rulecolor=\color{secondary!30}
+}
+
+% --- Document Info ---
+\newcommand{\weeknumber}{3}
+\newcommand{\weeksubject}{Quảng bá}
+\newcommand{\projectname}{Bussiness Plan: Mutux}
+\newcommand{\reporttitle}{Kế hoạch Quảng bá \& Go-to-Market Strategy}
+\newcommand{\subject}{ĐỒ ÁN KHỞI NGHIỆP}
+\newcommand{\instructor}{Đinh Bá Tiến}
+
+\begin{document}
+
+\pagenumbering{gobble}
+\begin{titlepage}
+  \begin{tikzpicture}[overlay,remember picture]
+    \draw[line width=3pt]
+      ($(current page.north west)+(1.5cm,-2.5cm)$)
+      rectangle
+      ($(current page.south east)+(-1.5cm,3cm)$);
+  \end{tikzpicture}
+
+  \centering
+  \vspace*{\stretch{1}}
+
+  {\schoolfont\bfseries TRƯỜNG ĐẠI HỌC KHOA HỌC TỰ NHIÊN \\ ĐHQG-HCM\par}
+  \vspace{0.1cm}
+  {\facultyfont\bfseries KHOA CÔNG NGHỆ THÔNG TIN\par}
+
+  \vspace{0.75cm}
+
+  % Reference the logo inside PA2 to avoid duplication
+  \includegraphics[width=0.3\textwidth]{../PA2/img/logo-KHTN_REMAKE-1-1024x1024.png}\par
+
+  \vspace{0.45cm}
+
+  {\Large\bfseries \subject\par}
+  \vspace{0.25cm}
+  {\Large\bfseries PA\weeknumber - \weeksubject\par}
+  \vspace{0.25cm}
+  {\Huge\bfseries \textcolor{primary}{\projectname}\par}
+  \vspace{0.2cm}
+  {\large\bfseries \par} %\reporttitle
+
+  \vspace{0.45cm}
+
+  {\large Môn học: Khởi nghiệp\par}
+  {\large Lớp: 23CLC\par}
+
+  \vspace{0.55cm}
+
+  {\Large\bfseries Giảng viên}\par
+  \vspace{0.18cm}
+
+  {\normalsize Đinh Bá Tiến\par}
+  {\normalsize Trần Duy Hoàng\par}
+  {\normalsize Đậu Ngọc Hà Dương\par}
+  {\normalsize Phạm Hoàng Hải\par}
+  {\normalsize Nguyễn Lê Hoàng Dũng\par}
+
+  \vspace{0.5cm}
+
+  {\Large\bfseries Thành viên nhóm 6}\par
+  \vspace{0.2cm}
+
+  \small
+  \begin{tabular}{@{}cll@{}}
+    \toprule
+    \textbf{STT} & \textbf{MSSV} & \textbf{Họ và tên} \\
+    \midrule
+    1 & 23127141 & Trần Cao Vân \\
+    2 & 23127318 & Lê Hồ Đan Anh \\
+    3 & 23127016 & Lưu Huy Minh Quang \\
+    4 & 23127404 & Lê Tuấn Lộc \\
+    5 & 23127465 & Nguyễn Hồ Anh Quốc \\
+    \bottomrule
+  \end{tabular}\par
+  \normalsize
+
+  \vspace*{\stretch{1}}
+\end{titlepage}
+
+\newpage
+\pagenumbering{arabic}
+\tableofcontents
+\newpage
+
+% === MAIN CONTENT ===
+
+\input{PA0/sections/01-co-so-y-tuong.tex}
+\input{PA0/sections/02-van-de-thuc-te.tex}
+\input{PA0/sections/03-doi-tuong-khach-hang.tex}
+\input{PA0/sections/04-giai-phap.tex}
+\input{PA0/sections/05-canh-tranh.tex}
+\input{PA0/sections/06-khac-biet.tex}
+\input{PA0/sections/07-tinh-kha-thi.tex}
+\input{PA0/sections/08-ket-luan.tex}
+\input{PA0/sections/09-Rui-ro.tex}
+
+
+\input{PA1/sections/1-tom-tat-y-tuong.tex}
+\input{PA1/sections/2-danh sách và vai trò thành viên.tex}
+\input{PA1/sections/3-nang-luc-kinh-nghiem.tex}
+\input{PA1/sections/4-co-cau-to-chuc.tex}
+\input{PA1/sections/5-vi-tri-con-thieu.tex}
+\input{PA2/sections/1-mo-ta-san-pham-va-resolve.tex}
+\input{PA2/sections/2-ICP.tex}
+\input{PA2/sections/3-gia-tri-san-pham.tex}
+\input{PA2/sections/4-tinh-nang-chinh.tex}
+\input{PA2/sections/5-khac-biet-voi-thi-truong.tex}
+\input{PA2/sections/6-mo-hinh-hoat-dong.tex}
+\input{PA2/sections/7-MVP.tex}
+\input{PA2/sections/8-lo-trinh-phat-trien.tex}
+\input{PA3/sections/section1_intro_market.tex}
+\input{PA3/sections/section2_personas.tex}
+\input{PA3/sections/section3_marketing_strategy.tex}
+\input{PA3/sections/section4_cold_start.tex}
+
+
+\section{Tài liệu tham khảo}
+% Chèn tài liệu tham khảo bằng bibtex 
+\bibliographystyle{plain}
+\nocite{*}
+\bibliography{references}
+
+\end{document}

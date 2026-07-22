@@ -1,0 +1,11 @@
+meta {
+  name: Confirm Rental Return
+  type: http
+  seq: 9
+}
+
+patch {
+  url: {{baseUrl}}/rental-orders/80000000-0000-0000-0000-000000000004/confirm-return
+  body: none
+  auth: inherit
+}

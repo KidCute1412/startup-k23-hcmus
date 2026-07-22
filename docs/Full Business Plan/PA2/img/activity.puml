@@ -1,0 +1,56 @@
+@startuml
+skinparam defaultFontName Arial
+
+|Người thuê|
+start
+:Tìm kiếm và chọn thiết bị;
+:Gửi yêu cầu thuê;
+
+|Người cho thuê|
+:Nhận yêu cầu;
+if (Đồng ý?) then (Có)
+  :Phê duyệt yêu cầu;
+else (Không)
+  :Từ chối;
+  |Người thuê|
+  :Nhận thông báo hủy;
+  stop
+endif
+
+|Người thuê|
+:Thanh toán Tiền thuê + Tiền cọc;
+
+|Hệ thống (Escrow)|
+:Tạm giữ tiền (Escrow);
+
+|Người cho thuê|
+:Bàn giao thiết bị;
+:Cập nhật minh chứng (Proof);
+
+|Người thuê|
+:Nhận và kiểm tra thiết bị;
+:Xác nhận nhận hàng \n & Cập nhật Proof;
+:Sử dụng thiết bị;
+:Hết hạn, hoàn trả thiết bị;
+:Cập nhật minh chứng trả hàng;
+
+|Người cho thuê|
+:Nhận lại và kiểm tra;
+if (Thiết bị hư hỏng hoặc có vấn đề?) then (Có)
+  :Báo cáo sự cố;
+  |Quản trị viên|
+  :Xử lý tranh chấp (Dispute resolution);
+  :Quyết định bồi thường từ tiền cọc;
+else (Không)
+  |Người cho thuê|
+  :Xác nhận thiết bị an toàn;
+endif
+
+|Hệ thống (Escrow)|
+:Hoàn cọc cho Người thuê;
+:Chuyển tiền thuê (trừ phí) \n cho Người cho thuê;
+
+|Người thuê|
+:Đánh giá (Review) Người cho thuê;
+stop
+@enduml

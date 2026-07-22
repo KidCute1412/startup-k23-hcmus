@@ -1,0 +1,41 @@
+\section{Mô hình hoạt động cơ bản của dịch vụ}
+
+Mô hình hoạt động của hệ thống Mutux được thiết kế nhằm đảm bảo sự minh bạch, an toàn và tiện lợi cho cả Người thuê (Renter) và Người cho thuê (Lender), dưới sự giám sát của Quản trị viên (Admin).
+
+\subsection{Sơ đồ Use Case (Use Case Diagram)}
+
+Sơ đồ Use Case mô tả các tính năng chính mà các tác nhân (Actor) có thể tương tác với hệ thống. Hệ thống Mutux có 3 tác nhân chính:
+
+\begin{itemize}
+    \item \textbf{Người thuê (Renter):} Tìm kiếm, đặt thuê thiết bị, thanh toán và đánh giá.
+    \item \textbf{Người cho thuê (Lender):} Đăng tải thiết bị, quản lý yêu cầu thuê, giao dịch và quản lý doanh thu.
+    \item \textbf{Quản trị viên (Admin):} Phê duyệt KYC, duyệt thiết bị, giải quyết tranh chấp (Dispute resolution) và quản lý hệ thống.
+\end{itemize}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\textwidth]{PA2/img/usecase.png}
+    \caption{Sơ đồ Use Case của hệ thống Mutux}
+    \label{fig:usecase}
+\end{figure}
+
+\subsection{Sơ đồ Hoạt động (Activity Diagram)}
+
+Quy trình cốt lõi nhất của Mutux là luồng Đặt thuê và Bàn giao thiết bị. Hệ thống áp dụng cơ chế thanh toán tạm giữ (Escrow) và quy trình xác thực minh chứng (Proof) để bảo vệ cả hai bên.
+
+Quy trình cơ bản diễn ra theo các bước sau:
+\begin{enumerate}
+    \item \textbf{Đặt thuê:} Người thuê tìm kiếm thiết bị, chọn ngày thuê và gửi yêu cầu.
+    \item \textbf{Phê duyệt:} Người cho thuê xem xét và chấp nhận yêu cầu.
+    \item \textbf{Thanh toán:} Người thuê tiến hành thanh toán tiền thuê và tiền cọc. Số tiền này được chuyển vào ví hệ thống (Escrow) chờ xử lý.
+    \item \textbf{Giao nhận:} Người cho thuê bàn giao thiết bị và cập nhật hình ảnh minh chứng (Proof). Người thuê nhận, kiểm tra và xác nhận trên hệ thống.
+    \item \textbf{Hoàn trả:} Khi hết hạn, người thuê trả lại thiết bị kèm hình ảnh minh chứng. Người cho thuê nhận và xác nhận tình trạng.
+    \item \textbf{Quyết toán:} Hệ thống hoàn lại tiền cọc cho người thuê và chuyển tiền thuê (sau khi trừ phí nền tảng) vào ví của người cho thuê. Nếu có vấn đề phát sinh, Admin sẽ can thiệp để giải quyết tranh chấp.
+\end{enumerate}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{PA2/img/activity.png}
+    \caption{Sơ đồ Hoạt động quy trình thuê thiết bị trên Mutux}
+    \label{fig:activity}
+\end{figure}

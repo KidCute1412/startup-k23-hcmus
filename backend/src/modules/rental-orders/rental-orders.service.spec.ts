@@ -6,6 +6,7 @@ import {
   UserRole,
 } from '@prisma/client';
 import { CreateRentalOrderDto } from './dto/create-rental-order.dto';
+import { EscrowService } from '../escrow/escrow.service';
 import { RentalOrdersRepository } from './rental-orders.repository';
 import { RentalOrdersService } from './rental-orders.service';
 
@@ -18,7 +19,9 @@ describe('RentalOrdersService', () => {
     create: jest.Mock;
     findAll: jest.Mock;
     findById: jest.Mock;
+    transition: jest.Mock;
   };
+  let escrowService: { lock: jest.Mock };
 
   const dto: CreateRentalOrderDto = {
     gearId: '30000000-0000-0000-0000-000000000001',
@@ -51,9 +54,14 @@ describe('RentalOrdersService', () => {
         ),
       findAll: jest.fn(),
       findById: jest.fn(),
+      transition: jest.fn(),
+    };
+    escrowService = {
+      lock: jest.fn().mockResolvedValue({ escrowId: 'escrow-id' }),
     };
     service = new RentalOrdersService(
       repository as unknown as RentalOrdersRepository,
+      escrowService as unknown as EscrowService,
     );
   });
 
@@ -189,5 +197,188 @@ describe('RentalOrdersService', () => {
     repository.findById.mockResolvedValue(order);
 
     await expect(service.findOne(user, order.id)).resolves.toBe(order);
+  });
+
+  it('forbids a renter from confirming an order without calling escrow', async () => {
+    repository.findById.mockResolvedValue({
+      id: 'order-id',
+      renter_id: 'renter-id',
+      lender_id: 'lender-id',
+      status: OrderStatusType.pending_confirm,
+    });
+
+    await expect(
+      service.confirm('renter-id', 'order-id'),
+    ).rejects.toMatchObject({
+      status: 403,
+      response: { error: 'FORBIDDEN' },
+    });
+    expect(escrowService.lock).not.toHaveBeenCalled();
+    expect(repository.transition).not.toHaveBeenCalled();
+  });
+
+  it('forbids a lender from returning an active order', async () => {
+    repository.findById.mockResolvedValue({
+      id: 'order-id',
+      renter_id: 'renter-id',
+      lender_id: 'lender-id',
+      status: OrderStatusType.active,
+    });
+
+    await expect(
+      service.returnOrder('lender-id', 'order-id'),
+    ).rejects.toMatchObject({
+      status: 403,
+      response: { error: 'FORBIDDEN' },
+    });
+    expect(repository.transition).not.toHaveBeenCalled();
+  });
+
+  it('rejects confirm outside pending_confirm without calling escrow', async () => {
+    repository.findById.mockResolvedValue({
+      id: 'order-id',
+      renter_id: 'renter-id',
+      lender_id: 'lender-id',
+      status: OrderStatusType.delivering,
+    });
+
+    await expect(
+      service.confirm('lender-id', 'order-id'),
+    ).rejects.toMatchObject({
+      status: 400,
+      response: { error: 'INVALID_TRANSITION' },
+    });
+    expect(escrowService.lock).not.toHaveBeenCalled();
+  });
+
+  it('keeps pending_confirm when escrow lock fails', async () => {
+    const order = {
+      id: 'order-id',
+      renter_id: 'renter-id',
+      lender_id: 'lender-id',
+      status: OrderStatusType.pending_confirm,
+    };
+    repository.findById.mockResolvedValue(order);
+    escrowService.lock.mockRejectedValue({
+      status: 400,
+      response: { error: 'INSUFFICIENT_CASH' },
+    });
+
+    await expect(service.confirm('lender-id', order.id)).rejects.toMatchObject({
+      response: { error: 'INSUFFICIENT_CASH' },
+    });
+    expect(order.status).toBe(OrderStatusType.pending_confirm);
+    expect(repository.transition).not.toHaveBeenCalled();
+  });
+
+  it('confirms once, creates escrow once, and rejects a repeated confirm', async () => {
+    const order: {
+      id: string;
+      renter_id: string;
+      lender_id: string;
+      status: OrderStatusType;
+    } = {
+      id: 'order-id',
+      renter_id: 'renter-id',
+      lender_id: 'lender-id',
+      status: OrderStatusType.pending_confirm,
+    };
+    repository.findById.mockImplementation(() => Promise.resolve({ ...order }));
+    repository.transition.mockImplementation(
+      (
+        _id: string,
+        expectedStatus: OrderStatusType,
+        data: { status: OrderStatusType },
+      ) => {
+        if (order.status !== expectedStatus) return Promise.resolve(null);
+        order.status = data.status;
+        return Promise.resolve({ ...order });
+      },
+    );
+
+    await expect(service.confirm('lender-id', order.id)).resolves.toMatchObject(
+      {
+        status: OrderStatusType.confirmed,
+      },
+    );
+    await expect(service.confirm('lender-id', order.id)).rejects.toMatchObject({
+      status: 400,
+      response: { error: 'INVALID_TRANSITION' },
+    });
+    expect(escrowService.lock).toHaveBeenCalledTimes(1);
+    expect(repository.transition).toHaveBeenCalledTimes(1);
+  });
+
+  it('runs the complete happy-path lifecycle with the correct actors and timestamps', async () => {
+    const order: Record<string, unknown> & {
+      id: string;
+      renter_id: string;
+      lender_id: string;
+      status: OrderStatusType;
+    } = {
+      id: 'order-id',
+      renter_id: 'renter-id',
+      lender_id: 'lender-id',
+      status: OrderStatusType.pending_confirm,
+    };
+    repository.findById.mockImplementation(() => Promise.resolve({ ...order }));
+    repository.transition.mockImplementation(
+      (
+        _id: string,
+        expectedStatus: OrderStatusType,
+        data: Record<string, unknown> & { status: OrderStatusType },
+      ) => {
+        if (order.status !== expectedStatus) return Promise.resolve(null);
+        Object.assign(order, data);
+        return Promise.resolve({ ...order });
+      },
+    );
+
+    await expect(service.confirm('lender-id', order.id)).resolves.toMatchObject(
+      {
+        status: OrderStatusType.confirmed,
+      },
+    );
+    await expect(service.ship('lender-id', order.id)).resolves.toMatchObject({
+      status: OrderStatusType.delivering,
+    });
+    await expect(
+      service.confirmReceipt('renter-id', order.id),
+    ).resolves.toMatchObject({
+      status: OrderStatusType.active,
+    });
+    await expect(
+      service.returnOrder('renter-id', order.id),
+    ).resolves.toMatchObject({
+      status: OrderStatusType.returning,
+    });
+    await expect(
+      service.confirmReturn('lender-id', order.id),
+    ).resolves.toMatchObject({
+      status: OrderStatusType.completed,
+    });
+    expect(order.lender_shipped_at).toBeInstanceOf(Date);
+    expect(order.renter_received_at).toBeInstanceOf(Date);
+    expect(order.renter_returned_at).toBeInstanceOf(Date);
+    expect(order.lender_received_back_at).toBeInstanceOf(Date);
+  });
+
+  it('lets only the renter cancel a pending order', async () => {
+    repository.findById.mockResolvedValue({
+      id: 'order-id',
+      renter_id: 'renter-id',
+      lender_id: 'lender-id',
+      status: OrderStatusType.pending_confirm,
+    });
+    repository.transition.mockResolvedValue({
+      id: 'order-id',
+      status: OrderStatusType.cancelled,
+    });
+
+    await expect(
+      service.cancel('renter-id', 'order-id'),
+    ).resolves.toMatchObject({
+      status: OrderStatusType.cancelled,
+    });
   });
 });

@@ -1,0 +1,11 @@
+meta {
+  name: Confirm Rental Receipt
+  type: http
+  seq: 7
+}
+
+patch {
+  url: {{baseUrl}}/rental-orders/80000000-0000-0000-0000-000000000004/confirm-receipt
+  body: none
+  auth: inherit
+}

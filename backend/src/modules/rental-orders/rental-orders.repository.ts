@@ -111,4 +111,18 @@ export class RentalOrdersRepository {
       },
     });
   }
+
+  async transition(
+    id: string,
+    expectedStatus: OrderStatusType,
+    data: Prisma.RentalOrderUpdateManyMutationInput,
+  ) {
+    const result = await this.prisma.rentalOrder.updateMany({
+      where: { id, status: expectedStatus },
+      data,
+    });
+
+    if (result.count !== 1) return null;
+    return this.findById(id);
+  }
 }

@@ -16,11 +16,27 @@ import {
 import { randomInt } from 'crypto';
 import { CreateRentalOrderDto } from './dto/create-rental-order.dto';
 import { GetRentalOrdersQueryDto } from './dto/get-rental-orders-query.dto';
+import { EscrowService } from '../escrow/escrow.service';
 import { RentalOrdersRepository } from './rental-orders.repository';
 
 interface CurrentUser {
   id: string;
   role: UserRole;
+}
+
+type TransitionActor = 'renter' | 'lender';
+
+interface TransitionOptions {
+  actor: TransitionActor;
+  currentStatus: OrderStatusType;
+  nextStatus: OrderStatusType;
+  action: string;
+  timestampField?:
+    | 'lender_shipped_at'
+    | 'renter_received_at'
+    | 'renter_returned_at'
+    | 'lender_received_back_at';
+  beforeUpdate?: () => Promise<unknown>;
 }
 
 const MILLISECONDS_PER_DAY = 24 * 60 * 60 * 1000;
@@ -29,6 +45,7 @@ const MILLISECONDS_PER_DAY = 24 * 60 * 60 * 1000;
 export class RentalOrdersService {
   constructor(
     private readonly rentalOrdersRepository: RentalOrdersRepository,
+    private readonly escrowService: EscrowService,
   ) {}
 
   async create(renterId: string, dto: CreateRentalOrderDto) {
@@ -145,6 +162,118 @@ export class RentalOrdersService {
     }
 
     return order;
+  }
+
+  confirm(userId: string, id: string) {
+    return this.performTransition(userId, id, {
+      actor: 'lender',
+      currentStatus: OrderStatusType.pending_confirm,
+      nextStatus: OrderStatusType.confirmed,
+      action: 'confirm',
+      beforeUpdate: () => this.escrowService.lock(id),
+    });
+  }
+
+  ship(userId: string, id: string) {
+    return this.performTransition(userId, id, {
+      actor: 'lender',
+      currentStatus: OrderStatusType.confirmed,
+      nextStatus: OrderStatusType.delivering,
+      action: 'ship',
+      timestampField: 'lender_shipped_at',
+    });
+  }
+
+  cancel(userId: string, id: string) {
+    return this.performTransition(userId, id, {
+      actor: 'renter',
+      currentStatus: OrderStatusType.pending_confirm,
+      nextStatus: OrderStatusType.cancelled,
+      action: 'cancel',
+    });
+  }
+
+  confirmReceipt(userId: string, id: string) {
+    return this.performTransition(userId, id, {
+      actor: 'renter',
+      currentStatus: OrderStatusType.delivering,
+      nextStatus: OrderStatusType.active,
+      action: 'confirm receipt of',
+      timestampField: 'renter_received_at',
+    });
+  }
+
+  returnOrder(userId: string, id: string) {
+    return this.performTransition(userId, id, {
+      actor: 'renter',
+      currentStatus: OrderStatusType.active,
+      nextStatus: OrderStatusType.returning,
+      action: 'return',
+      timestampField: 'renter_returned_at',
+    });
+  }
+
+  confirmReturn(userId: string, id: string) {
+    return this.performTransition(userId, id, {
+      actor: 'lender',
+      currentStatus: OrderStatusType.returning,
+      nextStatus: OrderStatusType.completed,
+      action: 'confirm return of',
+      timestampField: 'lender_received_back_at',
+    });
+  }
+
+  private async performTransition(
+    userId: string,
+    id: string,
+    options: TransitionOptions,
+  ) {
+    const order = await this.rentalOrdersRepository.findById(id);
+    if (!order) {
+      throw new NotFoundException({
+        error: 'NOT_FOUND',
+        message: 'Rental order not found',
+      });
+    }
+
+    const actorId =
+      options.actor === 'lender' ? order.lender_id : order.renter_id;
+    if (actorId !== userId) {
+      throw new ForbiddenException({
+        error: 'FORBIDDEN',
+        message: `Only the order ${options.actor} can perform this transition`,
+      });
+    }
+
+    if (order.status !== options.currentStatus) {
+      throw this.invalidTransition(options.action, order.status);
+    }
+
+    await options.beforeUpdate?.();
+
+    const data: Prisma.RentalOrderUpdateManyMutationInput = {
+      status: options.nextStatus,
+      ...(options.timestampField
+        ? { [options.timestampField]: new Date() }
+        : {}),
+    };
+    const transitionedOrder = await this.rentalOrdersRepository.transition(
+      id,
+      options.currentStatus,
+      data,
+    );
+
+    if (!transitionedOrder) {
+      throw this.invalidTransition(options.action, order.status);
+    }
+    return transitionedOrder;
+  }
+
+  private invalidTransition(action: string, status: OrderStatusType) {
+    return new BadRequestException({
+      error: 'INVALID_TRANSITION',
+      message: `Cannot ${action} rental order from status ${status}`,
+    });
   }
 
   private buildAccessScope(user: CurrentUser): Prisma.RentalOrderWhereInput {
