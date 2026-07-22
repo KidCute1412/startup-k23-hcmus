@@ -1,5 +1,23 @@
+export interface User {
+  id: string;
+  email: string;
+  name?: string;
+  role?: string;
+}
+
+export interface LoginResponse {
+  success: boolean;
+  data: {
+    token: string;
+    user: User;
+  };
+  error?: {
+    message: string;
+  };
+}
+
 export const authService = {
-  async login(email, password) {
+  async login(email: string, password: string): Promise<LoginResponse['data']> {
     try {
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api/v1'}/auth/login`, {
         method: 'POST',
@@ -9,7 +27,7 @@ export const authService = {
         body: JSON.stringify({ email, password }),
       });
 
-      const data = await response.json();
+      const data = (await response.json()) as LoginResponse;
 
       if (!response.ok || !data.success) {
         throw new Error(data.error?.message || 'Đăng nhập thất bại.');
@@ -27,25 +45,26 @@ export const authService = {
     }
   },
 
-  logout() {
+  logout(): void {
     if (typeof window !== 'undefined') {
       localStorage.removeItem('token');
       localStorage.removeItem('user');
     }
   },
 
-  getToken() {
+  getToken(): string | null {
     if (typeof window !== 'undefined') {
       return localStorage.getItem('token');
     }
     return null;
   },
 
-  getUser() {
+  getUser(): User | null {
     if (typeof window !== 'undefined') {
       const user = localStorage.getItem('user');
-      return user ? JSON.parse(user) : null;
+      return user ? (JSON.parse(user) as User) : null;
     }
     return null;
   }
 };
+

@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { authService } from '@/services/authService';
 import { PinkHairCharacter } from '@/components/ui/pink-hair-character';
 
@@ -10,17 +9,17 @@ const inputClass =
   'w-full rounded-v-sm border border-vanguard-light-border bg-vanguard-light-surf px-3 py-2 text-sm text-vanguard-light-text outline-none transition placeholder:text-gray-400 focus:border-vanguard-primary focus:ring-4 focus:ring-vanguard-primary/10 dark:border-vanguard-dark-border dark:bg-vanguard-dark-surfDim dark:text-vanguard-dark-text dark:focus:border-vanguard-primary dark:focus:ring-vanguard-primary/10';
 
 export default function LoginPage() {
-  const [focusedField, setFocusedField] = useState('idle');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
-  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [loginError, setLoginError] = useState(null);
-  const cardRef = useRef(null);
+  const [focusedField, setFocusedField] = useState<string>('idle');
+  const [email, setEmail] = useState<string>('');
+  const [password, setPassword] = useState<string>('');
+  const [showPassword, setShowPassword] = useState<boolean>(false);
+  const [mousePos, setMousePos] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const [loginError, setLoginError] = useState<string | null>(null);
+  const cardRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const handleMouseMove = (event) => {
+    const handleMouseMove = (event: MouseEvent) => {
       if (!cardRef.current) return;
       const rect = cardRef.current.getBoundingClientRect();
       const centerX = rect.left + rect.width / 2;
@@ -39,7 +38,7 @@ export default function LoginPage() {
     return () => window.removeEventListener('mousemove', handleMouseMove);
   }, []);
 
-  const handleSubmit = async (event) => {
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setIsSubmitting(true);
     setLoginError(null);
@@ -47,7 +46,12 @@ export default function LoginPage() {
       await authService.login(email, password);
       window.location.href = '/';
     } catch (error) {
-      setLoginError(error.message || 'Sai thông tin đăng nhập.');
+      const errMsg = error instanceof Error 
+        ? error.message 
+        : (typeof error === 'object' && error !== null && 'message' in error 
+            ? String((error as { message: unknown }).message) 
+            : 'Sai thông tin đăng nhập.');
+      setLoginError(errMsg);
     } finally {
       setIsSubmitting(false);
     }
@@ -67,6 +71,8 @@ export default function LoginPage() {
             emailLength={email.length}
             showPassword={showPassword}
             mousePos={mousePos}
+            isSubmitting={isSubmitting}
+            hasError={!!loginError}
             className="h-44 w-44"
           />
           <div className="mt-4 z-10">
@@ -84,6 +90,8 @@ export default function LoginPage() {
               emailLength={email.length}
               showPassword={showPassword}
               mousePos={mousePos}
+              isSubmitting={isSubmitting}
+              hasError={!!loginError}
               className="h-28 w-28"
             />
           </div>
