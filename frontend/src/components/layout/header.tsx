@@ -3,11 +3,11 @@
 import { Menu, ShoppingBag, ShoppingCart, WalletCards, X, User, LogOut, KeyRound } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { cn } from "@/lib/cn";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { useCart } from "@/features/cart/cart-context";
-import { authService, User as AuthUser } from "@/services/authService";
+import { useAuth } from "@/hooks/useAuth";
 
 const navItems = [
   { href: "/", label: "Trang chủ" },
@@ -22,16 +22,11 @@ export function Header() {
   const [open, setOpen] = useState(false);
   const { totalItems } = useCart();
   
-  const [user, setUser] = useState<AuthUser | null>(null);
+  const { user, logout } = useAuth();
   const [showUserMenu, setShowUserMenu] = useState(false);
 
-  useEffect(() => {
-    setUser(authService.getUser());
-  }, []);
-
-  const handleLogout = () => {
-    authService.logout();
-    setUser(null);
+  const handleLogout = async () => {
+    await logout();
     setShowUserMenu(false);
     window.location.href = "/";
   };
@@ -113,15 +108,23 @@ export function Header() {
                 onClick={() => setShowUserMenu(!showUserMenu)}
                 className="relative inline-flex size-10 items-center justify-center rounded-full border border-vanguard-primary/30 text-vanguard-light-text transition-colors hover:bg-vanguard-light-surfDim dark:text-vanguard-dark-text dark:hover:bg-vanguard-dark-surfBright"
                 aria-label="Tài khoản"
-                title={user.name || user.email}
+                title={user.email}
               >
                 <User size={18} />
               </button>
               {showUserMenu && (
                 <div className="absolute right-0 mt-2 w-48 rounded-v-sm border border-vanguard-light-border bg-vanguard-light-surf p-1 shadow-lg dark:border-vanguard-dark-border dark:bg-vanguard-dark-surf">
                   <div className="px-3 py-2 border-b border-vanguard-light-border dark:border-vanguard-dark-border text-xs font-semibold truncate text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted">
-                    {user.name || user.email}
+                    {user.email}
                   </div>
+                  <Link
+                    href="/account"
+                    onClick={() => setShowUserMenu(false)}
+                    className="flex w-full items-center gap-2 rounded-v-sm px-3 py-2 text-left text-xs font-semibold text-vanguard-light-text hover:bg-vanguard-light-surfDim dark:text-vanguard-dark-text dark:hover:bg-vanguard-dark-surfBright"
+                  >
+                    <User size={14} />
+                    Tài khoản cá nhân
+                  </Link>
                   <Link
                     href="/change-password"
                     onClick={() => setShowUserMenu(false)}
@@ -132,7 +135,7 @@ export function Header() {
                   </Link>
                   <button
                     type="button"
-                    onClick={handleLogout}
+                    onClick={() => void handleLogout()}
                     className="flex w-full items-center gap-2 rounded-v-sm px-3 py-2 text-left text-xs text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950/20"
                   >
                     <LogOut size={14} />
@@ -182,8 +185,15 @@ export function Header() {
               {user ? (
                 <>
                   <div className="px-3 py-2 text-xs font-semibold truncate text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted">
-                    {user.name || user.email}
+                    {user.email}
                   </div>
+                  <Link
+                    href="/account"
+                    onClick={() => setOpen(false)}
+                    className="flex w-full items-center gap-2 rounded-v-sm px-3 py-3 text-xs font-bold uppercase tracking-widest text-vanguard-primary hover:bg-vanguard-light-surfDim dark:hover:bg-vanguard-dark-surfBright"
+                  >
+                    Tài khoản cá nhân
+                  </Link>
                   <Link
                     href="/change-password"
                     onClick={() => setOpen(false)}
@@ -194,8 +204,7 @@ export function Header() {
                   <button
                     type="button"
                     onClick={() => {
-                      handleLogout();
-                      setOpen(false);
+                      void handleLogout();
                     }}
                     className="flex w-full items-center gap-2 rounded-v-sm px-3 py-3 text-left text-xs font-bold uppercase tracking-widest text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950/20"
                   >

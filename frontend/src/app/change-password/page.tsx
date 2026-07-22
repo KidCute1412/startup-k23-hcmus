@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { authService } from '@/services/authService';
+import { useAuth } from '@/hooks/useAuth';
 import { PinkHairCharacter } from '@/components/ui/pink-hair-character';
 
 const inputClass =
@@ -19,20 +19,24 @@ export default function ChangePasswordPage() {
   const [showConfirmNewPassword, setShowConfirmNewPassword] = useState<boolean>(false);
   
   const [mousePos, setMousePos] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
-  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const { changePassword, isLoading: isSubmitting, error: authError } = useAuth();
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [submitSuccess, setSubmitSuccess] = useState<string | null>(null);
   const cardRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const handleMouseMove = (event: MouseEvent) => {
+    const handlePointerMove = (event: MouseEvent | TouchEvent) => {
       if (!cardRef.current) return;
+      const clientX = 'touches' in event ? event.touches[0]?.clientX : event.clientX;
+      const clientY = 'touches' in event ? event.touches[0]?.clientY : event.clientY;
+      if (clientX === undefined || clientY === undefined) return;
+
       const rect = cardRef.current.getBoundingClientRect();
       const centerX = rect.left + rect.width / 2;
       const centerY = rect.top + rect.height / 3;
       
-      const dx = (event.clientX - centerX) / (rect.width / 2);
-      const dy = (event.clientY - centerY) / (rect.height / 2);
+      const dx = (clientX - centerX) / (rect.width / 2);
+      const dy = (clientY - centerY) / (rect.height / 2);
       
       setMousePos({ 
         x: Math.max(-1, Math.min(1, dx)), 
@@ -40,24 +44,26 @@ export default function ChangePasswordPage() {
       });
     };
 
-    window.addEventListener('mousemove', handleMouseMove);
-    return () => window.removeEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mousemove', handlePointerMove);
+    window.addEventListener('touchmove', handlePointerMove, { passive: true });
+    return () => {
+      window.removeEventListener('mousemove', handlePointerMove);
+      window.removeEventListener('touchmove', handlePointerMove);
+    };
   }, []);
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    setIsSubmitting(true);
     setSubmitError(null);
     setSubmitSuccess(null);
 
     if (newPassword !== confirmNewPassword) {
       setSubmitError('Mật khẩu mới xác nhận không khớp.');
-      setIsSubmitting(false);
       return;
     }
 
     try {
-      await authService.changePassword(oldPassword, newPassword);
+      await changePassword(oldPassword, newPassword);
       setSubmitSuccess('Đổi mật khẩu thành công!');
       setOldPassword('');
       setNewPassword('');
@@ -69,8 +75,6 @@ export default function ChangePasswordPage() {
             ? String((error as { message: unknown }).message) 
             : 'Đổi mật khẩu thất bại. Vui lòng thử lại.');
       setSubmitError(errMsg);
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
@@ -101,7 +105,8 @@ export default function ChangePasswordPage() {
         {/* Right Side: Form */}
         <div className="flex flex-col justify-center p-6 sm:p-8 md:col-span-7 bg-vanguard-light-surf dark:bg-vanguard-dark-surf">
           {/* Mascot in Mobile */}
-          <div className="block md:hidden mb-4 text-center">
+          <div className="block md:hidden mb-5 relative overflow-hidden rounded-v-md border border-vanguard-light-border dark:border-vanguard-dark-border bg-gradient-to-br from-vanguard-light-bg to-vanguard-light-surfDim dark:from-vanguard-dark-bg dark:to-vanguard-dark-surfDim py-4 text-center">
+            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(212,175,55,0.08),transparent_70%)] pointer-events-none" />
             <PinkHairCharacter
               mode={focusedField}
               emailLength={0}
@@ -211,9 +216,9 @@ export default function ChangePasswordPage() {
               </div>
             </label>
 
-            {submitError && (
+            {(submitError || authError) && (
               <p className="rounded-v-sm border border-red-200 bg-red-50 px-3 py-1.5 text-xs text-red-600 dark:border-red-900/50 dark:bg-red-900/20 dark:text-red-400">
-                {submitError}
+                {submitError || authError}
               </p>
             )}
 

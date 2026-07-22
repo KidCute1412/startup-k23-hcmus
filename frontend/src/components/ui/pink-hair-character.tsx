@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useEffect } from 'react';
+import { useMemo, useState, useEffect, useId } from 'react';
 
 export interface MousePos {
   x: number;
@@ -26,6 +26,15 @@ export function PinkHairCharacter({
   hasError = false,
   className = "h-40 w-40" 
 }: PinkHairCharacterProps) {
+  const uniqueId = useId();
+  const hairGradId = `hairGrad-${uniqueId.replace(/:/g, '')}`;
+  const skinGradId = `skinGrad-${uniqueId.replace(/:/g, '')}`;
+  const characterGlowId = `characterGlow-${uniqueId.replace(/:/g, '')}`;
+
+  const hairGrad = `url(#${hairGradId})`;
+  const skinGrad = `url(#${skinGradId})`;
+  const characterGlow = `url(#${characterGlowId})`;
+
   const [idleState, setIdleState] = useState<'active' | 'music'>('active');
   const [loopTrigger, setLoopTrigger] = useState<number>(0);
 
@@ -70,9 +79,6 @@ export function PinkHairCharacter({
   const isPassword = mode === 'password';
   const isCovering = isPassword && !showPassword;
   const isPeeking = isPassword && showPassword;
-
-  const hairGrad = 'url(#hairGrad)';
-  const skinGrad = 'url(#skinGrad)';
 
   // Calculate head tilt and translate based on mouse position
   const headTransform = useMemo<string>(() => {
@@ -124,7 +130,7 @@ export function PinkHairCharacter({
         __html: `
         @keyframes character-float {
           0%, 100% { transform: translateY(0); }
-          50% { transform: translateY(-6px); }
+          50% { transform: translateY(-2.7%); }
         }
         @keyframes sparkle-twinkle {
           0%, 100% { opacity: 0; transform: scale(0.5); }
@@ -151,8 +157,8 @@ export function PinkHairCharacter({
           50% { filter: drop-shadow(0 0 5px #00F0FF) drop-shadow(0 0 12px #00F0FF); opacity: 1; }
         }
         @keyframes music-sway {
-          0%, 100% { transform: translate(0px, 0px) rotate(-2.5deg); }
-          50% { transform: translate(0px, 1px) rotate(2.5deg); }
+          0%, 100% { transform: translate(0, 0) rotate(-2.5deg); }
+          50% { transform: translate(0, 0.5%) rotate(2.5deg); }
         }
         @keyframes rgb-rainbow {
           0% { stroke: #FF007F; filter: drop-shadow(0 0 1px #FF007F); }
@@ -169,22 +175,33 @@ export function PinkHairCharacter({
         @keyframes note-float-left {
           0% { transform: translate(0, 0) scale(0.6); opacity: 0; }
           30% { opacity: 0.8; }
-          100% { transform: translate(-15px, -30px) scale(1); opacity: 0; }
+          100% { transform: translate(-6.8%, -13.6%) scale(1); opacity: 0; }
         }
         @keyframes note-float-right {
           0% { transform: translate(0, 0) scale(0.6); opacity: 0; }
           30% { opacity: 0.8; }
-          100% { transform: translate(15px, -30px) scale(1); opacity: 0; }
+          100% { transform: translate(6.8%, -13.6%) scale(1); opacity: 0; }
         }
         
         .animate-character { 
           animation: character-float 4s ease-in-out infinite; 
+          transform-box: view-box;
+          transform-origin: 50% 50%;
         }
-        .animate-sparkle { animation: sparkle-twinkle 3s ease-in-out infinite; }
-        .animate-heart { animation: heart-pulse 2.5s ease-in-out infinite; }
+        .animate-sparkle { 
+          animation: sparkle-twinkle 3s ease-in-out infinite; 
+          transform-box: view-box;
+          transform-origin: center;
+        }
+        .animate-heart { 
+          animation: heart-pulse 2.5s ease-in-out infinite; 
+          transform-box: view-box;
+          transform-origin: center;
+        }
         .animate-blink { 
           animation: blink 5s infinite;
-          transform-origin: center 122px;
+          transform-origin: 50% 55.5%;
+          transform-box: view-box;
         }
         .animate-neon {
           animation: neon-pulse 2s ease-in-out infinite;
@@ -201,20 +218,25 @@ export function PinkHairCharacter({
         }
         .animate-headsway {
           animation: music-sway 1.2s ease-in-out infinite;
+          transform-box: view-box;
+          transform-origin: 50% 65.9%;
         }
         .animate-note-l {
           animation: note-float-left 2s ease-in-out infinite;
+          transform-box: view-box;
         }
         .animate-note-r {
           animation: note-float-right 2s ease-in-out infinite;
+          transform-box: view-box;
+        }
+        .head-group {
+          transform-box: view-box;
+          transform-origin: 50% 65.9%;
         }
 
         /* Hover Interactive Effects */
         .character-container {
           cursor: pointer;
-        }
-        .character-container:hover .animate-character {
-          animation-duration: 2s;
         }
         .character-container:hover .animate-neon {
           animation: neon-pulse-fast 0.8s ease-in-out infinite;
@@ -275,15 +297,15 @@ export function PinkHairCharacter({
         className="h-full w-full overflow-visible animate-character"
       >
         <defs>
-          <linearGradient id="hairGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+          <linearGradient id={hairGradId} x1="0%" y1="0%" x2="0%" y2="100%">
             <stop offset="0%" stopColor="#F9C6D5" />
             <stop offset="100%" stopColor="#EAA3B6" />
           </linearGradient>
-          <linearGradient id="skinGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+          <linearGradient id={skinGradId} x1="0%" y1="0%" x2="0%" y2="100%">
             <stop offset="0%" stopColor="#FFF3ED" />
             <stop offset="100%" stopColor="#FDE8E1" />
           </linearGradient>
-          <filter id="character-glow" x="-50%" y="-50%" width="200%" height="200%">
+          <filter id={characterGlowId} x="-50%" y="-50%" width="200%" height="200%">
             <feGaussianBlur in="SourceAlpha" stdDeviation="6" result="blur" />
             <feFlood floodOpacity={0.8} result="color" className="character-glow-flood" />
             <feComposite in="color" in2="blur" operator="in" result="glow" />
@@ -296,16 +318,16 @@ export function PinkHairCharacter({
         </defs>
 
         <g className="animate-sparkle" style={{ animationDelay: '0s' }}>
-          <path d="M30 60 L 32 55 L 37 53 L 32 51 L 30 46 L 28 51 L 23 53 L 28 55 Z" className="sparkle-path" filter="url(#character-glow)" />
+          <path d="M30 60 L 32 55 L 37 53 L 32 51 L 30 46 L 28 51 L 23 53 L 28 55 Z" className="sparkle-path" filter={characterGlow} />
         </g>
         <g className="animate-sparkle" style={{ animationDelay: '1.5s' }}>
-          <path d="M190 80 L 192 75 L 197 73 L 192 71 L 190 66 L 188 71 L 183 73 L 188 75 Z" className="sparkle-path" filter="url(#character-glow)" />
+          <path d="M190 80 L 192 75 L 197 73 L 192 71 L 190 66 L 188 71 L 183 73 L 188 75 Z" className="sparkle-path" filter={characterGlow} />
         </g>
         <g className="animate-heart" style={{ animationDelay: '0.5s' }}>
-          <path d="M40 100 C 40 95, 45 90, 50 90 C 55 90, 60 95, 60 100 C 60 110, 50 120, 50 120 C 50 120, 40 110, 40 100" className="heart-path" filter="url(#character-glow)" />
+          <path d="M40 100 C 40 95, 45 90, 50 90 C 55 90, 60 95, 60 100 C 60 110, 50 120, 50 120 C 50 120, 40 110, 40 100" className="heart-path" filter={characterGlow} />
         </g>
         <g className="animate-heart" style={{ animationDelay: '2s' }}>
-          <path d="M170 140 C 170 135, 175 130, 180 130 C 185 130, 190 135, 190 140 C 190 150, 180 160, 180 160 C 180 160, 170 150, 170 140" className="heart-path" filter="url(#character-glow)" />
+          <path d="M170 140 C 170 135, 175 130, 180 130 C 185 130, 190 135, 190 140 C 190 150, 180 160, 180 160 C 180 160, 170 150, 170 140" className="heart-path" filter={characterGlow} />
         </g>
 
         {/* Floating Music Notes during music mode */}
@@ -321,7 +343,7 @@ export function PinkHairCharacter({
           </g>
         )}
 
-        <g filter="url(#character-glow)">
+        <g filter={characterGlow}>
           {/* Hair Back */}
           <path d="M65 25 C 40 25, 25 70, 30 140 C 33 190, 40 220, 40 220 L 180 220 C 180 220, 187 190, 190 140 C 195 70, 180 25, 155 25 C 130 15, 90 15, 65 25 Z" fill={hairGrad} stroke="#3A202A" strokeWidth="2" />
           
@@ -346,8 +368,8 @@ export function PinkHairCharacter({
 
           {/* DYNAMIC INTERACTIVE HEAD GROUP */}
           <g 
-            style={{ transform: headTransform, transformOrigin: '110px 145px', transition: 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1)' }} 
-            className={idleState === 'music' ? 'animate-headsway' : ''}
+            style={{ transform: headTransform, transformOrigin: '50% 65.9%', transformBox: 'view-box', transition: 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1)' }} 
+            className={`head-group ${idleState === 'music' ? 'animate-headsway' : ''}`}
           >
             {/* Face Base */}
             <path d="M50 100 C 50 40, 80 30, 110 30 C 140 30, 170 40, 170 100 C 170 145, 140 165, 110 165 C 80 165, 50 145, 50 100 Z" fill={skinGrad} stroke="#3A202A" strokeWidth="2.5" />
@@ -424,8 +446,21 @@ export function PinkHairCharacter({
             <path d="M110 35 C 120 65, 130 85, 125 105 C 135 90, 145 80, 150 85 C 155 80, 160 70, 165 50 C 150 40, 130 35, 110 35 Z" fill={hairGrad} stroke="#3A202A" strokeWidth="2" strokeLinejoin="round" />
 
             {/* HANDS (Password Cover) */}
-            <g className={`transition-transform duration-500 ${isPassword ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'}`}>
-              <g className={`transition-transform duration-300 ${isPeeking ? 'translate-y-4' : ''}`}>
+            <g 
+              style={{ 
+                transform: isPassword ? 'translateY(0px)' : 'translateY(55px)', 
+                opacity: isPassword ? 1 : 0, 
+                transition: 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease',
+                transformBox: 'view-box'
+              }}
+            >
+              <g 
+                style={{ 
+                  transform: isPeeking ? 'translateY(15px)' : 'translateY(0px)', 
+                  transition: 'transform 0.3s ease',
+                  transformBox: 'view-box'
+                }}
+              >
                 <path d="M35 220 C 40 170, 55 140, 75 140 C 95 140, 95 180, 65 220 Z" fill={skinGrad} stroke="#3A202A" strokeWidth="2.5" strokeLinejoin="round" />
                 <ellipse cx={80} cy={130} rx={14} ry={18} fill={skinGrad} stroke="#3A202A" strokeWidth="2.5" />
                 <path d="M185 220 C 180 170, 165 140, 145 140 C 125 140, 125 180, 155 220 Z" fill={skinGrad} stroke="#3A202A" strokeWidth="2.5" strokeLinejoin="round" />
