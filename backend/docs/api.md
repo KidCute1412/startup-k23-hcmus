@@ -21,12 +21,9 @@ https://api.mutux.vn/api/v1 || http://localhost:8080/api/v1
 - **Query Parameters**: CamelCase (Ví dụ: `?page=1&limit=10&categoryId=uuid`)
 
 ### Authentication
-Hệ thống sử dụng cơ chế **Single JWT Token** đơn giản cho MVP:
-- Hạn dùng token dài (ví dụ: 30 ngày) lưu ở local storage hoặc cookie.
-- Truyền qua header ở mỗi request cần xác thực:
-  ```http
-  Authorization: Bearer <jwt_token>
-  ```
+Hệ thống dùng cặp **Access Token + Refresh Token** hoàn toàn trong cookie `HttpOnly`; frontend không lưu token, không nhận token trong JSON và không gửi header `Authorization`. `accessToken` có `Path=/api/v1`, hết hạn 15 phút; `refreshToken` có `Path=/api/v1/auth`, hết hạn 7 ngày. Cả hai cookie dùng `SameSite=Lax` và chỉ có cờ `Secure` ở production.
+
+Mọi request được bảo vệ xác thực qua cookie `accessToken`. Với `POST`, `PUT`, `PATCH`, hoặc `DELETE` có access cookie, client phải gửi `Origin` khớp một giá trị trong `FRONTEND_URL` (mặc định `http://localhost:3000`), nếu không server trả `403`.
 
 ### Pagination (Phân trang)
 Các API danh sách sử dụng phương thức phân trang Offset:
@@ -78,7 +75,6 @@ HTTP Status: `400`, `401`, `403`, `404`, `422`, `500`.
   ```json
   {
     "email": "user@example.com",
-    "phone": "0987654321",
     "password": "SecurePassword123",
     "fullName": "Nguyễn Văn A"
   }
@@ -93,26 +89,35 @@ HTTP Status: `400`, `401`, `403`, `404`, `422`, `500`.
     "password": "SecurePassword123"
   }
   ```
-* **Success (200)**: Trả về token duy nhất dùng cho 30 ngày.
+* **Success (200)**: Server đặt cả `accessToken` và `refreshToken` qua `Set-Cookie`; JSON không chứa token.
   ```json
   {
     "success": true,
     "data": {
-      "token": "eyJhbGciOiJIUzI1NiIsInR5c...",
       "user": { "id": "uuid", "email": "user@example.com", "role": "renter" }
     }
   }
   ```
 
+#### [POST] `/auth/refresh`
+* **Cookie**: `refreshToken` được trình duyệt tự động gửi; frontend phải dùng `credentials: 'include'`.
+* **Success (200)**: Xoay cả hai cookie qua `Set-Cookie`; `data` là `null`.
+
+#### [POST] `/auth/change-password`
+* **Authentication**: `accessToken` cookie; request phải có `Origin` hợp lệ.
+* **Body**: `{ "oldPassword": "SecurePassword123", "newPassword": "SecurePassword456" }`
+* **Success (200)**: Đổi mật khẩu, thu hồi refresh token đang tồn tại và xóa cookie.
+
 #### [POST] `/auth/logout` (Đăng xuất)
+* **Cookie**: `accessToken` và `refreshToken` (nếu có). Endpoint idempotent, luôn xóa cả hai cookie trên trình duyệt và thu hồi session tương ứng khi refresh cookie hợp lệ.
 * **Success (200)**: `{"success": true}`.
 
 #### [GET] `/users/me` (Lấy thông tin cá nhân)
-* **Headers**: `Authorization: Bearer <token>`
+* **Authentication**: `accessToken` cookie.
 * **Success (200)**: Trả về thông tin chi tiết user (bao gồm cả trạng thái `kycStatus` và `cccd`).
 
 #### [POST] `/users/me/kyc` (Gửi hồ sơ KYC)
-* **Headers**: `Authorization: Bearer <token>`
+* **Authentication**: `accessToken` cookie (and valid `Origin` for state changes).
 * **Body**:
   ```json
   {
@@ -139,7 +144,7 @@ HTTP Status: `400`, `401`, `403`, `404`, `422`, `500`.
 * **Success (200)**: Thông tin chi tiết thiết bị kèm danh sách hình ảnh (`media`) và danh sách các đánh giá (`reviews`) đã có của thiết bị đó.
 
 #### [POST] `/gears` (Lender đăng thiết bị mới)
-* **Headers**: `Authorization: Bearer <token>` (Phải là user đã duyệt KYC)
+* **Authentication**: `accessToken` cookie (and valid `Origin` for state changes; requires verified KYC).
 * **Body**:
   ```json
   {
@@ -157,7 +162,7 @@ HTTP Status: `400`, `401`, `403`, `404`, `422`, `500`.
 * **Success (201)**: Thiết bị được tạo ở trạng thái `pending` (chờ Admin duyệt). `lenderId` luôn lấy từ JWT và lender phải có KYC `verified`.
 
 #### [PATCH] `/gears/:id` (Lender cập nhật hoặc gỡ thiết bị)
-* **Headers**: `Authorization: Bearer <token>`
+* **Authentication**: `accessToken` cookie (and valid `Origin` for state changes).
 * **Body**: Truyền các trường cần cập nhật hoặc đổi trạng thái `status` sang `delisted` để gỡ thiết bị.
 * **Success (200)**: Cập nhật thành công. Chỉ lender sở hữu gear được sửa; sửa gear đã `approved` sẽ đưa gear về `pending` để duyệt lại.
 
@@ -166,7 +171,7 @@ HTTP Status: `400`, `401`, `403`, `404`, `422`, `500`.
 ### 3.3 Wallets (5 APIs)
 
 #### [GET] `/wallets/renter` (Thông tin ví ảo của Renter)
-* **Headers**: `Authorization: Bearer <token>`
+* **Authentication**: `accessToken` cookie (and valid `Origin` for state changes).
 * **Mô tả**: Trả về số dư ví ảo dùng để thanh toán phí thuê, lock cọc truyền thống và nhận refund trong môi trường demo.
 * **Success (200)**:
   ```json
@@ -181,7 +186,7 @@ HTTP Status: `400`, `401`, `403`, `404`, `422`, `500`.
   ```
 
 #### [POST] `/wallets/topups/checkout` (Tạo phiên nạp tiền ví ảo - PayOS mock)
-* **Headers**: `Authorization: Bearer <token>`
+* **Authentication**: `accessToken` cookie (and valid `Origin` for state changes).
 * **Mô tả**: Tạo top-up intent để nạp tiền vào ví ảo. Với MVP demo, PayOS chỉ được mô phỏng ở mức checkout/callback shape, không xử lý tiền thật.
 * **Body**:
   ```json
@@ -203,11 +208,11 @@ HTTP Status: `400`, `401`, `403`, `404`, `422`, `500`.
   ```
 
 #### [GET] `/wallets/mutux` (Thông tin Ví trả sau / Credit Line - Renter)
-* **Headers**: `Authorization: Bearer <token>`
+* **Authentication**: `accessToken` cookie (and valid `Origin` for state changes).
 * **Success (200)**: Trả về hạn mức khả dụng (`displayBalance`), hạn mức bị khóa (`lockedBalance`), dư nợ (`outstandingDebt`). Ví này chỉ dùng để bảo đảm cọc khi `depositType = credit_line`.
 
 #### [GET] `/wallets/lender` (Thông tin Ví thu nhập ảo & Yêu cầu rút tiền - Lender)
-* **Headers**: `Authorization: Bearer <token>`
+* **Authentication**: `accessToken` cookie (and valid `Origin` for state changes).
 * **Mô tả**: Trả về số dư thu nhập ảo của lender. Với MVP demo, withdraw chỉ ghi nhận request/trạng thái, không chuyển khoản ngân hàng thật.
 * **Trường hợp Yêu cầu rút tiền (POST `/wallets/lender/withdraw`):**
   - **Body**:
@@ -226,7 +231,7 @@ HTTP Status: `400`, `401`, `403`, `404`, `422`, `500`.
 ### 3.4 Rental Orders (9 APIs)
 
 #### [POST] `/rental-orders` (Tạo yêu cầu thuê thiết bị - Renter)
-* **Headers**: `Authorization: Bearer <token>`
+* **Authentication**: `accessToken` cookie (and valid `Origin` for state changes).
 * **Body**:
   ```json
   {
@@ -259,7 +264,7 @@ HTTP Status: `400`, `401`, `403`, `404`, `422`, `500`.
 * **Authorization**: chỉ renter, lender liên quan hoặc admin được xem; user khác nhận `403 FORBIDDEN`.
 
 #### [PATCH] `/rental-orders/:id/confirm` (Lender xác nhận đơn)
-* **Headers**: `Authorization: Bearer <token>`
+* **Authentication**: `accessToken` cookie (and valid `Origin` for state changes).
 * **Actor**: chỉ lender của order; renter hoặc user khác nhận `403 FORBIDDEN`.
 * **Transition**: `pending_confirm` → `confirmed`.
 * **Escrow**: gọi `EscrowService.lock(orderId)` trước khi đổi trạng thái. Chỉ khi lock thành công mới cập nhật order; lock tạo `EscrowWallet` ở trạng thái `locked`.
@@ -273,34 +278,34 @@ HTTP Status: `400`, `401`, `403`, `404`, `422`, `500`.
 * **Success (200)**: trả về order với `status = confirmed`.
 
 #### [PATCH] `/rental-orders/:id/ship` (Lender xác nhận đã giao hàng)
-* **Headers**: `Authorization: Bearer <token>`
+* **Authentication**: `accessToken` cookie (and valid `Origin` for state changes).
 * **Actor**: chỉ lender của order.
 * **Transition**: `confirmed` → `delivering`.
 * **Side effect**: cập nhật `lender_shipped_at` bằng thời điểm hiện tại.
 * **Success (200)**: trả về order với `status = delivering`.
 
 #### [PATCH] `/rental-orders/:id/cancel` (Renter hủy yêu cầu thuê)
-* **Headers**: `Authorization: Bearer <token>`
+* **Authentication**: `accessToken` cookie (and valid `Origin` for state changes).
 * **Actor**: chỉ renter của order.
 * **Transition**: `pending_confirm` → `cancelled`.
 * **Success (200)**: trả về order với `status = cancelled`.
 
 #### [PATCH] `/rental-orders/:id/confirm-receipt` (Renter xác nhận đã nhận hàng)
-* **Headers**: `Authorization: Bearer <token>`
+* **Authentication**: `accessToken` cookie (and valid `Origin` for state changes).
 * **Actor**: chỉ renter của order.
 * **Transition**: `delivering` → `active`.
 * **Side effect**: cập nhật `renter_received_at` bằng thời điểm hiện tại.
 * **Success (200)**: trả về order với `status = active`.
 
 #### [PATCH] `/rental-orders/:id/return` (Renter xác nhận đã gửi trả)
-* **Headers**: `Authorization: Bearer <token>`
+* **Authentication**: `accessToken` cookie (and valid `Origin` for state changes).
 * **Actor**: chỉ renter của order; lender hoặc user khác nhận `403 FORBIDDEN`.
 * **Transition**: `active` → `returning`.
 * **Side effect**: cập nhật `renter_returned_at` bằng thời điểm hiện tại.
 * **Success (200)**: trả về order với `status = returning`.
 
 #### [PATCH] `/rental-orders/:id/confirm-return` (Lender xác nhận đã nhận lại gear)
-* **Headers**: `Authorization: Bearer <token>`
+* **Authentication**: `accessToken` cookie (and valid `Origin` for state changes).
 * **Actor**: chỉ lender của order.
 * **Transition**: `returning` → `completed`.
 * **Side effect**: cập nhật `lender_received_back_at` bằng thời điểm hiện tại. Việc gọi `EscrowService.release()` được kích hoạt ở W3.1, chưa thuộc endpoint trong task này.
@@ -314,7 +319,7 @@ Với năm endpoint không gọi escrow, nếu trạng thái hiện tại không
 *Tải hình ảnh/video bằng chứng qua 4 mốc bàn giao giúp tránh tranh chấp.*
 
 #### [POST] `/rental-orders/:id/proofs` (Tải lên bằng chứng)
-* **Headers**: `Authorization: Bearer <token>`
+* **Authentication**: `accessToken` cookie (and valid `Origin` for state changes).
 * **Body**:
   ```json
   {
@@ -363,7 +368,7 @@ Với năm endpoint không gọi escrow, nếu trạng thái hiện tại không
   ```
 
 #### [POST] `/wallets/topups/:id/simulate-success` (Local helper để giả lập webhook top-up)
-* **Headers**: `Authorization: Bearer <token>`
+* **Authentication**: `accessToken` cookie (and valid `Origin` for state changes).
 * **Mô tả**: Endpoint tiện ích cho demo/local. Khi gọi sẽ giả lập callback thành công cho top-up pending, cộng số dư ví ảo và đảm bảo idempotency. Không expose endpoint này ở production.
 * **Success (200)**:
   ```json
@@ -384,7 +389,7 @@ Với năm endpoint không gọi escrow, nếu trạng thái hiện tại không
 ### 3.7 Disputes & Reviews (2 APIs)
 
 #### [POST] `/disputes` (Gửi khiếu nại tranh chấp - Renter hoặc Lender)
-* **Headers**: `Authorization: Bearer <token>`
+* **Authentication**: `accessToken` cookie (and valid `Origin` for state changes).
 * **Body**:
   ```json
   {
@@ -399,7 +404,7 @@ Với năm endpoint không gọi escrow, nếu trạng thái hiện tại không
 * **Success (210)**: Tạo tranh chấp thành công, đơn hàng đổi trạng thái sang `disputed`.
 
 #### [POST] `/reviews` (Đánh giá sau khi hoàn thành đơn thuê)
-* **Headers**: `Authorization: Bearer <token>`
+* **Authentication**: `accessToken` cookie and valid `Origin`.
 * **Body**:
   ```json
   {
@@ -417,25 +422,25 @@ Với năm endpoint không gọi escrow, nếu trạng thái hiện tại không
 ### 3.8 Notifications & Media (2 APIs)
 
 #### [GET] `/notifications` (Lấy danh sách thông báo của tôi)
-* **Headers**: `Authorization: Bearer <token>`
+* **Authentication**: `accessToken` cookie.
 * **Success (200)**: Trả về danh sách thông báo mới nhất.
 
 #### [POST] `/media/upload` (Upload hình ảnh / video)
-* **Headers**: `Authorization: Bearer <token>`, `Content-Type: multipart/form-data`
+* **Authentication**: `accessToken` cookie; `Content-Type: multipart/form-data`; valid `Origin` required.
 * **Body (Form-data)**: `file` (Binary)
 * **Success (201)**: Trả về link CDN/Cloud của ảnh/video (`{"success": true, "data": {"url": "https://..."}}`).
 
 ---
 
 ### 3.9 Admin Operations
-*Tất cả endpoint yêu cầu JWT có `role = admin`; thiếu token trả `401`, role khác trả `403 ADMIN_ONLY`.*
+*Tất cả endpoint admin yêu cầu access cookie có `role = admin`; thiếu hoặc hết hạn cookie trả `401`, role khác trả `403 ADMIN_ONLY`.*
 
 #### [POST] `/admin/kyc/:id/approve`
-* **Headers**: `Authorization: Bearer <token>` (Admin)
+* **Authentication**: `accessToken` cookie, admin role, and valid `Origin`.
 * **Success (201)**: Chuyển KYC `pending` sang `verified`, lưu admin review và thời điểm review. Gọi lại trên KYC đã `verified` là idempotent.
 
 #### [POST] `/admin/kyc/:id/reject`
-* **Headers**: `Authorization: Bearer <token>` (Admin)
+* **Authentication**: `accessToken` cookie, admin role, and valid `Origin`.
 * **Body**:
   ```json
   { "reason": "Thông tin không khớp với ảnh chân dung" }
@@ -443,15 +448,15 @@ Với năm endpoint không gọi escrow, nếu trạng thái hiện tại không
 * **Success (201)**: Chuyển KYC `pending` sang `rejected`, lưu lý do và admin review. User phải gửi lại KYC trước khi có thể được duyệt khác trạng thái.
 
 #### [POST] `/admin/gears/:id/approve`
-* **Headers**: `Authorization: Bearer <token>` (Admin)
+* **Authentication**: `accessToken` cookie, admin role, and valid `Origin`.
 * **Success (201)**: Chuyển gear `pending` sang `approved`, lưu `approvedBy` và `approvedAt`. Gear chỉ xuất hiện ở catalog công khai khi đồng thời `approved` và `available`; gọi approve lặp lại không đổi timestamp.
 
 #### [POST] `/admin/gears/:id/reject`
-* **Headers**: `Authorization: Bearer <token>` (Admin)
+* **Authentication**: `accessToken` cookie, admin role, and valid `Origin`.
 * **Success (201)**: Chuyển gear `pending` hoặc `approved` sang `rejected`, lưu admin review và loại gear khỏi catalog công khai.
 
 #### [POST] `/admin/disputes/:id/resolve` (Giải quyết tranh chấp đơn thuê)
-* **Headers**: `Authorization: Bearer <token>` (Admin)
+* **Authentication**: `accessToken` cookie, admin role, and valid `Origin`.
 * **Mô tả**: Quyết định số tiền khấu trừ từ khoản cọc của Renter để đền bù cho Lender.
 * **Body**:
   ```json

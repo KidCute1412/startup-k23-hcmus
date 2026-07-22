@@ -5,8 +5,10 @@ import { App } from 'supertest/types';
 import { PrismaService } from '../src/prisma/prisma.service';
 import {
   createFixtureIds,
+  createAccessTokenCookie,
   createIntegrationApp,
   createJwt,
+  INTEGRATION_FRONTEND_ORIGIN,
 } from './support/integration';
 
 const testDatabaseUrl = process.env.TEST_DATABASE_URL;
@@ -127,16 +129,19 @@ describeIntegration('Rental order transitions (PostgreSQL integration)', () => {
 
     await request(app.getHttpServer())
       .patch(`/api/v1/rental-orders/${order.id}/confirm`)
-      .set('Authorization', `Bearer ${renterToken}`)
+      .set('Cookie', createAccessTokenCookie(renterToken))
+      .set('Origin', INTEGRATION_FRONTEND_ORIGIN)
       .expect(403);
     await request(app.getHttpServer())
       .patch(`/api/v1/rental-orders/${order.id}/return`)
-      .set('Authorization', `Bearer ${lenderToken}`)
+      .set('Cookie', createAccessTokenCookie(lenderToken))
+      .set('Origin', INTEGRATION_FRONTEND_ORIGIN)
       .expect(403);
 
     await request(app.getHttpServer())
       .patch(`/api/v1/rental-orders/${order.id}/confirm`)
-      .set('Authorization', `Bearer ${lenderToken}`)
+      .set('Cookie', createAccessTokenCookie(lenderToken))
+      .set('Origin', INTEGRATION_FRONTEND_ORIGIN)
       .expect(200);
     expect(
       await prisma.rentalOrder.findUniqueOrThrow({ where: { id: order.id } }),
@@ -149,7 +154,8 @@ describeIntegration('Rental order transitions (PostgreSQL integration)', () => {
 
     const repeatedConfirm = await request(app.getHttpServer())
       .patch(`/api/v1/rental-orders/${order.id}/confirm`)
-      .set('Authorization', `Bearer ${lenderToken}`)
+      .set('Cookie', createAccessTokenCookie(lenderToken))
+      .set('Origin', INTEGRATION_FRONTEND_ORIGIN)
       .expect(400);
     expect(repeatedConfirm.body).toMatchObject({
       error: { code: 'INVALID_TRANSITION' },
@@ -162,26 +168,31 @@ describeIntegration('Rental order transitions (PostgreSQL integration)', () => {
 
     await request(app.getHttpServer())
       .patch(`/api/v1/rental-orders/${order.id}/ship`)
-      .set('Authorization', `Bearer ${lenderToken}`)
+      .set('Cookie', createAccessTokenCookie(lenderToken))
+      .set('Origin', INTEGRATION_FRONTEND_ORIGIN)
       .expect(200);
     const invalidConfirm = await request(app.getHttpServer())
       .patch(`/api/v1/rental-orders/${order.id}/confirm`)
-      .set('Authorization', `Bearer ${lenderToken}`)
+      .set('Cookie', createAccessTokenCookie(lenderToken))
+      .set('Origin', INTEGRATION_FRONTEND_ORIGIN)
       .expect(400);
     expect(invalidConfirm.body).toMatchObject({
       error: { code: 'INVALID_TRANSITION' },
     });
     await request(app.getHttpServer())
       .patch(`/api/v1/rental-orders/${order.id}/confirm-receipt`)
-      .set('Authorization', `Bearer ${renterToken}`)
+      .set('Cookie', createAccessTokenCookie(renterToken))
+      .set('Origin', INTEGRATION_FRONTEND_ORIGIN)
       .expect(200);
     await request(app.getHttpServer())
       .patch(`/api/v1/rental-orders/${order.id}/return`)
-      .set('Authorization', `Bearer ${renterToken}`)
+      .set('Cookie', createAccessTokenCookie(renterToken))
+      .set('Origin', INTEGRATION_FRONTEND_ORIGIN)
       .expect(200);
     await request(app.getHttpServer())
       .patch(`/api/v1/rental-orders/${order.id}/confirm-return`)
-      .set('Authorization', `Bearer ${lenderToken}`)
+      .set('Cookie', createAccessTokenCookie(lenderToken))
+      .set('Origin', INTEGRATION_FRONTEND_ORIGIN)
       .expect(200);
 
     const completedOrder = await prisma.rentalOrder.findUniqueOrThrow({
@@ -199,7 +210,8 @@ describeIntegration('Rental order transitions (PostgreSQL integration)', () => {
     const poorRenterToken = createJwt(poorRenterId, 'renter');
     const response = await request(app.getHttpServer())
       .patch(`/api/v1/rental-orders/${order.id}/confirm`)
-      .set('Authorization', `Bearer ${lenderToken}`)
+      .set('Cookie', createAccessTokenCookie(lenderToken))
+      .set('Origin', INTEGRATION_FRONTEND_ORIGIN)
       .expect(400);
 
     expect(response.body).toMatchObject({
@@ -216,7 +228,8 @@ describeIntegration('Rental order transitions (PostgreSQL integration)', () => {
 
     await request(app.getHttpServer())
       .patch(`/api/v1/rental-orders/${order.id}/cancel`)
-      .set('Authorization', `Bearer ${poorRenterToken}`)
+      .set('Cookie', createAccessTokenCookie(poorRenterToken))
+      .set('Origin', INTEGRATION_FRONTEND_ORIGIN)
       .expect(200);
   });
 
@@ -235,7 +248,8 @@ describeIntegration('Rental order transitions (PostgreSQL integration)', () => {
 
     await request(app.getHttpServer())
       .patch(`/api/v1/rental-orders/${order.id}/confirm`)
-      .set('Authorization', `Bearer ${lenderToken}`)
+      .set('Cookie', createAccessTokenCookie(lenderToken))
+      .set('Origin', INTEGRATION_FRONTEND_ORIGIN)
       .expect(200);
 
     expect(
@@ -299,7 +313,8 @@ describeIntegration('Rental order transitions (PostgreSQL integration)', () => {
 
     await request(app.getHttpServer())
       .patch(`/api/v1/rental-orders/${order.id}/confirm`)
-      .set('Authorization', `Bearer ${lenderToken}`)
+      .set('Cookie', createAccessTokenCookie(lenderToken))
+      .set('Origin', INTEGRATION_FRONTEND_ORIGIN)
       .expect(400);
     expect(
       await prisma.creditTransaction.count({ where: { ref_id: order.id } }),
@@ -321,7 +336,8 @@ describeIntegration('Rental order transitions (PostgreSQL integration)', () => {
 
     const response = await request(app.getHttpServer())
       .patch(`/api/v1/rental-orders/${order.id}/confirm`)
-      .set('Authorization', `Bearer ${lenderToken}`)
+      .set('Cookie', createAccessTokenCookie(lenderToken))
+      .set('Origin', INTEGRATION_FRONTEND_ORIGIN)
       .expect(400);
 
     expect(response.body).toMatchObject({
@@ -388,7 +404,8 @@ describeIntegration('Rental order transitions (PostgreSQL integration)', () => {
 
     const response = await request(app.getHttpServer())
       .patch(`/api/v1/rental-orders/${order.id}/confirm`)
-      .set('Authorization', `Bearer ${lenderToken}`)
+      .set('Cookie', createAccessTokenCookie(lenderToken))
+      .set('Origin', INTEGRATION_FRONTEND_ORIGIN)
       .expect(400);
 
     expect(response.body).toMatchObject({
@@ -409,7 +426,8 @@ describeIntegration('Rental order transitions (PostgreSQL integration)', () => {
 
     await request(app.getHttpServer())
       .patch(`/api/v1/rental-orders/${order.id}/cancel`)
-      .set('Authorization', `Bearer ${renterToken}`)
+      .set('Cookie', createAccessTokenCookie(renterToken))
+      .set('Origin', INTEGRATION_FRONTEND_ORIGIN)
       .expect(200);
     expect(
       await prisma.rentalOrder.findUniqueOrThrow({ where: { id: order.id } }),

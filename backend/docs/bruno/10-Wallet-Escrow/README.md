@@ -5,7 +5,7 @@ Run these requests in order.
 Required environment variables:
 
 - `baseUrl`: API base URL, for example `http://localhost:8080/api/v1`.
-- `token`: JWT for a renter user. Collection auth sends `Authorization: Bearer {{token}}`.
+- Login first so Bruno's cookie jar holds the renter session cookies. The collection sends the local frontend `Origin` header.
 - `PAYOS_WEBHOOK_SECRET`: must match backend `PAYOS_WEBHOOK_SECRET`. If omitted, request 04 uses `test-secret`.
 
 Flow:

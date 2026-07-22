@@ -6,8 +6,10 @@ import { App } from 'supertest/types';
 import { PrismaService } from '../src/prisma/prisma.service';
 import {
   createFixtureIds,
+  createAccessTokenCookie,
   createIntegrationApp,
   createJwt,
+  INTEGRATION_FRONTEND_ORIGIN,
 } from './support/integration';
 
 const testDatabaseUrl = process.env.TEST_DATABASE_URL;
@@ -48,7 +50,8 @@ describeIntegration('Wallet topups (PostgreSQL integration)', () => {
   it('rejects checkout amount = 0 with validation error and creates no topup', async () => {
     await request(app.getHttpServer())
       .post('/api/v1/wallets/topups/checkout')
-      .set('Authorization', `Bearer ${renterToken}`)
+      .set('Cookie', createAccessTokenCookie(renterToken))
+      .set('Origin', INTEGRATION_FRONTEND_ORIGIN)
       .send({ amount: 0 })
       .expect(400);
 
@@ -159,11 +162,13 @@ describeIntegration('Wallet topups (PostgreSQL integration)', () => {
 
     await request(app.getHttpServer())
       .post(`/api/v1/wallets/topups/${topup.id}/simulate-success`)
-      .set('Authorization', `Bearer ${renterToken}`)
+      .set('Cookie', createAccessTokenCookie(renterToken))
+      .set('Origin', INTEGRATION_FRONTEND_ORIGIN)
       .expect(201);
     const repeated = await request(app.getHttpServer())
       .post(`/api/v1/wallets/topups/${topup.id}/simulate-success`)
-      .set('Authorization', `Bearer ${renterToken}`)
+      .set('Cookie', createAccessTokenCookie(renterToken))
+      .set('Origin', INTEGRATION_FRONTEND_ORIGIN)
       .expect(201);
 
     expect(repeated.body).toMatchObject({

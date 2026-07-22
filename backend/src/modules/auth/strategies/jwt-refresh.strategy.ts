@@ -1,11 +1,12 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
-import { ExtractJwt, Strategy } from 'passport-jwt';
+import { Strategy } from 'passport-jwt';
 import { Request } from 'express';
 import type {
   JwtPayload,
   RefreshJwtPayload,
 } from '../../../common/types/authentication';
+import { getRefreshTokenFromRequest } from '../auth-cookie';
 
 @Injectable()
 export class JwtRefreshStrategy extends PassportStrategy(
@@ -14,7 +15,8 @@ export class JwtRefreshStrategy extends PassportStrategy(
 ) {
   constructor() {
     super({
-      jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
+      jwtFromRequest: (request: Request) =>
+        getRefreshTokenFromRequest(request) ?? null,
       ignoreExpiration: false,
       secretOrKey:
         process.env.JWT_REFRESH_SECRET ||
@@ -24,11 +26,10 @@ export class JwtRefreshStrategy extends PassportStrategy(
   }
 
   validate(req: Request, payload: JwtPayload): RefreshJwtPayload {
-    const authHeader = req.get('Authorization');
-    if (!authHeader) {
-      throw new UnauthorizedException('Authorization header missing');
+    const refreshToken = getRefreshTokenFromRequest(req);
+    if (!refreshToken) {
+      throw new UnauthorizedException('Refresh token cookie missing');
     }
-    const refreshToken = authHeader.replace('Bearer', '').trim();
     return {
       id: payload.id,
       email: payload.email,

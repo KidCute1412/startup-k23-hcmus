@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { CategoryModule } from './modules/categories/category.module';
 import { PrismaModule } from './prisma/prisma.module';
@@ -9,6 +9,7 @@ import { WalletsModule } from './modules/wallets/wallets.module';
 import { RentalOrdersModule } from './modules/rental-orders/rental-orders.module';
 import { AdminModule } from './modules/admin/admin.module';
 import { EscrowModule } from './modules/escrow/escrow.module';
+import { CsrfOriginMiddleware } from './common/middleware/csrf-origin.middleware';
 
 @Module({
   imports: [
@@ -26,4 +27,8 @@ import { EscrowModule } from './modules/escrow/escrow.module';
   controllers: [],
   providers: [],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer.apply(CsrfOriginMiddleware).forRoutes('*');
+  }
+}

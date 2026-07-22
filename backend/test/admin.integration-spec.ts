@@ -4,8 +4,10 @@ import { App } from 'supertest/types';
 import { PrismaService } from '../src/prisma/prisma.service';
 import {
   createFixtureIds,
+  createAccessTokenCookie,
   createIntegrationApp,
   createJwt,
+  INTEGRATION_FRONTEND_ORIGIN,
 } from './support/integration';
 
 const testDatabaseUrl = process.env.TEST_DATABASE_URL;
@@ -65,7 +67,8 @@ describeIntegration('Admin approval APIs (PostgreSQL integration)', () => {
       .expect(401);
     const response = await request(app.getHttpServer())
       .post(`/api/v1/admin/kyc/${targetId}/approve`)
-      .set('Authorization', `Bearer ${lenderToken}`)
+      .set('Cookie', createAccessTokenCookie(lenderToken))
+      .set('Origin', INTEGRATION_FRONTEND_ORIGIN)
       .expect(403);
     const errorBody = response.body as unknown as { error: { code: string } };
     expect(errorBody.error.code).toBe('ADMIN_ONLY');
@@ -84,7 +87,8 @@ describeIntegration('Admin approval APIs (PostgreSQL integration)', () => {
     });
     await request(app.getHttpServer())
       .post(`/api/v1/admin/kyc/${targetId}/approve`)
-      .set('Authorization', `Bearer ${adminToken}`)
+      .set('Cookie', createAccessTokenCookie(adminToken))
+      .set('Origin', INTEGRATION_FRONTEND_ORIGIN)
       .expect(201);
     expect(
       await prisma.user.findUniqueOrThrow({ where: { id: targetId } }),
@@ -108,7 +112,8 @@ describeIntegration('Admin approval APIs (PostgreSQL integration)', () => {
     });
     await request(app.getHttpServer())
       .post(`/api/v1/admin/kyc/${targetId}/reject`)
-      .set('Authorization', `Bearer ${adminToken}`)
+      .set('Cookie', createAccessTokenCookie(adminToken))
+      .set('Origin', INTEGRATION_FRONTEND_ORIGIN)
       .send({ reason: 'Identity document is unreadable' })
       .expect(201);
     expect(
@@ -134,14 +139,16 @@ describeIntegration('Admin approval APIs (PostgreSQL integration)', () => {
     });
     await request(app.getHttpServer())
       .post(`/api/v1/admin/gears/${gearId}/approve`)
-      .set('Authorization', `Bearer ${adminToken}`)
+      .set('Cookie', createAccessTokenCookie(adminToken))
+      .set('Origin', INTEGRATION_FRONTEND_ORIGIN)
       .expect(201);
     const first = await prisma.gear.findUniqueOrThrow({
       where: { id: gearId },
     });
     await request(app.getHttpServer())
       .post(`/api/v1/admin/gears/${gearId}/approve`)
-      .set('Authorization', `Bearer ${adminToken}`)
+      .set('Cookie', createAccessTokenCookie(adminToken))
+      .set('Origin', INTEGRATION_FRONTEND_ORIGIN)
       .expect(201);
     expect(
       await prisma.gear.findUniqueOrThrow({ where: { id: gearId } }),
@@ -180,7 +187,8 @@ describeIntegration('Admin approval APIs (PostgreSQL integration)', () => {
     });
     await request(app.getHttpServer())
       .post(`/api/v1/admin/gears/${gearId}/reject`)
-      .set('Authorization', `Bearer ${adminToken}`)
+      .set('Cookie', createAccessTokenCookie(adminToken))
+      .set('Origin', INTEGRATION_FRONTEND_ORIGIN)
       .expect(201);
     expect(
       await prisma.gear.findUniqueOrThrow({ where: { id: gearId } }),
@@ -206,7 +214,8 @@ describeIntegration('Admin approval APIs (PostgreSQL integration)', () => {
     });
     await request(app.getHttpServer())
       .patch(`/api/v1/gears/${gearId}`)
-      .set('Authorization', `Bearer ${lenderToken}`)
+      .set('Cookie', createAccessTokenCookie(lenderToken))
+      .set('Origin', INTEGRATION_FRONTEND_ORIGIN)
       .send({ name: 'Edited gear' })
       .expect(200);
     expect(

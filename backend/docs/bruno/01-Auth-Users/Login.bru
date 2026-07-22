@@ -16,9 +16,3 @@ body:json {
     "password": "SecurePassword123"
   }
 }
-
-script:post-response {
-  if (res.status === 200 && res.body.data && res.body.data.token) {
-    bru.setEnvVar("token", res.body.data.token);
-  }
-}

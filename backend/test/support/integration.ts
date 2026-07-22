@@ -6,7 +6,10 @@ import { AppModule } from '../../src/app.module';
 import { HttpExceptionFilter } from '../../src/common/filters/http-exception.filter';
 import { TransformInterceptor } from '../../src/common/interceptors/transform.interceptor';
 import { PrismaService } from '../../src/prisma/prisma.service';
+import { ACCESS_TOKEN_COOKIE } from '../../src/modules/auth/auth-cookie';
 import type { App } from 'supertest/types';
+
+export const INTEGRATION_FRONTEND_ORIGIN = 'http://localhost:3000';
 
 export async function createIntegrationApp(): Promise<{
   app: INestApplication<App>;
@@ -52,4 +55,8 @@ export function createJwt(id: string, role: string) {
       expiresIn: '15m',
     },
   );
+}
+
+export function createAccessTokenCookie(token: string) {
+  return `${ACCESS_TOKEN_COOKIE}=${encodeURIComponent(token)}`;
 }

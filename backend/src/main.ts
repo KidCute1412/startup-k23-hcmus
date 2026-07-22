@@ -11,7 +11,14 @@ async function bootstrap() {
   app.setGlobalPrefix('api/v1');
 
   // Enable CORS
-  app.enableCors();
+  const frontendOrigins = (process.env.FRONTEND_URL || 'http://localhost:3000')
+    .split(',')
+    .map((origin) => origin.trim())
+    .filter(Boolean);
+  app.enableCors({
+    origin: frontendOrigins,
+    credentials: true,
+  });
 
   // Wire Validation globally
   app.useGlobalPipes(
