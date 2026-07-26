@@ -1,14 +1,19 @@
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
+import type { NestExpressApplication } from '@nestjs/platform-express';
 import { AppModule } from './app.module';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 import { TransformInterceptor } from './common/interceptors/transform.interceptor';
+import { configureStaticUploads } from './modules/media/media-storage';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule, { rawBody: true });
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, {
+    rawBody: true,
+  });
 
   // Set Global Route Prefix
   app.setGlobalPrefix('api/v1');
+  configureStaticUploads(app);
 
   // Enable CORS
   const frontendOrigins = (process.env.FRONTEND_URL || 'http://localhost:3000')

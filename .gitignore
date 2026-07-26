@@ -30,6 +30,7 @@ Thumbs.db
 **/node_modules/
 **/dist/
 **/build/
+backend/uploads/
 .env
 .env.local
 .env.development.local

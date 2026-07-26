@@ -10,6 +10,7 @@ import { RentalOrdersModule } from './modules/rental-orders/rental-orders.module
 import { AdminModule } from './modules/admin/admin.module';
 import { EscrowModule } from './modules/escrow/escrow.module';
 import { CsrfOriginMiddleware } from './common/middleware/csrf-origin.middleware';
+import { MediaModule } from './modules/media/media.module';
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { CsrfOriginMiddleware } from './common/middleware/csrf-origin.middleware
     CategoryModule,
     WalletsModule,
     RentalOrdersModule,
+    MediaModule,
     AdminModule,
     EscrowModule,
   ],

@@ -1,11 +1,11 @@
 meta {
-  name: Upload Proof
+  name: Create Proof
   type: http
   seq: 1
 }
 
 post {
-  url: {{baseUrl}}/rental-orders/:id/proofs
+  url: {{baseUrl}}/rental-orders/{{rentalOrderId}}/proofs
   body: json
   auth: inherit
 }
@@ -13,8 +13,18 @@ post {
 body:json {
   {
     "stage": "pre_shipment",
-    "proofType": "image",
-    "fileUrl": "https://...",
+    "fileUrl": "{{proofFileUrl}}",
     "note": "Hộp đầy đủ cáp và keycap"
   }
+}
+
+headers {
+  Origin: http://localhost:3000
+}
+
+tests {
+  test("creates an image proof", function() {
+    expect(res.status).to.equal(201);
+    expect(res.body.data.proofType).to.equal("image");
+  });
 }
