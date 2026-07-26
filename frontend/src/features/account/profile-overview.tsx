@@ -12,6 +12,7 @@ export function ProfileOverview() {
     fullName: user.fullName,
     phone: user.phone,
     bio: user.bio,
+    dob: user.dob || "",
   });
   const [savedMsg, setSavedMsg] = useState(false);
 
@@ -22,6 +23,7 @@ export function ProfileOverview() {
       fullName: formData.fullName,
       phone: formData.phone,
       bio: formData.bio,
+      dob: formData.dob,
     }));
     setIsEditing(false);
     setSavedMsg(true);
@@ -94,15 +96,26 @@ export function ProfileOverview() {
                 required
               />
             </div>
-            <div>
-              <label className="block text-xs font-semibold mb-1">Số điện thoại</label>
-              <input
-                type="text"
-                value={formData.phone}
-                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                className="w-full rounded-v-sm border border-vanguard-light-border bg-vanguard-light-surf px-3 py-2 text-sm text-vanguard-light-text outline-none focus:border-vanguard-primary dark:border-vanguard-dark-border dark:bg-vanguard-dark-surfDim dark:text-vanguard-dark-text"
-                required
-              />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-semibold mb-1">Số điện thoại</label>
+                <input
+                  type="text"
+                  value={formData.phone}
+                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                  className="w-full rounded-v-sm border border-vanguard-light-border bg-vanguard-light-surf px-3 py-2 text-sm text-vanguard-light-text outline-none focus:border-vanguard-primary dark:border-vanguard-dark-border dark:bg-vanguard-dark-surfDim dark:text-vanguard-dark-text"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold mb-1">Ngày sinh</label>
+                <input
+                  type="date"
+                  value={formData.dob}
+                  onChange={(e) => setFormData({ ...formData, dob: e.target.value })}
+                  className="w-full rounded-v-sm border border-vanguard-light-border bg-vanguard-light-surf px-3 py-2 text-sm text-vanguard-light-text outline-none focus:border-vanguard-primary dark:border-vanguard-dark-border dark:bg-vanguard-dark-surfDim dark:text-vanguard-dark-text"
+                />
+              </div>
             </div>
             <div>
               <label className="block text-xs font-semibold mb-1">Giới thiệu bản thân (Bio)</label>
@@ -123,10 +136,14 @@ export function ProfileOverview() {
             </div>
           </form>
         ) : (
-          <div className="mt-6 border-t border-vanguard-light-border dark:border-vanguard-dark-border pt-6 grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+          <div className="mt-6 border-t border-vanguard-light-border dark:border-vanguard-dark-border pt-6 grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">
             <div>
               <span className="text-xs uppercase tracking-widest text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted">Số điện thoại</span>
               <p className="font-semibold mt-0.5">{user.phone}</p>
+            </div>
+            <div>
+              <span className="text-xs uppercase tracking-widest text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted">Ngày sinh</span>
+              <p className="font-semibold mt-0.5">{user.dob || "Chưa cập nhật"}</p>
             </div>
             <div>
               <span className="text-xs uppercase tracking-widest text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted">Giới thiệu</span>
@@ -154,6 +171,33 @@ export function ProfileOverview() {
               Gửi hồ sơ KYC
             </button>
           )}
+        </div>
+      </Card>
+
+      {/* Security Section */}
+      <Card className="p-6">
+        <h3 className="font-display text-lg font-bold mb-4">Bảo mật tài khoản</h3>
+        <div className="flex flex-col sm:flex-row gap-4 border-t border-vanguard-light-border dark:border-vanguard-dark-border pt-4">
+          <div className="flex-1">
+            <h4 className="font-semibold text-sm">Mật khẩu đăng nhập</h4>
+            <p className="text-xs text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted mt-1">
+              Bạn nên thay đổi mật khẩu định kỳ để bảo vệ tài khoản tốt hơn.
+            </p>
+          </div>
+          <button className="whitespace-nowrap rounded-v-sm border border-vanguard-light-border dark:border-vanguard-dark-border px-4 py-2 text-xs font-semibold uppercase tracking-wider hover:border-vanguard-primary transition h-fit">
+            Đổi mật khẩu
+          </button>
+        </div>
+        <div className="flex flex-col sm:flex-row gap-4 border-t border-vanguard-light-border dark:border-vanguard-dark-border mt-4 pt-4">
+          <div className="flex-1">
+            <h4 className="font-semibold text-sm text-red-600 dark:text-red-400">Xóa tài khoản</h4>
+            <p className="text-xs text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted mt-1">
+              Khi xóa tài khoản, toàn bộ dữ liệu của bạn sẽ bị xóa vĩnh viễn khỏi Mutux. Bạn không thể hoàn tác hành động này.
+            </p>
+          </div>
+          <button className="whitespace-nowrap rounded-v-sm bg-red-600/10 text-red-600 border border-red-600/20 px-4 py-2 text-xs font-semibold uppercase tracking-wider hover:bg-red-600 hover:text-white transition h-fit">
+            Xóa tài khoản
+          </button>
         </div>
       </Card>
     </div>

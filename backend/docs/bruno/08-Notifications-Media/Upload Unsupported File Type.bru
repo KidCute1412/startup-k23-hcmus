@@ -1,0 +1,26 @@
+meta {
+  name: Upload Unsupported File Type
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/media/upload
+  body: multipart-form
+  auth: inherit
+}
+
+body:multipart-form {
+  file: @file()
+}
+
+headers {
+  Origin: http://localhost:3000
+}
+
+tests {
+  test("rejects a PDF or other unsupported file", function() {
+    expect(res.status).to.equal(400);
+    expect(res.body.error.code).to.equal("UNSUPPORTED_FILE_TYPE");
+  });
+}

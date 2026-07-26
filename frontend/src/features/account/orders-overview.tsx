@@ -1,12 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { StatRow } from "@/components/ui/stat-row";
 import { formatCurrency, formatShortDate } from "@/lib/format";
-import { mockRentalOrders, OrderStatusType, RentalOrderMock } from "@/lib/mock-account-data";
+import { fetchOrders, OrderStatusType, RentalOrderMock } from "@/lib/mock-account-data";
 
 export const statusConfig: Record<OrderStatusType, { label: string; tone: "gold" | "muted" | "destructive" }> = {
   pending_confirm: { label: "Chờ xác nhận", tone: "gold" },
@@ -20,9 +20,24 @@ export const statusConfig: Record<OrderStatusType, { label: string; tone: "gold"
 };
 
 export function OrdersOverview() {
-  const [orders] = useState<RentalOrderMock[]>(mockRentalOrders);
+  const [orders, setOrders] = useState<RentalOrderMock[]>([]);
+  const [loading, setLoading] = useState(true);
   const [selectedStatus, setSelectedStatus] = useState<string>("all");
   const [searchTerm, setSearchTerm] = useState<string>("");
+
+  useEffect(() => {
+    async function load() {
+      try {
+        const response = await fetchOrders();
+        if (response.success) {
+          setOrders(response.data);
+        }
+      } finally {
+        setLoading(false);
+      }
+    }
+    load();
+  }, []);
 
   const filterTabs = [
     { id: "all", label: "Tất cả đơn" },
@@ -76,7 +91,12 @@ export function OrdersOverview() {
 
       {/* Orders List */}
       <div className="space-y-4">
-        {filteredOrders.map((order) => {
+        {loading && (
+          <div className="text-center py-10 text-sm text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted">
+            Đang tải dữ liệu đơn thuê...
+          </div>
+        )}
+        {!loading && filteredOrders.map((order) => {
           const config = statusConfig[order.status];
           return (
             <Card key={order.id} className="p-5 hover:border-vanguard-primary/50 transition">
@@ -134,7 +154,7 @@ export function OrdersOverview() {
           );
         })}
 
-        {filteredOrders.length === 0 && (
+        {!loading && filteredOrders.length === 0 && (
           <Card className="p-12 text-center">
             <p className="font-display text-lg font-bold">Không tìm thấy đơn thuê phù hợp</p>
             <p className="text-xs text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted mt-1">

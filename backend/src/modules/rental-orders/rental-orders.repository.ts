@@ -112,6 +112,29 @@ export class RentalOrdersRepository {
     });
   }
 
+  findProofOrderById(id: string) {
+    return this.prisma.rentalOrder.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        renter_id: true,
+        lender_id: true,
+        status: true,
+      },
+    });
+  }
+
+  createProof(data: Prisma.RentalProofUncheckedCreateInput) {
+    return this.prisma.rentalProof.create({ data });
+  }
+
+  findProofs(rentalOrderId: string) {
+    return this.prisma.rentalProof.findMany({
+      where: { rental_order_id: rentalOrderId },
+      orderBy: [{ uploaded_at: 'asc' }, { id: 'asc' }],
+    });
+  }
+
   async transition(
     id: string,
     expectedStatus: OrderStatusType,

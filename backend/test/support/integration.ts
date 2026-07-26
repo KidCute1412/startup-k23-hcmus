@@ -1,6 +1,7 @@
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { Test } from '@nestjs/testing';
+import type { NestExpressApplication } from '@nestjs/platform-express';
 import { randomUUID } from 'crypto';
 import { AppModule } from '../../src/app.module';
 import { HttpExceptionFilter } from '../../src/common/filters/http-exception.filter';
@@ -8,6 +9,7 @@ import { TransformInterceptor } from '../../src/common/interceptors/transform.in
 import { PrismaService } from '../../src/prisma/prisma.service';
 import { ACCESS_TOKEN_COOKIE } from '../../src/modules/auth/auth-cookie';
 import type { App } from 'supertest/types';
+import { configureStaticUploads } from '../../src/modules/media/media-storage';
 
 export const INTEGRATION_FRONTEND_ORIGIN = 'http://localhost:3000';
 
@@ -18,10 +20,13 @@ export async function createIntegrationApp(): Promise<{
   const moduleFixture = await Test.createTestingModule({
     imports: [AppModule],
   }).compile();
-  const app = moduleFixture.createNestApplication<INestApplication<App>>({
-    rawBody: true,
-  });
+  const nestExpressApp =
+    moduleFixture.createNestApplication<NestExpressApplication>({
+      rawBody: true,
+    });
+  const app: INestApplication<App> = nestExpressApp;
   app.setGlobalPrefix('api/v1');
+  configureStaticUploads(nestExpressApp);
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,

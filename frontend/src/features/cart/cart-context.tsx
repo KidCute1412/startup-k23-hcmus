@@ -16,12 +16,17 @@ type CartContextType = {
   removeFromCart: (id: string) => void;
   clearCart: () => void;
   totalItems: number;
+  selectedItemIds: string[];
+  toggleSelectItem: (id: string) => void;
+  selectAll: (ids: string[]) => void;
+  clearSelected: () => void;
 };
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
 export function CartProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([]);
+  const [selectedItemIds, setSelectedItemIds] = useState<string[]>([]);
   const [isLoaded, setIsLoaded] = useState(false);
 
   // Load from local storage
@@ -34,6 +39,14 @@ export function CartProvider({ children }: { children: ReactNode }) {
         console.error("Failed to parse cart from local storage", e);
       }
     }
+    const savedSelected = localStorage.getItem("mutux_cart_selected");
+    if (savedSelected) {
+      try {
+        setSelectedItemIds(JSON.parse(savedSelected));
+      } catch (e) {
+        console.error("Failed to parse selected items", e);
+      }
+    }
     setIsLoaded(true);
   }, []);
 
@@ -41,8 +54,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (isLoaded) {
       localStorage.setItem("mutux_cart", JSON.stringify(items));
+      localStorage.setItem("mutux_cart_selected", JSON.stringify(selectedItemIds));
     }
-  }, [items, isLoaded]);
+  }, [items, selectedItemIds, isLoaded]);
 
   const addToCart = (newItem: CartItem) => {
     setItems((currentItems) => {
@@ -61,16 +75,34 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   const removeFromCart = (id: string) => {
     setItems((current) => current.filter((item) => item.id !== id));
+    setSelectedItemIds((current) => current.filter((itemId) => itemId !== id));
   };
 
   const clearCart = () => {
     setItems([]);
+    setSelectedItemIds([]);
   };
 
   const totalItems = items.length;
 
+  const toggleSelectItem = (id: string) => {
+    setSelectedItemIds((current) =>
+      current.includes(id)
+        ? current.filter((itemId) => itemId !== id)
+        : [...current, id]
+    );
+  };
+
+  const selectAll = (ids: string[]) => {
+    setSelectedItemIds(ids);
+  };
+
+  const clearSelected = () => {
+    setSelectedItemIds([]);
+  };
+
   return (
-    <CartContext.Provider value={{ items, addToCart, removeFromCart, clearCart, totalItems }}>
+    <CartContext.Provider value={{ items, addToCart, removeFromCart, clearCart, totalItems, selectedItemIds, toggleSelectItem, selectAll, clearSelected }}>
       {children}
     </CartContext.Provider>
   );

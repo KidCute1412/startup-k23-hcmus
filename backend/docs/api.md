@@ -66,7 +66,7 @@ HTTP Status: `400`, `401`, `403`, `404`, `422`, `500`.
 
 ---
 
-## 3. Danh sách APIs Tinh gọn (37 Endpoints)
+## 3. Danh sách APIs Tinh gọn
 
 ### 3.1 Auth & Users (5 APIs)
 
@@ -316,23 +316,56 @@ Với năm endpoint không gọi escrow, nếu trạng thái hiện tại không
 ---
 
 ### 3.5 Rental Proofs (2 APIs)
-*Tải hình ảnh/video bằng chứng qua 4 mốc bàn giao giúp tránh tranh chấp.*
+*Gắn ảnh đã upload local qua 4 mốc bàn giao giúp tránh tranh chấp.*
 
-#### [POST] `/rental-orders/:id/proofs` (Tải lên bằng chứng)
+#### [POST] `/rental-orders/:id/proofs` (Tạo bằng chứng)
 * **Authentication**: `accessToken` cookie (and valid `Origin` for state changes).
 * **Body**:
   ```json
   {
     "stage": "pre_shipment", // "pre_shipment" | "post_received" | "pre_return" | "post_returned"
-    "proofType": "image",
-    "fileUrl": "https://...",
+    "fileUrl": "/uploads/user-uuid/1753500000000-gear-front.jpg",
     "note": "Hộp đầy đủ cáp và keycap"
   }
   ```
-* **Success (201)**: Ghi nhận bằng chứng bàn giao thành công.
+* **Server-derived fields**: `uploadedBy` lấy từ access token, `rentalOrderId` lấy từ path và `proofType` luôn là `image`; client không được truyền các field này.
+* **Stage rules**:
+
+  | `stage` | Actor bắt buộc | Trạng thái order bắt buộc |
+  | --- | --- | --- |
+  | `pre_shipment` | lender của order | `confirmed` |
+  | `post_received` | renter của order | `active` |
+  | `pre_return` | renter của order | `returning` |
+  | `post_returned` | lender của order | `returning` |
+
+* **File ownership**: `fileUrl` phải đúng dạng `/uploads/{currentUserId}/{fileName}` do chính caller nhận từ `POST /media/upload`, phải là file ảnh còn tồn tại trong thư mục upload của caller. URL ngoài, path traversal, file không tồn tại hoặc file của participant khác đều trả `400 INVALID_FILE_URL`.
+* **Authorization**: chỉ renter/lender của order được tạo proof; user khác trả `403 FORBIDDEN`.
+* **Errors**:
+  - `400 INVALID_PROOF_STAGE`: sai actor hoặc trạng thái order cho stage.
+  - `400 INVALID_FILE_URL`: URL không thuộc thư mục upload của caller.
+  - `403 FORBIDDEN`: caller không phải participant của order.
+  - `404 NOT_FOUND`: order không tồn tại.
+* **Success (201)**:
+  ```json
+  {
+    "success": true,
+    "data": {
+      "id": "uuid",
+      "rentalOrderId": "uuid",
+      "uploadedBy": "uuid",
+      "stage": "pre_shipment",
+      "proofType": "image",
+      "fileUrl": "/uploads/user-uuid/1753500000000-gear-front.jpg",
+      "note": "Hộp đầy đủ cáp và keycap",
+      "uploadedAt": "2026-07-26T10:00:00.000Z"
+    }
+  }
+  ```
 
 #### [GET] `/rental-orders/:id/proofs` (Xem bằng chứng đơn hàng)
-* **Success (200)**: Trả về toàn bộ danh sách ảnh/video bàn giao đã tải lên của đơn hàng đó.
+* **Authentication**: `accessToken` cookie.
+* **Authorization**: chỉ renter/lender của order được xem; user khác trả `403 FORBIDDEN`.
+* **Success (200)**: Trả về toàn bộ danh sách ảnh bàn giao, sắp xếp theo `uploadedAt` tăng dần.
 
 ---
 
@@ -425,10 +458,25 @@ Với năm endpoint không gọi escrow, nếu trạng thái hiện tại không
 * **Authentication**: `accessToken` cookie.
 * **Success (200)**: Trả về danh sách thông báo mới nhất.
 
-#### [POST] `/media/upload` (Upload hình ảnh / video)
+#### [POST] `/media/upload` (Upload hình ảnh local)
 * **Authentication**: `accessToken` cookie; `Content-Type: multipart/form-data`; valid `Origin` required.
 * **Body (Form-data)**: `file` (Binary)
-* **Success (201)**: Trả về link CDN/Cloud của ảnh/video (`{"success": true, "data": {"url": "https://..."}}`).
+* **MIME types**: `image/jpeg`, `image/png`, `image/webp`.
+* **Kích thước tối đa**: 5MB.
+* **Lưu trữ MVP**: `uploads/{userId}/{timestamp}-{sanitizedFileName}`; static file được serve công khai từ `/uploads/`.
+* **Success (201)**:
+  ```json
+  {
+    "success": true,
+    "data": {
+      "url": "/uploads/user-uuid/1753500000000-gear-front.jpg"
+    }
+  }
+  ```
+* **Errors**:
+  - `400 UNSUPPORTED_FILE_TYPE`: file không phải JPEG/PNG/WEBP.
+  - `400 FILE_TOO_LARGE`: file lớn hơn 5MB.
+  - `400 FILE_REQUIRED`: không có field multipart `file`.
 
 ---
 

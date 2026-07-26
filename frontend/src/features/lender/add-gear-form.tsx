@@ -8,12 +8,9 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input, Select, Textarea } from "@/components/ui/field";
 
-const CATEGORIES = [
-  { id: "keyboards", name: "Bàn phím chế tác" },
-  { id: "mice", name: "Chuột quý tộc" },
-  { id: "audio", name: "Âm thanh hi-end" },
-  { id: "setups", name: "Thiết lập không gian" },
-];
+import { getCategories } from "@/features/catalog/mock-data";
+
+const CATEGORIES = getCategories();
 
 const CONDITION_OPTIONS = [
   "Like new, đã kiểm định",
@@ -49,10 +46,10 @@ export function AddGearForm() {
   const [description, setDescription] = useState("");
   const [condition, setCondition] = useState(CONDITION_OPTIONS[0]);
   const [badge, setBadge] = useState("");
-  const [imageUrl, setImageUrl] = useState("");
+  const [imageUrls, setImageUrls] = useState<string[]>([]);
   const [dailyPrice, setDailyPrice] = useState("");
   const [depositCash, setDepositCash] = useState("");
-  const [creditLine, setCreditLine] = useState("");
+
   const [specs, setSpecs] = useState<SpecRow[]>([{ ...defaultSpec }]);
   const [submitted, setSubmitted] = useState(false);
 
@@ -98,8 +95,8 @@ export function AddGearForm() {
               setStep("info");
               setName(""); setCategoryId("keyboards"); setShortDesc("");
               setDescription(""); setCondition(CONDITION_OPTIONS[0]);
-              setBadge(""); setImageUrl(""); setDailyPrice("");
-              setDepositCash(""); setCreditLine("");
+              setBadge(""); setImageUrls([]); setDailyPrice("");
+              setDepositCash("");
               setSpecs([{ ...defaultSpec }]);
             }}
           >
@@ -254,23 +251,44 @@ export function AddGearForm() {
 
               <div className="space-y-1.5">
                 <label htmlFor="gear-image" className="field-label">
-                  URL ảnh đại diện
+                  URL ảnh (Có thể thêm nhiều ảnh)
                 </label>
-                <Input
-                  id="gear-image"
-                  type="url"
-                  placeholder="https://…"
-                  value={imageUrl}
-                  onChange={(e) => setImageUrl(e.target.value)}
-                />
-                {imageUrl && (
-                  <div className="relative mt-2 aspect-video w-full max-w-sm overflow-hidden rounded-v-sm border border-vanguard-light-border dark:border-vanguard-dark-border">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={imageUrl}
-                      alt="Preview"
-                      className="h-full w-full object-cover"
-                    />
+                <div className="flex gap-2">
+                  <Input
+                    id="gear-image"
+                    type="url"
+                    placeholder="https://…"
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        const val = e.currentTarget.value;
+                        if (val && !imageUrls.includes(val)) {
+                          setImageUrls([...imageUrls, val]);
+                          e.currentTarget.value = "";
+                        }
+                      }
+                    }}
+                  />
+                  <Button type="button" onClick={(e) => {
+                    const input = document.getElementById("gear-image") as HTMLInputElement;
+                    const val = input.value;
+                    if (val && !imageUrls.includes(val)) {
+                      setImageUrls([...imageUrls, val]);
+                      input.value = "";
+                    }
+                  }}>Thêm</Button>
+                </div>
+                {imageUrls.length > 0 && (
+                  <div className="mt-2 grid grid-cols-3 gap-2">
+                    {imageUrls.map((url, i) => (
+                      <div key={i} className="relative aspect-video w-full overflow-hidden rounded-v-sm border border-vanguard-light-border dark:border-vanguard-dark-border group">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={url} alt={`Preview ${i}`} className="h-full w-full object-cover" />
+                        <button type="button" onClick={() => setImageUrls(imageUrls.filter((_, idx) => idx !== i))} className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <X size={12} />
+                        </button>
+                      </div>
+                    ))}
                   </div>
                 )}
               </div>
@@ -299,7 +317,7 @@ export function AddGearForm() {
                 </p>
               </div>
 
-              <div className="grid gap-4 sm:grid-cols-3">
+              <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-1.5">
                   <label htmlFor="daily-price" className="field-label">
                     Giá / ngày (VNĐ) <span className="text-red-500">*</span>
@@ -326,19 +344,7 @@ export function AddGearForm() {
                     onChange={(e) => setDepositCash(e.target.value)}
                   />
                 </div>
-                <div className="space-y-1.5">
-                  <label htmlFor="credit-line" className="field-label">
-                    Credit line tối thiểu
-                  </label>
-                  <Input
-                    id="credit-line"
-                    type="number"
-                    min={0}
-                    placeholder="4200000"
-                    value={creditLine}
-                    onChange={(e) => setCreditLine(e.target.value)}
-                  />
-                </div>
+
               </div>
 
               {dailyPrice && depositCash && (
@@ -346,25 +352,30 @@ export function AddGearForm() {
                   <p className="font-display text-xs font-bold uppercase tracking-widest text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted">
                     Ước tính doanh thu
                   </p>
-                  <div className="mt-3 grid grid-cols-3 gap-4 text-center">
+                  <div className="mt-3 grid grid-cols-1 sm:grid-cols-3 gap-4 text-center">
                     {[
                       { days: 3, label: "3 ngày" },
                       { days: 7, label: "1 tuần" },
                       { days: 30, label: "1 tháng" },
-                    ].map(({ days, label }) => (
-                      <div key={days}>
-                        <p className="text-[10px] uppercase tracking-widest text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted">
-                          {label}
-                        </p>
-                        <p className="mt-1 font-display text-base font-bold text-vanguard-primary">
-                          {new Intl.NumberFormat("vi-VN", {
-                            style: "currency",
-                            currency: "VND",
-                            maximumFractionDigits: 0,
-                          }).format(Number(dailyPrice) * days)}
-                        </p>
-                      </div>
-                    ))}
+                    ].map(({ days, label }) => {
+                      const gross = Number(dailyPrice) * days;
+                      const fee = gross * 0.1;
+                      const net = gross - fee;
+                      return (
+                        <div key={days} className="border border-vanguard-light-border dark:border-vanguard-dark-border p-2 rounded-v-sm">
+                          <p className="text-[10px] uppercase tracking-widest text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted">
+                            {label}
+                          </p>
+                          <div className="mt-1 flex flex-col gap-1">
+                            <p className="text-xs">Tổng: {new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND", maximumFractionDigits: 0 }).format(gross)}</p>
+                            <p className="text-xs text-red-500">Phí sàn (10%): -{new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND", maximumFractionDigits: 0 }).format(fee)}</p>
+                            <p className="font-display text-sm font-bold text-vanguard-primary border-t border-vanguard-light-border dark:border-vanguard-dark-border pt-1 mt-1">
+                              Thực nhận: {new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND", maximumFractionDigits: 0 }).format(net)}
+                            </p>
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
               )}
@@ -452,10 +463,10 @@ export function AddGearForm() {
                       {badge}
                     </span>
                   )}
-                  {imageUrl ? (
+                  {imageUrls.length > 0 ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
-                      src={imageUrl}
+                      src={imageUrls[0]}
                       alt={name}
                       className="h-full w-full object-cover"
                     />

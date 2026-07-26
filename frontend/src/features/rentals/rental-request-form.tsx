@@ -17,7 +17,7 @@ type RentalRequestFormProps = {
 export function RentalRequestForm({ items }: RentalRequestFormProps) {
   const { clearCart } = useCart();
   const [draft, setDraft] = useState<Omit<RentalRequestDraft, "gearId" | "startDate" | "endDate">>({
-    depositType: "credit-line",
+    depositType: "cash",
     shippingName: "",
     shippingPhone: "",
     shippingAddress: "",
@@ -57,30 +57,25 @@ export function RentalRequestForm({ items }: RentalRequestFormProps) {
               Hình thức cọc
             </legend>
             <div className="grid gap-3 sm:grid-cols-2">
-              {[
-                ["credit-line", "Ví tín dụng Mutux"],
-                ["cash", "Cọc tiền mặt"],
-              ].map(([value, label]) => (
-                <label
-                  key={value}
-                  className="flex cursor-pointer items-center gap-3 rounded-v-sm border border-vanguard-light-border p-4 text-sm dark:border-vanguard-dark-border"
-                >
-                  <input
-                    type="radio"
-                    name="depositType"
-                    value={value}
-                    checked={draft.depositType === value}
-                    onChange={() =>
-                      setDraft((current) => ({
-                        ...current,
-                        depositType: value as RentalRequestDraft["depositType"],
-                      }))
-                    }
-                    className="accent-vanguard-primary"
-                  />
-                  {label}
-                </label>
-              ))}
+              <label
+                key="cash"
+                className="flex cursor-pointer items-center gap-3 rounded-v-sm border border-vanguard-light-border p-4 text-sm dark:border-vanguard-dark-border"
+              >
+                <input
+                  type="radio"
+                  name="depositType"
+                  value="cash"
+                  checked={draft.depositType === "cash"}
+                  onChange={() =>
+                    setDraft((current) => ({
+                      ...current,
+                      depositType: "cash",
+                    }))
+                  }
+                  className="accent-vanguard-primary"
+                />
+                Cọc tiền mặt
+              </label>
             </div>
           </fieldset>
 

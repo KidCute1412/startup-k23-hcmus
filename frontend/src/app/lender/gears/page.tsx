@@ -25,7 +25,7 @@ export default function LenderGearsPage() {
         <div className="mx-auto max-w-7xl">
           <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
             <div>
-              <Badge tone="muted">Lender Dashboard</Badge>
+              <Badge tone="muted">Quản lý thiết bị cho thuê</Badge>
               <h1 className="mt-3 font-display text-3xl font-bold sm:text-4xl">
                 Gear của tôi
               </h1>

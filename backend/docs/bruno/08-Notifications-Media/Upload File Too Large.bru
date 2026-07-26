@@ -1,0 +1,26 @@
+meta {
+  name: Upload File Too Large
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{baseUrl}}/media/upload
+  body: multipart-form
+  auth: inherit
+}
+
+body:multipart-form {
+  file: @file()
+}
+
+headers {
+  Origin: http://localhost:3000
+}
+
+tests {
+  test("rejects an image larger than 5MB", function() {
+    expect(res.status).to.equal(400);
+    expect(res.body.error.code).to.equal("FILE_TOO_LARGE");
+  });
+}

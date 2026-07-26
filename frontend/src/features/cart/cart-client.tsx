@@ -9,7 +9,7 @@ import { formatCurrency } from "@/lib/format";
 import { useCart } from "@/features/cart/cart-context";
 
 export function CartClient() {
-  const { items, removeFromCart, totalItems } = useCart();
+  const { items, removeFromCart, totalItems, selectedItemIds, toggleSelectItem, selectAll, clearSelected } = useCart();
 
   const calculateSubtotal = (dailyPrice: number, startDate: string, endDate: string) => {
     const start = new Date(startDate);
@@ -19,9 +19,19 @@ export function CartClient() {
     return dailyPrice * (durationDays > 0 ? durationDays : 1);
   };
 
-  const totalPrice = items.reduce((sum, item) => {
+  const selectedItems = items.filter(item => selectedItemIds.includes(item.id));
+  const totalPrice = selectedItems.reduce((sum, item) => {
     return sum + calculateSubtotal(item.gear.pricing.dailyPrice, item.startDate, item.endDate);
   }, 0);
+
+  const isAllSelected = items.length > 0 && selectedItemIds.length === items.length;
+  const toggleAll = () => {
+    if (isAllSelected) {
+      clearSelected();
+    } else {
+      selectAll(items.map(i => i.id));
+    }
+  };
 
   if (totalItems === 0) {
     return (
@@ -37,6 +47,18 @@ export function CartClient() {
   return (
     <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_360px]">
       <div className="space-y-4">
+        <div className="flex items-center justify-between px-4 py-2 bg-vanguard-light-surfDim dark:bg-vanguard-dark-surfDim rounded-v-sm border border-vanguard-light-border dark:border-vanguard-dark-border">
+          <label className="flex items-center gap-3 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={isAllSelected}
+              onChange={toggleAll}
+              className="size-5 rounded-sm accent-vanguard-primary"
+            />
+            <span className="font-display font-semibold text-sm">Chọn tất cả ({items.length})</span>
+          </label>
+        </div>
+        
         {items.map((item) => {
           const primaryMedia = item.gear.media[0];
           const subtotal = calculateSubtotal(
@@ -47,6 +69,14 @@ export function CartClient() {
 
           return (
             <Card key={item.id} className="flex flex-col gap-4 p-4 sm:flex-row sm:items-center">
+              <label className="flex items-center cursor-pointer px-2">
+                <input
+                  type="checkbox"
+                  checked={selectedItemIds.includes(item.id)}
+                  onChange={() => toggleSelectItem(item.id)}
+                  className="size-5 rounded-sm accent-vanguard-primary"
+                />
+              </label>
               <div className="relative aspect-square w-24 shrink-0 overflow-hidden rounded-v-sm bg-vanguard-light-surfDim dark:bg-vanguard-dark-surfDim">
                 {primaryMedia ? (
                   <Image
@@ -100,8 +130,8 @@ export function CartClient() {
             Chưa bao gồm phí cọc. Phí cọc sẽ được tính ở bước thanh toán.
           </p>
           <div className="mt-6 border-t border-vanguard-light-border pt-6 dark:border-vanguard-dark-border">
-            <LinkButton href="/checkout" className="w-full justify-center">
-              Tiến hành thanh toán
+            <LinkButton href={selectedItemIds.length > 0 ? "/checkout" : "#"} className={`w-full justify-center ${selectedItemIds.length === 0 ? "opacity-50 cursor-not-allowed pointer-events-none" : ""}`}>
+              Tiến hành thanh toán ({selectedItemIds.length})
             </LinkButton>
           </div>
         </Card>
