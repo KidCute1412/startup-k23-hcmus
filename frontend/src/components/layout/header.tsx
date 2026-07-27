@@ -1,6 +1,6 @@
 "use client";
 
-import { Menu, ShoppingBag, ShoppingCart, WalletCards, X, User, LogOut, KeyRound, Home, LayoutGrid, PlusSquare } from "lucide-react";
+import { Menu, ShoppingBag, ShoppingCart, WalletCards, X, User, LogOut, KeyRound, Wallet } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
@@ -12,8 +12,8 @@ import { useAuth } from "@/hooks/useAuth";
 const navItems = [
   { href: "/", label: "Trang chủ" },
   { href: "/gears", label: "Sản phẩm" },
-  { href: "/orders", label: "Đơn thuê" },
-  { href: "/wallet", label: "Ví Mutux" },
+  { href: "/about", label: "About us" },
+  // { href: "/wallet", label: "Ví Mutux" },
   { href: "/lender/gears", label: "Cho thuê" },
 ];
 
@@ -21,7 +21,7 @@ export function Header() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const { totalItems } = useCart();
-  
+
   const { user, logout } = useAuth();
   const [showUserMenu, setShowUserMenu] = useState(false);
 
@@ -40,46 +40,43 @@ export function Header() {
           </span>
           <span className="font-display text-lg font-semibold tracking-wider sm:text-xl">
             Mutux{" "}
-            <span className="font-light text-vanguard-primary">GEAR</span>
           </span>
         </Link>
 
+        <nav className="hidden items-center gap-8 font-display text-xs font-semibold uppercase tracking-widest md:flex">
+          {navItems.map((item) => {
+            const active =
+              item.href === "/"
+                ? pathname === "/"
+                : pathname.startsWith(item.href);
 
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={cn(
+                  "border-b pb-1 transition-colors",
+                  active
+                    ? "border-vanguard-primary text-vanguard-primary"
+                    : "border-transparent text-vanguard-light-textMuted hover:text-vanguard-light-text dark:text-vanguard-dark-textMuted dark:hover:text-vanguard-dark-text",
+                )}
+              >
+                {item.label}
+              </Link>
+            );
+          })}
+        </nav>
 
         <div className="flex items-center gap-2">
           <ThemeToggle />
-          <Link
-            href="/"
-            className="relative inline-flex size-10 items-center justify-center rounded-full text-vanguard-light-text transition-colors hover:bg-vanguard-light-surfDim dark:text-vanguard-dark-text dark:hover:bg-vanguard-dark-surfBright"
-            aria-label="Trang chủ"
-            title="Trang chủ"
-          >
-            <Home size={18} />
-          </Link>
-          <Link
-            href="/gears"
-            className="relative inline-flex size-10 items-center justify-center rounded-full text-vanguard-light-text transition-colors hover:bg-vanguard-light-surfDim dark:text-vanguard-dark-text dark:hover:bg-vanguard-dark-surfBright"
-            aria-label="Sản phẩm"
-            title="Sản phẩm"
-          >
-            <LayoutGrid size={18} />
-          </Link>
-          <Link
-            href="/lender/gears"
-            className="relative inline-flex size-10 items-center justify-center rounded-full text-vanguard-light-text transition-colors hover:bg-vanguard-light-surfDim dark:text-vanguard-dark-text dark:hover:bg-vanguard-dark-surfBright"
-            aria-label="Cho thuê"
-            title="Cho thuê"
-          >
-            <PlusSquare size={18} />
-          </Link>
-          <Link
+          {/* <Link
             href="/wallet"
             className="relative inline-flex size-10 items-center justify-center rounded-full text-vanguard-light-text transition-colors hover:bg-vanguard-light-surfDim dark:text-vanguard-dark-text dark:hover:bg-vanguard-dark-surfBright"
             aria-label="Ví Mutux"
             title="Ví Mutux"
           >
             <WalletCards size={18} />
-          </Link>
+          </Link> */}
           <Link
             href="/cart"
             className="relative inline-flex size-10 items-center justify-center rounded-full text-vanguard-light-text transition-colors hover:bg-vanguard-light-surfDim dark:text-vanguard-dark-text dark:hover:bg-vanguard-dark-surfBright"
@@ -126,6 +123,14 @@ export function Header() {
                   >
                     <User size={14} />
                     Tài khoản cá nhân
+                  </Link>
+                  <Link
+                    href="/wallet"
+                    onClick={() => setShowUserMenu(false)}
+                    className="flex w-full items-center gap-2 rounded-v-sm px-3 py-2 text-left text-xs font-semibold text-vanguard-light-text hover:bg-vanguard-light-surfDim dark:text-vanguard-dark-text dark:hover:bg-vanguard-dark-surfBright"
+                  >
+                    <Wallet size={14} />
+                    Ví Mutux
                   </Link>
                   <Link
                     href="/change-password"
@@ -195,6 +200,13 @@ export function Header() {
                     className="flex w-full items-center gap-2 rounded-v-sm px-3 py-3 text-xs font-bold uppercase tracking-widest text-vanguard-primary hover:bg-vanguard-light-surfDim dark:hover:bg-vanguard-dark-surfBright"
                   >
                     Tài khoản cá nhân
+                  </Link>
+                  <Link
+                    href="/wallet"
+                    onClick={() => setOpen(false)}
+                    className="flex w-full items-center gap-2 rounded-v-sm px-3 py-3 text-xs font-bold uppercase tracking-widest text-vanguard-light-textMuted hover:bg-vanguard-light-surfDim hover:text-vanguard-light-text dark:text-vanguard-dark-textMuted dark:hover:bg-vanguard-dark-surfBright dark:hover:text-vanguard-dark-text"
+                  >
+                    Ví Mutux
                   </Link>
                   <Link
                     href="/change-password"
