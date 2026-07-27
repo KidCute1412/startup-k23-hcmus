@@ -6,7 +6,14 @@ import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Input, Select, Textarea } from "@/components/ui/field";
+import { Input, Textarea } from "@/components/ui/field";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 import { getCategories } from "@/features/catalog/mock-data";
 
@@ -182,17 +189,17 @@ export function AddGearForm() {
                   <label htmlFor="gear-category" className="field-label">
                     Danh mục <span className="text-red-500">*</span>
                   </label>
-                  <Select
-                    id="gear-category"
-                    value={categoryId}
-                    onChange={(e) => setCategoryId(e.target.value)}
-                    className="w-full"
-                  >
-                    {CATEGORIES.map((c) => (
-                      <option key={c.id} value={c.id}>
-                        {c.name}
-                      </option>
-                    ))}
+                  <Select value={categoryId} onValueChange={setCategoryId}>
+                    <SelectTrigger id="gear-category" className="w-full">
+                      <SelectValue placeholder="Chọn danh mục" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {CATEGORIES.map((c) => (
+                        <SelectItem key={c.id} value={c.id}>
+                          {c.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
                   </Select>
                 </div>
 
@@ -237,16 +244,18 @@ export function AddGearForm() {
                 <label htmlFor="gear-condition" className="field-label">
                   Tình trạng <span className="text-red-500">*</span>
                 </label>
-                <Select
-                  id="gear-condition"
-                  value={condition}
-                  onChange={(e) => setCondition(e.target.value)}
-                  className="w-full"
-                >
-                  {CONDITION_OPTIONS.map((o) => (
-                    <option key={o}>{o}</option>
-                  ))}
-                </Select>
+                  <Select value={condition} onValueChange={setCondition}>
+                    <SelectTrigger id="gear-condition" className="w-full">
+                      <SelectValue placeholder="Chọn tình trạng" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {CONDITION_OPTIONS.map((o) => (
+                        <SelectItem key={o} value={o}>
+                          {o}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
               </div>
 
               <div className="space-y-1.5">

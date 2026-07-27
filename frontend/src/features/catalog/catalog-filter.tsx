@@ -3,7 +3,13 @@
 import { Filter, X } from "lucide-react";
 import { useState } from "react";
 import { Card } from "@/components/ui/card";
-import { Select } from "@/components/ui/field";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import type { GearCategory } from "./types";
 
 type CatalogFilterProps = {
@@ -34,31 +40,41 @@ export function CatalogFilter({
       </div>
 
       <form className={`grid gap-5 ${isOpen ? 'block' : 'hidden md:grid'}`} action="/gears">
-        <label className="grid gap-2 text-sm">
+        <div className="grid gap-2 text-sm">
           <span className="font-display text-xs font-semibold uppercase tracking-wider">
             Danh mục
           </span>
           <Select name="category" defaultValue={category}>
-            <option value="all">Tất cả gear</option>
-            {categories.map((item) => (
-              <option key={item.id} value={item.id}>
-                {item.name}
-              </option>
-            ))}
+            <SelectTrigger>
+              <SelectValue placeholder="Tất cả gear" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Tất cả gear</SelectItem>
+              {categories.map((item) => (
+                <SelectItem key={item.id} value={item.id}>
+                  {item.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
           </Select>
-        </label>
+        </div>
 
-        <label className="grid gap-2 text-sm">
+        <div className="grid gap-2 text-sm">
           <span className="font-display text-xs font-semibold uppercase tracking-wider">
             Sắp xếp
           </span>
           <Select name="sort" defaultValue={sort}>
-            <option value="featured">Nổi bật</option>
-            <option value="price-asc">Giá thuê tăng dần</option>
-            <option value="price-desc">Giá thuê giảm dần</option>
-            <option value="rating">Đánh giá cao nhất</option>
+            <SelectTrigger>
+              <SelectValue placeholder="Sắp xếp theo" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="featured">Nổi bật</SelectItem>
+              <SelectItem value="price-asc">Giá thuê tăng dần</SelectItem>
+              <SelectItem value="price-desc">Giá thuê giảm dần</SelectItem>
+              <SelectItem value="rating">Đánh giá cao nhất</SelectItem>
+            </SelectContent>
           </Select>
-        </label>
+        </div>
 
         <div className="space-y-2">
           <p className="font-display text-xs font-semibold uppercase tracking-wider">
