@@ -14,6 +14,9 @@ export function Footer() {
           </p>
         </div>
         <div className="flex flex-wrap gap-6 font-display font-semibold uppercase tracking-widest">
+          <Link href="/about" className="hover:text-vanguard-primary">
+            Về chúng tôi
+          </Link>
           <Link href="/gears" className="hover:text-vanguard-primary">
             Catalog
           </Link>
