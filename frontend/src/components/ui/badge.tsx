@@ -3,7 +3,7 @@ import { cn } from "@/lib/cn";
 
 type BadgeProps = {
   children: ReactNode;
-  tone?: "gold" | "burgundy" | "muted";
+  tone?: "gold" | "burgundy" | "muted" | "destructive";
   className?: string;
 };
 
@@ -13,6 +13,8 @@ export function Badge({ children, tone = "gold", className }: BadgeProps) {
     burgundy: "bg-vanguard-accent text-white",
     muted:
       "border border-vanguard-primary/30 bg-vanguard-primary/5 text-vanguard-primary",
+    destructive:
+      "border border-red-500/30 bg-red-500/10 text-red-500",
   };
 
   return (

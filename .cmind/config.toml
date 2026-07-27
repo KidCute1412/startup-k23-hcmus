@@ -3,6 +3,8 @@
 # See: https://github.com/microsoft/RPG-ZeroRepo (CoderMind/docs/configuration.md)
 
 [cmind]
-ai_cli_cmd = "codex.cmd exec"
+ai_cli_cmd = 'node "C:/Users/LENOVO/AppData/Roaming/npm/node_modules/@openai/codex/bin/codex.js" exec'
+
+
 
 
