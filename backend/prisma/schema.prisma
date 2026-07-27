@@ -458,6 +458,8 @@ model RentalOrder {
   discount_amount            Decimal         @default(0) @db.Decimal(15, 2)
   deposit_amount             Decimal         @db.Decimal(15, 2)
   deposit_type               DepositTypeEnum @default(traditional)
+  platform_fee               Decimal         @default(0) @db.Decimal(15, 2)
+  lender_income              Decimal         @default(0) @db.Decimal(15, 2)
   status                     OrderStatusType @default(pending_confirm)
   shipping_address           String?
   shipping_name              String?         @db.VarChar(255)

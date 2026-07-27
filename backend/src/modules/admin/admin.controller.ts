@@ -13,6 +13,7 @@ import { AdminGuard } from '../../common/guards/admin.guard';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { AdminService } from './admin.service';
 import { RejectDto } from './dto/reject.dto';
+import { ResolveDisputeDto } from './dto/resolve-dispute.dto';
 import type { AuthenticatedRequest } from '../../common/types/authentication';
 import { GetGearQueueQueryDto } from './dto/get-gear-queue-query.dto';
 import { GetKycQueueQueryDto } from './dto/get-kyc-queue-query.dto';
@@ -60,8 +61,24 @@ export class AdminController {
   @Post('gears/:id/reject')
   rejectGear(
     @Param('id', new ParseUUIDPipe()) id: string,
+    @Body() dto: RejectDto,
     @Req() req: AuthenticatedRequest,
   ) {
     return this.adminService.rejectGear(id, req.user.id);
+  }
+
+  @Post('disputes/:id/resolve')
+  resolveDispute(
+    @Param('id', new ParseUUIDPipe()) id: string,
+    @Body() dto: ResolveDisputeDto,
+    @Req() req: AuthenticatedRequest,
+  ) {
+    return this.adminService.resolveDispute(
+      id,
+      req.user.id,
+      dto.resolutionType,
+      dto.deductAmount,
+      dto.resolutionNote,
+    );
   }
 }

@@ -129,8 +129,9 @@ describe('EscrowService', () => {
         findUnique: jest.fn(async () => ({ ...state.wallet })),
         findUniqueOrThrow: jest.fn(async () => ({ ...state.wallet })),
         update: jest.fn(async ({ data }) => {
-          state.wallet.balance = data.balance;
-          state.wallet.locked_balance = data.locked_balance;
+          if (data.balance !== undefined) state.wallet.balance = data.balance;
+          if (data.locked_balance !== undefined)
+            state.wallet.locked_balance = data.locked_balance;
           return state.wallet;
         }),
       },
@@ -243,7 +244,7 @@ describe('EscrowService', () => {
     expect(state.wallet.locked_balance).toEqual(new Prisma.Decimal(400000));
   });
 
-  it('locks a credit-line deposit without changing the renter cash wallet', async () => {
+  it('locks a credit-line deposit and debits rental_fee from the renter cash wallet', async () => {
     state.order.deposit_type = 'credit_line';
     state.wallet.balance = new Prisma.Decimal(200000);
 
@@ -256,10 +257,9 @@ describe('EscrowService', () => {
       source: 'credit_line',
       status: 'locked',
     });
-    expect(state.wallet.balance).toEqual(new Prisma.Decimal(200000));
+    expect(state.wallet.balance).toEqual(new Prisma.Decimal(100000));
     expect(state.wallet.locked_balance).toEqual(new Prisma.Decimal(0));
-    expect(tx.renterWallet.update).not.toHaveBeenCalled();
-    expect(tx.renterWalletTransaction.create).not.toHaveBeenCalled();
+    expect(tx.renterWalletTransaction.create).toHaveBeenCalled();
     expect(state.creditWallet?.display_balance).toEqual(
       new Prisma.Decimal(100000),
     );
@@ -285,17 +285,13 @@ describe('EscrowService', () => {
     );
   });
 
-  it('does not require a renter cash wallet for a credit-line lock', async () => {
+  it('returns INSUFFICIENT_CASH when renter has no cash wallet for a credit-line lock', async () => {
     state.order.deposit_type = 'credit_line';
-    tx.renterWallet.findUnique.mockResolvedValueOnce(null);
+    tx.renterWallet.findUnique.mockResolvedValue(null);
 
-    await expect(service.lock(orderId)).resolves.toMatchObject({
-      orderId,
-      source: 'credit_line',
-      status: 'locked',
+    await expect(service.lock(orderId)).rejects.toMatchObject({
+      response: { error: 'INSUFFICIENT_CASH' },
     });
-    expect(tx.renterWallet.findUnique).not.toHaveBeenCalled();
-    expect(tx.renterWallet.update).not.toHaveBeenCalled();
   });
 
   it('rolls back a credit-line lock when available credit is insufficient', async () => {
@@ -309,7 +305,6 @@ describe('EscrowService', () => {
       status: 400,
       response: { error: 'INSUFFICIENT_CREDIT' },
     });
-    expect(tx.renterWallet.update).not.toHaveBeenCalled();
     expect(tx.mutuxWallet.update).not.toHaveBeenCalled();
     expect(tx.creditTransaction.create).not.toHaveBeenCalled();
     expect(tx.escrowWallet.create).not.toHaveBeenCalled();
@@ -343,8 +338,7 @@ describe('EscrowService', () => {
     const second = await service.lock(orderId);
 
     expect(second).toEqual(first);
-    expect(tx.renterWallet.update).not.toHaveBeenCalled();
-    expect(tx.renterWalletTransaction.create).not.toHaveBeenCalled();
+    expect(tx.renterWallet.update).toHaveBeenCalledTimes(1);
     expect(tx.mutuxWallet.update).toHaveBeenCalledTimes(1);
     expect(tx.creditTransaction.create).toHaveBeenCalledTimes(1);
     expect(tx.escrowWallet.create).toHaveBeenCalledTimes(1);

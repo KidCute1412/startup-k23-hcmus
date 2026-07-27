@@ -1,4 +1,7 @@
 import { spawnSync } from 'node:child_process';
+import { config } from 'dotenv';
+
+config({ path: '.env.test.local' });
 
 const testDatabaseUrl = process.env.TEST_DATABASE_URL ??
   'postgresql://postgres:mysecretpassword@127.0.0.1:5432/mutux_test?schema=public';
