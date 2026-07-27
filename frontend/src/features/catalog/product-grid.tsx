@@ -1,4 +1,5 @@
 import { Card } from "@/components/ui/card";
+import { StaggerContainer } from "@/components/ui/animations/stagger-container";
 import { ProductCard } from "./product-card";
 import type { Gear } from "./types";
 
@@ -19,10 +20,11 @@ export function ProductGrid({ gears }: ProductGridProps) {
   }
 
   return (
-    <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
+    <StaggerContainer staggerDelay={100} className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
       {gears.map((gear) => (
         <ProductCard key={gear.id} gear={gear} />
       ))}
-    </div>
+    </StaggerContainer>
   );
 }
+

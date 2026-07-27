@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import { StaggerContainer } from "@/components/ui/animations/stagger-container";
 import type { GearCategory } from "./types";
 
 type CategoryGalleryProps = {
@@ -8,7 +9,7 @@ type CategoryGalleryProps = {
 
 export function CategoryGallery({ categories }: CategoryGalleryProps) {
   return (
-    <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+    <StaggerContainer staggerDelay={120} className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
       {categories.map((category, index) => (
         <Link
           key={category.id}
@@ -36,6 +37,7 @@ export function CategoryGallery({ categories }: CategoryGalleryProps) {
           </div>
         </Link>
       ))}
-    </div>
+    </StaggerContainer>
   );
 }
+
