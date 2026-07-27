@@ -148,14 +148,6 @@ export function ProductDetail({ gear }: ProductDetailProps) {
         >
           Thuê ngay
         </Button>
-        <button
-          type="button"
-          className="inline-flex min-h-11 items-center justify-center rounded-v-sm border border-vanguard-primary px-5 py-3 text-vanguard-primary transition-colors hover:bg-vanguard-primary hover:text-vanguard-dark-bg"
-          aria-label="Lưu gear yêu thích"
-          title="Lưu gear yêu thích"
-        >
-          <Heart size={18} />
-        </button>
       </div>
 
       <Card className="p-5">
