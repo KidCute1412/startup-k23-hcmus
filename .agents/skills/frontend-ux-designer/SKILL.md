@@ -27,10 +27,17 @@ Use other sketch directions only when the user explicitly requests them or when 
 7. Prioritize Server-Side Rendering (SSR) & React Server Components to optimize initial page loading speed and data security. Only use Client Components ("use client") at interactive boundaries (e.g., forms, buttons, client states).
 8. Implement SEO best practices on every route (dynamic/static metadata, page titles, descriptions, single <h1> heading, semantic HTML).
 
+## Frontend API Architecture
+- `frontend/src/lib/apiClient.ts`: Shared API client handling base URL (`http://localhost:8080/api/v1`), global response unwrapping (`{ success: true, data }`), `credentials: 'include'`, token refresh, and error handling.
+- `frontend/src/services/<domain>Service.ts`: Domain service modules (e.g., `authService.ts`, `gearService.ts`) that wrap `apiClient` calls to NestJS backend REST endpoints.
+- `frontend/src/hooks/use<Domain>.ts`: Custom React hooks for interactive Client Components to consume services, handle reactive state (`user`, `gears`, `loading`, `error`), and trigger actions.
+- Server Components call services directly for server-rendered data; Client Components consume custom hooks at interactive boundaries.
+
 ## Quality Gates
 - From `frontend`, run `npm run lint` when TS, TSX, or CSS files changed.
 - Desktop and mobile layout check.
 - No text overflow in buttons/cards.
 - Primary actions and expected empty/loading/error states are represented when implementing real app screens.
 - Verify hydration safety when utilizing client-only browser APIs (e.g., localStorage) in Client Components.
+
 

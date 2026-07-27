@@ -21,4 +21,4 @@ Use this as the table of contents for local Mutux skills. Each skill has a focus
 
 ## Product And Docs
 - `skills/startup-report-writer/SKILL.md`: PA0-PA5 Vietnamese LaTeX reports, citations, bibliography.
-- `skills/frontend-ux-designer/SKILL.md`: marketplace UX, product screens, responsive UI, Next.js frontend app, design sketches, default Vanguard Elite direction.
+- `skills/frontend-ux-designer/SKILL.md`: marketplace UX, product screens, responsive UI, Next.js frontend app, frontend API architecture (services, hooks, apiClient), design sketches, default Vanguard Elite direction.
