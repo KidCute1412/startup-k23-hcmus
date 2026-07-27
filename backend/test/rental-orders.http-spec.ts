@@ -8,6 +8,7 @@ import {
   ApprovalStatusType,
   GearStatusType,
   OrderStatusType,
+  Prisma,
   UserRole,
 } from '@prisma/client';
 import request from 'supertest';
@@ -15,6 +16,7 @@ import { App } from 'supertest/types';
 import { HttpExceptionFilter } from '../src/common/filters/http-exception.filter';
 import { JwtAuthGuard } from '../src/common/guards/jwt-auth.guard';
 import { TransformInterceptor } from '../src/common/interceptors/transform.interceptor';
+import { PrismaService } from '../src/prisma/prisma.service';
 import { EscrowService } from '../src/modules/escrow/escrow.service';
 import { RentalOrdersController } from '../src/modules/rental-orders/rental-orders.controller';
 import { RentalOrdersRepository } from '../src/modules/rental-orders/rental-orders.repository';
@@ -32,7 +34,8 @@ describe('RentalOrdersController (HTTP)', () => {
     findById: jest.Mock;
     transition: jest.Mock;
   };
-  let escrowService: { lock: jest.Mock };
+  let escrowService: { lock: jest.Mock; release: jest.Mock };
+  let prismaService: { $transaction: jest.Mock };
 
   beforeEach(async () => {
     currentUser = { id: 'renter-id', role: UserRole.renter };
@@ -58,12 +61,40 @@ describe('RentalOrdersController (HTTP)', () => {
     };
     escrowService = {
       lock: jest.fn().mockResolvedValue({ escrowId: 'escrow-id' }),
+      release: jest.fn().mockResolvedValue({ escrowId: 'escrow-id' }),
+    };
+    const txOrder: Record<string, unknown> & { status: OrderStatusType } = {
+      id: 'order-id',
+      lender_id: 'lender-id',
+      renter_id: 'renter-id',
+      status: OrderStatusType.pending_confirm,
+      rental_fee: new Prisma.Decimal(100000),
+      deposit_amount: new Prisma.Decimal(500000),
+      deposit_type: 'traditional',
+    };
+    const mockTx = {
+      $queryRaw: jest.fn().mockResolvedValue([]),
+      rentalOrder: {
+        findUnique: jest
+          .fn()
+          .mockImplementation(() => Promise.resolve({ ...txOrder })),
+        update: jest.fn().mockImplementation(({ data }) => {
+          Object.assign(txOrder, data);
+          return Promise.resolve({ ...txOrder });
+        }),
+      },
+    };
+    prismaService = {
+      $transaction: jest
+        .fn()
+        .mockImplementation((fn: (tx: unknown) => unknown) => fn(mockTx)),
     };
 
     const moduleFixture: TestingModule = await Test.createTestingModule({
       controllers: [RentalOrdersController],
       providers: [
         RentalOrdersService,
+        { provide: PrismaService, useValue: prismaService },
         { provide: RentalOrdersRepository, useValue: repository },
         { provide: EscrowService, useValue: escrowService },
       ],
@@ -203,12 +234,25 @@ describe('RentalOrdersController (HTTP)', () => {
 
   it('PATCH confirm returns 400 INVALID_TRANSITION from delivering', async () => {
     currentUser = { id: 'lender-id', role: UserRole.lender };
-    repository.findById.mockResolvedValue({
-      id: 'order-id',
-      renter_id: 'renter-id',
-      lender_id: 'lender-id',
-      status: OrderStatusType.delivering,
-    });
+    prismaService.$transaction = jest
+      .fn()
+      .mockImplementation((fn: (tx: unknown) => unknown) =>
+        fn({
+          $queryRaw: jest.fn().mockResolvedValue([]),
+          rentalOrder: {
+            findUnique: jest.fn().mockResolvedValue({
+              id: 'order-id',
+              lender_id: 'lender-id',
+              renter_id: 'renter-id',
+              status: OrderStatusType.delivering,
+              rental_fee: new Prisma.Decimal(100000),
+              deposit_amount: new Prisma.Decimal(500000),
+              deposit_type: 'traditional',
+            }),
+            update: jest.fn(),
+          },
+        }),
+      );
 
     const response = await request(app.getHttpServer())
       .patch('/api/v1/rental-orders/order-id/confirm')
@@ -232,6 +276,9 @@ describe('RentalOrdersController (HTTP)', () => {
       renter_id: 'renter-id',
       lender_id: 'lender-id',
       status: OrderStatusType.pending_confirm,
+      rental_fee: new Prisma.Decimal(100000),
+      deposit_amount: new Prisma.Decimal(500000),
+      deposit_type: 'traditional',
     };
     repository.findById.mockImplementation(() => Promise.resolve({ ...order }));
     repository.transition.mockImplementation(
@@ -245,6 +292,24 @@ describe('RentalOrdersController (HTTP)', () => {
         return Promise.resolve({ ...order });
       },
     );
+
+    const txOrder = order;
+    prismaService.$transaction = jest
+      .fn()
+      .mockImplementation((fn: (tx: unknown) => unknown) =>
+        fn({
+          $queryRaw: jest.fn().mockResolvedValue([]),
+          rentalOrder: {
+            findUnique: jest
+              .fn()
+              .mockImplementation(() => Promise.resolve({ ...txOrder })),
+            update: jest.fn().mockImplementation(({ data }) => {
+              Object.assign(txOrder, data);
+              return Promise.resolve({ ...txOrder });
+            }),
+          },
+        }),
+      );
 
     currentUser = { id: 'lender-id', role: UserRole.lender };
     await request(app.getHttpServer())

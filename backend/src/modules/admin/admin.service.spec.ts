@@ -2,6 +2,7 @@
 import { ApprovalStatusType, KycStatusType, UserRole } from '@prisma/client';
 import { AdminService } from './admin.service';
 import { PrismaService } from '../../prisma/prisma.service';
+import { EscrowService } from '../escrow/escrow.service';
 
 describe('AdminService', () => {
   const userModel = {
@@ -16,6 +17,10 @@ describe('AdminService', () => {
     findUnique: jest.fn(),
     updateMany: jest.fn(),
   };
+  const escrowService = {
+    release: jest.fn(),
+    compensate: jest.fn(),
+  } as unknown as EscrowService;
   const prisma = {
     user: userModel,
     gear: gearModel,
@@ -57,7 +62,7 @@ describe('AdminService', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    service = new AdminService(prisma);
+    service = new AdminService(prisma, escrowService);
   });
 
   it('filters and paginates the KYC queue', async () => {
