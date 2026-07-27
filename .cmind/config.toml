@@ -3,4 +3,6 @@
 # See: https://github.com/microsoft/RPG-ZeroRepo (CoderMind/docs/configuration.md)
 
 [cmind]
-ai_cli_cmd = "copilot"
+ai_cli_cmd = "codex.cmd exec"
+
+
