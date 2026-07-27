@@ -6,6 +6,9 @@ import { getCategories, getFeaturedGears } from "@/features/catalog/mock-data";
 import { LinkButton } from "@/components/ui/button";
 import { SectionHeading } from "@/components/ui/section-heading";
 import { Reveal } from "@/components/ui/animations/reveal";
+import { GoldSpotlight } from "@/components/ui/animations/gold-spotlight";
+import { GoldDustParticles } from "@/components/ui/animations/gold-dust-particles";
+import { AtelierLens } from "@/components/ui/animations/atelier-lens";
 
 export default function Home() {
   const categories = getCategories();
@@ -13,7 +16,10 @@ export default function Home() {
 
   return (
     <>
-      <section className="relative overflow-hidden border-b border-vanguard-light-border bg-gradient-to-b from-transparent to-vanguard-light-surfDim/70 px-4 py-16 dark:border-vanguard-dark-border dark:to-vanguard-dark-surfDim/50 sm:px-6 lg:py-24">
+      <GoldSpotlight className="border-b border-vanguard-light-border bg-gradient-to-b from-transparent to-vanguard-light-surfDim/70 px-4 py-16 dark:border-vanguard-dark-border dark:to-vanguard-dark-surfDim/50 sm:px-6 lg:py-24">
+        {/* Atmospheric Gold Particles */}
+        <GoldDustParticles count={25} />
+
         {/* Background glow ambient element */}
         <div className="animate-pulse-glow pointer-events-none absolute -right-24 top-1/2 -z-10 size-[500px] -translate-y-1/2 rounded-full bg-vanguard-primary/10 blur-3xl" />
 
@@ -56,25 +62,27 @@ export default function Home() {
 
           <div className="lg:col-span-6">
             <Reveal delay={150} direction="left">
-              <div className="animate-float royal-glow relative mx-auto aspect-[4/3] max-w-xl rounded-v-sm border border-vanguard-primary/30 bg-vanguard-light-surf p-2 shadow-2xl hover:-translate-y-1 dark:bg-vanguard-dark-surf">
-                <div className="gold-shimmer relative h-full overflow-hidden rounded-v-sm border border-vanguard-light-border dark:border-vanguard-dark-border">
-                  <Image
-                    src="https://images.unsplash.com/photo-1618384887929-16ec33fab9ef?auto=format&fit=crop&w=1200&q=80"
-                    alt="Bàn phím custom Vanguard Elite"
-                    fill
-                    priority
-                    sizes="(min-width: 1024px) 50vw, 100vw"
-                    className="object-cover transition-transform duration-700 hover:scale-105"
-                  />
-                </div>
-                <div className="absolute bottom-5 right-5 border border-vanguard-primary/30 bg-vanguard-dark-bg/85 px-4 py-2 font-display text-[10px] font-semibold uppercase tracking-widest text-vanguard-primary backdrop-blur-md">
+              <div className="animate-float royal-glow relative mx-auto aspect-[4/3] max-w-xl rounded-v-sm border border-vanguard-primary/30 bg-vanguard-light-surf p-2 shadow-2xl dark:bg-vanguard-dark-surf">
+                <AtelierLens className="h-full w-full rounded-v-sm">
+                  <div className="gold-shimmer relative h-full overflow-hidden rounded-v-sm border border-vanguard-light-border dark:border-vanguard-dark-border">
+                    <Image
+                      src="https://images.unsplash.com/photo-1618384887929-16ec33fab9ef?auto=format&fit=crop&w=1200&q=80"
+                      alt="Bàn phím custom Vanguard Elite"
+                      fill
+                      priority
+                      sizes="(min-width: 1024px) 50vw, 100vw"
+                      className="object-cover transition-transform duration-700 hover:scale-105"
+                    />
+                  </div>
+                </AtelierLens>
+                <div className="absolute bottom-5 right-5 z-20 border border-vanguard-primary/30 bg-vanguard-dark-bg/85 px-4 py-2 font-display text-[10px] font-semibold uppercase tracking-widest text-vanguard-primary backdrop-blur-md">
                   Vanguard Atelier Edition
                 </div>
               </div>
             </Reveal>
           </div>
         </div>
-      </section>
+      </GoldSpotlight>
 
       <section className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:py-20">
         <Reveal className="mb-10 flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
@@ -127,4 +135,5 @@ export default function Home() {
     </>
   );
 }
+
 
