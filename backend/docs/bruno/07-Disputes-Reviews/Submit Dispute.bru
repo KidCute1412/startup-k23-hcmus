@@ -12,14 +12,24 @@ post {
 
 body:json {
   {
-    "rentalOrderId": "uuid",
+    "rentalOrderId": "{{rentalOrderId}}",
     "reason": "device_damaged",
     "description": "Bàn phím bị nứt góc nhôm",
     "evidences": [
       {
         "mediaType": "image",
-        "url": "https://..."
+        "url": "{{disputeEvidenceUrl}}"
       }
     ]
   }
+}
+
+tests {
+  test("creates a dispute", function() {
+    expect(res.getStatus()).to.equal(201);
+    expect(res.getBody().success).to.equal(true);
+    expect(res.getBody().data.rentalOrderId).to.equal(bru.getVar("rentalOrderId"));
+    expect(res.getBody().data.reporterRole).to.be.oneOf(["renter", "lender"]);
+    expect(res.getBody().data.evidences).to.have.lengthOf(1);
+  });
 }

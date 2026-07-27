@@ -1,0 +1,25 @@
+meta {
+  name: Resolve Dispute Non Admin
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{baseUrl}}/admin/disputes/{{disputeId}}/resolve
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "resolutionType": "refund"
+  }
+}
+
+tests {
+  test("returns 403 ADMIN_ONLY when non-admin calls resolve", function() {
+    expect(res.getStatus()).to.equal(403);
+    expect(res.getBody().success).to.equal(false);
+    expect(res.getBody().error.code).to.equal("ADMIN_ONLY");
+  });
+}

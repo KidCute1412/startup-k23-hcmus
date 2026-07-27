@@ -10,12 +10,12 @@ import {
   DisputeStatusType,
   OrderStatusType,
   Prisma,
-  ResolutionTypeEnum,
 } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { GetGearQueueQueryDto } from './dto/get-gear-queue-query.dto';
 import { GetKycQueueQueryDto } from './dto/get-kyc-queue-query.dto';
 import { EscrowService } from '../escrow/escrow.service';
+import { ResolutionType } from './dto/resolve-dispute.dto';
 
 const kycUserSelect = {
   id: true,
@@ -197,7 +197,7 @@ export class AdminService {
   async resolveDispute(
     disputeId: string,
     adminId: string,
-    resolutionType: string,
+    resolutionType: ResolutionType,
     deductAmount: number | undefined,
     resolutionNote: string | undefined,
   ) {
@@ -213,6 +213,9 @@ export class AdminService {
           message: 'Dispute not found',
         });
       }
+      if (dispute.status === DisputeStatusType.resolved) {
+        return this.toApiDispute(dispute);
+      }
       if (dispute.status !== 'open' && dispute.status !== 'under_review') {
         throw new BadRequestException({
           error: 'INVALID_DISPUTE_STATUS',
@@ -221,10 +224,22 @@ export class AdminService {
       }
 
       const orderId = dispute.rental_order_id;
+      if (dispute.rental_order.status !== OrderStatusType.disputed) {
+        throw new BadRequestException({
+          error: 'INVALID_ORDER_STATUS',
+          message: `Rental order status is ${dispute.rental_order.status}, expected disputed`,
+        });
+      }
 
-      if (resolutionType === 'deposit_deduct') {
-        const deduct = deductAmount ?? 0;
-        await this.escrowService.compensate(orderId, deduct, tx);
+      if (resolutionType === ResolutionType.deposit_deduct) {
+        if (deductAmount === undefined) {
+          throw new BadRequestException({
+            error: 'INVALID_DEDUCT_AMOUNT',
+            message:
+              'deductAmount must be a positive integer for deposit_deduct',
+          });
+        }
+        await this.escrowService.compensate(orderId, deductAmount, tx);
       } else {
         await this.escrowService.release(orderId, tx);
       }
@@ -234,18 +249,54 @@ export class AdminService {
         data: { status: OrderStatusType.completed },
       });
 
-      return tx.dispute.update({
+      const resolved = await tx.dispute.update({
         where: { id: disputeId },
         data: {
           status: DisputeStatusType.resolved,
           resolved_by: adminId,
-          resolution_type: resolutionType as ResolutionTypeEnum,
-          deduct_amount: deductAmount ?? 0,
-          resolution_note: resolutionNote,
+          resolution_type: resolutionType,
+          deduct_amount:
+            resolutionType === ResolutionType.deposit_deduct
+              ? deductAmount
+              : null,
+          resolution_note: resolutionNote ?? null,
           resolved_at: new Date(),
         },
       });
+      return this.toApiDispute(resolved);
     });
+  }
+
+  private toApiDispute(dispute: {
+    id: string;
+    rental_order_id: string;
+    reported_by: string;
+    reporter_role: string;
+    reason: string;
+    description: string | null;
+    status: string;
+    resolved_by: string | null;
+    resolution_note: string | null;
+    resolution_type: string | null;
+    deduct_amount: Prisma.Decimal | null;
+    created_at: Date;
+    resolved_at: Date | null;
+  }) {
+    return {
+      id: dispute.id,
+      rentalOrderId: dispute.rental_order_id,
+      reportedBy: dispute.reported_by,
+      reporterRole: dispute.reporter_role,
+      reason: dispute.reason,
+      description: dispute.description,
+      status: dispute.status,
+      resolvedBy: dispute.resolved_by,
+      resolutionNote: dispute.resolution_note,
+      resolutionType: dispute.resolution_type,
+      deductAmount: dispute.deduct_amount?.toNumber() ?? null,
+      createdAt: dispute.created_at,
+      resolvedAt: dispute.resolved_at,
+    };
   }
 
   private async requireUser(id: string) {

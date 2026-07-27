@@ -1,0 +1,26 @@
+meta {
+  name: Submit Dispute Invalid Reason
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/disputes
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "rentalOrderId": "{{rentalOrderId}}",
+    "reason": "invalid_reason_code",
+    "description": "Invalid reason test"
+  }
+}
+
+tests {
+  test("returns 400 validation error for invalid reason", function() {
+    expect(res.getStatus()).to.equal(400);
+    expect(res.getBody().success).to.equal(false);
+  });
+}

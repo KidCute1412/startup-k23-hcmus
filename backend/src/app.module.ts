@@ -11,6 +11,7 @@ import { AdminModule } from './modules/admin/admin.module';
 import { EscrowModule } from './modules/escrow/escrow.module';
 import { CsrfOriginMiddleware } from './common/middleware/csrf-origin.middleware';
 import { MediaModule } from './modules/media/media.module';
+import { DisputesModule } from './modules/disputes/disputes.module';
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { MediaModule } from './modules/media/media.module';
     MediaModule,
     AdminModule,
     EscrowModule,
+    DisputesModule,
   ],
   controllers: [],
   providers: [],

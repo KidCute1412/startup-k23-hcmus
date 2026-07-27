@@ -2,6 +2,8 @@ import {
   Body,
   Controller,
   Get,
+  HttpCode,
+  HttpStatus,
   Param,
   ParseUUIDPipe,
   Post,
@@ -68,6 +70,7 @@ export class AdminController {
   }
 
   @Post('disputes/:id/resolve')
+  @HttpCode(HttpStatus.OK)
   resolveDispute(
     @Param('id', new ParseUUIDPipe()) id: string,
     @Body() dto: ResolveDisputeDto,

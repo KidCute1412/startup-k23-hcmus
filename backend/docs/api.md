@@ -501,11 +501,22 @@ Với năm endpoint không gọi escrow, nếu trạng thái hiện tại không
     "reason": "device_damaged",
     "description": "Bàn phím bị nứt góc nhôm",
     "evidences": [
-      { "mediaType": "image", "url": "https://..." }
+      { "mediaType": "image", "url": "/uploads/{currentUserId}/{uploadedFile}.jpg" }
     ]
   }
   ```
-* **Success (210)**: Tạo tranh chấp thành công, đơn hàng đổi trạng thái sang `disputed`.
+* **Evidence**: Tối đa 5 ảnh. Mỗi URL phải là ảnh local còn tồn tại do chính người gọi upload qua `/media/upload`; URL ngoài hệ thống hoặc của user khác trả `400 INVALID_FILE_URL`.
+* **Business rules**:
+  - Chỉ renter hoặc lender của order được gửi; `reporterRole` do server suy ra, không nhận từ client.
+  - Order phải ở `active` hoặc `returning`.
+  - Việc tạo dispute, evidence và chuyển order sang `disputed` chạy trong cùng transaction. Order được khóa để hai request đồng thời không thể cùng tạo dispute đang hoạt động.
+* **Errors**:
+  - `400 DISPUTE_NOT_ALLOWED_AT_THIS_STAGE` nếu order không ở `active` / `returning`.
+  - `400 INVALID_FILE_URL` nếu evidence không phải ảnh local thuộc người gọi.
+  - `403 FORBIDDEN` nếu người gọi không phải participant.
+  - `404 NOT_FOUND` nếu order không tồn tại.
+  - `409 DISPUTE_ALREADY_OPEN` nếu order đã có dispute `open` / `under_review`.
+* **Success (201)**: Tạo tranh chấp cùng evidence thành công, server trả dữ liệu camelCase và order đổi sang `disputed`.
 
 #### [POST] `/reviews` (Đánh giá sau khi hoàn thành đơn thuê)
 * **Authentication**: `accessToken` cookie and valid `Origin`.
@@ -614,15 +625,22 @@ Với năm endpoint không gọi escrow, nếu trạng thái hiện tại không
 * **Body**:
   ```json
   {
-    "resolutionType": "deposit_deduct", // "deposit_deduct", "refund", "no_action"
+    "resolutionType": "deposit_deduct", // "deposit_deduct" | "refund"
     "deductAmount": 1500000, // Số tiền cọc khấu trừ đền bù cho Lender (chỉ dùng khi resolutionType = deposit_deduct)
     "resolutionNote": "Khấu trừ 1.500.000đ do làm nứt vỏ nhôm"
   }
   ```
+* **Validation**:
+  - `deposit_deduct` bắt buộc có `deductAmount` là số nguyên dương.
+  - `refund` không được gửi `deductAmount`.
+  - `resolutionNote` là tùy chọn, tối đa 2.000 ký tự.
 * **Behavior theo resolutionType**:
   - `deposit_deduct`: gọi `EscrowService.compensate(orderId, deductAmount)` — khấu trừ tiền cọc, bồi thường cho lender.
-  - `refund` / `no_action`: gọi `EscrowService.release(orderId)` — hoàn toàn bộ cọc.
+  - `refund`: gọi `EscrowService.release(orderId)` — hoàn toàn bộ cọc.
 * **Errors**:
   - `400 DEDUCT_EXCEEDS_DEPOSIT` nếu `deductAmount > escrow.amount`.
   - `400 INVALID_DISPUTE_STATUS` nếu dispute không còn ở trạng thái `open` / `under_review`.
-* **Success (200)**: Tranh chấp được đánh dấu `resolved`, escrow được release/compensate, đơn thuê chuyển về `completed`.
+  - `400 INVALID_ORDER_STATUS` nếu order liên quan không ở `disputed`.
+  - `403 ADMIN_ONLY` nếu user đã đăng nhập nhưng không phải admin.
+  - `404 NOT_FOUND` nếu dispute không tồn tại.
+* **Success (200)**: Tranh chấp được đánh dấu `resolved`, escrow được release/compensate, đơn thuê chuyển về `completed`, và response dùng camelCase. Gọi lại một dispute đã `resolved` trả nguyên resolution đã lưu mà không thay đổi audit fields, số dư, escrow hoặc ledger.

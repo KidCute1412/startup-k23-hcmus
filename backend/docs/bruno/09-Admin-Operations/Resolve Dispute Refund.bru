@@ -1,0 +1,28 @@
+meta {
+  name: Resolve Dispute Refund
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{baseUrl}}/admin/disputes/{{disputeId}}/resolve
+  body: json
+  auth: inherit
+}
+
+tests {
+  test("resolves the dispute with full refund", function() {
+    expect(res.getStatus()).to.equal(200);
+    expect(res.getBody().success).to.equal(true);
+    expect(res.getBody().data.status).to.equal("resolved");
+    expect(res.getBody().data.resolutionType).to.equal("refund");
+    expect(res.getBody().data.deductAmount).to.equal(null);
+  });
+}
+
+body:json {
+  {
+    "resolutionType": "refund",
+    "resolutionNote": "Hoàn trả lại toàn bộ tiền cọc do lỗi thiết bị từ phía Lender"
+  }
+}

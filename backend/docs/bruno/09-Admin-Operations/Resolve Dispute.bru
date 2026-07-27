@@ -5,9 +5,19 @@ meta {
 }
 
 post {
-  url: {{baseUrl}}/admin/disputes/:id/resolve
+  url: {{baseUrl}}/admin/disputes/{{disputeId}}/resolve
   body: json
   auth: inherit
+}
+
+tests {
+  test("resolves the dispute", function() {
+    expect(res.getStatus()).to.equal(200);
+    expect(res.getBody().success).to.equal(true);
+    expect(res.getBody().data.status).to.equal("resolved");
+    expect(res.getBody().data.resolutionType).to.equal("deposit_deduct");
+    expect(res.getBody().data.deductAmount).to.equal(1500000);
+  });
 }
 
 body:json {
