@@ -1,9 +1,11 @@
 import {
   Body,
   Controller,
+  Get,
   Param,
   ParseUUIDPipe,
   Post,
+  Query,
   Req,
   UseGuards,
 } from '@nestjs/common';
@@ -12,11 +14,23 @@ import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { AdminService } from './admin.service';
 import { RejectDto } from './dto/reject.dto';
 import type { AuthenticatedRequest } from '../../common/types/authentication';
+import { GetGearQueueQueryDto } from './dto/get-gear-queue-query.dto';
+import { GetKycQueueQueryDto } from './dto/get-kyc-queue-query.dto';
 
 @Controller('admin')
 @UseGuards(JwtAuthGuard, AdminGuard)
 export class AdminController {
   constructor(private readonly adminService: AdminService) {}
+
+  @Get('kyc')
+  getKycQueue(@Query() query: GetKycQueueQueryDto) {
+    return this.adminService.getKycQueue(query);
+  }
+
+  @Get('gears')
+  getGearQueue(@Query() query: GetGearQueueQueryDto) {
+    return this.adminService.getGearQueue(query);
+  }
 
   @Post('kyc/:id/approve')
   approveKyc(

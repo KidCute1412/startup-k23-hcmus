@@ -20,6 +20,7 @@ interface PaginatedResult<T> {
     total: number;
     page: number;
     limit: number;
+    totalPages?: number;
   };
 }
 
@@ -78,6 +79,27 @@ export class GearsService {
     const gear = await this.gearsRepository.findById(id);
     if (!gear) throw new NotFoundException('Gear not found');
     return gear;
+  }
+
+  async findMine(
+    lenderId: string,
+    page: number,
+    limit: number,
+  ): Promise<PaginatedResult<Gear>> {
+    const result = await this.gearsRepository.findMine({
+      lenderId,
+      page,
+      limit,
+    });
+    return {
+      data: result.data,
+      meta: {
+        total: result.total,
+        page,
+        limit,
+        totalPages: Math.ceil(result.total / limit),
+      },
+    };
   }
 
   async update(

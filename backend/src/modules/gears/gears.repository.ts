@@ -8,6 +8,12 @@ interface FindAllOptions {
   categoryId?: string;
 }
 
+interface FindMineOptions {
+  lenderId: string;
+  page: number;
+  limit: number;
+}
+
 @Injectable()
 export class GearsRepository {
   constructor(private readonly prisma: PrismaService) {}
@@ -40,6 +46,23 @@ export class GearsRepository {
     return this.prisma.gear.findFirst({
       where: { id, approval_status: 'approved', status: 'available' },
     });
+  }
+
+  async findMine(
+    options: FindMineOptions,
+  ): Promise<{ data: Gear[]; total: number }> {
+    const { lenderId, page, limit } = options;
+    const where: Prisma.GearWhereInput = { lender_id: lenderId };
+    const [data, total] = await Promise.all([
+      this.prisma.gear.findMany({
+        where,
+        orderBy: [{ created_at: 'desc' }, { id: 'desc' }],
+        skip: (page - 1) * limit,
+        take: limit,
+      }),
+      this.prisma.gear.count({ where }),
+    ]);
+    return { data, total };
   }
 
   async findByIdForLender(id: string, lenderId: string): Promise<Gear | null> {

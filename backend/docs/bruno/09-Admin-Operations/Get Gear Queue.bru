@@ -1,0 +1,19 @@
+meta {
+  name: Get Gear Queue
+  type: http
+  seq: 6
+}
+
+get {
+  url: {{baseUrl}}/admin/gears?approvalStatus=pending&page=1&limit=10
+  body: none
+  auth: inherit
+}
+
+tests {
+  test("returns the paginated pending gear queue", function() {
+    expect(res.status).to.equal(200);
+    expect(res.body.data).to.be.an("array");
+    expect(res.body.meta).to.include.keys("total", "page", "limit", "totalPages");
+  });
+}

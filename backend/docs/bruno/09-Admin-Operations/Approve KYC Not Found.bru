@@ -1,0 +1,17 @@
+meta {
+  name: Approve KYC Not Found
+  type: http
+  seq: 15
+}
+
+post {
+  url: {{baseUrl}}/admin/kyc/{{missingId}}/approve
+  body: none
+  auth: inherit
+}
+
+tests {
+  test("returns not found for a missing KYC user", function() {
+    expect(res.status).to.equal(404);
+  });
+}

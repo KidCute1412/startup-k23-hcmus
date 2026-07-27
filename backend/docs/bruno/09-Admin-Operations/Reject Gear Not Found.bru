@@ -1,0 +1,17 @@
+meta {
+  name: Reject Gear Not Found
+  type: http
+  seq: 18
+}
+
+post {
+  url: {{baseUrl}}/admin/gears/{{missingId}}/reject
+  body: none
+  auth: inherit
+}
+
+tests {
+  test("returns not found for a missing gear", function() {
+    expect(res.status).to.equal(404);
+  });
+}

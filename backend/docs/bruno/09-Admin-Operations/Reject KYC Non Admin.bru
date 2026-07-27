@@ -1,0 +1,24 @@
+meta {
+  name: Reject KYC Non Admin
+  type: http
+  seq: 12
+}
+
+post {
+  url: {{baseUrl}}/admin/kyc/{{kycUserId}}/reject
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "reason": "Non-admin attempt"
+  }
+}
+
+tests {
+  test("rejects the current non-admin session", function() {
+    expect(res.status).to.equal(403);
+    expect(res.body.error.code).to.equal("ADMIN_ONLY");
+  });
+}

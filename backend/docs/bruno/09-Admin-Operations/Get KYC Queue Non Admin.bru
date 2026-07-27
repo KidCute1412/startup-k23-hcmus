@@ -1,0 +1,18 @@
+meta {
+  name: Get KYC Queue Non Admin
+  type: http
+  seq: 9
+}
+
+get {
+  url: {{baseUrl}}/admin/kyc
+  body: none
+  auth: inherit
+}
+
+tests {
+  test("rejects the current non-admin session", function() {
+    expect(res.status).to.equal(403);
+    expect(res.body.error.code).to.equal("ADMIN_ONLY");
+  });
+}

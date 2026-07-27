@@ -1,0 +1,17 @@
+meta {
+  name: Get Gear Queue Invalid Status
+  type: http
+  seq: 8
+}
+
+get {
+  url: {{baseUrl}}/admin/gears?approvalStatus=invalid
+  body: none
+  auth: inherit
+}
+
+tests {
+  test("rejects an invalid approval status", function() {
+    expect(res.status).to.equal(400);
+  });
+}

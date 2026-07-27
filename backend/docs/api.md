@@ -131,7 +131,7 @@ HTTP Status: `400`, `401`, `403`, `404`, `422`, `500`.
 
 ---
 
-### 3.2 Gears & Catalog (5 APIs)
+### 3.2 Gears & Catalog (6 APIs)
 
 #### [GET] `/categories` (Danh sách danh mục)
 * **Success (200)**: Mảng phẳng các danh mục gear (có chứa `id` và `parentId` để vẽ cây danh mục).
@@ -142,6 +142,24 @@ HTTP Status: `400`, `401`, `403`, `404`, `422`, `500`.
 
 #### [GET] `/gears/:id` (Chi tiết thiết bị)
 * **Success (200)**: Thông tin chi tiết thiết bị kèm danh sách hình ảnh (`media`) và danh sách các đánh giá (`reviews`) đã có của thiết bị đó.
+
+#### [GET] `/gears/mine` (Danh sách thiết bị của lender)
+* **Authentication**: `accessToken` cookie.
+* **Query Params**: `page` (mặc định `1`), `limit` (mặc định `10`, tối đa `100`).
+* **Ownership**: `lenderId` luôn lấy từ JWT; endpoint không nhận lender ID từ client.
+* **Success (200)**: Trả về tất cả gear thuộc lender đang đăng nhập, bao gồm gear `pending`, `rejected`, `approved` hoặc có status `delisted`.
+  ```json
+  {
+    "success": true,
+    "data": [],
+    "meta": {
+      "total": 0,
+      "page": 1,
+      "limit": 10,
+      "totalPages": 0
+    }
+  }
+  ```
 
 #### [POST] `/gears` (Lender đăng thiết bị mới)
 * **Authentication**: `accessToken` cookie (and valid `Origin` for state changes; requires verified KYC).
@@ -483,9 +501,40 @@ Với năm endpoint không gọi escrow, nếu trạng thái hiện tại không
 ### 3.9 Admin Operations
 *Tất cả endpoint admin yêu cầu access cookie có `role = admin`; thiếu hoặc hết hạn cookie trả `401`, role khác trả `403 ADMIN_ONLY`.*
 
+#### [GET] `/admin/kyc`
+* **Authentication**: `accessToken` cookie, admin role.
+* **Query Params**:
+  - `status`: `pending` | `verified` | `rejected`, mặc định `pending`.
+  - `page`: mặc định `1`.
+  - `limit`: mặc định `10`, tối đa `100`.
+* **Success (200)**: Danh sách hồ sơ KYC an toàn, có thông tin nhận diện và audit nhưng không chứa password hoặc refresh token.
+  ```json
+  {
+    "success": true,
+    "data": [],
+    "meta": {
+      "total": 0,
+      "page": 1,
+      "limit": 10,
+      "totalPages": 0
+    }
+  }
+  ```
+* **Errors**: `400` khi status hoặc pagination không hợp lệ.
+
+#### [GET] `/admin/gears`
+* **Authentication**: `accessToken` cookie, admin role.
+* **Query Params**:
+  - `approvalStatus`: `pending` | `approved` | `rejected`, mặc định `pending`.
+  - `page`: mặc định `1`.
+  - `limit`: mặc định `10`, tối đa `100`.
+* **Success (200)**: Danh sách gear theo trạng thái duyệt, cùng cấu trúc pagination như queue KYC.
+* **Errors**: `400` khi approvalStatus hoặc pagination không hợp lệ.
+
 #### [POST] `/admin/kyc/:id/approve`
 * **Authentication**: `accessToken` cookie, admin role, and valid `Origin`.
-* **Success (201)**: Chuyển KYC `pending` sang `verified`, lưu admin review và thời điểm review. Gọi lại trên KYC đã `verified` là idempotent.
+* **Success (201)**: Chuyển KYC `pending` sang `verified`, xóa rejection reason và lưu admin review/thời điểm review. Gọi lại trên KYC đã `verified` là idempotent và không đổi audit timestamp.
+* **Errors**: `404` khi User ID không tồn tại; `409 INVALID_KYC_STATUS` cho transition không hợp lệ.
 
 #### [POST] `/admin/kyc/:id/reject`
 * **Authentication**: `accessToken` cookie, admin role, and valid `Origin`.
@@ -493,15 +542,18 @@ Với năm endpoint không gọi escrow, nếu trạng thái hiện tại không
   ```json
   { "reason": "Thông tin không khớp với ảnh chân dung" }
   ```
-* **Success (201)**: Chuyển KYC `pending` sang `rejected`, lưu lý do và admin review. User phải gửi lại KYC trước khi có thể được duyệt khác trạng thái.
+* **Success (201)**: Chuyển KYC `pending` sang `rejected`, lưu lý do và admin review. Gọi lại trên KYC đã `rejected` là idempotent. User phải gửi lại KYC trước khi có thể được duyệt khác trạng thái.
+* **Errors**: `404` khi User ID không tồn tại; `409 INVALID_KYC_STATUS` cho transition không hợp lệ.
 
 #### [POST] `/admin/gears/:id/approve`
 * **Authentication**: `accessToken` cookie, admin role, and valid `Origin`.
 * **Success (201)**: Chuyển gear `pending` sang `approved`, lưu `approvedBy` và `approvedAt`. Gear chỉ xuất hiện ở catalog công khai khi đồng thời `approved` và `available`; gọi approve lặp lại không đổi timestamp.
+* **Errors**: `404` khi gear không tồn tại; `409 INVALID_GEAR_APPROVAL_STATUS` cho transition không hợp lệ.
 
 #### [POST] `/admin/gears/:id/reject`
 * **Authentication**: `accessToken` cookie, admin role, and valid `Origin`.
-* **Success (201)**: Chuyển gear `pending` hoặc `approved` sang `rejected`, lưu admin review và loại gear khỏi catalog công khai.
+* **Success (201)**: Chuyển gear `pending` hoặc `approved` sang `rejected`, lưu admin review và loại gear khỏi catalog công khai. Gọi lại trên gear đã `rejected` là idempotent.
+* **Errors**: `404` khi gear không tồn tại.
 
 #### [POST] `/admin/disputes/:id/resolve` (Giải quyết tranh chấp đơn thuê)
 * **Authentication**: `accessToken` cookie, admin role, and valid `Origin`.
