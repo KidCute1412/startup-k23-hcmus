@@ -1,6 +1,6 @@
 "use client";
 
-import { Menu, ShoppingBag, ShoppingCart, WalletCards, X, User, LogOut, KeyRound, Wallet } from "lucide-react";
+import { Menu, ShoppingBag, ShoppingCart, X, User, LogOut, KeyRound, Wallet } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
@@ -13,7 +13,6 @@ const navItems = [
   { href: "/", label: "Trang chủ" },
   { href: "/gears", label: "Sản phẩm" },
   { href: "/about", label: "About us" },
-  // { href: "/wallet", label: "Ví Mutux" },
   { href: "/lender/gears", label: "Cho thuê" },
 ];
 
@@ -69,14 +68,6 @@ export function Header() {
 
         <div className="flex items-center gap-2">
           <ThemeToggle />
-          {/* <Link
-            href="/wallet"
-            className="relative inline-flex size-10 items-center justify-center rounded-full text-vanguard-light-text transition-colors hover:bg-vanguard-light-surfDim dark:text-vanguard-dark-text dark:hover:bg-vanguard-dark-surfBright"
-            aria-label="Ví Mutux"
-            title="Ví Mutux"
-          >
-            <WalletCards size={18} />
-          </Link> */}
           <Link
             href="/cart"
             className="relative inline-flex size-10 items-center justify-center rounded-full text-vanguard-light-text transition-colors hover:bg-vanguard-light-surfDim dark:text-vanguard-dark-text dark:hover:bg-vanguard-dark-surfBright"
@@ -89,14 +80,6 @@ export function Header() {
                 {totalItems}
               </span>
             )}
-          </Link>
-          <Link
-            href="/orders"
-            className="relative inline-flex size-10 items-center justify-center rounded-full text-vanguard-light-text transition-colors hover:bg-vanguard-light-surfDim dark:text-vanguard-dark-text dark:hover:bg-vanguard-dark-surfBright"
-            aria-label="Đơn thuê"
-            title="Đơn thuê"
-          >
-            <ShoppingBag size={18} />
           </Link>
 
           {/* User Profile / Login Dropdown */}
@@ -123,6 +106,14 @@ export function Header() {
                   >
                     <User size={14} />
                     Tài khoản cá nhân
+                  </Link>
+                  <Link
+                    href="/orders"
+                    onClick={() => setShowUserMenu(false)}
+                    className="flex w-full items-center gap-2 rounded-v-sm px-3 py-2 text-left text-xs font-semibold text-vanguard-light-text hover:bg-vanguard-light-surfDim dark:text-vanguard-dark-text dark:hover:bg-vanguard-dark-surfBright"
+                  >
+                    <ShoppingBag size={14} />
+                    Đơn thuê của tôi
                   </Link>
                   <Link
                     href="/wallet"
@@ -200,6 +191,13 @@ export function Header() {
                     className="flex w-full items-center gap-2 rounded-v-sm px-3 py-3 text-xs font-bold uppercase tracking-widest text-vanguard-primary hover:bg-vanguard-light-surfDim dark:hover:bg-vanguard-dark-surfBright"
                   >
                     Tài khoản cá nhân
+                  </Link>
+                  <Link
+                    href="/orders"
+                    onClick={() => setOpen(false)}
+                    className="flex w-full items-center gap-2 rounded-v-sm px-3 py-3 text-xs font-bold uppercase tracking-widest text-vanguard-light-textMuted hover:bg-vanguard-light-surfDim hover:text-vanguard-light-text dark:text-vanguard-dark-textMuted dark:hover:bg-vanguard-dark-surfBright dark:hover:text-vanguard-dark-text"
+                  >
+                    Đơn thuê của tôi
                   </Link>
                   <Link
                     href="/wallet"
