@@ -1,0 +1,23 @@
+meta {
+  name: Reject KYC Not Found
+  type: http
+  seq: 16
+}
+
+post {
+  url: {{baseUrl}}/admin/kyc/{{missingId}}/reject
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "reason": "Missing profile"
+  }
+}
+
+tests {
+  test("returns not found for a missing KYC user", function() {
+    expect(res.status).to.equal(404);
+  });
+}

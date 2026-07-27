@@ -1,0 +1,17 @@
+meta {
+  name: Get KYC Queue Invalid Status
+  type: http
+  seq: 7
+}
+
+get {
+  url: {{baseUrl}}/admin/kyc?status=invalid
+  body: none
+  auth: inherit
+}
+
+tests {
+  test("rejects an invalid KYC status", function() {
+    expect(res.status).to.equal(400);
+  });
+}

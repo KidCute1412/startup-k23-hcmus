@@ -13,3 +13,20 @@ post {
 body:multipart-form {
   file: @file()
 }
+
+headers {
+  Origin: http://localhost:3000
+}
+
+script:post-response {
+  if (res.status === 201) {
+    bru.setEnvVar("proofFileUrl", res.body.data.url);
+  }
+}
+
+tests {
+  test("uploads an image to local storage", function() {
+    expect(res.status).to.equal(201);
+    expect(res.body.data.url).to.match(/^\/uploads\/[^/]+\/.+/);
+  });
+}

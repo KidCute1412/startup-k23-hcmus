@@ -1,0 +1,29 @@
+meta {
+  name: Create Proof Invalid Order Status
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{baseUrl}}/rental-orders/{{rentalOrderId}}/proofs
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "stage": "post_received",
+    "fileUrl": "{{proofFileUrl}}"
+  }
+}
+
+headers {
+  Origin: http://localhost:3000
+}
+
+tests {
+  test("rejects post_received while order is still confirmed", function() {
+    expect(res.status).to.equal(400);
+    expect(res.body.error.code).to.equal("INVALID_PROOF_STAGE");
+  });
+}

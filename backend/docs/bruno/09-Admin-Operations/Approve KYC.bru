@@ -5,7 +5,14 @@ meta {
 }
 
 post {
-  url: {{baseUrl}}/admin/kyc/:id/approve
+  url: {{baseUrl}}/admin/kyc/{{kycUserId}}/approve
   body: none
   auth: inherit
+}
+
+tests {
+  test("approves the KYC profile", function() {
+    expect(res.status).to.equal(201);
+    expect(res.body.data.kyc_status).to.equal("verified");
+  });
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { Menu, ShoppingBag, ShoppingCart, WalletCards, X, User, LogOut, KeyRound } from "lucide-react";
+import { Menu, ShoppingBag, ShoppingCart, WalletCards, X, User, LogOut, KeyRound, Home, LayoutGrid, PlusSquare } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
@@ -44,32 +44,34 @@ export function Header() {
           </span>
         </Link>
 
-        <nav className="hidden items-center gap-8 font-display text-xs font-semibold uppercase tracking-widest md:flex">
-          {navItems.map((item) => {
-            const active =
-              item.href === "/"
-                ? pathname === "/"
-                : pathname.startsWith(item.href);
 
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={cn(
-                  "border-b pb-1 transition-colors",
-                  active
-                    ? "border-vanguard-primary text-vanguard-primary"
-                    : "border-transparent text-vanguard-light-textMuted hover:text-vanguard-light-text dark:text-vanguard-dark-textMuted dark:hover:text-vanguard-dark-text",
-                )}
-              >
-                {item.label}
-              </Link>
-            );
-          })}
-        </nav>
 
         <div className="flex items-center gap-2">
           <ThemeToggle />
+          <Link
+            href="/"
+            className="relative inline-flex size-10 items-center justify-center rounded-full text-vanguard-light-text transition-colors hover:bg-vanguard-light-surfDim dark:text-vanguard-dark-text dark:hover:bg-vanguard-dark-surfBright"
+            aria-label="Trang chủ"
+            title="Trang chủ"
+          >
+            <Home size={18} />
+          </Link>
+          <Link
+            href="/gears"
+            className="relative inline-flex size-10 items-center justify-center rounded-full text-vanguard-light-text transition-colors hover:bg-vanguard-light-surfDim dark:text-vanguard-dark-text dark:hover:bg-vanguard-dark-surfBright"
+            aria-label="Sản phẩm"
+            title="Sản phẩm"
+          >
+            <LayoutGrid size={18} />
+          </Link>
+          <Link
+            href="/lender/gears"
+            className="relative inline-flex size-10 items-center justify-center rounded-full text-vanguard-light-text transition-colors hover:bg-vanguard-light-surfDim dark:text-vanguard-dark-text dark:hover:bg-vanguard-dark-surfBright"
+            aria-label="Cho thuê"
+            title="Cho thuê"
+          >
+            <PlusSquare size={18} />
+          </Link>
           <Link
             href="/wallet"
             className="relative inline-flex size-10 items-center justify-center rounded-full text-vanguard-light-text transition-colors hover:bg-vanguard-light-surfDim dark:text-vanguard-dark-text dark:hover:bg-vanguard-dark-surfBright"

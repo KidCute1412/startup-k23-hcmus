@@ -66,7 +66,7 @@ HTTP Status: `400`, `401`, `403`, `404`, `422`, `500`.
 
 ---
 
-## 3. Danh sách APIs Tinh gọn (37 Endpoints)
+## 3. Danh sách APIs Tinh gọn
 
 ### 3.1 Auth & Users (5 APIs)
 
@@ -131,7 +131,7 @@ HTTP Status: `400`, `401`, `403`, `404`, `422`, `500`.
 
 ---
 
-### 3.2 Gears & Catalog (5 APIs)
+### 3.2 Gears & Catalog (6 APIs)
 
 #### [GET] `/categories` (Danh sách danh mục)
 * **Success (200)**: Mảng phẳng các danh mục gear (có chứa `id` và `parentId` để vẽ cây danh mục).
@@ -142,6 +142,24 @@ HTTP Status: `400`, `401`, `403`, `404`, `422`, `500`.
 
 #### [GET] `/gears/:id` (Chi tiết thiết bị)
 * **Success (200)**: Thông tin chi tiết thiết bị kèm danh sách hình ảnh (`media`) và danh sách các đánh giá (`reviews`) đã có của thiết bị đó.
+
+#### [GET] `/gears/mine` (Danh sách thiết bị của lender)
+* **Authentication**: `accessToken` cookie.
+* **Query Params**: `page` (mặc định `1`), `limit` (mặc định `10`, tối đa `100`).
+* **Ownership**: `lenderId` luôn lấy từ JWT; endpoint không nhận lender ID từ client.
+* **Success (200)**: Trả về tất cả gear thuộc lender đang đăng nhập, bao gồm gear `pending`, `rejected`, `approved` hoặc có status `delisted`.
+  ```json
+  {
+    "success": true,
+    "data": [],
+    "meta": {
+      "total": 0,
+      "page": 1,
+      "limit": 10,
+      "totalPages": 0
+    }
+  }
+  ```
 
 #### [POST] `/gears` (Lender đăng thiết bị mới)
 * **Authentication**: `accessToken` cookie (and valid `Origin` for state changes; requires verified KYC).
@@ -369,23 +387,56 @@ Với năm endpoint không gọi escrow, nếu trạng thái hiện tại không
 ---
 
 ### 3.5 Rental Proofs (2 APIs)
-*Tải hình ảnh/video bằng chứng qua 4 mốc bàn giao giúp tránh tranh chấp.*
+*Gắn ảnh đã upload local qua 4 mốc bàn giao giúp tránh tranh chấp.*
 
-#### [POST] `/rental-orders/:id/proofs` (Tải lên bằng chứng)
+#### [POST] `/rental-orders/:id/proofs` (Tạo bằng chứng)
 * **Authentication**: `accessToken` cookie (and valid `Origin` for state changes).
 * **Body**:
   ```json
   {
     "stage": "pre_shipment", // "pre_shipment" | "post_received" | "pre_return" | "post_returned"
-    "proofType": "image",
-    "fileUrl": "https://...",
+    "fileUrl": "/uploads/user-uuid/1753500000000-gear-front.jpg",
     "note": "Hộp đầy đủ cáp và keycap"
   }
   ```
-* **Success (201)**: Ghi nhận bằng chứng bàn giao thành công.
+* **Server-derived fields**: `uploadedBy` lấy từ access token, `rentalOrderId` lấy từ path và `proofType` luôn là `image`; client không được truyền các field này.
+* **Stage rules**:
+
+  | `stage` | Actor bắt buộc | Trạng thái order bắt buộc |
+  | --- | --- | --- |
+  | `pre_shipment` | lender của order | `confirmed` |
+  | `post_received` | renter của order | `active` |
+  | `pre_return` | renter của order | `returning` |
+  | `post_returned` | lender của order | `returning` |
+
+* **File ownership**: `fileUrl` phải đúng dạng `/uploads/{currentUserId}/{fileName}` do chính caller nhận từ `POST /media/upload`, phải là file ảnh còn tồn tại trong thư mục upload của caller. URL ngoài, path traversal, file không tồn tại hoặc file của participant khác đều trả `400 INVALID_FILE_URL`.
+* **Authorization**: chỉ renter/lender của order được tạo proof; user khác trả `403 FORBIDDEN`.
+* **Errors**:
+  - `400 INVALID_PROOF_STAGE`: sai actor hoặc trạng thái order cho stage.
+  - `400 INVALID_FILE_URL`: URL không thuộc thư mục upload của caller.
+  - `403 FORBIDDEN`: caller không phải participant của order.
+  - `404 NOT_FOUND`: order không tồn tại.
+* **Success (201)**:
+  ```json
+  {
+    "success": true,
+    "data": {
+      "id": "uuid",
+      "rentalOrderId": "uuid",
+      "uploadedBy": "uuid",
+      "stage": "pre_shipment",
+      "proofType": "image",
+      "fileUrl": "/uploads/user-uuid/1753500000000-gear-front.jpg",
+      "note": "Hộp đầy đủ cáp và keycap",
+      "uploadedAt": "2026-07-26T10:00:00.000Z"
+    }
+  }
+  ```
 
 #### [GET] `/rental-orders/:id/proofs` (Xem bằng chứng đơn hàng)
-* **Success (200)**: Trả về toàn bộ danh sách ảnh/video bàn giao đã tải lên của đơn hàng đó.
+* **Authentication**: `accessToken` cookie.
+* **Authorization**: chỉ renter/lender của order được xem; user khác trả `403 FORBIDDEN`.
+* **Success (200)**: Trả về toàn bộ danh sách ảnh bàn giao, sắp xếp theo `uploadedAt` tăng dần.
 
 ---
 
@@ -478,19 +529,65 @@ Với năm endpoint không gọi escrow, nếu trạng thái hiện tại không
 * **Authentication**: `accessToken` cookie.
 * **Success (200)**: Trả về danh sách thông báo mới nhất.
 
-#### [POST] `/media/upload` (Upload hình ảnh / video)
+#### [POST] `/media/upload` (Upload hình ảnh local)
 * **Authentication**: `accessToken` cookie; `Content-Type: multipart/form-data`; valid `Origin` required.
 * **Body (Form-data)**: `file` (Binary)
-* **Success (201)**: Trả về link CDN/Cloud của ảnh/video (`{"success": true, "data": {"url": "https://..."}}`).
+* **MIME types**: `image/jpeg`, `image/png`, `image/webp`.
+* **Kích thước tối đa**: 5MB.
+* **Lưu trữ MVP**: `uploads/{userId}/{timestamp}-{sanitizedFileName}`; static file được serve công khai từ `/uploads/`.
+* **Success (201)**:
+  ```json
+  {
+    "success": true,
+    "data": {
+      "url": "/uploads/user-uuid/1753500000000-gear-front.jpg"
+    }
+  }
+  ```
+* **Errors**:
+  - `400 UNSUPPORTED_FILE_TYPE`: file không phải JPEG/PNG/WEBP.
+  - `400 FILE_TOO_LARGE`: file lớn hơn 5MB.
+  - `400 FILE_REQUIRED`: không có field multipart `file`.
 
 ---
 
 ### 3.9 Admin Operations
 *Tất cả endpoint admin yêu cầu access cookie có `role = admin`; thiếu hoặc hết hạn cookie trả `401`, role khác trả `403 ADMIN_ONLY`.*
 
+#### [GET] `/admin/kyc`
+* **Authentication**: `accessToken` cookie, admin role.
+* **Query Params**:
+  - `status`: `pending` | `verified` | `rejected`, mặc định `pending`.
+  - `page`: mặc định `1`.
+  - `limit`: mặc định `10`, tối đa `100`.
+* **Success (200)**: Danh sách hồ sơ KYC an toàn, có thông tin nhận diện và audit nhưng không chứa password hoặc refresh token.
+  ```json
+  {
+    "success": true,
+    "data": [],
+    "meta": {
+      "total": 0,
+      "page": 1,
+      "limit": 10,
+      "totalPages": 0
+    }
+  }
+  ```
+* **Errors**: `400` khi status hoặc pagination không hợp lệ.
+
+#### [GET] `/admin/gears`
+* **Authentication**: `accessToken` cookie, admin role.
+* **Query Params**:
+  - `approvalStatus`: `pending` | `approved` | `rejected`, mặc định `pending`.
+  - `page`: mặc định `1`.
+  - `limit`: mặc định `10`, tối đa `100`.
+* **Success (200)**: Danh sách gear theo trạng thái duyệt, cùng cấu trúc pagination như queue KYC.
+* **Errors**: `400` khi approvalStatus hoặc pagination không hợp lệ.
+
 #### [POST] `/admin/kyc/:id/approve`
 * **Authentication**: `accessToken` cookie, admin role, and valid `Origin`.
-* **Success (201)**: Chuyển KYC `pending` sang `verified`, lưu admin review và thời điểm review. Gọi lại trên KYC đã `verified` là idempotent.
+* **Success (201)**: Chuyển KYC `pending` sang `verified`, xóa rejection reason và lưu admin review/thời điểm review. Gọi lại trên KYC đã `verified` là idempotent và không đổi audit timestamp.
+* **Errors**: `404` khi User ID không tồn tại; `409 INVALID_KYC_STATUS` cho transition không hợp lệ.
 
 #### [POST] `/admin/kyc/:id/reject`
 * **Authentication**: `accessToken` cookie, admin role, and valid `Origin`.
@@ -498,15 +595,18 @@ Với năm endpoint không gọi escrow, nếu trạng thái hiện tại không
   ```json
   { "reason": "Thông tin không khớp với ảnh chân dung" }
   ```
-* **Success (201)**: Chuyển KYC `pending` sang `rejected`, lưu lý do và admin review. User phải gửi lại KYC trước khi có thể được duyệt khác trạng thái.
+* **Success (201)**: Chuyển KYC `pending` sang `rejected`, lưu lý do và admin review. Gọi lại trên KYC đã `rejected` là idempotent. User phải gửi lại KYC trước khi có thể được duyệt khác trạng thái.
+* **Errors**: `404` khi User ID không tồn tại; `409 INVALID_KYC_STATUS` cho transition không hợp lệ.
 
 #### [POST] `/admin/gears/:id/approve`
 * **Authentication**: `accessToken` cookie, admin role, and valid `Origin`.
 * **Success (201)**: Chuyển gear `pending` sang `approved`, lưu `approvedBy` và `approvedAt`. Gear chỉ xuất hiện ở catalog công khai khi đồng thời `approved` và `available`; gọi approve lặp lại không đổi timestamp.
+* **Errors**: `404` khi gear không tồn tại; `409 INVALID_GEAR_APPROVAL_STATUS` cho transition không hợp lệ.
 
 #### [POST] `/admin/gears/:id/reject`
 * **Authentication**: `accessToken` cookie, admin role, and valid `Origin`.
-* **Success (201)**: Chuyển gear `pending` hoặc `approved` sang `rejected`, lưu admin review và loại gear khỏi catalog công khai.
+* **Success (201)**: Chuyển gear `pending` hoặc `approved` sang `rejected`, lưu admin review và loại gear khỏi catalog công khai. Gọi lại trên gear đã `rejected` là idempotent.
+* **Errors**: `404` khi gear không tồn tại.
 
 #### [POST] `/admin/disputes/:id/resolve` (Giải quyết tranh chấp đơn thuê)
 * **Authentication**: `accessToken` cookie, admin role, and valid `Origin`.

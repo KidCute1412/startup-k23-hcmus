@@ -1,4 +1,7 @@
-import { Filter } from "lucide-react";
+"use client";
+
+import { Filter, X } from "lucide-react";
+import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Select } from "@/components/ui/field";
 import type { GearCategory } from "./types";
@@ -16,16 +19,21 @@ export function CatalogFilter({
   sort = "featured",
   resultCount,
 }: CatalogFilterProps) {
+  const [isOpen, setIsOpen] = useState(false);
+
   return (
     <Card className="p-5">
-      <div className="mb-5 flex items-center justify-between border-b border-vanguard-light-border pb-4 dark:border-vanguard-dark-border">
+      <div 
+        className="mb-5 flex items-center justify-between border-b border-vanguard-light-border pb-4 dark:border-vanguard-dark-border cursor-pointer md:cursor-default"
+        onClick={() => setIsOpen(!isOpen)}
+      >
         <h2 className="font-display text-sm font-bold uppercase tracking-widest">
           Bộ lọc
         </h2>
-        <Filter size={16} className="text-vanguard-primary" />
+        {isOpen ? <X size={16} className="text-vanguard-primary md:hidden" /> : <Filter size={16} className="text-vanguard-primary" />}
       </div>
 
-      <form className="grid gap-5" action="/gears">
+      <form className={`grid gap-5 ${isOpen ? 'block' : 'hidden md:grid'}`} action="/gears">
         <label className="grid gap-2 text-sm">
           <span className="font-display text-xs font-semibold uppercase tracking-wider">
             Danh mục
@@ -73,7 +81,7 @@ export function CatalogFilter({
                 readOnly
                 className="size-4 rounded-v-sm accent-vanguard-primary"
               />
-              Hỗ trợ cọc bằng ví tín dụng
+              Có kiểm định ảnh và serial
             </label>
           </div>
         </div>
@@ -83,7 +91,7 @@ export function CatalogFilter({
         </button>
       </form>
 
-      <p className="mt-5 border-t border-vanguard-light-border pt-4 text-xs uppercase tracking-widest text-vanguard-light-textMuted dark:border-vanguard-dark-border dark:text-vanguard-dark-textMuted">
+      <p className={`mt-5 border-t border-vanguard-light-border pt-4 text-xs uppercase tracking-widest text-vanguard-light-textMuted dark:border-vanguard-dark-border dark:text-vanguard-dark-textMuted ${isOpen ? 'block' : 'hidden md:block'}`}>
         Hiển thị {resultCount} tuyệt phẩm
       </p>
     </Card>

@@ -5,7 +5,14 @@ meta {
 }
 
 post {
-  url: {{baseUrl}}/admin/gears/:id/reject
+  url: {{baseUrl}}/admin/gears/{{gearId}}/reject
   body: none
   auth: inherit
+}
+
+tests {
+  test("rejects the gear", function() {
+    expect(res.status).to.equal(201);
+    expect(res.body.data.approval_status).to.equal("rejected");
+  });
 }

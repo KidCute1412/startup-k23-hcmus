@@ -5,7 +5,7 @@ meta {
 }
 
 post {
-  url: {{baseUrl}}/admin/kyc/:id/reject
+  url: {{baseUrl}}/admin/kyc/{{kycUserId}}/reject
   body: json
   auth: inherit
 }
@@ -14,4 +14,11 @@ body:json {
   {
     "reason": "Identity document is unreadable"
   }
+}
+
+tests {
+  test("rejects the KYC profile", function() {
+    expect(res.status).to.equal(201);
+    expect(res.body.data.kyc_status).to.equal("rejected");
+  });
 }

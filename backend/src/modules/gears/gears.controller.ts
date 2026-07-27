@@ -17,10 +17,11 @@ import { CreateGearDto } from './dto/create-gear.dto';
 import { UpdateGearDto } from './dto/update-gear.dto';
 import { Gear } from '@prisma/client';
 import type { AuthenticatedRequest } from '../../common/types/authentication';
+import { GetMyGearsQueryDto } from './dto/get-my-gears-query.dto';
 
 interface GearListResponse {
   data: Gear[];
-  meta: { total: number; page: number; limit: number };
+  meta: { total: number; page: number; limit: number; totalPages?: number };
 }
 
 @Controller('gears')
@@ -49,6 +50,15 @@ export class GearsController {
       limit: limitNum,
       categoryId,
     });
+  }
+
+  @Get('mine')
+  @UseGuards(JwtAuthGuard)
+  async findMine(
+    @Req() req: AuthenticatedRequest,
+    @Query() query: GetMyGearsQueryDto,
+  ): Promise<GearListResponse> {
+    return this.gearsService.findMine(req.user.id, query.page, query.limit);
   }
 
   @Get(':id')

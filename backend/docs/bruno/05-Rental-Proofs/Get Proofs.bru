@@ -5,7 +5,15 @@ meta {
 }
 
 get {
-  url: {{baseUrl}}/rental-orders/:id/proofs
+  url: {{baseUrl}}/rental-orders/{{rentalOrderId}}/proofs
   body: none
   auth: inherit
+}
+
+tests {
+  test("returns proofs oldest first", function() {
+    expect(res.status).to.equal(200);
+    const timestamps = res.body.data.map((proof) => proof.uploadedAt);
+    expect(timestamps).to.deep.equal([...timestamps].sort());
+  });
 }

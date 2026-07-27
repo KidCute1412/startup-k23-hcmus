@@ -5,7 +5,15 @@ meta {
 }
 
 post {
-  url: {{baseUrl}}/admin/gears/:id/approve
+  url: {{baseUrl}}/admin/gears/{{gearId}}/approve
   body: none
   auth: inherit
+}
+
+tests {
+  test("approves the gear", function() {
+    expect(res.status).to.equal(201);
+    expect(res.body.data.approval_status).to.equal("approved");
+    expect(res.body.data.approved_at).to.be.a("string");
+  });
 }

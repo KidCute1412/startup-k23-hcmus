@@ -1,0 +1,18 @@
+meta {
+  name: Approve KYC Non Admin
+  type: http
+  seq: 11
+}
+
+post {
+  url: {{baseUrl}}/admin/kyc/{{kycUserId}}/approve
+  body: none
+  auth: inherit
+}
+
+tests {
+  test("rejects the current non-admin session", function() {
+    expect(res.status).to.equal(403);
+    expect(res.body.error.code).to.equal("ADMIN_ONLY");
+  });
+}

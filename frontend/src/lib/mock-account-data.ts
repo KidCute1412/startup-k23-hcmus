@@ -6,6 +6,7 @@ export interface UserProfile {
   avatarUrl: string;
   bio: string;
   cccd: string;
+  dob: string;
   kycStatus: 'pending' | 'approved' | 'rejected' | 'unverified';
   kycRejectionReason?: string;
   createdAt: string;
@@ -75,6 +76,7 @@ export const mockUserProfile: UserProfile = {
   avatarUrl: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&q=80",
   bio: "Gamer PC enthusiast & pro rental member tại Mutux.",
   cccd: "079201088921",
+  dob: "1999-05-15",
   kycStatus: "approved",
   createdAt: "2025-11-15",
 };
@@ -229,3 +231,32 @@ export const mockRentalOrders: RentalOrderMock[] = [
     ],
   },
 ];
+
+export interface FetchOrdersResponse {
+  success: boolean;
+  data: RentalOrderMock[];
+  meta: {
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  };
+}
+
+export async function fetchOrders(): Promise<FetchOrdersResponse> {
+  // Giả lập gọi API BE
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      resolve({
+        success: true,
+        data: mockRentalOrders,
+        meta: {
+          total: mockRentalOrders.length,
+          page: 1,
+          limit: 10,
+          totalPages: 1,
+        },
+      });
+    }, 800);
+  });
+}
