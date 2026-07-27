@@ -11,10 +11,10 @@ export function SectionHeading({
 }: SectionHeadingProps) {
   return (
     <div className="border-b border-vanguard-light-border pb-6 dark:border-vanguard-dark-border">
-      <p className="font-display text-xs font-semibold uppercase tracking-widest text-vanguard-primary">
+      <p className="font-display text-xs font-semibold uppercase tracking-widest text-vanguard-secondary dark:text-vanguard-primary">
         {eyebrow}
       </p>
-      <h2 className="mt-2 font-display text-3xl font-bold md:text-4xl">
+      <h2 className="mt-2 font-display text-3xl font-bold text-vanguard-light-text dark:text-vanguard-dark-text md:text-4xl">
         {title}
       </h2>
       {description ? (

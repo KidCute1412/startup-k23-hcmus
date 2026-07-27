@@ -43,15 +43,15 @@ export function Reveal({
   const getInitialTransform = () => {
     switch (direction) {
       case "up":
-        return "translate-y-6";
+        return "translate-y-8 scale-[0.97]";
       case "down":
-        return "-translate-y-6";
+        return "-translate-y-8 scale-[0.97]";
       case "left":
-        return "translate-x-6";
+        return "translate-x-8 scale-[0.97]";
       case "right":
-        return "-translate-x-6";
+        return "-translate-x-8 scale-[0.97]";
       case "none":
-        return "";
+        return "scale-[0.95]";
     }
   };
 
@@ -64,7 +64,7 @@ export function Reveal({
       }}
       className={`transition-all ease-royal ${
         isVisible
-          ? "opacity-100 translate-x-0 translate-y-0"
+          ? "opacity-100 translate-x-0 translate-y-0 scale-100"
           : `opacity-0 ${getInitialTransform()}`
       } ${className}`}
     >

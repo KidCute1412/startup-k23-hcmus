@@ -47,7 +47,7 @@ export function ProductCard({ gear }: ProductCardProps) {
                 {gear.shortDescription}
               </p>
             </div>
-            <div className="flex shrink-0 items-center text-vanguard-primary">
+            <div className="flex shrink-0 items-center text-vanguard-secondary dark:text-vanguard-primary">
               <Star size={15} fill="currentColor" />
               <span className="ml-1 text-xs font-bold">{gear.rating.toFixed(1)}</span>
             </div>
@@ -59,7 +59,7 @@ export function ProductCard({ gear }: ProductCardProps) {
                 <p className="uppercase tracking-widest text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted">
                   Giá thuê
                 </p>
-                <p className="mt-1 font-display text-lg font-bold text-vanguard-primary">
+                <p className="mt-1 font-display text-lg font-bold text-vanguard-secondary dark:text-vanguard-primary">
                   {formatCurrency(gear.pricing.dailyPrice)}
                   <span className="text-xs font-normal">/ngày</span>
                 </p>

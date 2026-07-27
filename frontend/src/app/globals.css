@@ -92,11 +92,31 @@ body {
   }
 
   .animate-gradient-text {
+    background: linear-gradient(135deg, #aa7c11 0%, #1c1f26 40%, #805b0d 70%, #aa7c11 100%);
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: vanguardTextShimmer 6s linear infinite;
+  }
+
+  .dark .animate-gradient-text {
     background: linear-gradient(135deg, #d4af37 0%, #fff 40%, #aa7c11 70%, #d4af37 100%);
     background-size: 200% auto;
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     animation: vanguardTextShimmer 6s linear infinite;
+  }
+
+  .animate-fade-in-up {
+    animation: vanguardFadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+
+  .animate-scale-in {
+    animation: vanguardScaleIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+
+  .animate-star-drop {
+    animation: vanguardStarDrop 1s cubic-bezier(0.25, 1, 0.5, 1) forwards;
   }
 }
 
@@ -129,6 +149,47 @@ body {
   }
   100% {
     background-position: 0% 50%;
+  }
+}
+
+@keyframes vanguardFadeInUp {
+  0% {
+    opacity: 0;
+    transform: translateY(20px) scale(0.98);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes vanguardScaleIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.94);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes vanguardStarDrop {
+  0% {
+    opacity: 0;
+    transform: translate(0, 0) scale(0.3) rotate(0deg);
+  }
+  20% {
+    opacity: 0.95;
+    transform: translate(calc(var(--star-vx, 0px) * 0.4), 8px) scale(1.15) rotate(20deg);
+  }
+  60% {
+    opacity: 0.7;
+    transform: translate(calc(var(--star-vx, 0px) * 0.8), 24px) scale(0.8) rotate(45deg);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(var(--star-vx, 0px), 42px) scale(0.2) rotate(90deg);
   }
 }
 
