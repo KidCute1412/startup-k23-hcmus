@@ -209,11 +209,58 @@ HTTP Status: `400`, `401`, `403`, `404`, `422`, `500`.
 
 #### [GET] `/wallets/mutux` (Thông tin Ví trả sau / Credit Line - Renter)
 * **Authentication**: `accessToken` cookie (and valid `Origin` for state changes).
-* **Success (200)**: Trả về hạn mức khả dụng (`displayBalance`), hạn mức bị khóa (`lockedBalance`), dư nợ (`outstandingDebt`). Ví này chỉ dùng để bảo đảm cọc khi `depositType = credit_line`.
+* **Success (200)**: Trả về hạn mức khả dụng (`displayBalance`), hạn mức bị khóa (`lockedBalance`), dư nợ (`outstandingDebt`), tổng hạn mức (`totalLimit`), trạng thái (`status`). Ví này chỉ dùng để bảo đảm cọc khi `depositType = credit_line`.
+* **Response**:
+  ```json
+  {
+    "success": true,
+    "data": {
+      "id": "uuid",
+      "userId": "uuid",
+      "totalLimit": 5000000,
+      "displayBalance": 3000000,
+      "lockedBalance": 1000000,
+      "outstandingDebt": 1000000,
+      "status": "active"
+    }
+  }
+  ```
+  > `displayBalance` luôn được tính theo invariant: `displayBalance = totalLimit - lockedBalance - outstandingDebt`.
 
 #### [GET] `/wallets/lender` (Thông tin Ví thu nhập ảo & Yêu cầu rút tiền - Lender)
 * **Authentication**: `accessToken` cookie (and valid `Origin` for state changes).
-* **Mô tả**: Trả về số dư thu nhập ảo của lender. Với MVP demo, withdraw chỉ ghi nhận request/trạng thái, không chuyển khoản ngân hàng thật.
+* **Query Params**: `page` (default: 1), `limit` (default: 20)
+* **Mô tả**: Trả về số dư thu nhập ảo của lender kèm danh sách giao dịch phân trang. Với MVP demo, withdraw chỉ ghi nhận request/trạng thái, không chuyển khoản ngân hàng thật.
+* **Success (200)**:
+  ```json
+  {
+    "success": true,
+    "data": {
+      "balance": 5000000,
+      "totalWithdrawn": 1000000,
+      "status": "active",
+      "transactions": {
+        "data": [
+          {
+            "id": "uuid",
+            "type": "income",
+            "amount": 280500,
+            "balanceBefore": 4719500,
+            "balanceAfter": 5000000,
+            "note": "Income for order MX-2024-0001",
+            "createdAt": "2026-07-01T12:00:00Z"
+          }
+        ],
+        "meta": {
+          "total": 1,
+          "page": 1,
+          "limit": 20,
+          "totalPages": 1
+        }
+      }
+    }
+  }
+  ```
 * **Trường hợp Yêu cầu rút tiền (POST `/wallets/lender/withdraw`):**
   - **Body**:
     ```json
@@ -275,7 +322,7 @@ HTTP Status: `400`, `401`, `403`, `404`, `422`, `500`.
   - `400 INSUFFICIENT_CASH` nếu ví renter không đủ trả `rental_fee` và phần cọc tiền mặt (nếu dùng `traditional`).
   - `400 INSUFFICIENT_CREDIT` nếu ví hạn mức không tồn tại, không active, hết hạn hoặc không đủ `deposit_amount`.
   - Lỗi từ escrow được trả nguyên trạng; mọi cập nhật ví, credit ledger và escrow đều rollback, order vẫn ở `pending_confirm`.
-* **Success (200)**: trả về order với `status = confirmed`.
+* **Success (200)**: trả về order với `status = confirmed`. Order được snapshot `platform_fee` và `lender_income` dựa trên platform fee rate 15%.
 
 #### [PATCH] `/rental-orders/:id/ship` (Lender xác nhận đã giao hàng)
 * **Authentication**: `accessToken` cookie (and valid `Origin` for state changes).
@@ -308,7 +355,13 @@ HTTP Status: `400`, `401`, `403`, `404`, `422`, `500`.
 * **Authentication**: `accessToken` cookie (and valid `Origin` for state changes).
 * **Actor**: chỉ lender của order.
 * **Transition**: `returning` → `completed`.
-* **Side effect**: cập nhật `lender_received_back_at` bằng thời điểm hiện tại. Việc gọi `EscrowService.release()` được kích hoạt ở W3.1, chưa thuộc endpoint trong task này.
+* **Escrow**: gọi `EscrowService.release(orderId)` trong cùng transaction để giải phóng cọc, cộng doanh thu cho lender, cập nhật trạng thái escrow thành `released`.
+  - `traditional`: mở khóa `locked_balance` của ví renter (balance không đổi), cộng `lenderIncome` vào ví lender.
+  - `credit_line`: giảm `locked_balance` của MutuxWallet, tính lại `display_balance` theo invariant, cộng `lenderIncome` vào ví lender.
+  - Phí nền tảng: `platformFee = rentalFee × 15%`, `lenderIncome = rentalFee - platformFee`, snapshot trên order tại thời điểm confirm.
+* **Errors**:
+  - `400 ESCROW_INVALID_STATUS` nếu escrow không ở trạng thái `locked`.
+* **Side effect**: cập nhật `lender_received_back_at`, tạo `LenderWalletTransaction(type='income')`.
 * **Success (200)**: trả về order với `status = completed`.
 
 Với năm endpoint không gọi escrow, nếu trạng thái hiện tại không đúng trạng thái nguồn thì API trả `400 INVALID_TRANSITION`. Mọi endpoint trả `404 NOT_FOUND` khi order không tồn tại và dùng response wrapper toàn cục `{ "success": true, "data": ... }` hoặc `{ "success": false, "error": ... }`.
@@ -457,13 +510,19 @@ Với năm endpoint không gọi escrow, nếu trạng thái hiện tại không
 
 #### [POST] `/admin/disputes/:id/resolve` (Giải quyết tranh chấp đơn thuê)
 * **Authentication**: `accessToken` cookie, admin role, and valid `Origin`.
-* **Mô tả**: Quyết định số tiền khấu trừ từ khoản cọc của Renter để đền bù cho Lender.
+* **Mô tả**: Quyết định số tiền khấu trừ từ khoản cọc của Renter để đền bù cho Lender. Hệ thống tự động gọi `EscrowService.compensate()` hoặc `release()` và chuyển order về `completed` trong cùng transaction.
 * **Body**:
   ```json
   {
     "resolutionType": "deposit_deduct", // "deposit_deduct", "refund", "no_action"
-    "deductAmount": 1500000, // Số tiền cọc khấu trừ đền bù cho Lender
+    "deductAmount": 1500000, // Số tiền cọc khấu trừ đền bù cho Lender (chỉ dùng khi resolutionType = deposit_deduct)
     "resolutionNote": "Khấu trừ 1.500.000đ do làm nứt vỏ nhôm"
   }
   ```
-* **Success (200)**: Tranh chấp đã được xử lý xong, hệ thống tự động mở khóa / phân bổ cọc trong escrow và chuyển đơn thuê về trạng thái `completed`.
+* **Behavior theo resolutionType**:
+  - `deposit_deduct`: gọi `EscrowService.compensate(orderId, deductAmount)` — khấu trừ tiền cọc, bồi thường cho lender.
+  - `refund` / `no_action`: gọi `EscrowService.release(orderId)` — hoàn toàn bộ cọc.
+* **Errors**:
+  - `400 DEDUCT_EXCEEDS_DEPOSIT` nếu `deductAmount > escrow.amount`.
+  - `400 INVALID_DISPUTE_STATUS` nếu dispute không còn ở trạng thái `open` / `under_review`.
+* **Success (200)**: Tranh chấp được đánh dấu `resolved`, escrow được release/compensate, đơn thuê chuyển về `completed`.

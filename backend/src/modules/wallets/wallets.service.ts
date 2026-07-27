@@ -20,6 +20,58 @@ export class WalletsService {
     });
   }
 
+  async getMutux(userId: string) {
+    const wallet = await this.prisma.mutuxWallet.findUnique({
+      where: { user_id: userId },
+    });
+    if (!wallet) {
+      throw new NotFoundException({
+        error: 'NOT_FOUND',
+        message: 'Mutux credit line wallet not found',
+      });
+    }
+    return wallet;
+  }
+
+  async getLender(userId: string, page: number, limit: number) {
+    const wallet = await this.prisma.lenderWallet.findUnique({
+      where: { lender_id: userId },
+    });
+    if (!wallet) {
+      throw new NotFoundException({
+        error: 'NOT_FOUND',
+        message: 'Lender wallet not found',
+      });
+    }
+
+    const [transactions, total] = await Promise.all([
+      this.prisma.lenderWalletTransaction.findMany({
+        where: { lender_wallet_id: wallet.id },
+        orderBy: { created_at: 'desc' },
+        skip: (page - 1) * limit,
+        take: limit,
+      }),
+      this.prisma.lenderWalletTransaction.count({
+        where: { lender_wallet_id: wallet.id },
+      }),
+    ]);
+
+    return {
+      balance: wallet.balance,
+      totalWithdrawn: wallet.total_withdrawn,
+      status: wallet.status,
+      transactions: {
+        data: transactions,
+        meta: {
+          total,
+          page,
+          limit,
+          totalPages: Math.ceil(total / limit),
+        },
+      },
+    };
+  }
+
   async checkout(userId: string, amount: number) {
     if (!Number.isFinite(amount) || amount <= 0)
       throw new BadRequestException('Amount must be positive');

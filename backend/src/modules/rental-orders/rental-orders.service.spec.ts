@@ -3,11 +3,13 @@ import {
   DepositTypeEnum,
   GearStatusType,
   OrderStatusType,
+  Prisma,
   UserRole,
 } from '@prisma/client';
 import { CreateRentalOrderDto } from './dto/create-rental-order.dto';
 import { EscrowService } from '../escrow/escrow.service';
 import { RentalOrdersRepository } from './rental-orders.repository';
+import { PrismaService } from '../../prisma/prisma.service';
 import { RentalOrdersService } from './rental-orders.service';
 
 describe('RentalOrdersService', () => {
@@ -21,7 +23,11 @@ describe('RentalOrdersService', () => {
     findById: jest.Mock;
     transition: jest.Mock;
   };
-  let escrowService: { lock: jest.Mock };
+  let escrowService: {
+    lock: jest.Mock;
+    release: jest.Mock;
+    compensate: jest.Mock;
+  };
 
   const dto: CreateRentalOrderDto = {
     gearId: '30000000-0000-0000-0000-000000000001',
@@ -42,7 +48,48 @@ describe('RentalOrdersService', () => {
     value: 4_500_000,
   };
 
+  let txOrderState: Record<string, unknown>;
+
+  function cloneTxOrder(src: Record<string, unknown>): Record<string, unknown> {
+    const cloned: Record<string, unknown> = {};
+    for (const [key, val] of Object.entries(src)) {
+      cloned[key] =
+        val instanceof Prisma.Decimal ? new Prisma.Decimal(val) : val;
+    }
+    return cloned;
+  }
+
+  function createTxMock() {
+    const state: Record<string, unknown> = cloneTxOrder(txOrderState);
+    return {
+      $queryRaw: jest.fn().mockResolvedValue([]),
+      rentalOrder: {
+        findUnique: jest.fn(() => Promise.resolve(state ? { ...state } : null)),
+        update: jest.fn(
+          (_args: { where: { id: string }; data: Record<string, unknown> }) => {
+            if (state) {
+              Object.assign(state, _args.data);
+              Object.assign(txOrderState, _args.data);
+            }
+            return Promise.resolve(state ? { ...state } : null);
+          },
+        ),
+      },
+    };
+  }
+
   beforeEach(() => {
+    txOrderState = {
+      id: 'order-id',
+      renter_id: 'renter-id',
+      lender_id: 'lender-id',
+      status: OrderStatusType.pending_confirm,
+      rental_fee: new Prisma.Decimal(400000),
+      deposit_amount: new Prisma.Decimal(4500000),
+      deposit_type: 'traditional',
+      platform_fee: new Prisma.Decimal(0),
+      lender_income: new Prisma.Decimal(0),
+    };
     repository = {
       findGearById: jest.fn().mockResolvedValue({ ...approvedGear }),
       hasOverlappingOrder: jest.fn().mockResolvedValue(false),
@@ -58,8 +105,16 @@ describe('RentalOrdersService', () => {
     };
     escrowService = {
       lock: jest.fn().mockResolvedValue({ escrowId: 'escrow-id' }),
+      release: jest.fn().mockResolvedValue({ escrowId: 'escrow-id' }),
+      compensate: jest.fn().mockResolvedValue({ escrowId: 'escrow-id' }),
     };
+    const prisma = {
+      $transaction: jest.fn((cb: (tx: object) => unknown) =>
+        cb(createTxMock()),
+      ),
+    } as unknown as PrismaService;
     service = new RentalOrdersService(
+      prisma,
       repository as unknown as RentalOrdersRepository,
       escrowService as unknown as EscrowService,
     );
@@ -235,12 +290,7 @@ describe('RentalOrdersService', () => {
   });
 
   it('rejects confirm outside pending_confirm without calling escrow', async () => {
-    repository.findById.mockResolvedValue({
-      id: 'order-id',
-      renter_id: 'renter-id',
-      lender_id: 'lender-id',
-      status: OrderStatusType.delivering,
-    });
+    txOrderState.status = OrderStatusType.delivering;
 
     await expect(
       service.confirm('lender-id', 'order-id'),
@@ -252,115 +302,95 @@ describe('RentalOrdersService', () => {
   });
 
   it('keeps pending_confirm when escrow lock fails', async () => {
-    const order = {
-      id: 'order-id',
-      renter_id: 'renter-id',
-      lender_id: 'lender-id',
-      status: OrderStatusType.pending_confirm,
-    };
-    repository.findById.mockResolvedValue(order);
     escrowService.lock.mockRejectedValue({
       status: 400,
       response: { error: 'INSUFFICIENT_CASH' },
     });
 
-    await expect(service.confirm('lender-id', order.id)).rejects.toMatchObject({
+    await expect(
+      service.confirm('lender-id', 'order-id'),
+    ).rejects.toMatchObject({
       response: { error: 'INSUFFICIENT_CASH' },
     });
-    expect(order.status).toBe(OrderStatusType.pending_confirm);
+    expect(txOrderState.status).toBe(OrderStatusType.pending_confirm);
     expect(repository.transition).not.toHaveBeenCalled();
   });
 
   it('confirms once, creates escrow once, and rejects a repeated confirm', async () => {
-    const order: {
-      id: string;
-      renter_id: string;
-      lender_id: string;
-      status: OrderStatusType;
-    } = {
-      id: 'order-id',
-      renter_id: 'renter-id',
-      lender_id: 'lender-id',
-      status: OrderStatusType.pending_confirm,
-    };
-    repository.findById.mockImplementation(() => Promise.resolve({ ...order }));
-    repository.transition.mockImplementation(
-      (
-        _id: string,
-        expectedStatus: OrderStatusType,
-        data: { status: OrderStatusType },
-      ) => {
-        if (order.status !== expectedStatus) return Promise.resolve(null);
-        order.status = data.status;
-        return Promise.resolve({ ...order });
-      },
-    );
-
-    await expect(service.confirm('lender-id', order.id)).resolves.toMatchObject(
-      {
-        status: OrderStatusType.confirmed,
-      },
-    );
-    await expect(service.confirm('lender-id', order.id)).rejects.toMatchObject({
+    await expect(
+      service.confirm('lender-id', 'order-id'),
+    ).resolves.toMatchObject({
+      status: OrderStatusType.confirmed,
+    });
+    await expect(
+      service.confirm('lender-id', 'order-id'),
+    ).rejects.toMatchObject({
       status: 400,
       response: { error: 'INVALID_TRANSITION' },
     });
     expect(escrowService.lock).toHaveBeenCalledTimes(1);
-    expect(repository.transition).toHaveBeenCalledTimes(1);
   });
 
   it('runs the complete happy-path lifecycle with the correct actors and timestamps', async () => {
-    const order: Record<string, unknown> & {
-      id: string;
-      renter_id: string;
-      lender_id: string;
-      status: OrderStatusType;
-    } = {
-      id: 'order-id',
-      renter_id: 'renter-id',
-      lender_id: 'lender-id',
-      status: OrderStatusType.pending_confirm,
-    };
-    repository.findById.mockImplementation(() => Promise.resolve({ ...order }));
-    repository.transition.mockImplementation(
-      (
-        _id: string,
-        expectedStatus: OrderStatusType,
-        data: Record<string, unknown> & { status: OrderStatusType },
-      ) => {
-        if (order.status !== expectedStatus) return Promise.resolve(null);
-        Object.assign(order, data);
-        return Promise.resolve({ ...order });
-      },
-    );
+    function setupRepoFromTxState() {
+      const cloned = cloneTxOrder(txOrderState);
+      repository.findById.mockResolvedValue(cloned);
+      repository.transition.mockImplementation(
+        (
+          _id: string,
+          expectedStatus: OrderStatusType,
+          data: Record<string, unknown> & { status: OrderStatusType },
+        ) => {
+          const current = txOrderState;
+          if (current.status !== expectedStatus) return Promise.resolve(null);
+          Object.assign(current, data);
+          return Promise.resolve(cloneTxOrder(txOrderState));
+        },
+      );
+    }
 
-    await expect(service.confirm('lender-id', order.id)).resolves.toMatchObject(
-      {
-        status: OrderStatusType.confirmed,
-      },
-    );
-    await expect(service.ship('lender-id', order.id)).resolves.toMatchObject({
+    setupRepoFromTxState();
+
+    await expect(
+      service.confirm('lender-id', 'order-id'),
+    ).resolves.toMatchObject({
+      status: OrderStatusType.confirmed,
+    });
+    expect(txOrderState.status).toBe(OrderStatusType.confirmed);
+
+    setupRepoFromTxState();
+
+    await expect(service.ship('lender-id', 'order-id')).resolves.toMatchObject({
       status: OrderStatusType.delivering,
     });
+
+    setupRepoFromTxState();
+
     await expect(
-      service.confirmReceipt('renter-id', order.id),
+      service.confirmReceipt('renter-id', 'order-id'),
     ).resolves.toMatchObject({
       status: OrderStatusType.active,
     });
+
+    setupRepoFromTxState();
+
     await expect(
-      service.returnOrder('renter-id', order.id),
+      service.returnOrder('renter-id', 'order-id'),
     ).resolves.toMatchObject({
       status: OrderStatusType.returning,
     });
+
+    setupRepoFromTxState();
+
     await expect(
-      service.confirmReturn('lender-id', order.id),
+      service.confirmReturn('lender-id', 'order-id'),
     ).resolves.toMatchObject({
       status: OrderStatusType.completed,
     });
-    expect(order.lender_shipped_at).toBeInstanceOf(Date);
-    expect(order.renter_received_at).toBeInstanceOf(Date);
-    expect(order.renter_returned_at).toBeInstanceOf(Date);
-    expect(order.lender_received_back_at).toBeInstanceOf(Date);
+    expect(txOrderState.lender_shipped_at).toBeInstanceOf(Date);
+    expect(txOrderState.renter_received_at).toBeInstanceOf(Date);
+    expect(txOrderState.renter_returned_at).toBeInstanceOf(Date);
+    expect(txOrderState.lender_received_back_at).toBeInstanceOf(Date);
   });
 
   it('lets only the renter cancel a pending order', async () => {

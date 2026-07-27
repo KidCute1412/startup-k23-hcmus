@@ -1,10 +1,12 @@
 import {
   Body,
   Controller,
+  DefaultValuePipe,
   Get,
   Headers,
   Param,
   Post,
+  Query,
   Req,
   UseGuards,
 } from '@nestjs/common';
@@ -21,6 +23,22 @@ export class WalletsController {
   @Get('wallets/renter')
   get(@Req() req: AuthenticatedRequest) {
     return this.service.getRenter(req.user.id);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('wallets/mutux')
+  getMutux(@Req() req: AuthenticatedRequest) {
+    return this.service.getMutux(req.user.id);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('wallets/lender')
+  getLender(
+    @Req() req: AuthenticatedRequest,
+    @Query('page', new DefaultValuePipe(1)) page: number,
+    @Query('limit', new DefaultValuePipe(20)) limit: number,
+  ) {
+    return this.service.getLender(req.user.id, page, limit);
   }
 
   @UseGuards(JwtAuthGuard)

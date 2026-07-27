@@ -8,6 +8,13 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { EscrowReconciliationService } from './escrow-reconciliation.service';
 import { EscrowResult, IEscrowService } from './escrow.service.interface';
 
+const PLATFORM_FEE_RATE = 0.15;
+
+const computePlatformFee = (rentalFee: Prisma.Decimal) =>
+  rentalFee.mul(PLATFORM_FEE_RATE);
+const computeLenderIncome = (rentalFee: Prisma.Decimal) =>
+  rentalFee.sub(computePlatformFee(rentalFee));
+
 @Injectable()
 export class EscrowService implements IEscrowService {
   constructor(
@@ -15,10 +22,13 @@ export class EscrowService implements IEscrowService {
     private readonly reconciliation: EscrowReconciliationService,
   ) {}
 
-  async lock(orderId: string): Promise<EscrowResult> {
-    return this.prisma.$transaction(async (tx) => {
-      await tx.$queryRaw`SELECT id FROM rental_orders WHERE id = ${orderId}::uuid FOR UPDATE`;
-      const order = await tx.rentalOrder.findUnique({
+  async lock(
+    orderId: string,
+    tx?: Prisma.TransactionClient,
+  ): Promise<EscrowResult> {
+    const execute = async (client: Prisma.TransactionClient) => {
+      await client.$queryRaw`SELECT id FROM rental_orders WHERE id = ${orderId}::uuid FOR UPDATE`;
+      const order = await client.rentalOrder.findUnique({
         where: { id: orderId },
         include: { escrow_wallet: true },
       });
@@ -26,93 +36,120 @@ export class EscrowService implements IEscrowService {
       if (!order) throw new NotFoundException('Order not found');
       if (order.escrow_wallet) return this.toResult(order.escrow_wallet);
 
-      let cashWallet:
-        | {
-            id: string;
-            balance: Prisma.Decimal;
-            locked_balance: Prisma.Decimal;
-          }
-        | undefined;
+      const reference = `LOCK-${orderId}`;
 
-      if (order.deposit_type === DepositTypeEnum.traditional) {
-        const reference = `LOCK-${orderId}`;
-        const existingTransaction = await tx.renterWalletTransaction.findUnique(
-          {
-            where: { reference },
-          },
-        );
-        if (existingTransaction) {
-          const escrow = await tx.escrowWallet.findUnique({
-            where: { rental_order_id: orderId },
-          });
-          if (escrow) return this.toResult(escrow);
-          throw new BadRequestException({
-            error: 'ESCROW_LOCK_INCONSISTENT',
-            message:
-              'Escrow lock transaction already exists without escrow wallet',
-          });
-        }
-
-        const walletReference = await tx.renterWallet.findUnique({
-          where: { user_id: order.renter_id },
-          select: { id: true },
+      const existingTransaction =
+        await client.renterWalletTransaction.findUnique({
+          where: { reference },
         });
-        if (!walletReference)
-          throw new BadRequestException({
-            error: 'INSUFFICIENT_CASH',
-            message: 'INSUFFICIENT_CASH',
-          });
-        await tx.$queryRaw`SELECT id FROM renter_wallets WHERE id = ${walletReference.id}::uuid FOR UPDATE`;
-        const wallet = await tx.renterWallet.findUniqueOrThrow({
-          where: { id: walletReference.id },
+      if (existingTransaction) {
+        const escrow = await client.escrowWallet.findUnique({
+          where: { rental_order_id: orderId },
         });
-
-        const availableBalance = wallet.balance.minus(wallet.locked_balance);
-        const requiredCash = order.deposit_amount.plus(order.rental_fee);
-        if (availableBalance.lessThan(requiredCash)) {
-          throw new BadRequestException({
-            error: 'INSUFFICIENT_CASH',
-            message: 'INSUFFICIENT_CASH',
-          });
-        }
-        cashWallet = wallet;
+        if (escrow) return this.toResult(escrow);
+        throw new BadRequestException({
+          error: 'ESCROW_LOCK_INCONSISTENT',
+          message:
+            'Escrow lock transaction already exists without escrow wallet',
+        });
       }
 
-      let creditWallet:
-        | {
-            id: string;
-            total_limit: Prisma.Decimal;
-            display_balance: Prisma.Decimal;
-            locked_balance: Prisma.Decimal;
-            outstanding_debt: Prisma.Decimal;
-          }
-        | undefined;
-      let creditDisplayBalanceAfter: Prisma.Decimal | undefined;
-      let creditLockedBalanceAfter: Prisma.Decimal | undefined;
+      const walletRef = await client.renterWallet.findUnique({
+        where: { user_id: order.renter_id },
+        select: { id: true },
+      });
+      if (!walletRef)
+        throw new BadRequestException({
+          error: 'INSUFFICIENT_CASH',
+          message: 'INSUFFICIENT_CASH',
+        });
 
-      if (order.deposit_type === DepositTypeEnum.credit_line) {
-        const creditWalletReference = await tx.mutuxWallet.findUnique({
+      await client.$queryRaw`SELECT id FROM renter_wallets WHERE id = ${walletRef.id}::uuid FOR UPDATE`;
+      const cashWallet = await client.renterWallet.findUniqueOrThrow({
+        where: { id: walletRef.id },
+      });
+
+      const availableCash = cashWallet.balance.minus(cashWallet.locked_balance);
+
+      if (order.deposit_type === DepositTypeEnum.traditional) {
+        const requiredCash = order.deposit_amount.plus(order.rental_fee);
+        if (availableCash.lessThan(requiredCash)) {
+          throw new BadRequestException({
+            error: 'INSUFFICIENT_CASH',
+            message: 'INSUFFICIENT_CASH',
+          });
+        }
+
+        const balanceAfter = cashWallet.balance.minus(order.rental_fee);
+        const lockedBalanceAfter = cashWallet.locked_balance.plus(
+          order.deposit_amount,
+        );
+
+        await client.renterWallet.update({
+          where: { id: cashWallet.id },
+          data: {
+            balance: balanceAfter,
+            locked_balance: lockedBalanceAfter,
+          },
+        });
+        await client.renterWalletTransaction.create({
+          data: {
+            wallet_id: cashWallet.id,
+            type: 'order_lock',
+            amount: order.rental_fee,
+            balance_before: cashWallet.balance,
+            balance_after: balanceAfter,
+            reference,
+          },
+        });
+      } else {
+        if (availableCash.lessThan(order.rental_fee)) {
+          throw new BadRequestException({
+            error: 'INSUFFICIENT_CASH',
+            message: 'INSUFFICIENT_CASH',
+          });
+        }
+
+        const balanceAfter = cashWallet.balance.minus(order.rental_fee);
+
+        await client.renterWallet.update({
+          where: { id: cashWallet.id },
+          data: { balance: balanceAfter },
+        });
+        await client.renterWalletTransaction.create({
+          data: {
+            wallet_id: cashWallet.id,
+            type: 'order_lock',
+            amount: order.rental_fee,
+            balance_before: cashWallet.balance,
+            balance_after: balanceAfter,
+            reference,
+          },
+        });
+
+        const creditRef = await client.mutuxWallet.findUnique({
           where: { user_id: order.renter_id },
           select: { id: true },
         });
-        if (!creditWalletReference) {
+        if (!creditRef) {
           throw new BadRequestException({
             error: 'INSUFFICIENT_CREDIT',
             message: 'INSUFFICIENT_CREDIT',
           });
         }
 
-        await tx.$queryRaw`SELECT id FROM mutux_wallets WHERE id = ${creditWalletReference.id}::uuid FOR UPDATE`;
-        const lockedCreditWallet = await tx.mutuxWallet.findUniqueOrThrow({
-          where: { id: creditWalletReference.id },
+        await client.$queryRaw`SELECT id FROM mutux_wallets WHERE id = ${creditRef.id}::uuid FOR UPDATE`;
+        const creditWallet = await client.mutuxWallet.findUniqueOrThrow({
+          where: { id: creditRef.id },
         });
-        const availableCredit = lockedCreditWallet.total_limit
-          .minus(lockedCreditWallet.locked_balance)
-          .minus(lockedCreditWallet.outstanding_debt);
+
+        const availableCredit = creditWallet.total_limit
+          .minus(creditWallet.locked_balance)
+          .minus(creditWallet.outstanding_debt);
         const creditUnavailable =
-          lockedCreditWallet.status !== WalletStatusType.active ||
-          (lockedCreditWallet.expired_at !== null &&
-            lockedCreditWallet.expired_at <= new Date());
+          creditWallet.status !== WalletStatusType.active ||
+          (creditWallet.expired_at !== null &&
+            creditWallet.expired_at <= new Date());
         if (
           creditUnavailable ||
           availableCredit.lessThan(order.deposit_amount)
@@ -123,53 +160,21 @@ export class EscrowService implements IEscrowService {
           });
         }
 
-        creditWallet = lockedCreditWallet;
-        creditDisplayBalanceAfter = lockedCreditWallet.display_balance.minus(
+        const creditDisplayBalanceAfter = creditWallet.display_balance.minus(
           order.deposit_amount,
         );
-        creditLockedBalanceAfter = lockedCreditWallet.locked_balance.plus(
-          order.deposit_amount,
-        );
-      }
-
-      if (cashWallet) {
-        const balanceAfter = cashWallet.balance.minus(order.rental_fee);
-        const lockedBalanceAfter = cashWallet.locked_balance.plus(
+        const creditLockedBalanceAfter = creditWallet.locked_balance.plus(
           order.deposit_amount,
         );
 
-        await tx.renterWallet.update({
-          where: { id: cashWallet.id },
-          data: {
-            balance: balanceAfter,
-            locked_balance: lockedBalanceAfter,
-          },
-        });
-        await tx.renterWalletTransaction.create({
-          data: {
-            wallet_id: cashWallet.id,
-            type: 'order_lock',
-            amount: order.rental_fee,
-            balance_before: cashWallet.balance,
-            balance_after: balanceAfter,
-            reference: `LOCK-${orderId}`,
-          },
-        });
-      }
-
-      if (
-        creditWallet &&
-        creditDisplayBalanceAfter &&
-        creditLockedBalanceAfter
-      ) {
-        await tx.mutuxWallet.update({
+        await client.mutuxWallet.update({
           where: { id: creditWallet.id },
           data: {
             display_balance: creditDisplayBalanceAfter,
             locked_balance: creditLockedBalanceAfter,
           },
         });
-        await tx.creditTransaction.create({
+        await client.creditTransaction.create({
           data: {
             mutux_wallet_id: creditWallet.id,
             type: 'deposit_lock',
@@ -183,9 +188,14 @@ export class EscrowService implements IEscrowService {
             status: 'success',
           },
         });
+
+        await this.reconciliation.checkCreditLineBalance(
+          client,
+          creditWallet.id,
+        );
       }
 
-      const escrow = await tx.escrowWallet.create({
+      const escrow = await client.escrowWallet.create({
         data: {
           rental_order_id: order.id,
           amount: order.deposit_amount,
@@ -197,30 +207,324 @@ export class EscrowService implements IEscrowService {
         },
       });
 
-      if (creditWallet) {
-        await this.reconciliation.checkCreditLineBalance(tx, creditWallet.id);
+      return this.toResult(escrow);
+    };
+
+    return tx ? execute(tx) : this.prisma.$transaction(execute);
+  }
+
+  async release(
+    orderId: string,
+    tx?: Prisma.TransactionClient,
+  ): Promise<EscrowResult> {
+    const execute = async (client: Prisma.TransactionClient) => {
+      await client.$queryRaw`SELECT id FROM rental_orders WHERE id = ${orderId}::uuid FOR UPDATE`;
+      const order = await client.rentalOrder.findUnique({
+        where: { id: orderId },
+        include: { escrow_wallet: true },
+      });
+      if (!order) throw new NotFoundException('Order not found');
+
+      const escrow = order.escrow_wallet;
+      if (!escrow) {
+        throw new BadRequestException({
+          error: 'ESCROW_NOT_FOUND',
+          message: 'No escrow found for this order',
+        });
       }
 
-      return this.toResult(escrow);
-    });
+      if (escrow.status === 'released') return this.toResult(escrow);
+      if (escrow.status !== 'locked') {
+        throw new BadRequestException({
+          error: 'ESCROW_INVALID_STATUS',
+          message: `Escrow status is ${escrow.status}, expected locked`,
+        });
+      }
+
+      const existingLenderTx = await client.lenderWalletTransaction.findFirst({
+        where: { rental_order_id: orderId, type: 'income' },
+      });
+      if (existingLenderTx) return this.toResult(escrow);
+
+      const lenderIncome =
+        order.lender_income.toNumber() > 0
+          ? order.lender_income
+          : computeLenderIncome(order.rental_fee);
+
+      const lenderWallet = await client.lenderWallet.findUnique({
+        where: { lender_id: order.lender_id },
+      });
+      if (!lenderWallet) {
+        throw new BadRequestException({
+          error: 'LENDER_WALLET_NOT_FOUND',
+          message: 'Lender wallet not found',
+        });
+      }
+      await client.$queryRaw`SELECT id FROM lender_wallets WHERE id = ${lenderWallet.id}::uuid FOR UPDATE`;
+
+      if (escrow.source === 'renter_cash') {
+        const renterWallet = await client.renterWallet.findUnique({
+          where: { user_id: order.renter_id },
+        });
+        if (!renterWallet) {
+          throw new BadRequestException({
+            error: 'RENTER_WALLET_NOT_FOUND',
+            message: 'Renter wallet not found',
+          });
+        }
+        await client.$queryRaw`SELECT id FROM renter_wallets WHERE id = ${renterWallet.id}::uuid FOR UPDATE`;
+
+        await client.renterWallet.update({
+          where: { id: renterWallet.id },
+          data: {
+            locked_balance: renterWallet.locked_balance.sub(escrow.amount),
+          },
+        });
+      } else {
+        const creditWallet = await client.mutuxWallet.findUnique({
+          where: { user_id: order.renter_id },
+        });
+        if (!creditWallet) {
+          throw new BadRequestException({
+            error: 'CREDIT_WALLET_NOT_FOUND',
+            message: 'Credit wallet not found',
+          });
+        }
+        await client.$queryRaw`SELECT id FROM mutux_wallets WHERE id = ${creditWallet.id}::uuid FOR UPDATE`;
+
+        const lockedAfter = creditWallet.locked_balance.sub(escrow.amount);
+        const displayAfter = creditWallet.total_limit
+          .sub(lockedAfter)
+          .sub(creditWallet.outstanding_debt);
+
+        await client.mutuxWallet.update({
+          where: { id: creditWallet.id },
+          data: {
+            locked_balance: lockedAfter,
+            display_balance: displayAfter,
+          },
+        });
+        await client.creditTransaction.create({
+          data: {
+            mutux_wallet_id: creditWallet.id,
+            type: 'deposit_release',
+            amount: escrow.amount,
+            display_balance_before: creditWallet.display_balance,
+            display_balance_after: displayAfter,
+            direction: 'in',
+            ref_type: 'rental_order',
+            ref_id: order.id,
+            note: `Release deposit for rental order ${order.id}`,
+            status: 'success',
+          },
+        });
+      }
+
+      const lenderBalanceAfter = lenderWallet.balance.plus(lenderIncome);
+
+      await client.lenderWallet.update({
+        where: { id: lenderWallet.id },
+        data: { balance: lenderBalanceAfter },
+      });
+      await client.lenderWalletTransaction.create({
+        data: {
+          lender_wallet_id: lenderWallet.id,
+          rental_order_id: order.id,
+          type: 'income',
+          amount: lenderIncome,
+          balance_before: lenderWallet.balance,
+          balance_after: lenderBalanceAfter,
+          note: `Income for order ${order.order_code} (after ${PLATFORM_FEE_RATE * 100}% platform fee)`,
+        },
+      });
+
+      const now = new Date();
+      const updated = await client.escrowWallet.update({
+        where: { id: escrow.id },
+        data: { status: 'released', released_at: now },
+      });
+
+      return this.toResult(updated);
+    };
+
+    return tx ? execute(tx) : this.prisma.$transaction(execute);
   }
 
-  release(orderId: string): Promise<EscrowResult> {
-    return Promise.reject(
-      new BadRequestException({
-        error: 'NOT_IMPLEMENTED',
-        message: `release(${orderId}) is not implemented yet`,
-      }),
-    );
-  }
+  async compensate(
+    orderId: string,
+    deductAmount: number,
+    tx?: Prisma.TransactionClient,
+  ): Promise<EscrowResult> {
+    const execute = async (client: Prisma.TransactionClient) => {
+      await client.$queryRaw`SELECT id FROM rental_orders WHERE id = ${orderId}::uuid FOR UPDATE`;
+      const order = await client.rentalOrder.findUnique({
+        where: { id: orderId },
+        include: { escrow_wallet: true },
+      });
+      if (!order) throw new NotFoundException('Order not found');
 
-  compensate(orderId: string, deductAmount: number): Promise<EscrowResult> {
-    return Promise.reject(
-      new BadRequestException({
-        error: 'NOT_IMPLEMENTED',
-        message: `compensate(${orderId}, ${deductAmount}) is not implemented yet`,
-      }),
-    );
+      const escrow = order.escrow_wallet;
+      if (!escrow) {
+        throw new BadRequestException({
+          error: 'ESCROW_NOT_FOUND',
+          message: 'No escrow found for this order',
+        });
+      }
+
+      if (escrow.status === 'compensated') return this.toResult(escrow);
+      if (escrow.status !== 'locked') {
+        throw new BadRequestException({
+          error: 'ESCROW_INVALID_STATUS',
+          message: `Escrow status is ${escrow.status}, expected locked`,
+        });
+      }
+
+      const deduct = new Prisma.Decimal(deductAmount);
+      if (deduct.greaterThan(escrow.amount)) {
+        throw new BadRequestException({
+          error: 'DEDUCT_EXCEEDS_DEPOSIT',
+          message: `Deduct amount ${deductAmount} exceeds deposit ${escrow.amount.toString()}`,
+        });
+      }
+
+      const existingLenderTx = await client.lenderWalletTransaction.findFirst({
+        where: { rental_order_id: orderId, type: 'compensation' },
+      });
+      if (existingLenderTx) return this.toResult(escrow);
+
+      const lenderIncome =
+        order.lender_income.toNumber() > 0
+          ? order.lender_income
+          : computeLenderIncome(order.rental_fee);
+
+      const lenderWallet = await client.lenderWallet.findUnique({
+        where: { lender_id: order.lender_id },
+      });
+      if (!lenderWallet) {
+        throw new BadRequestException({
+          error: 'LENDER_WALLET_NOT_FOUND',
+          message: 'Lender wallet not found',
+        });
+      }
+      await client.$queryRaw`SELECT id FROM lender_wallets WHERE id = ${lenderWallet.id}::uuid FOR UPDATE`;
+
+      if (escrow.source === 'renter_cash') {
+        const renterWallet = await client.renterWallet.findUnique({
+          where: { user_id: order.renter_id },
+        });
+        if (!renterWallet) {
+          throw new BadRequestException({
+            error: 'RENTER_WALLET_NOT_FOUND',
+            message: 'Renter wallet not found',
+          });
+        }
+        await client.$queryRaw`SELECT id FROM renter_wallets WHERE id = ${renterWallet.id}::uuid FOR UPDATE`;
+
+        await client.renterWallet.update({
+          where: { id: renterWallet.id },
+          data: {
+            balance: renterWallet.balance.sub(deduct),
+            locked_balance: renterWallet.locked_balance.sub(escrow.amount),
+          },
+        });
+
+        if (deduct.greaterThan(0)) {
+          await client.renterWalletTransaction.create({
+            data: {
+              wallet_id: renterWallet.id,
+              type: 'compensation',
+              amount: deduct,
+              balance_before: renterWallet.balance,
+              balance_after: renterWallet.balance.sub(deduct),
+              reference: `COMPENSATION-${orderId}`,
+            },
+          });
+        }
+      } else {
+        const creditWallet = await client.mutuxWallet.findUnique({
+          where: { user_id: order.renter_id },
+        });
+        if (!creditWallet) {
+          throw new BadRequestException({
+            error: 'CREDIT_WALLET_NOT_FOUND',
+            message: 'Credit wallet not found',
+          });
+        }
+        await client.$queryRaw`SELECT id FROM mutux_wallets WHERE id = ${creditWallet.id}::uuid FOR UPDATE`;
+
+        const lockedAfter = creditWallet.locked_balance.sub(escrow.amount);
+        const debtAfter = creditWallet.outstanding_debt.plus(deduct);
+        const displayAfter = creditWallet.total_limit
+          .sub(lockedAfter)
+          .sub(debtAfter);
+
+        await client.mutuxWallet.update({
+          where: { id: creditWallet.id },
+          data: {
+            locked_balance: lockedAfter,
+            outstanding_debt: debtAfter,
+            display_balance: displayAfter,
+          },
+        });
+        await client.creditTransaction.create({
+          data: {
+            mutux_wallet_id: creditWallet.id,
+            type: 'compensation',
+            amount: deduct,
+            display_balance_before: creditWallet.display_balance,
+            display_balance_after: displayAfter,
+            direction: 'out',
+            ref_type: 'dispute',
+            ref_id: order.id,
+            note: `Compensation for rental order ${order.id}`,
+            status: 'success',
+          },
+        });
+      }
+
+      const totalLenderAmount = lenderIncome.plus(deduct);
+      const lenderBalanceAfter = lenderWallet.balance.plus(totalLenderAmount);
+
+      await client.lenderWallet.update({
+        where: { id: lenderWallet.id },
+        data: { balance: lenderBalanceAfter },
+      });
+
+      await client.lenderWalletTransaction.create({
+        data: {
+          lender_wallet_id: lenderWallet.id,
+          rental_order_id: order.id,
+          type: 'income',
+          amount: lenderIncome,
+          balance_before: lenderWallet.balance,
+          balance_after: lenderWallet.balance.plus(lenderIncome),
+          note: `Income for order ${order.order_code}`,
+        },
+      });
+
+      if (deduct.greaterThan(0)) {
+        await client.lenderWalletTransaction.create({
+          data: {
+            lender_wallet_id: lenderWallet.id,
+            rental_order_id: order.id,
+            type: 'compensation',
+            amount: deduct,
+            balance_before: lenderWallet.balance.plus(lenderIncome),
+            balance_after: lenderBalanceAfter,
+            note: `Compensation for order ${order.order_code}`,
+          },
+        });
+      }
+
+      const updated = await client.escrowWallet.update({
+        where: { id: escrow.id },
+        data: { status: 'compensated' },
+      });
+
+      return this.toResult(updated);
+    };
+
+    return tx ? execute(tx) : this.prisma.$transaction(execute);
   }
 
   private toResult(escrow: {

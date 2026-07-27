@@ -16,6 +16,7 @@ import {
 import { randomInt } from 'crypto';
 import { CreateRentalOrderDto } from './dto/create-rental-order.dto';
 import { GetRentalOrdersQueryDto } from './dto/get-rental-orders-query.dto';
+import { PrismaService } from '../../prisma/prisma.service';
 import { EscrowService } from '../escrow/escrow.service';
 import { RentalOrdersRepository } from './rental-orders.repository';
 
@@ -43,7 +44,10 @@ const MILLISECONDS_PER_DAY = 24 * 60 * 60 * 1000;
 
 @Injectable()
 export class RentalOrdersService {
+  private readonly PLATFORM_FEE_RATE = 0.15;
+
   constructor(
+    private readonly prisma: PrismaService,
     private readonly rentalOrdersRepository: RentalOrdersRepository,
     private readonly escrowService: EscrowService,
   ) {}
@@ -164,13 +168,42 @@ export class RentalOrdersService {
     return order;
   }
 
-  confirm(userId: string, id: string) {
-    return this.performTransition(userId, id, {
-      actor: 'lender',
-      currentStatus: OrderStatusType.pending_confirm,
-      nextStatus: OrderStatusType.confirmed,
-      action: 'confirm',
-      beforeUpdate: () => this.escrowService.lock(id),
+  async confirm(userId: string, id: string) {
+    return this.prisma.$transaction(async (tx) => {
+      await tx.$queryRaw`SELECT id FROM rental_orders WHERE id = ${id}::uuid FOR UPDATE`;
+      const order = await tx.rentalOrder.findUnique({ where: { id } });
+      if (!order) {
+        throw new NotFoundException({
+          error: 'NOT_FOUND',
+          message: 'Rental order not found',
+        });
+      }
+      if (order.lender_id !== userId) {
+        throw new ForbiddenException({
+          error: 'FORBIDDEN',
+          message: 'Only the order lender can perform this transition',
+        });
+      }
+      if (order.status !== OrderStatusType.pending_confirm) {
+        throw new BadRequestException({
+          error: 'INVALID_TRANSITION',
+          message: `Cannot confirm rental order from status ${order.status}`,
+        });
+      }
+
+      await this.escrowService.lock(id, tx);
+
+      const platformFee = order.rental_fee.mul(this.PLATFORM_FEE_RATE);
+      const lenderIncome = order.rental_fee.sub(platformFee);
+
+      return tx.rentalOrder.update({
+        where: { id },
+        data: {
+          status: OrderStatusType.confirmed,
+          platform_fee: platformFee,
+          lender_income: lenderIncome,
+        },
+      });
     });
   }
 
@@ -213,13 +246,38 @@ export class RentalOrdersService {
     });
   }
 
-  confirmReturn(userId: string, id: string) {
-    return this.performTransition(userId, id, {
-      actor: 'lender',
-      currentStatus: OrderStatusType.returning,
-      nextStatus: OrderStatusType.completed,
-      action: 'confirm return of',
-      timestampField: 'lender_received_back_at',
+  async confirmReturn(userId: string, id: string) {
+    return this.prisma.$transaction(async (tx) => {
+      await tx.$queryRaw`SELECT id FROM rental_orders WHERE id = ${id}::uuid FOR UPDATE`;
+      const order = await tx.rentalOrder.findUnique({ where: { id } });
+      if (!order) {
+        throw new NotFoundException({
+          error: 'NOT_FOUND',
+          message: 'Rental order not found',
+        });
+      }
+      if (order.lender_id !== userId) {
+        throw new ForbiddenException({
+          error: 'FORBIDDEN',
+          message: 'Only the order lender can perform this transition',
+        });
+      }
+      if (order.status !== OrderStatusType.returning) {
+        throw new BadRequestException({
+          error: 'INVALID_TRANSITION',
+          message: `Cannot confirm return of rental order from status ${order.status}`,
+        });
+      }
+
+      await this.escrowService.release(id, tx);
+
+      return tx.rentalOrder.update({
+        where: { id },
+        data: {
+          status: OrderStatusType.completed,
+          lender_received_back_at: new Date(),
+        },
+      });
     });
   }
 

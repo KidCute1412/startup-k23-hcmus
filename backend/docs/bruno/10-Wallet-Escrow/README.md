@@ -17,4 +17,11 @@ Flow:
 5. `05 PayOS Webhook Duplicate Same Payload` resends the same payload/signature and should not credit again.
 6. `06 Simulate Success Already Successful` calls simulate-success again and should return the existing successful top-up.
 
-Escrow lock is service-level only in the current backend code unless an HTTP route such as `POST /escrow/orders/:orderId/lock` is added. Until that route exists, use `npm run test -- escrow.service.spec.ts` for insufficient cash, success, idempotency, and concurrency coverage.
+### Escrow Settlement Error Cases (W3.1)
+
+7. `07 Confirm Order Insufficient Cash` — confirm order with renter who lacks cash for rental_fee. Expects `400 INSUFFICIENT_CASH`.
+8. `08 Confirm Order Insufficient Credit` — confirm order with credit-line renter who lacks credit limit for deposit. Expects `400 INSUFFICIENT_CREDIT`.
+9. `09 Confirm Return Escrow Invalid Status` — call confirm-return on order whose escrow is not `locked`. Expects `400 ESCROW_INVALID_STATUS`.
+10. `10 Resolve Dispute Excess Deduction` — admin resolves dispute with `deductAmount > escrow.amount`. Expects `400 DEDUCT_EXCEEDS_DEPOSIT`.
+
+Coverage for happy-path escrow release/compensate, idempotency, rollback, and wallet balance checks is provided by unit tests (`npm run test -- escrow.service.spec.ts`).

@@ -1,10 +1,17 @@
 import {
+  BadRequestException,
   ConflictException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
+import {
+  DisputeStatusType,
+  OrderStatusType,
+  Prisma,
+  ResolutionTypeEnum,
+} from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
+import { EscrowService } from '../escrow/escrow.service';
 
 const kycUserSelect = {
   id: true,
@@ -20,7 +27,10 @@ const kycUserSelect = {
 
 @Injectable()
 export class AdminService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly escrowService: EscrowService,
+  ) {}
 
   async approveKyc(userId: string, adminId: string) {
     const user = await this.requireUser(userId);
@@ -85,6 +95,60 @@ export class AdminService {
         approved_by: adminId,
         approved_at: new Date(),
       },
+    });
+  }
+
+  async resolveDispute(
+    disputeId: string,
+    adminId: string,
+    resolutionType: string,
+    deductAmount: number | undefined,
+    resolutionNote: string | undefined,
+  ) {
+    return this.prisma.$transaction(async (tx) => {
+      await tx.$queryRaw`SELECT id FROM disputes WHERE id = ${disputeId}::uuid FOR UPDATE`;
+      const dispute = await tx.dispute.findUnique({
+        where: { id: disputeId },
+        include: { rental_order: true },
+      });
+      if (!dispute) {
+        throw new NotFoundException({
+          error: 'NOT_FOUND',
+          message: 'Dispute not found',
+        });
+      }
+      if (dispute.status !== 'open' && dispute.status !== 'under_review') {
+        throw new BadRequestException({
+          error: 'INVALID_DISPUTE_STATUS',
+          message: `Dispute status is ${dispute.status}, expected open or under_review`,
+        });
+      }
+
+      const orderId = dispute.rental_order_id;
+
+      if (resolutionType === 'deposit_deduct') {
+        const deduct = deductAmount ?? 0;
+        await this.escrowService.compensate(orderId, deduct, tx);
+      } else {
+        await this.escrowService.release(orderId, tx);
+      }
+
+      await tx.rentalOrder.update({
+        where: { id: orderId },
+        data: { status: OrderStatusType.completed },
+      });
+
+      return tx.dispute.update({
+        where: { id: disputeId },
+        data: {
+          status: DisputeStatusType.resolved,
+          resolved_by: adminId,
+          resolution_type: resolutionType as ResolutionTypeEnum,
+          deduct_amount: deductAmount ?? 0,
+          resolution_note: resolutionNote,
+          resolved_at: new Date(),
+        },
+      });
     });
   }
 
