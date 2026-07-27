@@ -29,6 +29,25 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="vi" className="dark scroll-smooth" suppressHydrationWarning>
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                try {
+                  var stored = localStorage.getItem('color-theme');
+                  var isDark = stored === 'light' ? false : (stored === 'dark' ? true : true);
+                  if (!isDark) {
+                    document.documentElement.classList.remove('dark');
+                  } else {
+                    document.documentElement.classList.add('dark');
+                  }
+                } catch (e) {}
+              })();
+            `,
+          }}
+        />
+      </head>
       <body className={`${display.variable} ${body.variable} font-body`}>
         <CartProvider>
           <div className="flex min-h-screen flex-col bg-vanguard-light-bg text-vanguard-light-text transition-colors duration-300 dark:bg-vanguard-dark-bg dark:text-vanguard-dark-text">
