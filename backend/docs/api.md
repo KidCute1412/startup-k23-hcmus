@@ -668,7 +668,7 @@ Với năm endpoint không gọi escrow, nếu trạng thái hiện tại không
 
 #### [POST] `/admin/disputes/:id/resolve` (Giải quyết tranh chấp đơn thuê)
 * **Authentication**: `accessToken` cookie, admin role, and valid `Origin`.
-* **Mô tả**: Quyết định số tiền khấu trừ từ khoản cọc của Renter để đền bù cho Lender. Hệ thống tự động gọi `EscrowService.compensate()` hoặc `release()` và chuyển order về `completed` trong cùng transaction.
+* **Mô tả**: Quyết định số tiền khấu trừ từ khoản cọc của Renter để đền bù cho Lender. Hệ thống tự động gọi `EscrowService.compensate()` hoặc `release()` và chuyển order về `completed` trong cùng transaction nguyên tử (`prisma.$transaction`).
 * **Body**:
   ```json
   {
@@ -681,13 +681,27 @@ Với năm endpoint không gọi escrow, nếu trạng thái hiện tại không
   - `deposit_deduct` bắt buộc có `deductAmount` là số nguyên dương.
   - `refund` không được gửi `deductAmount`.
   - `resolutionNote` là tùy chọn, tối đa 2.000 ký tự.
-* **Behavior theo resolutionType**:
-  - `deposit_deduct`: gọi `EscrowService.compensate(orderId, deductAmount)` — khấu trừ tiền cọc, bồi thường cho lender.
-  - `refund`: gọi `EscrowService.release(orderId)` — hoàn toàn bộ cọc.
-* **Errors**:
-  - `400 DEDUCT_EXCEEDS_DEPOSIT` nếu `deductAmount > escrow.amount`.
-  - `400 INVALID_DISPUTE_STATUS` nếu dispute không còn ở trạng thái `open` / `under_review`.
+* **Behavior theo resolutionType & Số dư kỳ vọng**:
+  - **`refund`**:
+    - Gọi `EscrowService.release(orderId, tx)`.
+    - Cọc truyền thống (`renter_cash`): Renter `locked_balance` giảm đúng `escrow.amount` (mở khóa cọc). Số dư `balance` không đổi.
+    - Cọc trả sau (`credit_line`): Mutux credit wallet `locked_balance` giảm `escrow.amount`, `display_balance` tăng lại `escrow.amount` tương ứng. Ghi `CreditTransaction(type = deposit_release)`.
+    - Lender: `balance` tăng thêm `lenderIncome` (`rental_fee` trừ 15% phí sàn), ghi `LenderWalletTransaction(type = income)`.
+    - Escrow status chuyển sang `released`.
+  - **`deposit_deduct` (với `deductAmount = X`)**:
+    - Gọi `EscrowService.compensate(orderId, X, tx)`.
+    - Cọc truyền thống (`renter_cash`): Renter `balance` giảm X, `locked_balance` giảm `escrow.amount` (phần cọc còn lại `escrow.amount - X` được mở khóa). Ghi `RenterWalletTransaction(type = compensation)`.
+    - Cọc trả sau (`credit_line`): Mutux credit wallet `outstanding_debt` tăng X, `locked_balance` giảm `escrow.amount`, `display_balance` tính lại bằng `total_limit - locked_balance - outstanding_debt`. Ghi `CreditTransaction(type = compensation)`.
+    - Lender: `balance` tăng thêm `lenderIncome + X` (nhận đủ doanh thu thuê + tiền đền bù X), ghi `LenderWalletTransaction(type = income)` và `LenderWalletTransaction(type = compensation)`.
+    - Escrow status chuyển sang `compensated`.
+* **Idempotency**:
+  - Áp dụng ở tầng W3.5a: Kiểm tra `dispute.status === 'resolved'` trước khi thực thi settlement.
+  - Khi gọi lại endpoint với `dispute.status` đã ở trạng thái `resolved`, API trả về 200 kèm record dispute đã giải quyết và `EscrowService` KHÔNG được gọi lần thứ hai (số dư ví, escrow và ledger hoàn toàn không thay đổi).
+* **Errors & Atomicity**:
+  - `400 DEDUCT_EXCEEDS_DEPOSIT` nếu `deductAmount > escrow.amount`. Record dispute KHÔNG được cập nhật (transaction rollback).
+  - `400 INVALID_DISPUTE_STATUS` nếu dispute ở trạng thái ngoại trừ `open` / `under_review` (hoặc `resolved` cho idempotency).
   - `400 INVALID_ORDER_STATUS` nếu order liên quan không ở `disputed`.
   - `403 ADMIN_ONLY` nếu user đã đăng nhập nhưng không phải admin.
   - `404 NOT_FOUND` nếu dispute không tồn tại.
-* **Success (200)**: Tranh chấp được đánh dấu `resolved`, escrow được release/compensate, đơn thuê chuyển về `completed`, và response dùng camelCase. Gọi lại một dispute đã `resolved` trả nguyên resolution đã lưu mà không thay đổi audit fields, số dư, escrow hoặc ledger.
+* **Success (200)**: Tranh chấp được đánh dấu `resolved`, escrow được release/compensate, đơn thuê chuyển về `completed`, và response dùng camelCase.
+

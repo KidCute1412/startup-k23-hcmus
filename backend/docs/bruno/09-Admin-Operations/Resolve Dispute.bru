@@ -27,3 +27,40 @@ body:json {
     "resolutionNote": "Khấu trừ 1.500.000đ do làm nứt vỏ nhôm"
   }
 }
+
+docs {
+  # POST /api/v1/admin/disputes/:id/resolve
+  
+  Atomically updates dispute status and triggers financial settlement via `EscrowService` within a single `prisma.$transaction`.
+  
+  ## Resolution Types & Expected Balances
+  
+  ### 1. `resolutionType = "deposit_deduct"` (deductAmount = X)
+  - **Traditional Deposit (`renter_cash`)**:
+    - Renter cash `balance` -= X
+    - Renter cash `locked_balance` -= escrow.amount (remaining `escrow.amount - X` unlocked)
+    - Lender `balance` += lenderIncome (rental_fee * 0.85) + X
+    - Escrow status -> `compensated`
+  - **Credit Line (`credit_line`)**:
+    - Renter `outstanding_debt` += X
+    - Renter `locked_balance` -= escrow.amount
+    - Renter `display_balance` recalculated as `total_limit - locked_balance - outstanding_debt`
+    - Lender `balance` += lenderIncome + X
+    - Escrow status -> `compensated`
+
+  ### 2. `resolutionType = "refund"`
+  - **Traditional Deposit (`renter_cash`)**:
+    - Renter cash `locked_balance` -= escrow.amount (full deposit unlocked)
+    - Lender `balance` += lenderIncome
+    - Escrow status -> `released`
+  - **Credit Line (`credit_line`)**:
+    - Renter `locked_balance` -= escrow.amount
+    - Renter `display_balance` += escrow.amount
+    - Lender `balance` += lenderIncome
+    - Escrow status -> `released`
+
+  ## Idempotency
+  - If called when dispute status is already `resolved`, returns `200` with existing dispute.
+  - `EscrowService` is NOT invoked a second time (no balance/ledger side effects).
+}
+
