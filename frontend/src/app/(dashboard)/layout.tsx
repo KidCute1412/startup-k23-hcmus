@@ -1,11 +1,16 @@
+"use client";
+
 import Link from "next/link";
-import { User, ShoppingBag, WalletCards } from "lucide-react";
+import { usePathname } from "next/navigation";
+import { User, ShoppingBag, Wallet } from "lucide-react";
+import { cn } from "@/lib/cn";
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname();
   const tabs = [
     { id: "dashboard", label: "Tổng quan & Hồ sơ", href: "/account", icon: User },
     { id: "orders", label: "Đơn thuê của tôi", href: "/orders", icon: ShoppingBag },
-    { id: "wallet", label: "Ví Mutux & Hạn mức", href: "/wallet", icon: WalletCards },
+    { id: "wallet", label: "Ví Mutux & Hạn mức", href: "/wallet", icon: Wallet },
   ];
 
   return (
@@ -20,11 +25,17 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             <nav className="flex flex-col space-y-1" aria-label="Dashboard Sidebar">
               {tabs.map((tab) => {
                 const Icon = tab.icon;
+                const isActive = pathname.startsWith(tab.href);
                 return (
                   <Link
                     key={tab.id}
                     href={tab.href}
-                    className="flex items-center gap-3 rounded-v-sm px-3 py-2.5 text-sm font-semibold text-vanguard-light-textMuted transition-colors hover:bg-vanguard-light-surfDim hover:text-vanguard-primary dark:text-vanguard-dark-textMuted dark:hover:bg-vanguard-dark-surfDim dark:hover:text-vanguard-primary"
+                    className={cn(
+                      "flex items-center gap-3 rounded-v-sm px-3 py-2.5 text-sm font-semibold transition-colors",
+                      isActive
+                        ? "bg-vanguard-primary/10 text-vanguard-primary dark:bg-vanguard-primary/20"
+                        : "text-vanguard-light-textMuted hover:bg-vanguard-light-surfDim hover:text-vanguard-primary dark:text-vanguard-dark-textMuted dark:hover:bg-vanguard-dark-surfDim dark:hover:text-vanguard-primary"
+                    )}
                   >
                     <Icon size={16} />
                     {tab.label}
