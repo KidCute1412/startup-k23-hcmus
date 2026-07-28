@@ -27,7 +27,12 @@ export function StaggerContainer({
 
         if (isValidElement(child)) {
           return (
-            <Reveal key={child.key ?? index} delay={itemDelay} direction={direction}>
+            <Reveal
+              key={child.key ?? index}
+              delay={itemDelay}
+              direction={direction}
+              className="min-w-0"
+            >
               {child}
             </Reveal>
           );

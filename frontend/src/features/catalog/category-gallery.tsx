@@ -18,7 +18,7 @@ export function CategoryGallery({ categories }: CategoryGalleryProps) {
             className="royal-glow group relative block h-full w-full overflow-hidden rounded-v-sm border border-vanguard-light-border bg-vanguard-light-surf hover:border-vanguard-primary dark:border-vanguard-dark-border dark:bg-vanguard-dark-surf"
           >
             <Image
-              src={category.imageUrl}
+              src={category.imageUrl ?? "/gear-placeholder.svg"}
               alt={category.name}
               fill
               sizes="(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw"
@@ -42,5 +42,4 @@ export function CategoryGallery({ categories }: CategoryGalleryProps) {
     </StaggerContainer>
   );
 }
-
 

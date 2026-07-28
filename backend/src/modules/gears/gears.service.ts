@@ -7,11 +7,18 @@ import { GearsRepository } from './gears.repository';
 import { Gear } from '@prisma/client';
 import { CreateGearDto } from './dto/create-gear.dto';
 import { UpdateGearDto } from './dto/update-gear.dto';
+import { GearCatalogSort } from './dto/get-gears-query.dto';
+import { PublicGearDetailRecord, PublicGearRecord } from './gears.repository';
 
 interface FindAllOptions {
   page: number;
   limit: number;
+  search?: string;
+  category?: string;
   categoryId?: string;
+  minPrice?: number;
+  maxPrice?: number;
+  sort: GearCatalogSort;
 }
 
 interface PaginatedResult<T> {
@@ -58,27 +65,24 @@ export class GearsService {
     });
   }
 
-  async findAll(options: FindAllOptions): Promise<PaginatedResult<Gear>> {
-    const { page, limit, categoryId } = options;
-    const result = await this.gearsRepository.findAll({
-      page,
-      limit,
-      categoryId,
-    });
+  async findAll(options: FindAllOptions) {
+    const { page, limit } = options;
+    const result = await this.gearsRepository.findAll(options);
     return {
-      data: result.data,
+      data: result.data.map((gear) => this.mapSummary(gear)),
       meta: {
         total: result.total,
         page,
         limit,
+        totalPages: Math.ceil(result.total / limit),
       },
     };
   }
 
-  async findOne(id: string): Promise<Gear> {
+  async findOne(id: string) {
     const gear = await this.gearsRepository.findById(id);
     if (!gear) throw new NotFoundException('Gear not found');
-    return gear;
+    return this.mapDetail(gear);
   }
 
   async findMine(
@@ -139,5 +143,67 @@ export class GearsService {
 
   async remove(id: string): Promise<Gear> {
     return this.gearsRepository.delete(id);
+  }
+
+  private mapSummary(gear: PublicGearRecord) {
+    return {
+      id: gear.id,
+      lenderId: gear.lender_id,
+      categoryId: gear.category_id,
+      name: gear.name,
+      brand: gear.brand,
+      model: gear.model,
+      description: gear.description,
+      specifications: gear.specifications,
+      value: gear.value === null ? null : Number(gear.value),
+      rentPricePerDay: Number(gear.rent_price_per_day),
+      status: gear.status,
+      approvalStatus: gear.approval_status,
+      createdAt: gear.created_at,
+      updatedAt: gear.updated_at,
+      category: gear.category
+        ? {
+            id: gear.category.id,
+            parentId: gear.category.parent_id,
+            name: gear.category.name,
+            slug: gear.category.slug,
+            description: gear.category.description,
+          }
+        : null,
+      media: gear.media.map((media) => ({
+        id: media.id,
+        type: media.type,
+        url: media.url,
+        isPrimary: media.is_primary,
+        sortOrder: media.sort_order,
+      })),
+      rating: gear.rating,
+      reviewCount: gear.reviewCount,
+      lender: {
+        id: gear.lender.id,
+        fullName: gear.lender.full_name,
+        avatarUrl: gear.lender.avatar_url,
+        rating: gear.lender.rating,
+        totalReviews: gear.lender.total_reviews,
+      },
+    };
+  }
+
+  private mapDetail(gear: PublicGearDetailRecord) {
+    return {
+      ...this.mapSummary(gear),
+      serialNumber: gear.serial_number,
+      reviews: gear.reviews.map((review) => ({
+        id: review.id,
+        rating: review.rating,
+        comment: review.comment,
+        createdAt: review.created_at,
+        reviewer: {
+          id: review.reviewer.id,
+          fullName: review.reviewer.full_name,
+          avatarUrl: review.reviewer.avatar_url,
+        },
+      })),
+    };
   }
 }

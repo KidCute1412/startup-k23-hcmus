@@ -22,7 +22,8 @@
     "test:integration": "node ./scripts/run-integration-tests.mjs",
     "test:all": "npm run lint && npm test -- --runInBand && npm run test:http -- --runInBand && npm run test:integration && npm run build",
     "test:e2e": "npm run test:http",
-    "test:integration:admin": "npm run test:integration"
+    "test:integration:admin": "npm run test:integration",
+    "image:audit": "tsx scripts/audit-images.ts"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.1",

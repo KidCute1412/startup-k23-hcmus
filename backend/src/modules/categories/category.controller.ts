@@ -22,12 +22,12 @@ export class CategoryController {
   }
 
   @Get()
-  async findAll(): Promise<GearCategory[]> {
+  async findAll() {
     return this.categoryService.findAll();
   }
 
   @Get(':id')
-  async findOne(@Param('id') id: string): Promise<GearCategory | null> {
+  async findOne(@Param('id') id: string) {
     return this.categoryService.findOne(id);
   }
 

@@ -1,0 +1,21 @@
+meta {
+  name: Fuzzy Search Gears
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{baseUrl}}/gears?search=logtech&sort=relevance&page=1&limit=10
+  body: none
+  auth: none
+}
+
+tests {
+  test("finds Logitech despite the typo", function() {
+    expect(res.status).to.equal(200);
+    expect(res.body.meta).to.include.keys("total", "page", "limit", "totalPages");
+    expect(res.body.data.some(function(gear) {
+      return gear.brand === "Logitech" || gear.name.includes("Logitech");
+    })).to.equal(true);
+  });
+}

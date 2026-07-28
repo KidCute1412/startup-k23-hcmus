@@ -5,7 +5,20 @@ meta {
 }
 
 get {
-  url: {{baseUrl}}/gears?page=1&limit=10&search=&categoryId=&minPrice=&maxPrice=
+  url: {{baseUrl}}/gears?page=1&limit=10&search=&categoryId=&minPrice=&maxPrice=&sort=newest
   body: none
   auth: none
+}
+
+tests {
+  test("returns public camelCase gears and pagination", function() {
+    expect(res.status).to.equal(200);
+    expect(res.body.data).to.be.an("array");
+    expect(res.body.meta).to.include.keys("total", "page", "limit", "totalPages");
+    if (res.body.data.length) {
+      expect(res.body.data[0]).to.include.keys("rentPricePerDay", "approvalStatus", "lender", "media");
+      expect(res.body.data[0]).not.to.have.property("rent_price_per_day");
+      expect(res.body.data[0].lender).not.to.include.keys("password_hash", "hashedRefreshToken", "phone", "address", "cccd");
+    }
+  });
 }

@@ -42,9 +42,13 @@ export class HttpExceptionFilter implements ExceptionFilter {
           : exception.message;
 
       // Map HTTP status to custom error codes if desired, or default to status name
-      errorCode = responseBody?.error
-        ? responseBody.error.toUpperCase().replace(/\s+/g, '_')
-        : HttpStatus[status];
+      errorCode =
+        status === HttpStatus.BAD_REQUEST &&
+        responseBody?.error === 'Bad Request'
+          ? 'VALIDATION_ERROR'
+          : responseBody?.error
+            ? responseBody.error.toUpperCase().replace(/\s+/g, '_')
+            : HttpStatus[status];
     } else {
       // Log generic errors for server administration
       console.error(exception);

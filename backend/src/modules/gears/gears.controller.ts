@@ -18,6 +18,7 @@ import { UpdateGearDto } from './dto/update-gear.dto';
 import { Gear } from '@prisma/client';
 import type { AuthenticatedRequest } from '../../common/types/authentication';
 import { GetMyGearsQueryDto } from './dto/get-my-gears-query.dto';
+import { GetGearsQueryDto } from './dto/get-gears-query.dto';
 
 interface GearListResponse {
   data: Gear[];
@@ -38,17 +39,16 @@ export class GearsController {
   }
 
   @Get()
-  async findAll(
-    @Query('page') page = '1',
-    @Query('limit') limit = '10',
-    @Query('categoryId') categoryId?: string,
-  ): Promise<GearListResponse> {
-    const pageNum = parseInt(page, 10);
-    const limitNum = parseInt(limit, 10);
+  async findAll(@Query() query: GetGearsQueryDto) {
     return this.gearsService.findAll({
-      page: pageNum,
-      limit: limitNum,
-      categoryId,
+      page: query.page,
+      limit: query.limit,
+      search: query.search,
+      category: query.category,
+      categoryId: query.categoryId,
+      minPrice: query.minPrice,
+      maxPrice: query.maxPrice,
+      sort: query.resolvedSort,
     });
   }
 

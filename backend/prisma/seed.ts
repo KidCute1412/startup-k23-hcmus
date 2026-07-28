@@ -240,6 +240,11 @@ async function main() {
   })
   console.log('✅ Credit Partners')
 
+  // Clean up existing gear catalog data to ensure fresh images and subcategories are applied
+  await prisma.$executeRawUnsafe(
+    `TRUNCATE TABLE gear_media, reviews, rental_proofs, disputes, escrow_wallets, payments, rental_orders, gears, gear_categories RESTART IDENTITY CASCADE;`
+  )
+
   // =============================================================
   // GEAR CATEGORIES
   // =============================================================
@@ -291,28 +296,21 @@ async function main() {
         parent_id: '20000000-0000-0000-0000-000000000001',
         name: 'Chuột gaming',
         slug: 'chuot-gaming',
-        description: 'Chuột có dây và không dây',
+        description: 'Chuột có dây và không dây cao cấp',
       },
       {
         id: '20000000-0000-0000-0000-000000000003',
         parent_id: '20000000-0000-0000-0000-000000000001',
         name: 'Bàn phím cơ',
         slug: 'ban-phim-co',
-        description: 'Bàn phím cơ đủ loại switch',
+        description: 'Bàn phím cơ đủ loại switch và layout',
       },
       {
         id: '20000000-0000-0000-0000-000000000004',
         parent_id: '20000000-0000-0000-0000-000000000001',
         name: 'Tai nghe gaming',
         slug: 'tai-nghe-gaming',
-        description: 'Tai nghe 7.1 surround',
-      },
-      {
-        id: '20000000-0000-0000-0000-000000000006',
-        parent_id: '20000000-0000-0000-0000-000000000005',
-        name: 'Màn hình 144Hz+',
-        slug: 'man-hinh-144hz',
-        description: 'Màn hình high refresh rate',
+        description: 'Tai nghe 7.1 surround & không dây',
       },
       {
         id: '20000000-0000-0000-0000-000000000007',
@@ -322,11 +320,25 @@ async function main() {
         description: 'Tay cầm chơi game console/PC và kính thực tế ảo',
       },
       {
-        id: '20000000-0000-0000-0000-000000000008',
-        parent_id: '20000000-0000-0000-0000-000000000020',
-        name: 'Microphone & Audio',
-        slug: 'microphone-audio',
-        description: 'Micro Thu Âm Stream & Mixer Audio Interface',
+        id: '20000000-0000-0000-0000-000000000006',
+        parent_id: '20000000-0000-0000-0000-000000000005',
+        name: 'Màn hình 144Hz - 240Hz',
+        slug: 'man-hinh-144hz',
+        description: 'Màn hình tốc độ cao cho game thủ Esports',
+      },
+      {
+        id: '20000000-0000-0000-0000-000000000012',
+        parent_id: '20000000-0000-0000-0000-000000000005',
+        name: 'Màn hình 4K & OLED',
+        slug: 'man-hinh-4k-oled',
+        description: 'Màn hình độ phân giải siêu cao và tấm nền OLED',
+      },
+      {
+        id: '20000000-0000-0000-0000-000000000013',
+        parent_id: '20000000-0000-0000-0000-000000000005',
+        name: 'Màn hình Cong & Ultrawide',
+        slug: 'man-hinh-ultrawide',
+        description: 'Màn hình tỉ lệ 21:9 & 32:9 siêu rộng',
       },
       {
         id: '20000000-0000-0000-0000-000000000009',
@@ -336,11 +348,67 @@ async function main() {
         description: 'VGA Gaming & Đồ họa RTX 40 series, RX 7000 series',
       },
       {
+        id: '20000000-0000-0000-0000-000000000014',
+        parent_id: '20000000-0000-0000-0000-000000000010',
+        name: 'CPU & Mainboard',
+        slug: 'cpu-mainboard',
+        description: 'Vi xử lý Intel/AMD & Bo mạch chủ cao cấp',
+      },
+      {
+        id: '20000000-0000-0000-0000-000000000015',
+        parent_id: '20000000-0000-0000-0000-000000000010',
+        name: 'RAM & Ổ cứng SSD',
+        slug: 'ram-ssd',
+        description: 'Bộ nhớ RAM DDR5 & SSD NVMe Gen4/Gen5',
+      },
+      {
+        id: '20000000-0000-0000-0000-000000000016',
+        parent_id: '20000000-0000-0000-0000-000000000010',
+        name: 'Case & Tản nhiệt',
+        slug: 'case-tan-nhiet',
+        description: 'Vỏ máy tính & Tản nhiệt nước AIO / Tản khí',
+      },
+      {
+        id: '20000000-0000-0000-0000-000000000008',
+        parent_id: '20000000-0000-0000-0000-000000000020',
+        name: 'Microphone & Soundcard',
+        slug: 'microphone-audio',
+        description: 'Micro Thu Âm Stream & Audio Interface',
+      },
+      {
+        id: '20000000-0000-0000-0000-000000000017',
+        parent_id: '20000000-0000-0000-0000-000000000020',
+        name: 'Stream Deck & Capture Card',
+        slug: 'stream-deck-capture',
+        description: 'Bàn điều khiển Stream Deck & Thiết bị ghi hình Capture Card',
+      },
+      {
+        id: '20000000-0000-0000-0000-000000000018',
+        parent_id: '20000000-0000-0000-0000-000000000020',
+        name: 'Webcam & Đèn Stream',
+        slug: 'webcam-lighting',
+        description: 'Webcam 4K & Đèn chiếu sáng Key Light chuyên nghiệp',
+      },
+      {
         id: '20000000-0000-0000-0000-000000000011',
         parent_id: '20000000-0000-0000-0000-000000000030',
-        name: 'Ghế Gaming & Bàn',
+        name: 'Ghế Gaming Ergonomic',
         slug: 'ghe-gaming-ban',
-        description: 'Ghế gaming công thái học & Bàn nâng hạ điện',
+        description: 'Ghế gaming & Ghế công thái học',
+      },
+      {
+        id: '20000000-0000-0000-0000-000000000019',
+        parent_id: '20000000-0000-0000-0000-000000000030',
+        name: 'Bàn Nâng Hạ Điện',
+        slug: 'ban-nang-ha',
+        description: 'Bàn làm việc nâng hạ thông minh (Standing Desk)',
+      },
+      {
+        id: '20000000-0000-0000-0000-000000000021',
+        parent_id: '20000000-0000-0000-0000-000000000030',
+        name: 'Phụ kiện Setup & Decor',
+        slug: 'phu-kien-setup',
+        description: 'Tay nâng màn hình Arm, LED RGB & thảm trải bàn',
       },
     ],
     skipDuplicates: true,
@@ -364,47 +432,158 @@ async function main() {
       'https://images.unsplash.com/photo-1527864550417-7fd91fc51a46?w=800&auto=format&fit=crop&q=80',
       'https://images.unsplash.com/photo-1629429408209-1f912961dbd8?w=800&auto=format&fit=crop&q=80',
       'https://images.unsplash.com/photo-1613141411244-0e4ac259d217?w=800&auto=format&fit=crop&q=80',
-      'https://images.unsplash.com/photo-1605774337664-7a846e9cdf17?w=800&auto=format&fit=crop&q=80',
-      'https://images.unsplash.com/photo-1586816879360-004f5b0c51e3?w=800&auto=format&fit=crop&q=80',
+      'https://images.unsplash.com/photo-1627850743564-20d3c0125ea8?w=800&auto=format&fit=crop&q=80',
+      'https://images.unsplash.com/photo-1748480248093-dc2827284840?w=800&auto=format&fit=crop&q=80',
+      'https://images.unsplash.com/photo-1756928626912-17d51297f43d?w=800&auto=format&fit=crop&q=80',
+      'https://images.unsplash.com/photo-1703052398270-27b5b394ee35?w=800&auto=format&fit=crop&q=80',
     ],
     '20000000-0000-0000-0000-000000000003': [ // Bàn phím cơ
       'https://images.unsplash.com/photo-1587829741301-dc798b83add3?w=800&auto=format&fit=crop&q=80',
       'https://images.unsplash.com/photo-1618384887929-16ec33fab9ef?w=800&auto=format&fit=crop&q=80',
       'https://images.unsplash.com/photo-1595225476474-87563907a212?w=800&auto=format&fit=crop&q=80',
-      'https://images.unsplash.com/photo-1541140596771-2915da507b38?w=800&auto=format&fit=crop&q=80',
-      'https://images.unsplash.com/photo-1626958390898-162d3577f293?w=800&auto=format&fit=crop&q=80',
-      'https://images.unsplash.com/photo-1511467687858-23d96c32e4ae?w=800&auto=format&fit=crop&q=80',
+      'https://images.unsplash.com/photo-1603481588273-2f908a9a7a1b?w=800&auto=format&fit=crop&q=80',
+      'https://images.unsplash.com/photo-1672173351203-89b1654742fc?w=800&auto=format&fit=crop&q=80',
+      'https://images.unsplash.com/photo-1636858507430-a1306162def1?w=800&auto=format&fit=crop&q=80',
+      'https://images.unsplash.com/photo-1722445423294-f3bc8317d93b?w=800&auto=format&fit=crop&q=80',
+      'https://images.unsplash.com/photo-1632125907236-b48eaaf35ddb?w=800&auto=format&fit=crop&q=80',
+      'https://images.unsplash.com/photo-1627510444490-95637baaf6cc?w=800&auto=format&fit=crop&q=80',
     ],
     '20000000-0000-0000-0000-000000000004': [ // Tai nghe gaming
       'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=800&auto=format&fit=crop&q=80',
       'https://images.unsplash.com/photo-1546435770-a3e426bf472b?w=800&auto=format&fit=crop&q=80',
       'https://images.unsplash.com/photo-1583394838336-acd977736f90?w=800&auto=format&fit=crop&q=80',
       'https://images.unsplash.com/photo-1484704849700-f032a568e944?w=800&auto=format&fit=crop&q=80',
-      'https://images.unsplash.com/photo-1590658268037-6bf12165a8df?w=800&auto=format&fit=crop&q=80',
-    ],
-    '20000000-0000-0000-0000-000000000006': [ // Màn hình 144Hz+
-      'https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?w=800&auto=format&fit=crop&q=80',
-      'https://images.unsplash.com/photo-1547082299-de196ea013d6?w=800&auto=format&fit=crop&q=80',
-      'https://images.unsplash.com/photo-1585792180666-f7347c490ee2?w=800&auto=format&fit=crop&q=80',
-      'https://images.unsplash.com/photo-1593640408182-31c70c8268f5?w=800&auto=format&fit=crop&q=80',
+      'https://images.unsplash.com/photo-1618366712010-f4ae9c647dcb?w=800&auto=format&fit=crop&q=80',
     ],
     '20000000-0000-0000-0000-000000000007': [ // Tay cầm & VR
       'https://images.unsplash.com/photo-1600080972464-8e5f35f63d08?w=800&auto=format&fit=crop&q=80',
-      'https://images.unsplash.com/photo-1592840062661-a5a07298f61d?w=800&auto=format&fit=crop&q=80',
+      'https://images.unsplash.com/photo-1628277613967-6abca504d0ac?w=800&auto=format&fit=crop&q=80',
       'https://images.unsplash.com/photo-1622297845775-5ff3fef71d13?w=800&auto=format&fit=crop&q=80',
+      'https://images.unsplash.com/photo-1606813907291-d86efa9b94db?w=800&auto=format&fit=crop&q=80',
+      'https://images.unsplash.com/photo-1742509084930-a196684325d0?w=800&auto=format&fit=crop&q=80',
+      'https://images.unsplash.com/photo-1576633587382-13ddf37b1fc1?w=800&auto=format&fit=crop&q=80',
     ],
-    '20000000-0000-0000-0000-000000000008': [ // Microphone & Audio
+    '20000000-0000-0000-0000-000000000006': [ // Màn hình 144Hz
+      'https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?w=800&auto=format&fit=crop&q=80',
+      'https://images.unsplash.com/photo-1547082299-de196ea013d6?w=800&auto=format&fit=crop&q=80',
+      'https://images.unsplash.com/photo-1677685854218-94b2b0250575?w=800&auto=format&fit=crop&q=80',
+    ],
+    '20000000-0000-0000-0000-000000000012': [ // Màn hình 4K & OLED
+      'https://images.unsplash.com/photo-1585792180666-f7347c490ee2?w=800&auto=format&fit=crop&q=80',
+      'https://images.unsplash.com/photo-1593640408182-31c70c8268f5?w=800&auto=format&fit=crop&q=80',
+      'https://images.unsplash.com/photo-1639342405971-a428b16b0f16?w=800&auto=format&fit=crop&q=80',
+    ],
+    '20000000-0000-0000-0000-000000000013': [ // Màn hình Cong & Ultrawide
+      'https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=800&auto=format&fit=crop&q=80',
+      'https://images.unsplash.com/photo-1705579609949-f4a73c9eee4f?w=800&auto=format&fit=crop&q=80',
+      'https://images.unsplash.com/photo-1760278041797-2a21a385f17c?w=800&auto=format&fit=crop&q=80',
+    ],
+    '20000000-0000-0000-0000-000000000008': [ // Microphone & Soundcard
       'https://images.unsplash.com/photo-1590602847861-f357a9332bbc?w=800&auto=format&fit=crop&q=80',
       'https://images.unsplash.com/photo-1598550476439-6847785fcea6?w=800&auto=format&fit=crop&q=80',
+      'https://images.unsplash.com/photo-1636996805273-64cb9ecadf16?w=800&auto=format&fit=crop&q=80',
+    ],
+    '20000000-0000-0000-0000-000000000017': [ // Stream Deck & Capture Card
+      'https://images.unsplash.com/photo-1542751371-adc38448a05e?w=800&auto=format&fit=crop&q=80',
+      'https://images.unsplash.com/photo-1511512578047-dfb367046420?w=800&auto=format&fit=crop&q=80',
+    ],
+    '20000000-0000-0000-0000-000000000018': [ // Webcam & Đèn Stream
+      'https://images.unsplash.com/photo-1587826080692-f439cd0b70da?w=800&auto=format&fit=crop&q=80',
+      'https://images.unsplash.com/photo-1585060544812-6b45742d762f?w=800&auto=format&fit=crop&q=80',
+      'https://images.unsplash.com/photo-1760348213920-d2a90ed705fd?w=800&auto=format&fit=crop&q=80',
     ],
     '20000000-0000-0000-0000-000000000009': [ // Card đồ họa (GPU)
       'https://images.unsplash.com/photo-1587202372775-e229f172b9d7?w=800&auto=format&fit=crop&q=80',
-      'https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=800&auto=format&fit=crop&q=80',
+      'https://images.unsplash.com/photo-1587202372634-32705e3bf49c?w=800&auto=format&fit=crop&q=80',
+      'https://images.unsplash.com/photo-1741392078112-f3a5fe979bcf?w=800&auto=format&fit=crop&q=80',
     ],
-    '20000000-0000-0000-0000-000000000011': [ // Ghế Gaming & Bàn
+    '20000000-0000-0000-0000-000000000014': [ // CPU & Mainboard
+      'https://images.unsplash.com/photo-1591799264318-7e6ef8ddb7ea?w=800&auto=format&fit=crop&q=80',
+      'https://images.unsplash.com/photo-1555680202-c86f0e12f086?w=800&auto=format&fit=crop&q=80',
+      'https://images.unsplash.com/photo-1760708528862-c07b820354c6?w=800&auto=format&fit=crop&q=80',
+      'https://images.unsplash.com/photo-1644987708868-1a97a5341ec3?w=800&auto=format&fit=crop&q=80',
+    ],
+    '20000000-0000-0000-0000-000000000015': [ // RAM & Ổ cứng SSD
+      'https://images.unsplash.com/photo-1562976540-1502c2145186?w=800&auto=format&fit=crop&q=80',
+      'https://images.unsplash.com/photo-1597872200969-2b65d56bd16b?w=800&auto=format&fit=crop&q=80',
+    ],
+    '20000000-0000-0000-0000-000000000016': [ // Case & Tản nhiệt
+      'https://images.unsplash.com/photo-1587202372616-b43abea06c2a?w=800&auto=format&fit=crop&q=80',
+      'https://images.unsplash.com/photo-1544197150-b99a580bb7a8?w=800&auto=format&fit=crop&q=80',
+      'https://images.unsplash.com/photo-1745412297990-02036b9a931f?w=800&auto=format&fit=crop&q=80',
+    ],
+    '20000000-0000-0000-0000-000000000011': [ // Ghế Gaming Ergonomic
       'https://images.unsplash.com/photo-1616588589676-62b3bd4ff6d2?w=800&auto=format&fit=crop&q=80',
-      'https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=800&auto=format&fit=crop&q=80',
+      'https://images.unsplash.com/photo-1592078615290-033ee584e267?w=800&auto=format&fit=crop&q=80',
     ],
+    '20000000-0000-0000-0000-000000000019': [ // Bàn Nâng Hạ Điện
+      'https://images.unsplash.com/photo-1518455027359-f3f8164ba6bd?w=800&auto=format&fit=crop&q=80',
+      'https://images.unsplash.com/photo-1595515106969-1ce29566ff1c?w=800&auto=format&fit=crop&q=80',
+      'https://images.unsplash.com/photo-1632923945815-c5a235ab458e?w=800&auto=format&fit=crop&q=80',
+    ],
+    '20000000-0000-0000-0000-000000000021': [ // Phụ kiện Setup & Decor
+      'https://images.unsplash.com/photo-1526738549149-8e07eca6c147?w=800&auto=format&fit=crop&q=80',
+      'https://images.unsplash.com/photo-1593642632823-8f785ba67e45?w=1000&auto=format&fit=crop&q=80',
+      'https://images.unsplash.com/photo-1593642532400-2682810df593?w=1000&auto=format&fit=crop&q=80',
+    ],
+  }
+
+  const sourcePhotoIds = Object.values(categoryImages)
+    .flat()
+    .map((url) => new URL(url).pathname)
+  const uniqueSourcePhotoIds = new Set(sourcePhotoIds)
+
+  if (sourcePhotoIds.length < 60) {
+    throw new Error(`Expected at least 60 catalog image sources, found ${sourcePhotoIds.length}`)
+  }
+  if (sourcePhotoIds.length !== uniqueSourcePhotoIds.size) {
+    throw new Error('Catalog image sources must use unique Unsplash photo IDs')
+  }
+  for (const [categoryId, images] of Object.entries(categoryImages)) {
+    if (images.length < 2) {
+      throw new Error(`Category ${categoryId} needs at least two distinct image sources`)
+    }
+  }
+
+  const imageUsage = new Map<string, number>()
+  const stableHash = (value: string) => {
+    let hash = 2166136261
+    for (let index = 0; index < value.length; index++) {
+      hash ^= value.charCodeAt(index)
+      hash = Math.imul(hash, 16777619)
+    }
+    return hash >>> 0
+  }
+  const getImagesForCategory = (
+    categoryId: string,
+    brand: string,
+    productName: string,
+  ): [string, string] => {
+    const pool = categoryImages[categoryId]
+    if (!pool) {
+      throw new Error(`Missing catalog image pool for category ${categoryId}`)
+    }
+
+    const productKey = `${categoryId}|${brand}|${productName}`
+    const selectLeastUsed = (candidates: string[], salt: string) =>
+      [...candidates].sort((left, right) => {
+        const usageDifference =
+          (imageUsage.get(left) ?? 0) - (imageUsage.get(right) ?? 0)
+        if (usageDifference !== 0) return usageDifference
+        return stableHash(`${productKey}|${salt}|${left}`) -
+          stableHash(`${productKey}|${salt}|${right}`)
+      })[0]
+
+    const primary = selectLeastUsed(pool, 'primary')
+    imageUsage.set(primary, (imageUsage.get(primary) ?? 0) + 1)
+
+    const secondary = selectLeastUsed(
+      pool.filter((url) => url !== primary),
+      'secondary',
+    )
+    imageUsage.set(secondary, (imageUsage.get(secondary) ?? 0) + 1)
+
+    return [primary, secondary]
   }
 
   // Preserve initial 17 gears (referenced by orders and tests)
@@ -771,37 +950,30 @@ async function main() {
       specGen: (m: string) => ({ connectivity: 'Bluetooth 5.3 + 2.4G', spatial_audio: '360 Spatial Sound', anc: true }),
     },
 
-    // 4. Màn hình 144Hz+ (40 items)
+    // 4. Màn hình subcategories
     {
-      catId: '20000000-0000-0000-0000-000000000006',
+      catId: '20000000-0000-0000-0000-000000000006', // 144Hz - 240Hz
       brand: 'ASUS ROG',
-      models: ['ROG Swift PG279QM 2K 240Hz', 'ROG Swift PG27AQDM OLED 240Hz', 'TUF Gaming VG27AQ 165Hz', 'ROG Strix XG27AQMR 300Hz'],
+      models: ['ROG Swift PG279QM 2K 240Hz', 'TUF Gaming VG27AQ 165Hz', 'ROG Strix XG27AQMR 300Hz'],
       baseVal: 14000000, baseRent: 220000,
-      specGen: (m: string) => ({ size_inch: 27, resolution: '2560x1440', refresh_hz: 240, panel: 'Fast IPS / OLED', response_ms: 0.03 }),
+      specGen: (m: string) => ({ size_inch: 27, resolution: '2560x1440', refresh_hz: 240, panel: 'Fast IPS', response_ms: 1 }),
     },
     {
-      catId: '20000000-0000-0000-0000-000000000006',
+      catId: '20000000-0000-0000-0000-000000000012', // 4K & OLED
       brand: 'LG UltraGear',
-      models: ['27GR95QE OLED 240Hz', '27GP850-B Nano IPS 180Hz', '34GP930G Ultrawide 144Hz', '32GQ950-B 4K 144Hz'],
-      baseVal: 16000000, baseRent: 250000,
-      specGen: (m: string) => ({ size_inch: 27, resolution: '2560x1440', refresh_hz: 240, panel: 'OLED', hdr: 'HDR True Black 400' }),
+      models: ['27GR95QE OLED 240Hz', '32GQ950-B 4K 144Hz', '27GP850-B Nano IPS 180Hz'],
+      baseVal: 18000000, baseRent: 280000,
+      specGen: (m: string) => ({ size_inch: 27, resolution: '3840x2160', refresh_hz: 240, panel: 'OLED', hdr: 'HDR True Black 400' }),
     },
     {
-      catId: '20000000-0000-0000-0000-000000000006',
-      brand: 'BenQ ZOWIE',
-      models: ['XL2566K 360Hz DyAc+', 'XL2546K 240Hz DyAc+', 'XL2746K 240Hz 27"', 'XL2540K 240Hz'],
-      baseVal: 13500000, baseRent: 210000,
-      specGen: (m: string) => ({ size_inch: 24.5, resolution: '1920x1080', refresh_hz: 360, panel: 'Fast TN', tech: 'DyAc+ Dynamic Accuracy' }),
-    },
-    {
-      catId: '20000000-0000-0000-0000-000000000006',
+      catId: '20000000-0000-0000-0000-000000000013', // Cong & Ultrawide
       brand: 'Samsung Odyssey',
-      models: ['Odyssey OLED G8 34" 175Hz', 'Odyssey G7 28" 4K 144Hz', 'Odyssey G9 49" Curved 240Hz', 'Odyssey OLED G9 49"'],
-      baseVal: 22000000, baseRent: 350000,
+      models: ['Odyssey OLED G8 34" 175Hz', 'Odyssey G9 49" Curved 240Hz', 'Odyssey OLED G9 49"'],
+      baseVal: 24000000, baseRent: 380000,
       specGen: (m: string) => ({ size_inch: 34, resolution: '3440x1440', refresh_hz: 175, panel: 'Neo Quantum OLED', curvature: '1800R' }),
     },
 
-    // 5. Tay cầm & VR (35 items)
+    // 5. Tay cầm & VR
     {
       catId: '20000000-0000-0000-0000-000000000007',
       brand: 'Sony PlayStation',
@@ -816,74 +988,73 @@ async function main() {
       baseVal: 13000000, baseRent: 220000,
       specGen: (m: string) => ({ display: '4K+ Infinite Display', tracking: 'Inside-out 6DOF', chip: 'Snapdragon XR2 Gen 2' }),
     },
-    {
-      catId: '20000000-0000-0000-0000-000000000007',
-      brand: 'Microsoft Xbox',
-      models: ['Xbox Elite Series 2 Wireless', 'Xbox Wireless Controller Robot White', 'Xbox Controller Stellar Shift'],
-      baseVal: 3800000, baseRent: 75000,
-      specGen: (m: string) => ({ platform: 'Xbox / PC / iOS / Android', connectivity: 'Bluetooth / Xbox Wireless', paddles: 4 }),
-    },
 
-    // 6. Microphone & Audio (35 items)
+    // 6. Stream & Audio subcategories
     {
-      catId: '20000000-0000-0000-0000-000000000008',
-      brand: 'Elgato',
-      models: ['Wave:3 Premium USB Microphone', 'Stream Deck MK.2 White', 'Stream Deck + Dial Controller', 'Cam Link 4K Capture Card', 'Key Light Air LED Panel'],
-      baseVal: 3400000, baseRent: 65000,
-      specGen: (m: string) => ({ type: 'Condenser Microphone', polar_pattern: 'Cardioid', resolution: '24-bit 96kHz', clipguard: true }),
-    },
-    {
-      catId: '20000000-0000-0000-0000-000000000008',
+      catId: '20000000-0000-0000-0000-000000000008', // Microphone & Soundcard
       brand: 'Shure',
       models: ['SM7B Cardioid Dynamic Vocal Mic', 'MV7 USB/XLR Podcast Mic', 'MV7+ Digital Dynamic Mic'],
       baseVal: 9500000, baseRent: 180000,
       specGen: (m: string) => ({ type: 'Dynamic Vocal Mic', connection: 'XLR & USB', frequency_range: '50Hz - 20kHz' }),
     },
     {
-      catId: '20000000-0000-0000-0000-000000000008',
-      brand: 'HyperX',
-      models: ['QuadCast S RGB USB Microphone', 'Solocast Compact USB Mic', 'ProCast Large Diaphragm XLR'],
-      baseVal: 3200000, baseRent: 60000,
-      specGen: (m: string) => ({ type: 'Electret Condenser', polar_patterns: 'Cardioid, Stereo, Omnidirectional, Bidirectional', rgb: true }),
+      catId: '20000000-0000-0000-0000-000000000017', // Stream Deck & Capture Card
+      brand: 'Elgato',
+      models: ['Stream Deck MK.2 White', 'Stream Deck + Dial Controller', 'Cam Link 4K Capture Card', 'HD60 X External Capture'],
+      baseVal: 4500000, baseRent: 80000,
+      specGen: (m: string) => ({ type: 'Studio Controller', keys: '15 LCD Keys', connectivity: 'USB 2.0 / USB 3.0' }),
+    },
+    {
+      catId: '20000000-0000-0000-0000-000000000018', // Webcam & Đèn Stream
+      brand: 'Logitech',
+      models: ['Brio 4K Ultra HD Webcam', 'Litra Glow Premium LED Light', 'StreamCam Full HD 60fps'],
+      baseVal: 3800000, baseRent: 65000,
+      specGen: (m: string) => ({ resolution: '4K/30fps, 1080p/60fps', hdr: true, microphone: 'Dual omnidirectional' }),
     },
 
-    // 7. Card đồ họa (GPU) (35 items)
+    // 7. PC & Linh kiện subcategories
     {
-      catId: '20000000-0000-0000-0000-000000000009',
+      catId: '20000000-0000-0000-0000-000000000009', // GPU
       brand: 'ASUS ROG',
-      models: ['ROG Strix GeForce RTX 4090 24GB', 'ROG Strix RTX 4080 Super 16GB', 'TUF Gaming RTX 4070 Ti Super 16GB', 'ROG Strix RTX 4070 Super 12GB'],
+      models: ['ROG Strix GeForce RTX 4090 24GB', 'ROG Strix RTX 4080 Super 16GB', 'TUF Gaming RTX 4070 Ti Super 16GB'],
       baseVal: 45000000, baseRent: 650000,
-      specGen: (m: string) => ({ vram: '24GB GDDR6X', bus_width: '384-bit', cooling: 'Axial-tech 3.5 slot', power_connector: '16-pin 12VHPWR' }),
+      specGen: (m: string) => ({ vram: '24GB GDDR6X', bus_width: '384-bit', cooling: 'Axial-tech 3.5 slot' }),
     },
     {
-      catId: '20000000-0000-0000-0000-000000000009',
-      brand: 'MSI',
-      models: ['Gaming X Trio RTX 4080 Super 16GB', 'SUPRIM X RTX 4090 24GB', 'Ventus 3X RTX 4070 Super 12GB'],
-      baseVal: 32000000, baseRent: 500000,
-      specGen: (m: string) => ({ vram: '16GB GDDR6X', cooling: 'TRI FROZR 3', rgb: 'Mystic Light' }),
+      catId: '20000000-0000-0000-0000-000000000014', // CPU & Mainboard
+      brand: 'Intel',
+      models: ['Core i9-14900K Flagship CPU', 'Core i7-14700K Gaming CPU', 'ROG Maximus Z790 Hero Mainboard'],
+      baseVal: 15000000, baseRent: 250000,
+      specGen: (m: string) => ({ cores: '24 Cores (8P + 16E)', socket: 'LGA1700', max_clock: '6.0 GHz' }),
     },
     {
-      catId: '20000000-0000-0000-0000-000000000009',
-      brand: 'Gigabyte AORUS',
-      models: ['AORUS RTX 4090 Master 24GB', 'AORUS RTX 4070 Ti Super Master 16GB', 'Gaming OC RTX 4080 Super 16GB'],
-      baseVal: 35000000, baseRent: 550000,
-      specGen: (m: string) => ({ vram: '16GB GDDR6X', cooling: 'WINDFORCE 3X', lcd_edge_view: true }),
+      catId: '20000000-0000-0000-0000-000000000015', // RAM & SSD
+      brand: 'Corsair',
+      models: ['Dominator Titanium DDR5 64GB 7200MHz', 'MP700 PRO PCIe 5.0 2TB SSD', 'Vengeance RGB DDR5 32GB'],
+      baseVal: 7500000, baseRent: 120000,
+      specGen: (m: string) => ({ capacity: '64GB (2x32GB)', type: 'DDR5', speed: '7200 MT/s' }),
     },
-
-    // 8. Ghế Gaming & Bàn (35 items)
+    // 8. Ghế & Setup Gaming subcategories
     {
-      catId: '20000000-0000-0000-0000-000000000011',
+      catId: '20000000-0000-0000-0000-000000000011', // Ghế Gaming Ergonomic
       brand: 'Secretlab',
-      models: ['TITAN Evo 2022 SoftWeave Plus', 'TITAN Evo 2022 NEO Hybrid Leatherette', 'MAGNUS Pro Ergonomic Desk'],
-      baseVal: 11500000, baseRent: 180000,
-      specGen: (m: string) => ({ material: 'SoftWeave Plus Fabric', lumbar_support: 'L-ADAPT Lumbar System', recline: '165 Degrees' }),
+      models: ['TITAN Evo 2022 SoftWeave Plus', 'Herman Miller x Logitech G Embody', 'Noblechairs HERO Real Leather'],
+      baseVal: 14000000, baseRent: 200000,
+      specGen: (m: string) => ({ material: 'SoftWeave Plus / Leather', lumbar: 'Multi-direction L-ADAPT' }),
     },
     {
-      catId: '20000000-0000-0000-0000-000000000011',
-      brand: 'Herman Miller',
-      models: ['Herman Miller x Logitech G Embody', 'Aeron Gaming Chair Cyan Edition'],
-      baseVal: 38000000, baseRent: 500000,
-      specGen: (m: string) => ({ ergonomic: 'Sync Architecture', pixelated_support: true, warranty_years: 12 }),
+      catId: '20000000-0000-0000-0000-000000000019', // Bàn Nâng Hạ Điện
+      brand: 'FlexiSpot',
+      models: ['E7 Pro Standing Desk Dual-Motor', 'Secretlab MAGNUS Pro Electric Desk'],
+      baseVal: 12500000, baseRent: 190000,
+      specGen: (m: string) => ({ motor: 'Dual Motor', height_range_cm: '60-125cm', max_load_kg: 125 }),
+    },
+    {
+      catId: '20000000-0000-0000-0000-000000000021', // Phụ kiện Setup
+      brand: 'HumanMotion',
+      models: ['Monitor Arm T9 Pro Dual Monitor', 'Nanoleaf Lines RGB LED Desk Kit', 'Elgato Master Mount L'],
+      baseVal: 3500000, baseRent: 50000,
+      specGen: (m: string) => ({ type: 'Dual Monitor Arm', max_size_inch: 35, spring_type: 'Gas Spring' }),
     },
     {
       catId: '20000000-0000-0000-0000-000000000011',
@@ -895,17 +1066,9 @@ async function main() {
   ]
 
   const generatedGears: any[] = [...initialGears]
-  const generatedMedia: any[] = [
-    { id: '40000000-0000-0000-0000-000000000001', gear_id: '30000000-0000-0000-0000-000000000001', type: 'image', url: categoryImages['20000000-0000-0000-0000-000000000002'][0], is_primary: true, sort_order: 1 },
-    { id: '40000000-0000-0000-0000-000000000002', gear_id: '30000000-0000-0000-0000-000000000001', type: 'image', url: categoryImages['20000000-0000-0000-0000-000000000002'][1], is_primary: false, sort_order: 2 },
-    { id: '40000000-0000-0000-0000-000000000003', gear_id: '30000000-0000-0000-0000-000000000002', type: 'image', url: categoryImages['20000000-0000-0000-0000-000000000003'][0], is_primary: true, sort_order: 1 },
-    { id: '40000000-0000-0000-0000-000000000004', gear_id: '30000000-0000-0000-0000-000000000003', type: 'image', url: categoryImages['20000000-0000-0000-0000-000000000004'][0], is_primary: true, sort_order: 1 },
-    { id: '40000000-0000-0000-0000-000000000005', gear_id: '30000000-0000-0000-0000-000000000004', type: 'image', url: categoryImages['20000000-0000-0000-0000-000000000006'][0], is_primary: true, sort_order: 1 },
-    { id: '40000000-0000-0000-0000-000000000006', gear_id: '30000000-0000-0000-0000-000000000004', type: 'image', url: categoryImages['20000000-0000-0000-0000-000000000006'][1], is_primary: false, sort_order: 2 },
-  ]
+  const generatedMedia: any[] = []
 
   let currentGearIdx = 18
-  let mediaIdx = 7
   const totalTargetGears = 310
 
   while (generatedGears.length < totalTargetGears) {
@@ -940,32 +1103,27 @@ async function main() {
         approved_at: daysAgo((currentGearIdx % 30) + 1),
       })
 
-      // Assign 2 working Unsplash images per product
-      const pool = categoryImages[catalog.catId] || categoryImages['20000000-0000-0000-0000-000000000002']
-      const primaryImgUrl = pool[currentGearIdx % pool.length]
-      const secondaryImgUrl = pool[(currentGearIdx + 1) % pool.length]
-
-      generatedMedia.push({
-        id: `40000000-0000-0000-0000-${mediaIdx.toString().padStart(12, '0')}`,
-        gear_id: gearUuid,
-        type: 'image',
-        url: primaryImgUrl,
-        is_primary: true,
-        sort_order: 1,
-      })
-      mediaIdx++
-
-      generatedMedia.push({
-        id: `40000000-0000-0000-0000-${mediaIdx.toString().padStart(12, '0')}`,
-        gear_id: gearUuid,
-        type: 'image',
-        url: secondaryImgUrl,
-        is_primary: false,
-        sort_order: 2,
-      })
-      mediaIdx++
-
       currentGearIdx++
+    }
+  }
+
+  let mediaIdx = 1
+  for (const gear of generatedGears) {
+    const [primaryImgUrl, secondaryImgUrl] = getImagesForCategory(
+      gear.category_id,
+      gear.brand,
+      gear.name,
+    )
+    for (const [imageIndex, url] of [primaryImgUrl, secondaryImgUrl].entries()) {
+      generatedMedia.push({
+        id: `40000000-0000-0000-0000-${mediaIdx.toString().padStart(12, '0')}`,
+        gear_id: gear.id,
+        type: 'image',
+        url,
+        is_primary: imageIndex === 0,
+        sort_order: imageIndex + 1,
+      })
+      mediaIdx++
     }
   }
 
@@ -975,10 +1133,12 @@ async function main() {
   })
   console.log(`✅ Gears (${generatedGears.length} products seeded)`)
 
-  await prisma.gearMedia.createMany({
-    data: generatedMedia,
-    skipDuplicates: true,
-  })
+  await prisma.$transaction([
+    prisma.gearMedia.deleteMany({
+      where: { id: { in: generatedMedia.map((media) => media.id) } },
+    }),
+    prisma.gearMedia.createMany({ data: generatedMedia }),
+  ])
   console.log(`✅ Gear Media (${generatedMedia.length} media items seeded)`)
 
   // =============================================================

@@ -133,6 +133,53 @@ HTTP Status: `400`, `401`, `403`, `404`, `422`, `500`.
 
 ### 3.2 Gears & Catalog (6 APIs)
 
+> **Public catalog contract (authoritative)**
+>
+> `GET /categories` returns `{ id, parentId, name, slug, description }[]` in
+> camelCase. Root categories have `parentId: null`.
+>
+> `GET /gears` only exposes approved, available gear. Query parameters:
+>
+> - `page`: integer, default `1`, minimum `1`.
+> - `limit`: integer, default `10`, range `1..100`.
+> - `search`: trimmed string, maximum 100 characters; blank is ignored.
+> - `categoryId`: optional UUID; a parent selection recursively includes all
+>   descendant categories.
+> - `minPrice`, `maxPrice`: non-negative numbers applied to
+>   `rentPricePerDay`; an inverted range returns `400 VALIDATION_ERROR`.
+> - `sort`: `relevance`, `newest`, `priceAsc`, `priceDesc`, or `ratingDesc`.
+>
+> Sort defaults to `relevance` with a search and `newest` otherwise. Every
+> order uses `createdAt DESC, id DESC` tie-breakers. Search performs substring
+> matching on name, brand, model, and description. For three or more
+> characters it also uses indexed PostgreSQL `pg_trgm` typo matching on name,
+> brand, and model; queries shorter than three characters use substring only.
+> Relevance is the greatest name/brand/model similarity.
+>
+> The list envelope is:
+>
+> ```json
+> {
+>   "success": true,
+>   "data": [],
+>   "meta": { "total": 0, "page": 1, "limit": 10, "totalPages": 0 }
+> }
+> ```
+>
+> A summary contains `id`, `lenderId`, `categoryId`, `name`, `brand`, `model`,
+> `description`, `specifications`, `value`, `rentPricePerDay`, `status`,
+> `approvalStatus`, `createdAt`, `updatedAt`, safe `category`, ordered `media`,
+> gear-only `rating`/`reviewCount`, and safe `lender`. Category is
+> `{ id, parentId, name, slug, description }`; media is
+> `{ id, type, url, isPrimary, sortOrder }`; lender is
+> `{ id, fullName, avatarUrl, rating, totalReviews }`. Password, refresh-token,
+> email, phone, address, CCCD, and KYC fields are never public.
+>
+> `GET /gears/:id` uses the same contract and adds `serialNumber` plus reviews
+> ordered newest first. Reviews are gear-targeted only and use
+> `{ id, rating, comment, createdAt, reviewer: { id, fullName, avatarUrl } }`.
+> Unapproved or unavailable gear returns `404`.
+
 #### [GET] `/categories` (Danh sách danh mục)
 * **Success (200)**: Mảng phẳng các danh mục gear (có chứa `id` và `parentId` để vẽ cây danh mục).
 

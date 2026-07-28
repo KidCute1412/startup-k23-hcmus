@@ -1,16 +1,14 @@
 "use client";
 
-import { CalendarDays, CheckCircle2, Heart, ShieldCheck, Star, ShoppingCart, Zap } from "lucide-react";
-import { useState } from "react";
+import { CalendarDays, ShoppingCart, Star, Zap } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { Badge } from "@/components/ui/badge";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/field";
 import { StatRow } from "@/components/ui/stat-row";
-import { formatCurrency } from "@/lib/format";
 import { useCart } from "@/features/cart/cart-context";
-import { availabilityLabel, availabilityTone } from "./availability";
+import { formatCurrency } from "@/lib/format";
 import type { Gear } from "./types";
 
 function dateOffset(days: number) {
@@ -19,149 +17,52 @@ function dateOffset(days: number) {
   return value.toISOString().slice(0, 10);
 }
 
-type ProductDetailProps = {
-  gear: Gear;
-};
-
-export function ProductDetail({ gear }: ProductDetailProps) {
+export function ProductDetail({ gear }: { gear: Gear }) {
   const router = useRouter();
   const { addToCart } = useCart();
   const [startDate, setStartDate] = useState(dateOffset(1));
   const [endDate, setEndDate] = useState(dateOffset(3));
+  const add = () => addToCart({ id: `${gear.id}-${startDate}-${endDate}`, gear, startDate, endDate });
 
-  const handleAddToCart = () => {
-    addToCart({ id: `${gear.id}-${startDate}-${endDate}`, gear, startDate, endDate });
-  };
-
-  const handleRentNow = () => {
-    handleAddToCart();
-    router.push("/checkout");
-  };
   return (
     <div className="space-y-8">
       <div className="space-y-4">
-        <Badge>{gear.badge ?? "Masterpiece Series"}</Badge>
-        <h1 className="font-display text-4xl font-bold leading-tight md:text-5xl">
-          {gear.name}
-        </h1>
-        <p className="max-w-2xl text-sm leading-6 text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted">
-          {gear.description}
-        </p>
-        <div className="flex flex-wrap items-center gap-4 font-display text-xs uppercase tracking-widest text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted">
-          <span className="flex items-center gap-1 text-vanguard-primary">
-            <Star size={16} fill="currentColor" />
-            <strong className="text-vanguard-light-text dark:text-vanguard-dark-text">
-              {gear.rating.toFixed(1)}
-            </strong>
-          </span>
-          <span>{gear.reviewCount} lượt kiểm định</span>
-          <span className={availabilityTone(gear.availability)}>
-            {availabilityLabel(gear.availability)}
-          </span>
+        {gear.categoryName ? <p className="font-display text-xs uppercase tracking-widest text-vanguard-primary">{gear.categoryName}</p> : null}
+        <h1 className="font-display text-4xl font-bold leading-tight md:text-5xl">{gear.name}</h1>
+        {gear.description ? <p className="text-sm leading-7 text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted">{gear.description}</p> : null}
+        <div className="flex flex-wrap items-center gap-4 text-sm">
+          <span className="flex items-center gap-1 text-vanguard-primary"><Star size={16} fill="currentColor" /> {gear.rating.toFixed(1)}</span>
+          <span>{gear.reviewCount} đánh giá gear</span>
+          <span className="text-emerald-600 dark:text-emerald-300">Sẵn sàng cho thuê</span>
         </div>
       </div>
 
       <Card className="grid gap-5 p-5 sm:grid-cols-2">
-        <div>
-          <p className="font-display text-[10px] uppercase tracking-widest text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted">
-            Giá trị sở hữu
-          </p>
-          <p className="mt-1 font-display text-3xl font-bold text-vanguard-primary">
-            {formatCurrency(gear.pricing.retailPrice)}
-          </p>
-        </div>
-        <div>
-          <p className="font-display text-[10px] uppercase tracking-widest text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted">
-            Thuê trải nghiệm
-          </p>
-          <p className="mt-1 font-display text-2xl font-semibold text-vanguard-secondary">
-            {formatCurrency(gear.pricing.dailyPrice)}/ngày
-          </p>
-        </div>
+        {gear.pricing.retailPrice !== null ? (
+          <div><p className="field-label">Giá trị</p><p className="mt-1 font-display text-2xl font-bold">{formatCurrency(gear.pricing.retailPrice)}</p></div>
+        ) : null}
+        <div><p className="field-label">Giá thuê mỗi ngày</p><p className="mt-1 font-display text-2xl font-bold text-vanguard-primary">{formatCurrency(gear.pricing.dailyPrice)}/ngày</p></div>
       </Card>
 
-      <div className="grid gap-4 sm:grid-cols-3">
-        <Card className="p-4">
-          <ShieldCheck className="text-vanguard-primary" size={22} />
-          <p className="mt-3 font-display text-sm font-bold uppercase tracking-wider">
-            Cọc linh hoạt
-          </p>
-          <p className="mt-1 text-xs leading-5 text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted">
-            Tiền mặt hoặc credit line Mutux.
-          </p>
-        </Card>
-        <Card className="p-4">
-          <CheckCircle2 className="text-vanguard-primary" size={22} />
-          <p className="mt-3 font-display text-sm font-bold uppercase tracking-wider">
-            Gear đã kiểm định
-          </p>
-          <p className="mt-1 text-xs leading-5 text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted">
-            Serial, ngoại hình và phụ kiện.
-          </p>
-        </Card>
-        <Card className="p-4">
-          <CalendarDays className="text-vanguard-primary" size={22} />
-          <p className="mt-3 font-display text-sm font-bold uppercase tracking-wider">
-            Giữ lịch nhanh
-          </p>
-          <p className="mt-1 text-xs leading-5 text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted">
-            Tạo yêu cầu thuê bằng mock flow.
-          </p>
-        </Card>
-      </div>
-
       <Card className="grid gap-4 p-5 sm:grid-cols-2">
-        <label className="grid gap-2 text-sm">
-          <span className="font-display text-xs font-semibold uppercase tracking-wider">
-            Ngày bắt đầu
-          </span>
-          <Input
-            type="date"
-            value={startDate}
-            onChange={(e) => setStartDate(e.target.value)}
-          />
-        </label>
-        <label className="grid gap-2 text-sm">
-          <span className="font-display text-xs font-semibold uppercase tracking-wider">
-            Ngày trả
-          </span>
-          <Input
-            type="date"
-            value={endDate}
-            onChange={(e) => setEndDate(e.target.value)}
-          />
-        </label>
+        <label className="grid gap-2"><span className="field-label">Ngày bắt đầu</span><Input type="date" value={startDate} onChange={(event) => setStartDate(event.target.value)} /></label>
+        <label className="grid gap-2"><span className="field-label">Ngày trả</span><Input type="date" value={endDate} onChange={(event) => setEndDate(event.target.value)} /></label>
       </Card>
 
       <div className="flex flex-col gap-3 sm:flex-row">
-        <Button
-          onClick={handleAddToCart}
-          className="flex-1"
-          icon={<ShoppingCart size={15} />}
-        >
-          Thêm vào giỏ
-        </Button>
-        <Button
-          onClick={handleRentNow}
-          className="flex-1 bg-vanguard-secondary hover:bg-vanguard-secondary/90 text-vanguard-dark-bg"
-          icon={<Zap size={15} />}
-        >
-          Thuê ngay
-        </Button>
+        <Button onClick={add} className="flex-1" icon={<ShoppingCart size={15} />}>Thêm vào giỏ</Button>
+        <Button onClick={() => { add(); router.push("/checkout"); }} className="flex-1" icon={<Zap size={15} />}>Thuê ngay</Button>
       </div>
 
       <Card className="p-5">
-        <h2 className="font-display text-base font-bold uppercase tracking-widest">
-          Chủ gear
-        </h2>
+        <h2 className="font-display text-base font-bold uppercase tracking-widest">Chủ gear</h2>
         <div className="mt-3">
           <StatRow label="Tên" value={gear.lender.name} />
-          <StatRow label="Cấp độ" value={gear.lender.tier} />
-          <StatRow label="Tỷ lệ phản hồi" value={`${gear.lender.responseRate}%`} />
-          <StatRow label="Đơn hoàn tất" value={`${gear.lender.completedRentals}`} />
-          <StatRow label="Khu vực" value={gear.lender.location} />
+          <StatRow label="Đánh giá" value={(gear.lender.rating ?? 0).toFixed(1)} />
+          <StatRow label="Tổng lượt đánh giá" value={String(gear.lender.totalReviews ?? 0)} />
         </div>
       </Card>
+      <p className="flex items-center gap-2 text-xs text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted"><CalendarDays size={14} /> Lịch thuê sẽ được xác nhận khi tạo đơn.</p>
     </div>
   );
 }

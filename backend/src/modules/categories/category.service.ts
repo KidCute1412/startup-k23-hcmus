@@ -14,12 +14,14 @@ export class CategoryService {
     return this.categoryRepository.create(data);
   }
 
-  async findAll(): Promise<GearCategory[]> {
-    return this.categoryRepository.findAll();
+  async findAll() {
+    const categories = await this.categoryRepository.findAll();
+    return categories.map((category) => this.mapCategory(category));
   }
 
-  async findOne(id: string): Promise<GearCategory | null> {
-    return this.categoryRepository.findById(id);
+  async findOne(id: string) {
+    const category = await this.categoryRepository.findById(id);
+    return category ? this.mapCategory(category) : null;
   }
 
   async update(
@@ -31,5 +33,15 @@ export class CategoryService {
 
   async delete(id: string): Promise<GearCategory> {
     return this.categoryRepository.delete(id);
+  }
+
+  private mapCategory(category: GearCategory) {
+    return {
+      id: category.id,
+      parentId: category.parent_id,
+      name: category.name,
+      slug: category.slug,
+      description: category.description,
+    };
   }
 }

@@ -1,11 +1,17 @@
 import { Injectable } from '@nestjs/common';
-import { PrismaService } from '../../prisma/prisma.service';
 import { Gear, Prisma } from '@prisma/client';
+import { PrismaService } from '../../prisma/prisma.service';
+import { GearCatalogSort } from './dto/get-gears-query.dto';
 
 interface FindAllOptions {
   page: number;
   limit: number;
+  search?: string;
+  category?: string;
   categoryId?: string;
+  minPrice?: number;
+  maxPrice?: number;
+  sort: GearCatalogSort;
 }
 
 interface FindMineOptions {
@@ -13,6 +19,85 @@ interface FindMineOptions {
   page: number;
   limit: number;
 }
+
+const categorySelect = {
+  id: true,
+  parent_id: true,
+  name: true,
+  slug: true,
+  description: true,
+} satisfies Prisma.GearCategorySelect;
+
+const mediaSelect = {
+  id: true,
+  type: true,
+  url: true,
+  is_primary: true,
+  sort_order: true,
+} satisfies Prisma.GearMediaSelect;
+
+const lenderSelect = {
+  id: true,
+  full_name: true,
+  avatar_url: true,
+  rating: true,
+  total_reviews: true,
+} satisfies Prisma.UserSelect;
+
+const publicGearSelect = {
+  id: true,
+  lender_id: true,
+  category_id: true,
+  name: true,
+  brand: true,
+  model: true,
+  description: true,
+  specifications: true,
+  value: true,
+  rent_price_per_day: true,
+  status: true,
+  approval_status: true,
+  created_at: true,
+  updated_at: true,
+  category: { select: categorySelect },
+  media: {
+    select: mediaSelect,
+    orderBy: [{ is_primary: 'desc' as const }, { sort_order: 'asc' as const }],
+  },
+  lender: { select: lenderSelect },
+} satisfies Prisma.GearSelect;
+
+export type PublicGearRecord = Prisma.GearGetPayload<{
+  select: typeof publicGearSelect;
+}> & { rating: number; reviewCount: number };
+
+const detailGearSelect = {
+  ...publicGearSelect,
+  serial_number: true,
+  reviews: {
+    where: { target_type: 'gear' as const },
+    orderBy: [{ created_at: 'desc' as const }, { id: 'desc' as const }],
+    select: {
+      id: true,
+      rating: true,
+      comment: true,
+      created_at: true,
+      reviewer: {
+        select: { id: true, full_name: true, avatar_url: true },
+      },
+    },
+  },
+} satisfies Prisma.GearSelect;
+
+export type PublicGearDetailRecord = Prisma.GearGetPayload<{
+  select: typeof detailGearSelect;
+}> & { rating: number; reviewCount: number };
+
+type RankedGearRow = {
+  id: string;
+  rating: number | null;
+  review_count: bigint;
+};
 
 @Injectable()
 export class GearsRepository {
@@ -24,28 +109,150 @@ export class GearsRepository {
 
   async findAll(
     options: FindAllOptions,
-  ): Promise<{ data: Gear[]; total: number }> {
-    const { page, limit, categoryId } = options;
-    const where = {
-      approval_status: 'approved' as const,
-      status: 'available' as const,
-      ...(categoryId ? { category_id: categoryId } : {}),
+  ): Promise<{ data: PublicGearRecord[]; total: number }> {
+    const { page, limit, category, categoryId, minPrice, maxPrice, search } =
+      options;
+    const predicates: Prisma.Sql[] = [
+      Prisma.sql`g.approval_status = 'approved'`,
+      Prisma.sql`g.status = 'available'`,
+    ];
+
+    const targetCategorySelector = category || categoryId;
+    const isUuid =
+      targetCategorySelector &&
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+        targetCategorySelector,
+      );
+
+    if (targetCategorySelector) {
+      predicates.push(
+        Prisma.sql`g.category_id IN (SELECT id FROM category_tree)`,
+      );
+    }
+    if (minPrice !== undefined) {
+      predicates.push(Prisma.sql`g.rent_price_per_day >= ${minPrice}`);
+    }
+    if (maxPrice !== undefined) {
+      predicates.push(Prisma.sql`g.rent_price_per_day <= ${maxPrice}`);
+    }
+    if (search) {
+      const like = `%${search}%`;
+      const substring = Prisma.sql`(
+        g.name ILIKE ${like} OR
+        COALESCE(g.brand, '') ILIKE ${like} OR
+        COALESCE(g.model, '') ILIKE ${like} OR
+        COALESCE(g.description, '') ILIKE ${like}
+      )`;
+      predicates.push(
+        search.length < 3
+          ? substring
+          : Prisma.sql`(
+              ${substring} OR
+              g.name % ${search} OR
+              COALESCE(g.brand, '') % ${search} OR
+              COALESCE(g.model, '') % ${search}
+            )`,
+      );
+    }
+
+    const categoryCte = targetCategorySelector
+      ? isUuid
+        ? Prisma.sql`WITH RECURSIVE category_tree AS (
+            SELECT id FROM gear_categories WHERE id = ${targetCategorySelector}::uuid
+            UNION ALL
+            SELECT child.id
+            FROM gear_categories child
+            JOIN category_tree parent ON child.parent_id = parent.id
+          )`
+        : Prisma.sql`WITH RECURSIVE category_tree AS (
+            SELECT id FROM gear_categories WHERE slug = ${targetCategorySelector}
+            UNION ALL
+            SELECT child.id
+            FROM gear_categories child
+            JOIN category_tree parent ON child.parent_id = parent.id
+          )`
+      : Prisma.empty;
+    const where = Prisma.sql`WHERE ${Prisma.join(predicates, ' AND ')}`;
+    const relevance = search
+      ? Prisma.sql`GREATEST(
+          similarity(g.name, ${search}),
+          similarity(COALESCE(g.brand, ''), ${search}),
+          similarity(COALESCE(g.model, ''), ${search})
+        )`
+      : Prisma.sql`0`;
+    const orderBy: Record<GearCatalogSort, Prisma.Sql> = {
+      relevance: Prisma.sql`relevance DESC`,
+      newest: Prisma.sql`g.created_at DESC`,
+      priceAsc: Prisma.sql`g.rent_price_per_day ASC`,
+      priceDesc: Prisma.sql`g.rent_price_per_day DESC`,
+      ratingDesc: Prisma.sql`rating DESC NULLS LAST`,
     };
-    const [data, total] = await Promise.all([
-      this.prisma.gear.findMany({
-        where,
-        skip: (page - 1) * limit,
-        take: limit,
-      }),
-      this.prisma.gear.count({ where }),
-    ]);
-    return { data, total };
+
+    const rows = await this.prisma.$queryRaw<RankedGearRow[]>(Prisma.sql`
+      ${categoryCte}
+      SELECT
+        g.id,
+        ${relevance} AS relevance,
+        COALESCE(AVG(r.rating), 0)::float8 AS rating,
+        COUNT(r.id)::bigint AS review_count
+      FROM gears g
+      LEFT JOIN reviews r
+        ON r.target_gear_id = g.id AND r.target_type = 'gear'
+      ${where}
+      GROUP BY g.id
+      ORDER BY ${orderBy[options.sort]}, g.created_at DESC, g.id DESC
+      OFFSET ${(page - 1) * limit}
+      LIMIT ${limit}
+    `);
+
+    const countRows = await this.prisma.$queryRaw<{ total: bigint }[]>(
+      Prisma.sql`
+        ${categoryCte}
+        SELECT COUNT(*)::bigint AS total
+        FROM gears g
+        ${where}
+      `,
+    );
+    if (!rows.length) {
+      return { data: [], total: Number(countRows[0]?.total ?? 0) };
+    }
+
+    const records = await this.prisma.gear.findMany({
+      where: { id: { in: rows.map((row) => row.id) } },
+      select: publicGearSelect,
+    });
+    const byId = new Map(records.map((record) => [record.id, record]));
+    const data = rows.flatMap((row) => {
+      const record = byId.get(row.id);
+      return record
+        ? [
+            {
+              ...record,
+              rating: Number(row.rating ?? 0),
+              reviewCount: Number(row.review_count),
+            },
+          ]
+        : [];
+    });
+    return { data, total: Number(countRows[0]?.total ?? 0) };
   }
 
-  async findById(id: string): Promise<Gear | null> {
-    return this.prisma.gear.findFirst({
+  async findById(id: string): Promise<PublicGearDetailRecord | null> {
+    const gear = await this.prisma.gear.findFirst({
       where: { id, approval_status: 'approved', status: 'available' },
+      select: detailGearSelect,
     });
+    if (!gear) return null;
+    const aggregate = await this.prisma.review.aggregate({
+      where: { target_gear_id: id, target_type: 'gear' },
+      _avg: { rating: true },
+      _count: { id: true },
+    });
+    return {
+      ...gear,
+      rating: aggregate._avg.rating ?? 0,
+      reviewCount: aggregate._count.id,
+    };
   }
 
   async findMine(

@@ -4,6 +4,7 @@
 
 -- Enable UUID generation
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
+CREATE EXTENSION IF NOT EXISTS pg_trgm;
 
 -- =============================================================
 -- ENUMS
@@ -340,11 +341,14 @@ CREATE TABLE reviews (
     id               UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     rental_order_id  UUID NOT NULL REFERENCES rental_orders(id) ON DELETE CASCADE,
     reviewer_id      UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    target_id        UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    target_id        UUID,
     target_type      review_target_type NOT NULL,
     rating           INT NOT NULL CHECK (rating BETWEEN 1 AND 5),
     comment          TEXT,
-    created_at       TIMESTAMP NOT NULL DEFAULT NOW()
+    created_at       TIMESTAMP NOT NULL DEFAULT NOW(),
+    target_user_id   UUID REFERENCES users(id) ON DELETE CASCADE,
+    target_gear_id   UUID REFERENCES gears(id) ON DELETE CASCADE,
+    UNIQUE (rental_order_id, reviewer_id, target_type)
 );
 
 -- =============================================================
@@ -437,6 +441,11 @@ CREATE TABLE bank_accounts (
 CREATE INDEX idx_gears_lender_id         ON gears(lender_id);
 CREATE INDEX idx_gears_category_id       ON gears(category_id);
 CREATE INDEX idx_gears_status            ON gears(status);
+CREATE INDEX idx_gears_name_trgm          ON gears USING GIN (name gin_trgm_ops);
+CREATE INDEX idx_gears_brand_trgm         ON gears USING GIN (brand gin_trgm_ops);
+CREATE INDEX idx_gears_model_trgm         ON gears USING GIN (model gin_trgm_ops);
+CREATE INDEX idx_gears_description_trgm   ON gears USING GIN (description gin_trgm_ops);
+CREATE INDEX idx_reviews_target_gear_type ON reviews(target_gear_id, target_type);
 CREATE INDEX idx_rental_orders_renter    ON rental_orders(renter_id);
 CREATE INDEX idx_rental_orders_lender    ON rental_orders(lender_id);
 CREATE INDEX idx_rental_orders_gear      ON rental_orders(gear_id);

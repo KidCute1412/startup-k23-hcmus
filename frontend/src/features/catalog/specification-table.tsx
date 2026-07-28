@@ -5,6 +5,13 @@ type SpecificationTableProps = {
 };
 
 export function SpecificationTable({ specifications }: SpecificationTableProps) {
+  if (!specifications.length) {
+    return (
+      <p className="rounded-v-sm border border-vanguard-light-border p-5 text-sm text-vanguard-light-textMuted dark:border-vanguard-dark-border dark:text-vanguard-dark-textMuted">
+        Chưa có thông số kỹ thuật.
+      </p>
+    );
+  }
   return (
     <div className="overflow-hidden rounded-v-sm border border-vanguard-light-border dark:border-vanguard-dark-border">
       <table className="w-full border-collapse text-left text-sm">

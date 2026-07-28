@@ -627,6 +627,7 @@ model Review {
   gear           Gear?       @relation(fields: [target_gear_id], references: [id], onDelete: Cascade)
 
   @@unique([rental_order_id, reviewer_id, target_type])
+  @@index([target_gear_id, target_type], name: "idx_reviews_target_gear_type")
   @@map("reviews")
 }
 
