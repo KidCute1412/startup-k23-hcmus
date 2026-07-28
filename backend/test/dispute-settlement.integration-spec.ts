@@ -239,7 +239,7 @@ describeIntegration(
           resolutionType: 'refund',
           resolutionNote: 'Full refund agreed',
         })
-        .expect(201);
+        .expect(200);
 
       expect(res.body.data).toMatchObject({
         id: dispute.id,
@@ -299,7 +299,7 @@ describeIntegration(
           deductAmount,
           resolutionNote: 'Deducted for crack',
         })
-        .expect(201);
+        .expect(200);
 
       expect(res.body.data).toMatchObject({
         id: dispute.id,
@@ -351,7 +351,7 @@ describeIntegration(
           deductAmount,
           resolutionNote: 'Credit line deduction',
         })
-        .expect(201);
+        .expect(200);
 
       expect(res.body.data).toMatchObject({
         id: dispute.id,
@@ -435,7 +435,7 @@ describeIntegration(
           resolutionType: 'refund',
           resolutionNote: 'First resolve',
         })
-        .expect(201);
+        .expect(200);
 
       expect(firstRes.body.data.status).toBe('resolved');
 
@@ -453,7 +453,7 @@ describeIntegration(
           resolutionType: 'refund',
           resolutionNote: 'Second resolve attempt',
         })
-        .expect(201);
+        .expect(200);
 
       expect(secondRes.body.data).toMatchObject({
         id: dispute.id,
