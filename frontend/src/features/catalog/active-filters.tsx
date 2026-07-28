@@ -8,6 +8,7 @@ import type { GearCategory } from "./types";
 type ActiveFiltersProps = {
   categories: GearCategory[];
   search?: string;
+  category?: string;
   categoryId?: string;
   minPrice?: string;
   maxPrice?: string;
@@ -26,6 +27,7 @@ const SORT_LABELS: Record<string, string> = {
 export function ActiveFilters({
   categories,
   search,
+  category,
   categoryId,
   minPrice,
   maxPrice,
@@ -34,12 +36,13 @@ export function ActiveFilters({
 }: ActiveFiltersProps) {
   const router = useRouter();
 
-  const activeCategoryKey = categoryId;
+  const activeCategoryKey = category || categoryId;
 
   const categoryMap = useMemo(() => {
     const map = new Map<string, string>();
     categories.forEach((cat) => {
       map.set(cat.id, cat.name);
+      if (cat.slug) map.set(cat.slug, cat.name);
     });
     return map;
   }, [categories]);
@@ -50,7 +53,9 @@ export function ActiveFilters({
     );
     const query = new URLSearchParams();
     if (search && !removed.has("search")) query.set("search", search);
-    if (categoryId && !removed.has("categoryId"))
+    if (category && !removed.has("category") && !removed.has("categoryId"))
+      query.set("category", category);
+    if (categoryId && !removed.has("categoryId") && !removed.has("category"))
       query.set("categoryId", categoryId);
     if (minPrice && !removed.has("minPrice"))
       query.set("minPrice", minPrice);
@@ -103,7 +108,7 @@ export function ActiveFilters({
                 Danh mục: {categoryMap.get(activeCategoryKey)}
                 <button
                   type="button"
-                  onClick={() => removeFilter("categoryId")}
+                  onClick={() => removeFilter(["category", "categoryId"])}
                   className="rounded-full p-0.5 hover:bg-vanguard-primary/20 transition"
                   aria-label="Xóa bộ lọc danh mục"
                 >

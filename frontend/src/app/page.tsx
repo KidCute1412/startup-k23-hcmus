@@ -1,8 +1,12 @@
-import { ArrowRight, ShieldCheck, Sparkles } from "lucide-react";
+import { ArrowRight, Award, CheckCircle2, ShieldCheck, Sparkles, Truck } from "lucide-react";
 import Image from "next/image";
 import { CategoryGallery } from "@/features/catalog/category-gallery";
 import { ProductGrid } from "@/features/catalog/product-grid";
-import { getCategories, getFeaturedGears } from "@/features/catalog/mock-data";
+import {
+  getCategories as getMockCategories,
+  getFeaturedGears as getMockFeatured,
+} from "@/features/catalog/mock-data";
+import { getCategories, getGears } from "@/services/gearService";
 import { LinkButton } from "@/components/ui/button";
 import { SectionHeading } from "@/components/ui/section-heading";
 import { Reveal } from "@/components/ui/animations/reveal";
@@ -10,9 +14,24 @@ import { GoldSpotlight } from "@/components/ui/animations/gold-spotlight";
 import { GoldDustParticles } from "@/components/ui/animations/gold-dust-particles";
 import { AtelierLens } from "@/components/ui/animations/atelier-lens";
 
-export default function Home() {
-  const categories = getCategories();
-  const featured = getFeaturedGears();
+export default async function Home() {
+  let categories = [];
+  let featured = [];
+
+  try {
+    const [catData, gearsData] = await Promise.all([
+      getCategories(),
+      getGears({ limit: 6, sort: "newest" }),
+    ]);
+    const rootCategories = catData.filter(
+      (cat) => cat.parentId === null || cat.parentId === undefined,
+    );
+    categories = rootCategories.length > 0 ? rootCategories : getMockCategories();
+    featured = gearsData.data.length > 0 ? gearsData.data : getMockFeatured();
+  } catch {
+    categories = getMockCategories();
+    featured = getMockFeatured();
+  }
 
   return (
     <>
@@ -33,7 +52,7 @@ export default function Home() {
               <Reveal delay={0}>
                 <div className="inline-flex items-center gap-2 rounded-full border border-vanguard-primary/40 bg-vanguard-primary/10 px-4 py-1.5 font-display text-xs font-semibold uppercase tracking-widest text-vanguard-secondary shadow-sm dark:border-vanguard-primary/30 dark:bg-vanguard-primary/5 dark:text-vanguard-primary">
                   <span className="size-1.5 rounded-full bg-vanguard-secondary dark:bg-vanguard-primary animate-pulse" />
-                  Heritage rental marketplace
+                  Heritage & Precision Craftsmanship
                 </div>
               </Reveal>
 
@@ -90,6 +109,77 @@ export default function Home() {
         </GoldSpotlight>
       </div>
 
+      {/* Mutux Core Value Props & Trust Banner */}
+      <section className="border-b border-vanguard-primary/20 bg-vanguard-light-surf/50 px-4 py-10 backdrop-blur-sm dark:bg-vanguard-dark-surf/50 sm:px-6">
+        <div className="mx-auto max-w-7xl">
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+            <Reveal delay={0}>
+              <div className="flex items-start gap-4 rounded-v-sm border border-vanguard-light-border/80 bg-vanguard-light-surf p-5 shadow-sm transition-all hover:border-vanguard-primary/50 dark:border-vanguard-dark-border dark:bg-vanguard-dark-surf">
+                <div className="flex size-10 shrink-0 items-center justify-center rounded-v-sm bg-vanguard-primary/10 text-vanguard-secondary dark:text-vanguard-primary">
+                  <CheckCircle2 size={20} />
+                </div>
+                <div>
+                  <h3 className="font-display text-sm font-bold text-vanguard-light-text dark:text-vanguard-dark-text">
+                    Kiểm Định 100%
+                  </h3>
+                  <p className="mt-1 text-xs text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted">
+                    Kiểm tra switch, cảm biến & vệ sinh khử khuẩn vô trùng trước khi giao.
+                  </p>
+                </div>
+              </div>
+            </Reveal>
+
+            <Reveal delay={100}>
+              <div className="flex items-start gap-4 rounded-v-sm border border-vanguard-light-border/80 bg-vanguard-light-surf p-5 shadow-sm transition-all hover:border-vanguard-primary/50 dark:border-vanguard-dark-border dark:bg-vanguard-dark-surf">
+                <div className="flex size-10 shrink-0 items-center justify-center rounded-v-sm bg-vanguard-primary/10 text-vanguard-secondary dark:text-vanguard-primary">
+                  <ShieldCheck size={20} />
+                </div>
+                <div>
+                  <h3 className="font-display text-sm font-bold text-vanguard-light-text dark:text-vanguard-dark-text">
+                    Cọc Linh Hoạt Escrow
+                  </h3>
+                  <p className="mt-1 text-xs text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted">
+                    Giữ cọc an toàn qua ví Mutux, tự động hoàn trả ngay khi trả gear.
+                  </p>
+                </div>
+              </div>
+            </Reveal>
+
+            <Reveal delay={200}>
+              <div className="flex items-start gap-4 rounded-v-sm border border-vanguard-light-border/80 bg-vanguard-light-surf p-5 shadow-sm transition-all hover:border-vanguard-primary/50 dark:border-vanguard-dark-border dark:bg-vanguard-dark-surf">
+                <div className="flex size-10 shrink-0 items-center justify-center rounded-v-sm bg-vanguard-primary/10 text-vanguard-secondary dark:text-vanguard-primary">
+                  <Award size={20} />
+                </div>
+                <div>
+                  <h3 className="font-display text-sm font-bold text-vanguard-light-text dark:text-vanguard-dark-text">
+                    Chủ Gear KYC 2 Lớp
+                  </h3>
+                  <p className="mt-1 text-xs text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted">
+                    Xác minh danh tính chủ cho thuê, minh bạch lịch sử và đánh giá.
+                  </p>
+                </div>
+              </div>
+            </Reveal>
+
+            <Reveal delay={300}>
+              <div className="flex items-start gap-4 rounded-v-sm border border-vanguard-light-border/80 bg-vanguard-light-surf p-5 shadow-sm transition-all hover:border-vanguard-primary/50 dark:border-vanguard-dark-border dark:bg-vanguard-dark-surf">
+                <div className="flex size-10 shrink-0 items-center justify-center rounded-v-sm bg-vanguard-primary/10 text-vanguard-secondary dark:text-vanguard-primary">
+                  <Truck size={20} />
+                </div>
+                <div>
+                  <h3 className="font-display text-sm font-bold text-vanguard-light-text dark:text-vanguard-dark-text">
+                    Giao Nhận Hỏa Tốc
+                  </h3>
+                  <p className="mt-1 text-xs text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted">
+                    Giao tận nơi trong 2 giờ tại nội thành, sẵn sàng cho mọi trận đấu.
+                  </p>
+                </div>
+              </div>
+            </Reveal>
+          </div>
+        </div>
+      </section>
+
       <section className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:py-20">
         <Reveal className="mb-10 flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
           <SectionHeading
@@ -115,9 +205,7 @@ export default function Home() {
               Mượn thử cấu hình đắt giá trước khi đặt chế tác riêng
             </h2>
             <p className="max-w-2xl text-sm leading-7 text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted">
-              Trải nghiệm chất liệu, switch, âm thanh và cảm giác cầm trong bối
-              cảnh thật. Khi backend hoàn tất, flow này sẽ nối trực tiếp tới đơn
-              thuê và escrow Mutux.
+              Trải nghiệm thực tế chất liệu nhôm nguyên khối, switch mạ vàng, âm thanh thô và cảm giác gõ độc bản trong môi trường của bạn. Đặt cọc an toàn qua ví Mutux Escrow và nhận gear tận nơi.
             </p>
           </div>
           <div className="md:col-span-4 md:text-right">
@@ -133,7 +221,7 @@ export default function Home() {
           <SectionHeading
             eyebrow="Featured rentals"
             title="Gear nổi bật tuần này"
-            description="Các món đang có rating cao, chủ gear phản hồi nhanh và phù hợp cho thuê ngắn hạn."
+            description="Các món đang có rating cao, chủ gear phản hồi nhanh và sẵn sàng cho thuê ngay."
           />
         </Reveal>
         <ProductGrid gears={featured} />
@@ -141,5 +229,3 @@ export default function Home() {
     </>
   );
 }
-
-

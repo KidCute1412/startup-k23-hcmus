@@ -20,6 +20,7 @@ import type { GearCategory } from "./types";
 type CatalogFilterProps = {
   categories: GearCategory[];
   search?: string;
+  category?: string;
   categoryId?: string;
   minPrice?: string;
   maxPrice?: string;
@@ -69,9 +70,12 @@ function buildCategoryGroups(categories: GearCategory[]): {
   return { groups, standalone };
 }
 
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 export function CatalogFilter({
   categories,
   search,
+  category,
   categoryId,
   minPrice,
   maxPrice,
@@ -82,15 +86,26 @@ export function CatalogFilter({
   const [isOpen, setIsOpen] = useState(false);
   const [error, setError] = useState<string>();
 
-  const activeCategoryId = categoryId ?? "all";
+  // Determine current active category slug or ID
+  const activeCategoryKey = useMemo(() => {
+    if (category) {
+      const matched = categories.find((c) => c.slug === category || c.id === category);
+      return matched ? (matched.slug || matched.id) : category;
+    }
+    if (categoryId) {
+      const matched = categories.find((c) => c.id === categoryId);
+      return matched ? (matched.slug || matched.id) : categoryId;
+    }
+    return "all";
+  }, [categories, category, categoryId]);
 
   // Controlled states synced with incoming props
-  const [selectedCategory, setSelectedCategory] = useState<string>(activeCategoryId);
+  const [selectedCategory, setSelectedCategory] = useState<string>(activeCategoryKey);
   const [selectedSort, setSelectedSort] = useState<string>(sort ?? "default");
 
   useEffect(() => {
-    setSelectedCategory(activeCategoryId);
-  }, [activeCategoryId]);
+    setSelectedCategory(activeCategoryKey);
+  }, [activeCategoryKey]);
 
   useEffect(() => {
     setSelectedSort(sort ?? "default");
@@ -107,21 +122,27 @@ export function CatalogFilter({
   };
 
   const navigateWithFilters = (overrides: {
-    categoryId?: string;
+    categoryKey?: string;
     sort?: string;
     searchVal?: string;
     minP?: string;
     maxP?: string;
   }) => {
     const query = new URLSearchParams();
-    const cat = overrides.categoryId !== undefined ? overrides.categoryId : selectedCategory;
+    const cat = overrides.categoryKey !== undefined ? overrides.categoryKey : selectedCategory;
     const s = overrides.sort !== undefined ? overrides.sort : selectedSort;
     const srch = overrides.searchVal !== undefined ? overrides.searchVal : (search ?? "");
     const min = overrides.minP !== undefined ? overrides.minP : (minPrice ?? "");
     const max = overrides.maxP !== undefined ? overrides.maxP : (maxPrice ?? "");
 
     if (srch.trim()) query.set("search", srch.trim());
-    if (cat && cat !== "all") query.set("categoryId", cat);
+    if (cat && cat !== "all") {
+      if (UUID_REGEX.test(cat)) {
+        query.set("categoryId", cat);
+      } else {
+        query.set("category", cat);
+      }
+    }
     if (min.trim()) query.set("minPrice", min.trim());
     if (max.trim()) query.set("maxPrice", max.trim());
     if (s && s !== "default") query.set("sort", s);
@@ -215,22 +236,28 @@ export function CatalogFilter({
                 </SelectItem>
                 <SelectSeparator />
 
-                {groups.map(({ parent, children }) => (
-                  <SelectGroup key={parent.id}>
-                    <SelectLabel className="font-bold text-vanguard-primary uppercase tracking-wider text-[11px] pt-2 pb-1">
-                      {parent.name}
-                    </SelectLabel>
-                    <SelectItem value={parent.id} className="font-semibold text-xs text-vanguard-light-text dark:text-vanguard-dark-text">
-                      Tất cả {parent.name}
-                    </SelectItem>
-                    {children.map((child) => (
-                      <SelectItem key={child.id} value={child.id} className="pl-6 text-xs text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted">
-                        • {child.name}
+                {groups.map(({ parent, children }) => {
+                  const parentVal = parent.slug || parent.id;
+                  return (
+                    <SelectGroup key={parent.id}>
+                      <SelectLabel className="font-bold text-vanguard-primary uppercase tracking-wider text-[11px] pt-2 pb-1">
+                        {parent.name}
+                      </SelectLabel>
+                      <SelectItem value={parentVal} className="font-semibold text-xs text-vanguard-light-text dark:text-vanguard-dark-text">
+                        Tất cả {parent.name}
                       </SelectItem>
-                    ))}
-                    <SelectSeparator className="my-1.5" />
-                  </SelectGroup>
-                ))}
+                      {children.map((child) => {
+                        const childVal = child.slug || child.id;
+                        return (
+                          <SelectItem key={child.id} value={childVal} className="pl-6 text-xs text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted">
+                            • {child.name}
+                          </SelectItem>
+                        );
+                      })}
+                      <SelectSeparator className="my-1.5" />
+                    </SelectGroup>
+                  );
+                })}
 
                 {standalone.length > 0 ? (
                   <SelectGroup>
@@ -238,7 +265,7 @@ export function CatalogFilter({
                       Danh mục khác
                     </SelectLabel>
                     {standalone.map((item) => (
-                      <SelectItem key={item.id} value={item.id} className="text-xs">
+                      <SelectItem key={item.id} value={item.slug || item.id} className="text-xs">
                         {item.name}
                       </SelectItem>
                     ))}

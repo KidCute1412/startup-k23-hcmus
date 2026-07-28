@@ -13,6 +13,7 @@ export const metadata: Metadata = {
 
 type Query = {
   search?: string;
+  category?: string;
   categoryId?: string;
   minPrice?: string;
   maxPrice?: string;
@@ -28,6 +29,7 @@ export default async function GearsPage({ searchParams }: { searchParams: Query 
       page,
       limit: 12,
       search: searchParams.search,
+      category: searchParams.category,
       categoryId: searchParams.categoryId,
       minPrice: searchParams.minPrice,
       maxPrice: searchParams.maxPrice,
@@ -55,6 +57,7 @@ export default async function GearsPage({ searchParams }: { searchParams: Query 
           <CatalogFilter
             categories={categories}
             search={searchParams.search}
+            category={searchParams.category}
             categoryId={searchParams.categoryId}
             minPrice={searchParams.minPrice}
             maxPrice={searchParams.maxPrice}
@@ -74,6 +77,7 @@ export default async function GearsPage({ searchParams }: { searchParams: Query 
               <ActiveFilters
                 categories={categories}
                 search={searchParams.search}
+                category={searchParams.category}
                 categoryId={searchParams.categoryId}
                 minPrice={searchParams.minPrice}
                 maxPrice={searchParams.maxPrice}

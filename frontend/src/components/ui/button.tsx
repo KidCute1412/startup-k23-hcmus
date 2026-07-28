@@ -8,7 +8,7 @@ const variants: Record<Variant, string> = {
   primary:
     "gold-shimmer bg-gold-metal text-vanguard-dark-bg shadow-md hover:scale-[1.02] active:scale-[0.98]",
   outline:
-    "border border-vanguard-primary/60 text-vanguard-secondary hover:bg-vanguard-primary hover:text-vanguard-dark-bg dark:border-vanguard-primary/50 dark:text-vanguard-primary",
+    "border border-vanguard-primary/60 text-vanguard-secondary hover:bg-vanguard-primary hover:text-vanguard-dark-bg dark:border-vanguard-primary/50 dark:text-vanguard-primary dark:hover:text-vanguard-dark-bg",
   ghost:
     "text-vanguard-light-textMuted hover:bg-vanguard-light-surfDim hover:text-vanguard-light-text dark:text-vanguard-dark-textMuted dark:hover:bg-vanguard-dark-surfBright dark:hover:text-vanguard-dark-text",
   dark:

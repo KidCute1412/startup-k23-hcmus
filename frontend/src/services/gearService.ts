@@ -12,6 +12,7 @@ export type GetGearsParams = {
   page?: number;
   limit?: number;
   search?: string;
+  category?: string;
   categoryId?: string;
   minPrice?: number | string;
   maxPrice?: number | string;
@@ -153,6 +154,9 @@ export async function getGears(
   }
   if (params.search && params.search.trim()) {
     query.set("search", params.search.trim());
+  }
+  if (params.category && params.category.trim()) {
+    query.set("category", params.category.trim());
   }
   if (params.categoryId && UUID_REGEX.test(params.categoryId)) {
     query.set("categoryId", params.categoryId);
