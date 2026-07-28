@@ -68,7 +68,7 @@ HTTP Status: `400`, `401`, `403`, `404`, `422`, `500`.
 
 ## 3. Danh sách APIs Tinh gọn
 
-### 3.1 Auth & Users (5 APIs)
+### 3.1 Auth & Account
 
 #### [POST] `/auth/register` (Đăng ký)
 * **Body**:
@@ -114,7 +114,30 @@ HTTP Status: `400`, `401`, `403`, `404`, `422`, `500`.
 
 #### [GET] `/users/me` (Lấy thông tin cá nhân)
 * **Authentication**: `accessToken` cookie.
-* **Success (200)**: Trả về thông tin chi tiết user (bao gồm cả trạng thái `kycStatus` và `cccd`).
+* **Success (200)**: Trả về DTO camelCase an toàn gồm `id`, `email`, `phone`, `fullName`, `dob`, `cccd`, `avatarUrl`, `bio`, `rating`, `totalReviews`, `role`, `kycStatus`, `kycRejectionReason`, `createdAt`, `updatedAt`.
+* **KYC status**: `unverified` khi user chưa gửi đủ hồ sơ; sau khi gửi dùng `pending`, `verified`, hoặc `rejected`.
+* **Data safety**: Không bao giờ trả `password_hash`, `hashedRefreshToken` hoặc metadata review nội bộ.
+
+#### [PATCH] `/users/me` (Cập nhật hồ sơ)
+* **Authentication**: `accessToken` cookie và `Origin` hợp lệ.
+* **Body**: Cho phép gửi một phần của `{ "fullName", "phone", "dob", "bio", "avatarUrl" }`. `dob` dùng `YYYY-MM-DD`; `avatarUrl` phải là ảnh do chính user upload qua `/media/upload`.
+* **Success (200)**: Trả lại DTO user an toàn như `GET /users/me`.
+
+#### [DELETE] `/users/me` (Đóng tài khoản)
+* **Authentication**: `accessToken` cookie và `Origin` hợp lệ.
+* **Body**: `{ "password": "CurrentPassword123" }`.
+* **Behavior**: Soft-close bằng `is_active = false`, thu hồi refresh token và xóa cookie. Lịch sử tài chính/đơn thuê được giữ lại.
+* **Errors**: `401` nếu mật khẩu sai; `409 ACCOUNT_HAS_ACTIVE_OBLIGATIONS` khi còn đơn chưa kết thúc, tranh chấp mở, tiền/hạn mức đang khóa, dư nợ hoặc withdrawal đang xử lý.
+* **Success (200)**: `{ "success": true, "data": { "closed": true } }`.
+
+#### Address book
+* `GET /users/me/addresses`: danh sách địa chỉ của user, địa chỉ mặc định đứng đầu.
+* `POST /users/me/addresses`: tạo địa chỉ; body gồm `receiverName`, `phone`, `detailAddress`, `ward`, `district`, `province`, `isDefault`.
+* `PATCH /users/me/addresses/:addressId`: cập nhật các trường được gửi.
+* `DELETE /users/me/addresses/:addressId`: xóa địa chỉ; nếu xóa mặc định thì địa chỉ cũ nhất còn lại được chọn thay thế.
+* `PATCH /users/me/addresses/:addressId/default`: đặt địa chỉ mặc định.
+* **Ownership**: `userId` luôn lấy từ JWT. ID không thuộc user hiện tại trả `404`.
+* **Invariant**: Thao tác default khóa row user và chạy transaction để chỉ có tối đa một default address.
 
 #### [POST] `/users/me/kyc` (Gửi hồ sơ KYC)
 * **Authentication**: `accessToken` cookie (and valid `Origin` for state changes).
@@ -122,12 +145,14 @@ HTTP Status: `400`, `401`, `403`, `404`, `422`, `500`.
   ```json
   {
     "cccd": "012345678912",
-    "frontCardUrl": "https://...",
-    "backCardUrl": "https://...",
-    "portraitUrl": "https://..."
+    "frontCardUrl": "/uploads/current-user-id/front.jpg",
+    "backCardUrl": "/uploads/current-user-id/back.jpg",
+    "portraitUrl": "/uploads/current-user-id/portrait.jpg"
   }
   ```
-* **Success (200)**: Trạng thái KYC cập nhật về `pending`, chờ Admin duyệt thủ công.
+* **File ownership**: Cả ba URL phải là ảnh tồn tại do chính user upload qua `/media/upload`.
+* **Transitions**: Cho phép user chưa submit hoặc đã bị reject gửi hồ sơ. Hồ sơ `pending` hoặc `verified` không thể gửi đè.
+* **Success (200)**: Trạng thái KYC cập nhật về `pending`, xóa audit/rejection cũ và chờ Admin duyệt thủ công.
 
 ---
 

@@ -1,4 +1,5 @@
 import { apiClient } from '@/lib/apiClient';
+import type { AccountUser } from './accountService';
 
 export interface User {
   id: string;
@@ -30,7 +31,7 @@ export const authService = {
       body: JSON.stringify(request),
     }),
 
-  me: () => apiClient<User>('/users/me'),
+  me: () => apiClient<AccountUser>('/users/me'),
 
   changePassword: (oldPassword: string, newPassword: string) =>
     apiClient<null>('/auth/change-password', {

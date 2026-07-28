@@ -26,6 +26,57 @@ body {
   background: rgba(212, 175, 55, 0.32);
 }
 
+/* Custom Vanguard Royal Scrollbar (Cross-Browser: Edge, Chrome, Firefox, Safari) */
+html,
+body,
+dialog,
+[role="dialog"],
+.overflow-y-auto,
+.overflow-x-auto,
+.overflow-auto {
+  scrollbar-width: thin !important;
+  scrollbar-color: #d4af37 rgba(17, 20, 32, 0.6) !important;
+  -ms-overflow-style: -ms-autohide-scrollbar;
+}
+
+::-webkit-scrollbar {
+  width: 7px !important;
+  height: 7px !important;
+}
+
+::-webkit-scrollbar-button {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(11, 13, 21, 0.7) !important;
+  border-radius: 4px !important;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #d4af37 !important;
+  border-radius: 4px !important;
+  border: 1px solid rgba(212, 175, 55, 0.4) !important;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #aa7c11 !important;
+}
+
+::-webkit-scrollbar-corner {
+  background: rgba(11, 13, 21, 0.7) !important;
+}
+
+.dark ::-webkit-scrollbar-track {
+  background: rgba(11, 13, 21, 0.9) !important;
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: #d4af37 !important;
+}
+
 @layer components {
   .text-gradient {
     background: linear-gradient(135deg, #d4af37 0%, #aa7c11 100%);
@@ -209,5 +260,3 @@ body {
     transform: translateY(-80px) scale(1.2);
   }
 }
-
-

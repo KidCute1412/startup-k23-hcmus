@@ -1,0 +1,15 @@
+meta {
+  name: Delete Address
+  type: http
+  seq: 11
+}
+
+delete {
+  url: {{baseUrl}}/users/me/addresses/{{addressId}}
+  body: none
+  auth: inherit
+}
+
+headers {
+  Origin: http://localhost:3000
+}

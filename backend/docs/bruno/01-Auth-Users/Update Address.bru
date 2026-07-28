@@ -1,0 +1,22 @@
+meta {
+  name: Update Address
+  type: http
+  seq: 9
+}
+
+patch {
+  url: {{baseUrl}}/users/me/addresses/{{addressId}}
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "receiverName": "Mutux Demo Updated",
+    "phone": "0908123456"
+  }
+}
+
+headers {
+  Origin: http://localhost:3000
+}

@@ -15,6 +15,7 @@ import { HttpExceptionFilter } from '../src/common/filters/http-exception.filter
 import { TransformInterceptor } from '../src/common/interceptors/transform.interceptor';
 import { AdminService } from '../src/modules/admin/admin.service';
 import { DisputesService } from '../src/modules/disputes/disputes.service';
+import { PrismaService } from '../src/prisma/prisma.service';
 import { createAccessTokenCookie, createJwt } from './support/integration';
 
 describe('Dispute routes (HTTP)', () => {
@@ -41,6 +42,12 @@ describe('Dispute routes (HTTP)', () => {
     const moduleFixture = await Test.createTestingModule({
       imports: [AppModule],
     })
+      .overrideProvider(PrismaService)
+      .useValue({
+        user: {
+          findUnique: jest.fn().mockResolvedValue({ is_active: true }),
+        },
+      })
       .overrideProvider(DisputesService)
       .useValue(disputesService)
       .overrideProvider(AdminService)

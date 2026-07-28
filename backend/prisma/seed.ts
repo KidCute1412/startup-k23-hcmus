@@ -101,6 +101,9 @@ async function main() {
         phone: '0902000006',
         password_hash: '$2b$10$VKlyxJLgvp7ep6ZskqJM3eyvq8nAzgmhmQWJPoJz4mVaW/1ek7ACS',
         full_name: 'Hoàng Đức Em',
+        dob: new Date('1999-05-15T00:00:00.000Z'),
+        bio: 'Gamer PC enthusiast & pro rental member tại Mutux.',
+        avatar_url: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&q=80',
         cccd: '001099000006',
         rating: 4.7,
         total_reviews: 3,
@@ -217,6 +220,35 @@ async function main() {
     skipDuplicates: true,
   })
   console.log('✅ Users')
+
+  await prisma.userAddress.createMany({
+    data: [
+      {
+        id: '01000000-0000-0000-0000-000000000001',
+        user_id: '00000000-0000-0000-0000-000000000006',
+        receiver_name: 'Hoàng Đức Em',
+        phone: '0902000006',
+        detail_address: '227 Nguyễn Văn Cừ',
+        ward: 'Phường 4',
+        district: 'Quận 5',
+        province: 'TP. Hồ Chí Minh',
+        is_default: true,
+      },
+      {
+        id: '01000000-0000-0000-0000-000000000002',
+        user_id: '00000000-0000-0000-0000-000000000006',
+        receiver_name: 'Hoàng Đức Em (Văn phòng)',
+        phone: '0902000006',
+        detail_address: '2 Hải Triều',
+        ward: 'Phường Bến Nghé',
+        district: 'Quận 1',
+        province: 'TP. Hồ Chí Minh',
+        is_default: false,
+      },
+    ],
+    skipDuplicates: true,
+  })
+  console.log('✅ User addresses')
 
   // =============================================================
   // CREDIT PARTNERS

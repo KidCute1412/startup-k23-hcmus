@@ -13,8 +13,12 @@ post {
 body:json {
   {
     "cccd": "012345678912",
-    "frontCardUrl": "https://...",
-    "backCardUrl": "https://...",
-    "portraitUrl": "https://..."
+    "frontCardUrl": "{{proofFileUrl}}",
+    "backCardUrl": "{{proofFileUrl}}",
+    "portraitUrl": "{{proofFileUrl}}"
   }
+}
+
+headers {
+  Origin: http://localhost:3000
 }

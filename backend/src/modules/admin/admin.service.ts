@@ -22,6 +22,9 @@ const kycUserSelect = {
   email: true,
   full_name: true,
   cccd: true,
+  kyc_front_card_url: true,
+  kyc_back_card_url: true,
+  kyc_portrait_url: true,
   role: true,
   kyc_status: true,
   kyc_rejection_reason: true,
@@ -40,7 +43,17 @@ export class AdminService {
 
   async getKycQueue(query: GetKycQueueQueryDto) {
     const { status, page, limit } = query;
-    const where: Prisma.UserWhereInput = { kyc_status: status };
+    const where: Prisma.UserWhereInput = {
+      kyc_status: status,
+      ...(status === KycStatusType.pending
+        ? {
+            cccd: { not: null },
+            kyc_front_card_url: { not: null },
+            kyc_back_card_url: { not: null },
+            kyc_portrait_url: { not: null },
+          }
+        : {}),
+    };
     const [data, total] = await Promise.all([
       this.prisma.user.findMany({
         where,

@@ -1,28 +1,3 @@
-export interface UserProfile {
-  id: string;
-  fullName: string;
-  email: string;
-  phone: string;
-  avatarUrl: string;
-  bio: string;
-  cccd: string;
-  dob: string;
-  kycStatus: 'pending' | 'approved' | 'rejected' | 'unverified';
-  kycRejectionReason?: string;
-  createdAt: string;
-}
-
-export interface UserAddress {
-  id: string;
-  receiverName: string;
-  phone: string;
-  detailAddress: string;
-  ward: string;
-  district: string;
-  province: string;
-  isDefault: boolean;
-}
-
 export type OrderStatusType =
   | 'pending_confirm'
   | 'confirmed'
@@ -67,42 +42,6 @@ export interface RentalOrderMock {
   }[];
   proofs?: OrderProof[];
 }
-
-export const mockUserProfile: UserProfile = {
-  id: "usr-8829102",
-  fullName: "Nguyễn Văn Tuấn",
-  email: "tuan.nguyen@example.com",
-  phone: "0908 123 456",
-  avatarUrl: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&q=80",
-  bio: "Gamer PC enthusiast & pro rental member tại Mutux.",
-  cccd: "079201088921",
-  dob: "1999-05-15",
-  kycStatus: "approved",
-  createdAt: "2025-11-15",
-};
-
-export const mockUserAddresses: UserAddress[] = [
-  {
-    id: "addr-01",
-    receiverName: "Nguyễn Văn Tuấn",
-    phone: "0908 123 456",
-    detailAddress: "227 Nguyễn Văn Cừ, Phường 4",
-    ward: "Phường 4",
-    district: "Quận 5",
-    province: "TP. Hồ Chí Minh",
-    isDefault: true,
-  },
-  {
-    id: "addr-02",
-    receiverName: "Nguyễn Văn Tuấn (Văn phòng)",
-    phone: "0908 123 456",
-    detailAddress: "Toà nhà Bitexco, 2 Hải Triều",
-    ward: "Phường Bến Nghé",
-    district: "Quận 1",
-    province: "TP. Hồ Chí Minh",
-    isDefault: false,
-  },
-];
 
 export const mockRentalOrders: RentalOrderMock[] = [
   {
