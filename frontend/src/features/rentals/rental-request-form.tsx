@@ -9,6 +9,8 @@ import { Input, Textarea } from "@/components/ui/field";
 import { PricingSummary } from "./pricing-summary";
 import type { RentalRequestDraft } from "./types";
 import { useCart, type CartItem } from "@/features/cart/cart-context";
+import { useRentalOrder } from "@/hooks/useRentalOrder";
+import { useRouter } from "next/navigation";
 
 type RentalRequestFormProps = {
   items: CartItem[];
@@ -16,8 +18,10 @@ type RentalRequestFormProps = {
 
 export function RentalRequestForm({ items }: RentalRequestFormProps) {
   const { clearCart } = useCart();
+  const { createOrder, isLoading: isCreating } = useRentalOrder();
+  const router = useRouter();
   const [draft, setDraft] = useState<Omit<RentalRequestDraft, "gearId" | "startDate" | "endDate">>({
-    depositType: "cash",
+    depositType: "traditional",
     shippingName: "",
     shippingPhone: "",
     shippingAddress: "",
@@ -46,10 +50,28 @@ export function RentalRequestForm({ items }: RentalRequestFormProps) {
 
         <form
           className="grid gap-5"
-          onSubmit={(event) => {
+          onSubmit={async (event) => {
             event.preventDefault();
-            setSubmitted(true);
-            clearCart();
+            if (!canSubmit) return;
+            try {
+              for (const item of items) {
+                await createOrder({
+                  gearId: item.gear.id,
+                  startDate: item.startDate,
+                  endDate: item.endDate,
+                  depositType: draft.depositType as "traditional" | "credit_line",
+                  shippingName: draft.shippingName,
+                  shippingPhone: draft.shippingPhone,
+                  shippingAddress: draft.shippingAddress,
+                });
+              }
+              setSubmitted(true);
+              clearCart();
+              alert("Tạo đơn thuê thành công!");
+              router.push("/orders");
+            } catch (e: any) {
+              alert("Lỗi tạo yêu cầu thuê: " + (e.message || "Vui lòng kiểm tra lại số dư ví"));
+            }
           }}
         >
           <fieldset className="grid gap-3">
@@ -58,18 +80,18 @@ export function RentalRequestForm({ items }: RentalRequestFormProps) {
             </legend>
             <div className="grid gap-3 sm:grid-cols-2">
               <label
-                key="cash"
+                key="traditional"
                 className="flex cursor-pointer items-center gap-3 rounded-v-sm border border-vanguard-light-border p-4 text-sm dark:border-vanguard-dark-border"
               >
                 <input
                   type="radio"
                   name="depositType"
-                  value="cash"
-                  checked={draft.depositType === "cash"}
+                  value="traditional"
+                  checked={draft.depositType === "traditional"}
                   onChange={() =>
                     setDraft((current) => ({
                       ...current,
-                      depositType: "cash",
+                      depositType: "traditional",
                     }))
                   }
                   className="accent-vanguard-primary"
@@ -134,8 +156,8 @@ export function RentalRequestForm({ items }: RentalRequestFormProps) {
             </div>
           ) : null}
 
-          <Button type="submit" disabled={!canSubmit} icon={<Send size={15} />}>
-            Tạo yêu cầu thuê
+          <Button type="submit" disabled={!canSubmit || isCreating} icon={<Send size={15} />}>
+            {isCreating ? "Đang xử lý..." : "Tạo yêu cầu thuê"}
           </Button>
         </form>
       </Card>
