@@ -54,6 +54,7 @@ export function AddGearForm() {
   const [condition, setCondition] = useState(CONDITION_OPTIONS[0]);
   const [badge, setBadge] = useState("");
   const [imageUrls, setImageUrls] = useState<string[]>([]);
+  const [imageUrlInput, setImageUrlInput] = useState("");
   const [dailyPrice, setDailyPrice] = useState("");
   const [depositCash, setDepositCash] = useState("");
 
@@ -102,7 +103,7 @@ export function AddGearForm() {
               setStep("info");
               setName(""); setCategoryId("keyboards"); setShortDesc("");
               setDescription(""); setCondition(CONDITION_OPTIONS[0]);
-              setBadge(""); setImageUrls([]); setDailyPrice("");
+              setBadge(""); setImageUrls([]); setImageUrlInput(""); setDailyPrice("");
               setDepositCash("");
               setSpecs([{ ...defaultSpec }]);
             }}
@@ -267,23 +268,31 @@ export function AddGearForm() {
                     id="gear-image"
                     type="url"
                     placeholder="https://…"
+                    value={imageUrlInput}
+                    onChange={(e) => setImageUrlInput(e.target.value)}
+                    onBlur={() => {
+                      const val = imageUrlInput.trim();
+                      if (val && val.startsWith('http') && !imageUrls.includes(val)) {
+                        setImageUrls([...imageUrls, val]);
+                        setImageUrlInput("");
+                      }
+                    }}
                     onKeyDown={(e) => {
                       if (e.key === 'Enter') {
                         e.preventDefault();
-                        const val = e.currentTarget.value;
+                        const val = imageUrlInput.trim();
                         if (val && !imageUrls.includes(val)) {
                           setImageUrls([...imageUrls, val]);
-                          e.currentTarget.value = "";
+                          setImageUrlInput("");
                         }
                       }
                     }}
                   />
-                  <Button type="button" onClick={(e) => {
-                    const input = document.getElementById("gear-image") as HTMLInputElement;
-                    const val = input.value;
+                  <Button type="button" onClick={() => {
+                    const val = imageUrlInput.trim();
                     if (val && !imageUrls.includes(val)) {
                       setImageUrls([...imageUrls, val]);
-                      input.value = "";
+                      setImageUrlInput("");
                     }
                   }}>Thêm</Button>
                 </div>

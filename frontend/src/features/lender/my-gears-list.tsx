@@ -77,14 +77,6 @@ export function MyGearsList({ gears: initialGears }: Props) {
           />
         </div>
 
-        <Link
-          href="/lender/gears/new"
-          id="add-new-gear-btn"
-          className="gold-shimmer inline-flex min-h-11 items-center justify-center gap-2 rounded-v-sm bg-gold-metal px-5 py-3 font-display text-xs font-bold uppercase tracking-widest text-vanguard-dark-bg shadow-lg transition-all duration-500 hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-vanguard-primary/60"
-        >
-          <PackagePlus size={14} />
-          Đăng gear mới
-        </Link>
       </div>
 
       {/* Status filter tabs */}
