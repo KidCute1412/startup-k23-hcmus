@@ -1,6 +1,6 @@
 "use client";
 
-import { Menu, ShoppingBag, ShoppingCart, X, User, LogOut, KeyRound, Wallet } from "lucide-react";
+import { Menu, ShoppingBag, ShoppingCart, X, User, LogOut, KeyRound, Wallet, ShieldCheck } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
@@ -123,6 +123,16 @@ export function Header() {
                     <Wallet size={14} />
                     Ví Mutux
                   </Link>
+                  {user.role === 'admin' && (
+                    <Link
+                      href="/admin/kyc"
+                      onClick={() => setShowUserMenu(false)}
+                      className="flex w-full items-center gap-2 rounded-v-sm px-3 py-2 text-left text-xs font-bold text-vanguard-primary hover:bg-vanguard-light-surfDim dark:hover:bg-vanguard-dark-surfBright"
+                    >
+                      <ShieldCheck size={14} />
+                      Quản trị Admin (KYC)
+                    </Link>
+                  )}
                   <Link
                     href="/change-password"
                     onClick={() => setShowUserMenu(false)}
