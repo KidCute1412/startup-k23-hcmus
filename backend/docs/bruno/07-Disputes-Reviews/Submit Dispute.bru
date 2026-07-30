@@ -33,3 +33,9 @@ tests {
     expect(res.getBody().data.evidences).to.have.lengthOf(1);
   });
 }
+
+docs {
+  The caller must be the order renter or lender and the order must be `active` or `returning`.
+
+  Creation, evidence and order `disputed` transition commit atomically. Retrying the same order returns the existing active dispute and does not create duplicate evidence.
+}

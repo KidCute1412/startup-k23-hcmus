@@ -12,7 +12,7 @@ post {
 
 body:json {
   {
-    "stage": "pre_shipment",
+    "stage": "{{proofStage}}",
     "fileUrl": "{{proofFileUrl}}",
     "note": "Hộp đầy đủ cáp và keycap"
   }
@@ -27,4 +27,12 @@ tests {
     expect(res.status).to.equal(201);
     expect(res.body.data.proofType).to.equal("image");
   });
+}
+
+docs {
+  Set `proofStage` and `proofFileUrl` for the current actor:
+
+  - before ship: lender uploads `pre_shipment` while order is `confirmed`
+  - after return: renter uploads `pre_return` while order is `returning`
+  - before confirm-return: lender uploads `post_returned` while order is `returning`
 }

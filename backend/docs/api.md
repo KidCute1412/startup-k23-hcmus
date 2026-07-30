@@ -367,6 +367,26 @@ HTTP Status: `400`, `401`, `403`, `404`, `422`, `500`.
 
 ### 3.4 Rental Orders (9 APIs)
 
+#### State-transition matrix (Lean MVP)
+
+Đây là ma trận duy nhất được implementation chấp nhận. Tất cả transition khóa row order và chạy trong `prisma.$transaction`; actor sai luôn nhận `403 FORBIDDEN`.
+
+| Action / endpoint | Actor | Source | Proof bắt buộc | Side effect nguyên tử | Target |
+| --- | --- | --- | --- | --- | --- |
+| Tạo order `POST /rental-orders` | renter | — | — | Không chạm ví | `pending_confirm` |
+| `PATCH /:id/confirm` | lender | `pending_confirm` | — | Debit rental fee, lock cọc, tạo escrow, snapshot phí/doanh thu | `confirmed` |
+| `PATCH /:id/ship` | lender | `confirmed` | `pre_shipment` của lender | Ghi `lender_shipped_at` | `delivering` |
+| `PATCH /:id/cancel` | renter | `pending_confirm` | — | Không chạm ví/escrow | `cancelled` |
+| `PATCH /:id/confirm-receipt` | renter | `delivering` | — | Ghi `renter_received_at` | `active` |
+| `PATCH /:id/return` | renter | `active` | — | Ghi `renter_returned_at` | `returning` |
+| `POST /disputes` | renter hoặc lender của order | `active` hoặc `returning` | — | Tạo dispute/evidence | `disputed` |
+| `PATCH /:id/confirm-return` | lender | `returning` | `pre_return` của renter và `post_returned` của lender | Release cọc, settle lender, ghi `lender_received_back_at` | `completed` |
+| `POST /admin/disputes/:id/resolve` | admin | `disputed` | — | Release/compensate escrow và resolve dispute | `completed` |
+
+**Idempotency**: retry cùng action sau khi transaction trước đã commit và order đang đúng target trả `200` với state hiện tại, không chạy lại timestamp hoặc side effect ví/escrow/ledger. Riêng tạo dispute retry trả lại dispute `open`/`under_review` đang có. Trạng thái khác source/target trả `400 INVALID_TRANSITION`; riêng cancel ngoài `pending_confirm`/`cancelled` trả `400 CANCEL_NOT_ALLOWED`.
+
+**Late return**: Sprint 3 không tự tính late fee. Trả trễ phải đi qua dispute và admin resolution thủ công.
+
 #### [POST] `/rental-orders` (Tạo yêu cầu thuê thiết bị - Renter)
 * **Authentication**: `accessToken` cookie (and valid `Origin` for state changes).
 * **Body**:
@@ -385,7 +405,8 @@ HTTP Status: `400`, `401`, `403`, `404`, `422`, `500`.
 * **Business rules**:
   - `gear.approval_status` phải là `approved` và gear phải đang `available`; nếu không trả `400 GEAR_NOT_AVAILABLE`.
   - `startDate` phải nhỏ hơn `endDate`; nếu không trả `400 INVALID_DATE_RANGE`.
-  - Không được có order khác cùng gear, có status khác `cancelled`/`completed`, bị giao nhau trong khoảng thuê; nếu không trả `409 GEAR_UNAVAILABLE_FOR_PERIOD`.
+  - `startDate` không được trước ngày hiện tại theo timezone business cố định `Asia/Ho_Chi_Minh`; nếu vi phạm trả `400 START_DATE_IN_PAST`. Date-only được so sánh độc lập timezone máy chạy.
+  - Chỉ các order `pending_confirm`, `confirmed`, `delivering`, `active`, `returning`, `disputed` chặn lịch trùng. `cancelled` và `completed` không chặn khoảng thuê mới; overlap trả `409 GEAR_UNAVAILABLE_FOR_PERIOD`.
   - `lenderId` luôn được lấy từ `gear.lender_id`, không nhận từ request body.
   - `duration_days = endDate - startDate` theo khoảng ngày nửa mở `[startDate, endDate)`; `rentalFee = snappedRentPricePerDay × durationDays`.
   - `snappedRentPricePerDay` lưu lại giá `rent_price_per_day` tại thời điểm tạo order. `depositAmount` lấy `gear.value`, hoặc `rentalFee × 2` khi gear chưa có `value`.
@@ -404,28 +425,32 @@ HTTP Status: `400`, `401`, `403`, `404`, `422`, `500`.
 * **Authentication**: `accessToken` cookie (and valid `Origin` for state changes).
 * **Actor**: chỉ lender của order; renter hoặc user khác nhận `403 FORBIDDEN`.
 * **Transition**: `pending_confirm` → `confirmed`.
-* **Escrow**: gọi `EscrowService.lock(orderId)` trước khi đổi trạng thái. Chỉ khi lock thành công mới cập nhật order; lock tạo `EscrowWallet` ở trạng thái `locked`.
+* **Escrow**: orchestration gọi `EscrowService.lock(orderId, tx)` và đổi status trong cùng transaction. Chỉ khi toàn bộ debit/lock/ledger/escrow thành công order mới được cập nhật; mọi lỗi rollback cả tiền lẫn status.
   - `traditional`: debit `rental_fee` từ ví renter và chuyển `deposit_amount` sang `locked_balance` của ví renter.
   - `credit_line`: debit `rental_fee` từ ví renter, giảm `mutux_wallets.display_balance`, tăng `mutux_wallets.locked_balance` và ghi `credit_transactions(type = deposit_lock)` cho tiền cọc.
 * **Errors**:
-  - `400 INVALID_TRANSITION` nếu order không còn ở `pending_confirm`; escrow không được gọi cho transition không hợp lệ.
+  - `400 INVALID_TRANSITION` nếu order không ở `pending_confirm` hoặc `confirmed`; escrow không được gọi cho transition không hợp lệ.
   - `400 INSUFFICIENT_CASH` nếu ví renter không đủ trả `rental_fee` và phần cọc tiền mặt (nếu dùng `traditional`).
   - `400 INSUFFICIENT_CREDIT` nếu ví hạn mức không tồn tại, không active, hết hạn hoặc không đủ `deposit_amount`.
+  - `400 ESCROW_LOCK_INCONSISTENT` nếu order `pending_confirm` đã có escrow/ledger không khớp; API không tự sửa hoặc debit thêm và order giữ nguyên để đối soát.
   - Lỗi từ escrow được trả nguyên trạng; mọi cập nhật ví, credit ledger và escrow đều rollback, order vẫn ở `pending_confirm`.
-* **Success (200)**: trả về order với `status = confirmed`. Order được snapshot `platform_fee` và `lender_income` dựa trên platform fee rate 15%.
+* **Success (200)**: trả về order với `status = confirmed`. Order được snapshot `platform_fee` và `lender_income` dựa trên platform fee rate 15%. Retry khi đã `confirmed` là no-op `200`.
 
 #### [PATCH] `/rental-orders/:id/ship` (Lender xác nhận đã giao hàng)
 * **Authentication**: `accessToken` cookie (and valid `Origin` for state changes).
 * **Actor**: chỉ lender của order.
 * **Transition**: `confirmed` → `delivering`.
+* **Proof gate**: bắt buộc đã có `pre_shipment` do lender upload; thiếu proof trả `400 PROOF_REQUIRED` và order vẫn `confirmed`.
 * **Side effect**: cập nhật `lender_shipped_at` bằng thời điểm hiện tại.
-* **Success (200)**: trả về order với `status = delivering`.
+* **Success (200)**: trả về order với `status = delivering`; retry khi đã `delivering` không đổi timestamp.
 
 #### [PATCH] `/rental-orders/:id/cancel` (Renter hủy yêu cầu thuê)
 * **Authentication**: `accessToken` cookie (and valid `Origin` for state changes).
 * **Actor**: chỉ renter của order.
 * **Transition**: `pending_confirm` → `cancelled`.
-* **Success (200)**: trả về order với `status = cancelled`.
+* **Money rule**: `pending_confirm` chưa lock tiền, vì vậy cancel chỉ đổi status và tuyệt đối không gọi ví/escrow/refund.
+* **Errors**: từ `confirmed` trở đi trả `400 CANCEL_NOT_ALLOWED`. Sprint 3 không có cancel-after-payment hoặc auto-refund.
+* **Success (200)**: trả về order với `status = cancelled`; retry khi đã `cancelled` là no-op.
 
 #### [PATCH] `/rental-orders/:id/confirm-receipt` (Renter xác nhận đã nhận hàng)
 * **Authentication**: `accessToken` cookie (and valid `Origin` for state changes).
@@ -445,16 +470,19 @@ HTTP Status: `400`, `401`, `403`, `404`, `422`, `500`.
 * **Authentication**: `accessToken` cookie (and valid `Origin` for state changes).
 * **Actor**: chỉ lender của order.
 * **Transition**: `returning` → `completed`.
-* **Escrow**: gọi `EscrowService.release(orderId)` trong cùng transaction để giải phóng cọc, cộng doanh thu cho lender, cập nhật trạng thái escrow thành `released`.
+* **Proof gate**: bắt buộc đồng thời có `pre_return` do renter upload và `post_returned` do lender upload; thiếu một trong hai trả `400 PROOF_REQUIRED`, không settlement.
+* **Escrow**: orchestration gọi `EscrowService.release(orderId, tx)` trong cùng transaction để giải phóng cọc, cộng doanh thu cho lender, cập nhật trạng thái escrow thành `released`. Chỉ sau settlement thành công order mới chuyển `completed`.
   - `traditional`: mở khóa `locked_balance` của ví renter (balance không đổi), cộng `lenderIncome` vào ví lender.
   - `credit_line`: giảm `locked_balance` của MutuxWallet, tính lại `display_balance` theo invariant, cộng `lenderIncome` vào ví lender.
   - Phí nền tảng: `platformFee = rentalFee × 15%`, `lenderIncome = rentalFee - platformFee`, snapshot trên order tại thời điểm confirm.
 * **Errors**:
   - `400 ESCROW_INVALID_STATUS` nếu escrow không ở trạng thái `locked`.
+  - `400 LENDER_WALLET_NOT_FOUND` hoặc lỗi settlement khác làm rollback toàn bộ; order giữ `returning`, escrow và các ví giữ nguyên.
+  - `400 SETTLEMENT_STATE_INCONSISTENT` nếu ledger lender đã tồn tại nhưng escrow vẫn `locked`; API không cho order chuyển `completed` và yêu cầu đối soát thủ công.
 * **Side effect**: cập nhật `lender_received_back_at`, tạo `LenderWalletTransaction(type='income')`.
-* **Success (200)**: trả về order với `status = completed`.
+* **Success (200)**: trả về order với `status = completed`; retry khi đã `completed` không settlement lần hai.
 
-Với năm endpoint không gọi escrow, nếu trạng thái hiện tại không đúng trạng thái nguồn thì API trả `400 INVALID_TRANSITION`. Mọi endpoint trả `404 NOT_FOUND` khi order không tồn tại và dùng response wrapper toàn cục `{ "success": true, "data": ... }` hoặc `{ "success": false, "error": ... }`.
+Ngoài retry ở đúng target, status sai trả `400 INVALID_TRANSITION` (hoặc `CANCEL_NOT_ALLOWED` cho cancel). Mọi endpoint trả `404 NOT_FOUND` khi order không tồn tại và dùng response wrapper toàn cục `{ "success": true, "data": ... }` hoặc `{ "success": false, "error": ... }`.
 
 ---
 
@@ -582,13 +610,13 @@ Với năm endpoint không gọi escrow, nếu trạng thái hiện tại không
   - Chỉ renter hoặc lender của order được gửi; `reporterRole` do server suy ra, không nhận từ client.
   - Order phải ở `active` hoặc `returning`.
   - Việc tạo dispute, evidence và chuyển order sang `disputed` chạy trong cùng transaction. Order được khóa để hai request đồng thời không thể cùng tạo dispute đang hoạt động.
+  - Retry/concurrent request cho cùng order trả lại dispute `open`/`under_review` đã tồn tại, không tạo evidence hoặc dispute thứ hai.
 * **Errors**:
   - `400 DISPUTE_NOT_ALLOWED_AT_THIS_STAGE` nếu order không ở `active` / `returning`.
   - `400 INVALID_FILE_URL` nếu evidence không phải ảnh local thuộc người gọi.
   - `403 FORBIDDEN` nếu người gọi không phải participant.
   - `404 NOT_FOUND` nếu order không tồn tại.
-  - `409 DISPUTE_ALREADY_OPEN` nếu order đã có dispute `open` / `under_review`.
-* **Success (201)**: Tạo tranh chấp cùng evidence thành công, server trả dữ liệu camelCase và order đổi sang `disputed`.
+* **Success (201)**: Tạo tranh chấp cùng evidence thành công, server trả dữ liệu camelCase và order đổi sang `disputed`. Retry trả cùng dispute hiện hữu.
 
 #### [POST] `/reviews` (Đánh giá sau khi hoàn thành đơn thuê)
 * **Authentication**: `accessToken` cookie and valid `Origin`.
@@ -697,17 +725,17 @@ Với năm endpoint không gọi escrow, nếu trạng thái hiện tại không
 * **Body**:
   ```json
   {
-    "resolutionType": "deposit_deduct", // "deposit_deduct" | "refund"
+    "resolutionType": "deposit_deduct", // "deposit_deduct" | "refund" | "no_action"
     "deductAmount": 1500000, // Số tiền cọc khấu trừ đền bù cho Lender (chỉ dùng khi resolutionType = deposit_deduct)
     "resolutionNote": "Khấu trừ 1.500.000đ do làm nứt vỏ nhôm"
   }
   ```
 * **Validation**:
   - `deposit_deduct` bắt buộc có `deductAmount` là số nguyên dương.
-  - `refund` không được gửi `deductAmount`.
+  - `refund` và `no_action` không được gửi `deductAmount`; cả hai release cọc, không khấu trừ.
   - `resolutionNote` là tùy chọn, tối đa 2.000 ký tự.
 * **Behavior theo resolutionType & Số dư kỳ vọng**:
-  - **`refund`**:
+  - **`refund` / `no_action`**:
     - Gọi `EscrowService.release(orderId, tx)`.
     - Cọc truyền thống (`renter_cash`): Renter `locked_balance` giảm đúng `escrow.amount` (mở khóa cọc). Số dư `balance` không đổi.
     - Cọc trả sau (`credit_line`): Mutux credit wallet `locked_balance` giảm `escrow.amount`, `display_balance` tăng lại `escrow.amount` tương ứng. Ghi `CreditTransaction(type = deposit_release)`.

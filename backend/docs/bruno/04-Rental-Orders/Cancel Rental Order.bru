@@ -5,7 +5,25 @@ meta {
 }
 
 patch {
-  url: {{baseUrl}}/rental-orders/80000000-0000-0000-0000-000000000004/cancel
+  url: {{baseUrl}}/rental-orders/{{cancelOrderId}}/cancel
   body: none
   auth: inherit
+}
+
+headers {
+  Origin: http://localhost:3000
+}
+
+tests {
+  test("cancels an untouched pending order", function() {
+    expect(res.getStatus()).to.equal(200);
+    expect(res.getBody().data.status).to.equal("cancelled");
+  });
+}
+
+docs {
+  # Prerequisite
+  Run as renter against a separate order that is still `pending_confirm`.
+
+  This transition never touches wallet or escrow. From `confirmed` onward the API returns `400 CANCEL_NOT_ALLOWED`; Sprint 3 has no cancel-after-payment refund.
 }

@@ -5,8 +5,25 @@ meta {
 }
 
 patch {
-  url: {{baseUrl}}/rental-orders/80000000-0000-0000-0000-000000000004/confirm
+  url: {{baseUrl}}/rental-orders/{{rentalOrderId}}/confirm
   body: none
   auth: inherit
 }
-​
+
+headers {
+  Origin: http://localhost:3000
+}
+
+tests {
+  test("atomically confirms and locks funds", function() {
+    expect(res.getStatus()).to.equal(200);
+    expect(res.getBody().data.status).to.equal("confirmed");
+  });
+}
+
+docs {
+  # Prerequisite
+  Run as the order lender. The order must be `pending_confirm`; renter cash must cover `rentalFee`, and the selected deposit source must cover `depositAmount`.
+
+  The request is idempotent after commit: retry returns `confirmed` without a second wallet debit or escrow lock.
+}

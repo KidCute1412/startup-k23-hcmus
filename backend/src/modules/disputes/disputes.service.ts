@@ -1,6 +1,5 @@
 import {
   BadRequestException,
-  ConflictException,
   ForbiddenException,
   Injectable,
   NotFoundException,
@@ -30,6 +29,17 @@ export class DisputesService {
     });
     this.assertParticipant(order, userId);
 
+    const existingDispute = await this.prisma.dispute.findFirst({
+      where: {
+        rental_order_id: dto.rentalOrderId,
+        status: {
+          in: [DisputeStatusType.open, DisputeStatusType.under_review],
+        },
+      },
+      include: disputeInclude,
+    });
+    if (existingDispute) return this.toApiDispute(existingDispute);
+
     const evidenceUrls = await Promise.all(
       dto.evidences.map((evidence) =>
         this.mediaService.assertOwnedImageFile(userId, evidence.url),
@@ -56,14 +66,9 @@ export class DisputesService {
             in: [DisputeStatusType.open, DisputeStatusType.under_review],
           },
         },
-        select: { id: true },
+        include: disputeInclude,
       });
-      if (existing) {
-        throw new ConflictException({
-          error: 'DISPUTE_ALREADY_OPEN',
-          message: 'An open dispute already exists for this rental order',
-        });
-      }
+      if (existing) return existing;
       if (
         lockedOrder.status !== OrderStatusType.active &&
         lockedOrder.status !== OrderStatusType.returning

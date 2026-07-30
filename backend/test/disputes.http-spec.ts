@@ -1,6 +1,5 @@
 import {
   BadRequestException,
-  ConflictException,
   ForbiddenException,
   INestApplication,
   NotFoundException,
@@ -141,14 +140,6 @@ describe('Dispute routes (HTTP)', () => {
       404,
       'NOT_FOUND',
     ],
-    [
-      new ConflictException({
-        error: 'DISPUTE_ALREADY_OPEN',
-        message: 'Duplicate',
-      }),
-      409,
-      'DISPUTE_ALREADY_OPEN',
-    ],
   ])('returns domain error %s', async (exception, status, code) => {
     disputesService.create.mockRejectedValueOnce(exception);
     const response = await submitDispute(validBody).expect(status);
@@ -179,7 +170,6 @@ describe('Dispute routes (HTTP)', () => {
   });
 
   it.each([
-    { resolutionType: 'no_action' },
     { resolutionType: 'refund', deductAmount: 1 },
     { resolutionType: 'deposit_deduct' },
     { resolutionType: 'deposit_deduct', deductAmount: 0 },

@@ -5,7 +5,25 @@ meta {
 }
 
 patch {
-  url: {{baseUrl}}/rental-orders/80000000-0000-0000-0000-000000000004/return
+  url: {{baseUrl}}/rental-orders/{{rentalOrderId}}/return
   body: none
   auth: inherit
+}
+
+headers {
+  Origin: http://localhost:3000
+}
+
+tests {
+  test("renter starts return", function() {
+    expect(res.getStatus()).to.equal(200);
+    expect(res.getBody().data.status).to.equal("returning");
+  });
+}
+
+docs {
+  # Prerequisite
+  Run as renter while the order is `active`.
+
+  After this succeeds, upload/create the renter `pre_return` proof. The lender then uploads/creates `post_returned` proof before confirm-return.
 }

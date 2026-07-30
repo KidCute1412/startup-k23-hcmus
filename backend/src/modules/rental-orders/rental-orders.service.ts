@@ -16,8 +16,7 @@ import {
 import { randomInt } from 'crypto';
 import { CreateRentalOrderDto } from './dto/create-rental-order.dto';
 import { GetRentalOrdersQueryDto } from './dto/get-rental-orders-query.dto';
-import { PrismaService } from '../../prisma/prisma.service';
-import { EscrowService } from '../escrow/escrow.service';
+import { RentalOrderOrchestrationService } from './rental-order-orchestration.service';
 import { RentalOrdersRepository } from './rental-orders.repository';
 
 interface CurrentUser {
@@ -25,31 +24,14 @@ interface CurrentUser {
   role: UserRole;
 }
 
-type TransitionActor = 'renter' | 'lender';
-
-interface TransitionOptions {
-  actor: TransitionActor;
-  currentStatus: OrderStatusType;
-  nextStatus: OrderStatusType;
-  action: string;
-  timestampField?:
-    | 'lender_shipped_at'
-    | 'renter_received_at'
-    | 'renter_returned_at'
-    | 'lender_received_back_at';
-  beforeUpdate?: () => Promise<unknown>;
-}
-
 const MILLISECONDS_PER_DAY = 24 * 60 * 60 * 1000;
+export const RENTAL_BUSINESS_TIME_ZONE = 'Asia/Ho_Chi_Minh';
 
 @Injectable()
 export class RentalOrdersService {
-  private readonly PLATFORM_FEE_RATE = 0.15;
-
   constructor(
-    private readonly prisma: PrismaService,
     private readonly rentalOrdersRepository: RentalOrdersRepository,
-    private readonly escrowService: EscrowService,
+    private readonly orchestration: RentalOrderOrchestrationService,
   ) {}
 
   async create(renterId: string, dto: CreateRentalOrderDto) {
@@ -60,6 +42,13 @@ export class RentalOrdersService {
       throw new BadRequestException({
         error: 'INVALID_DATE_RANGE',
         message: 'startDate must be earlier than endDate',
+      });
+    }
+    const today = this.parseDateOnly(this.currentBusinessDate());
+    if (startDate.getTime() < today.getTime()) {
+      throw new BadRequestException({
+        error: 'START_DATE_IN_PAST',
+        message: `startDate cannot be before today in ${RENTAL_BUSINESS_TIME_ZONE}`,
       });
     }
 
@@ -168,170 +157,28 @@ export class RentalOrdersService {
     return order;
   }
 
-  async confirm(userId: string, id: string) {
-    return this.prisma.$transaction(async (tx) => {
-      await tx.$queryRaw`SELECT id FROM rental_orders WHERE id = ${id}::uuid FOR UPDATE`;
-      const order = await tx.rentalOrder.findUnique({ where: { id } });
-      if (!order) {
-        throw new NotFoundException({
-          error: 'NOT_FOUND',
-          message: 'Rental order not found',
-        });
-      }
-      if (order.lender_id !== userId) {
-        throw new ForbiddenException({
-          error: 'FORBIDDEN',
-          message: 'Only the order lender can perform this transition',
-        });
-      }
-      if (order.status !== OrderStatusType.pending_confirm) {
-        throw new BadRequestException({
-          error: 'INVALID_TRANSITION',
-          message: `Cannot confirm rental order from status ${order.status}`,
-        });
-      }
-
-      await this.escrowService.lock(id, tx);
-
-      const platformFee = order.rental_fee.mul(this.PLATFORM_FEE_RATE);
-      const lenderIncome = order.rental_fee.sub(platformFee);
-
-      return tx.rentalOrder.update({
-        where: { id },
-        data: {
-          status: OrderStatusType.confirmed,
-          platform_fee: platformFee,
-          lender_income: lenderIncome,
-        },
-      });
-    });
+  confirm(userId: string, id: string) {
+    return this.orchestration.confirm(userId, id);
   }
 
   ship(userId: string, id: string) {
-    return this.performTransition(userId, id, {
-      actor: 'lender',
-      currentStatus: OrderStatusType.confirmed,
-      nextStatus: OrderStatusType.delivering,
-      action: 'ship',
-      timestampField: 'lender_shipped_at',
-    });
+    return this.orchestration.ship(userId, id);
   }
 
   cancel(userId: string, id: string) {
-    return this.performTransition(userId, id, {
-      actor: 'renter',
-      currentStatus: OrderStatusType.pending_confirm,
-      nextStatus: OrderStatusType.cancelled,
-      action: 'cancel',
-    });
+    return this.orchestration.cancel(userId, id);
   }
 
   confirmReceipt(userId: string, id: string) {
-    return this.performTransition(userId, id, {
-      actor: 'renter',
-      currentStatus: OrderStatusType.delivering,
-      nextStatus: OrderStatusType.active,
-      action: 'confirm receipt of',
-      timestampField: 'renter_received_at',
-    });
+    return this.orchestration.confirmReceipt(userId, id);
   }
 
   returnOrder(userId: string, id: string) {
-    return this.performTransition(userId, id, {
-      actor: 'renter',
-      currentStatus: OrderStatusType.active,
-      nextStatus: OrderStatusType.returning,
-      action: 'return',
-      timestampField: 'renter_returned_at',
-    });
+    return this.orchestration.returnOrder(userId, id);
   }
 
-  async confirmReturn(userId: string, id: string) {
-    return this.prisma.$transaction(async (tx) => {
-      await tx.$queryRaw`SELECT id FROM rental_orders WHERE id = ${id}::uuid FOR UPDATE`;
-      const order = await tx.rentalOrder.findUnique({ where: { id } });
-      if (!order) {
-        throw new NotFoundException({
-          error: 'NOT_FOUND',
-          message: 'Rental order not found',
-        });
-      }
-      if (order.lender_id !== userId) {
-        throw new ForbiddenException({
-          error: 'FORBIDDEN',
-          message: 'Only the order lender can perform this transition',
-        });
-      }
-      if (order.status !== OrderStatusType.returning) {
-        throw new BadRequestException({
-          error: 'INVALID_TRANSITION',
-          message: `Cannot confirm return of rental order from status ${order.status}`,
-        });
-      }
-
-      await this.escrowService.release(id, tx);
-
-      return tx.rentalOrder.update({
-        where: { id },
-        data: {
-          status: OrderStatusType.completed,
-          lender_received_back_at: new Date(),
-        },
-      });
-    });
-  }
-
-  private async performTransition(
-    userId: string,
-    id: string,
-    options: TransitionOptions,
-  ) {
-    const order = await this.rentalOrdersRepository.findById(id);
-    if (!order) {
-      throw new NotFoundException({
-        error: 'NOT_FOUND',
-        message: 'Rental order not found',
-      });
-    }
-
-    const actorId =
-      options.actor === 'lender' ? order.lender_id : order.renter_id;
-    if (actorId !== userId) {
-      throw new ForbiddenException({
-        error: 'FORBIDDEN',
-        message: `Only the order ${options.actor} can perform this transition`,
-      });
-    }
-
-    if (order.status !== options.currentStatus) {
-      throw this.invalidTransition(options.action, order.status);
-    }
-
-    await options.beforeUpdate?.();
-
-    const data: Prisma.RentalOrderUpdateManyMutationInput = {
-      status: options.nextStatus,
-      ...(options.timestampField
-        ? { [options.timestampField]: new Date() }
-        : {}),
-    };
-    const transitionedOrder = await this.rentalOrdersRepository.transition(
-      id,
-      options.currentStatus,
-      data,
-    );
-
-    if (!transitionedOrder) {
-      throw this.invalidTransition(options.action, order.status);
-    }
-    return transitionedOrder;
-  }
-
-  private invalidTransition(action: string, status: OrderStatusType) {
-    return new BadRequestException({
-      error: 'INVALID_TRANSITION',
-      message: `Cannot ${action} rental order from status ${status}`,
-    });
+  confirmReturn(userId: string, id: string) {
+    return this.orchestration.confirmReturn(userId, id);
   }
 
   private buildAccessScope(user: CurrentUser): Prisma.RentalOrderWhereInput {
@@ -353,6 +200,21 @@ export class RentalOrdersService {
       });
     }
     return date;
+  }
+
+  private currentBusinessDate(now = new Date()): string {
+    const values = Object.fromEntries(
+      new Intl.DateTimeFormat('en-US', {
+        timeZone: RENTAL_BUSINESS_TIME_ZONE,
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+      })
+        .formatToParts(now)
+        .filter((part) => part.type !== 'literal')
+        .map((part) => [part.type, part.value]),
+    );
+    return `${values.year}-${values.month}-${values.day}`;
   }
 
   private async generateUniqueOrderCode(): Promise<string> {

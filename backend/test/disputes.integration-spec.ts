@@ -133,7 +133,7 @@ describeIntegration('Dispute workflow (PostgreSQL integration)', () => {
     return { order, dispute };
   }
 
-  it('serializes concurrent submissions into one creation and one conflict', async () => {
+  it('serializes concurrent submissions into one creation and two idempotent responses', async () => {
     const order = await createOrder(OrderStatusType.active);
     const request = {
       rentalOrderId: order.id,
@@ -146,20 +146,11 @@ describeIntegration('Dispute workflow (PostgreSQL integration)', () => {
       ],
     };
 
-    const results = await Promise.allSettled([
+    const results = await Promise.all([
       disputesService.create(renterId, request),
       disputesService.create(renterId, request),
     ]);
-    expect(
-      results.filter((result) => result.status === 'fulfilled'),
-    ).toHaveLength(1);
-    const rejected = results.find(
-      (result): result is PromiseRejectedResult => result.status === 'rejected',
-    );
-    expect(rejected?.reason).toMatchObject({
-      status: 409,
-      response: { error: 'DISPUTE_ALREADY_OPEN' },
-    });
+    expect(results[0].id).toBe(results[1].id);
     expect(
       await prisma.dispute.count({
         where: { rental_order_id: order.id },
@@ -172,6 +163,7 @@ describeIntegration('Dispute workflow (PostgreSQL integration)', () => {
 
   it.each([
     [ResolutionType.refund, undefined, 'released', null],
+    [ResolutionType.no_action, undefined, 'released', null],
     [
       ResolutionType.deposit_deduct,
       100_000,
