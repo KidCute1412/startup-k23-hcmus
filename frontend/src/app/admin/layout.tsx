@@ -61,8 +61,6 @@ export default function AdminLayout({
           </div>
 
           <div className="flex items-center gap-4">
-            <ThemeToggle />
-
             {/* Admin User Chip */}
             <div className="flex items-center gap-3 rounded-full border border-vanguard-primary/30 bg-vanguard-primary/5 px-3.5 py-1.5">
               <div className="flex size-7 items-center justify-center rounded-full bg-vanguard-primary text-vanguard-dark-bg font-bold text-xs">

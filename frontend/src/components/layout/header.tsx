@@ -80,6 +80,16 @@ export function Header() {
               </span>
             )}
           </Link>
+          {user?.role === "admin" && (
+            <Link
+              href="/admin/kyc"
+              className="relative inline-flex size-10 items-center justify-center rounded-full text-vanguard-primary transition-colors hover:bg-vanguard-light-surfDim dark:hover:bg-vanguard-dark-surfBright"
+              aria-label="Quản trị Admin"
+              title="Quản trị Admin"
+            >
+              <ShieldCheck size={18} />
+            </Link>
+          )}
 
           {/* User Profile / Login Dropdown */}
           {user ? (
@@ -130,16 +140,6 @@ export function Header() {
                     >
                       <Package size={14} />
                       Quản lý cho thuê
-                    </Link>
-                  )}
-                  {user.role === 'admin' && (
-                    <Link
-                      href="/admin/kyc"
-                      onClick={() => setShowUserMenu(false)}
-                      className="flex w-full items-center gap-2 rounded-v-sm px-3 py-2 text-left text-xs font-bold text-vanguard-primary hover:bg-vanguard-light-surfDim dark:hover:bg-vanguard-dark-surfBright"
-                    >
-                      <ShieldCheck size={14} />
-                      Quản trị Admin (KYC)
                     </Link>
                   )}
                   <Link
