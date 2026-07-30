@@ -1,17 +1,21 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { StatRow } from "@/components/ui/stat-row";
 import { formatCurrency, formatShortDate } from "@/lib/format";
-import { fetchOrders, OrderStatusType, RentalOrderMock } from "@/lib/mock-account-data";
+import { useRentalOrder } from "@/hooks/useRentalOrder";
+import type { RentalOrder } from "@/services/rentalOrderService";
 
-export const statusConfig: Record<OrderStatusType, { label: string; tone: "gold" | "muted" | "destructive" }> = {
+export type OrderStatusType = RentalOrder['status'] | 'disputed';
+
+export const statusConfig: Record<OrderStatusType | 'pending_confirm', { label: string; tone: "gold" | "muted" | "destructive" }> = {
+  pending: { label: "Chờ xác nhận", tone: "gold" },
   pending_confirm: { label: "Chờ xác nhận", tone: "gold" },
   confirmed: { label: "Đã xác nhận", tone: "gold" },
-  delivering: { label: "Đang giao hàng", tone: "gold" },
+  shipped: { label: "Đang giao hàng", tone: "gold" },
   active: { label: "Đang thuê", tone: "gold" },
   returning: { label: "Đang trả hàng", tone: "gold" },
   completed: { label: "Đã hoàn tất", tone: "muted" },
@@ -19,42 +23,45 @@ export const statusConfig: Record<OrderStatusType, { label: string; tone: "gold"
   disputed: { label: "Đang khiếu nại", tone: "destructive" },
 };
 
+function calculateDays(start?: string | null, end?: string | null) {
+  if (!start || !end) return 0;
+  const diff = new Date(end).getTime() - new Date(start).getTime();
+  if (isNaN(diff)) return 0;
+  return Math.max(1, Math.ceil(diff / (1000 * 3600 * 24)));
+}
+
 export function OrdersOverview() {
-  const [orders, setOrders] = useState<RentalOrderMock[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { orders, isLoading, fetchOrders } = useRentalOrder();
   const [selectedStatus, setSelectedStatus] = useState<string>("all");
   const [searchTerm, setSearchTerm] = useState<string>("");
 
   useEffect(() => {
-    async function load() {
-      try {
-        const response = await fetchOrders();
-        if (response.success) {
-          setOrders(response.data);
-        }
-      } finally {
-        setLoading(false);
-      }
-    }
-    load();
-  }, []);
+    fetchOrders().catch(console.error);
+  }, [fetchOrders]);
 
   const filterTabs = [
     { id: "all", label: "Tất cả đơn" },
     { id: "active", label: "Đang thuê" },
-    { id: "pending_confirm", label: "Chờ xác nhận" },
+    { id: "pending", label: "Chờ xác nhận" },
     { id: "completed", label: "Đã hoàn tất" },
     { id: "cancelled", label: "Đã hủy" },
   ];
 
-  const filteredOrders = orders.filter((order) => {
-    const matchesStatus = selectedStatus === "all" || order.status === selectedStatus;
-    const matchesSearch =
-      order.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      order.gearTitle.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      order.lenderName.toLowerCase().includes(searchTerm.toLowerCase());
-    return matchesStatus && matchesSearch;
-  });
+  const filteredOrders = useMemo(() => {
+    return orders.filter((order) => {
+      const matchesStatus = selectedStatus === "all" || order.status === selectedStatus;
+      const searchLower = searchTerm.toLowerCase();
+      const code = order.id.slice(0, 8); // simplified code
+      const title = order.gear?.name || "";
+      const lender = order.lender?.fullName || "";
+      
+      const matchesSearch =
+        code.toLowerCase().includes(searchLower) ||
+        title.toLowerCase().includes(searchLower) ||
+        lender.toLowerCase().includes(searchLower);
+      return matchesStatus && matchesSearch;
+    });
+  }, [orders, selectedStatus, searchTerm]);
 
   return (
     <div className="space-y-6">
@@ -91,13 +98,19 @@ export function OrdersOverview() {
 
       {/* Orders List */}
       <div className="space-y-4">
-        {loading && (
+        {isLoading && orders.length === 0 && (
           <div className="text-center py-10 text-sm text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted">
             Đang tải dữ liệu đơn thuê...
           </div>
         )}
-        {!loading && filteredOrders.map((order) => {
-          const config = statusConfig[order.status];
+        {!isLoading && filteredOrders.map((order) => {
+          const config = statusConfig[order.status] || statusConfig.pending;
+          const gearImage = order.gear?.media?.[0]?.url || "https://placehold.co/400x400?text=Gear";
+          const gearTitle = order.gear?.name || "Sản phẩm chưa rõ";
+          const code = order.id.slice(0, 8).toUpperCase();
+          const lenderName = order.lender?.full_name || order.lender?.fullName || "Chủ gear";
+          const totalDays = calculateDays(order.start_date, order.end_date);
+
           return (
             <Card key={order.id} className="p-5 hover:border-vanguard-primary/50 transition">
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-vanguard-light-border dark:border-vanguard-dark-border pb-4">
@@ -105,15 +118,15 @@ export function OrdersOverview() {
                   <div className="h-16 w-16 overflow-hidden rounded-v-sm border border-vanguard-light-border dark:border-vanguard-dark-border bg-vanguard-light-surfDim dark:bg-vanguard-dark-surfDim flex-shrink-0">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
-                      src={order.gearImage}
-                      alt={order.gearTitle}
+                      src={gearImage}
+                      alt={gearTitle}
                       className="h-full w-full object-cover"
                     />
                   </div>
                   <div>
                     <div className="flex items-center space-x-3">
                       <span className="font-mono text-xs font-bold uppercase tracking-wider text-vanguard-primary">
-                        {order.code}
+                        {code}
                       </span>
                       <Badge tone={config.tone}>{config.label}</Badge>
                     </div>
@@ -121,10 +134,10 @@ export function OrdersOverview() {
                       href={`/orders/${order.id}`}
                       className="mt-1 font-display text-lg font-bold hover:text-vanguard-primary transition line-clamp-1"
                     >
-                      {order.gearTitle}
+                      {gearTitle}
                     </Link>
                     <p className="text-xs text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted mt-0.5">
-                      Chủ sở hữu: <span className="font-semibold">{order.lenderName}</span>
+                      Chủ sở hữu: <span className="font-semibold">{lenderName}</span>
                     </p>
                   </div>
                 </div>
@@ -132,14 +145,14 @@ export function OrdersOverview() {
                 <div className="text-left sm:text-right flex-shrink-0">
                   <p className="text-xs uppercase tracking-widest text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted">Tổng phí thuê</p>
                   <p className="font-display text-xl font-bold text-vanguard-primary mt-0.5">
-                    {formatCurrency(order.rentalFee)}
+                    {formatCurrency(order.rental_fee || order.rentPrice || 0)}
                   </p>
                 </div>
               </div>
 
               <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3 items-center">
-                <StatRow label="Thời gian thuê" value={`${formatShortDate(order.startDate)} - ${formatShortDate(order.endDate)} (${order.totalDays} ngày)`} />
-                <StatRow label="Tiền cọc thiết bị" value={`${formatCurrency(order.depositAmount)} (${order.depositType === 'credit_line' ? 'Tín dụng Mutux' : 'Tiền mặt'})`} />
+                <StatRow label="Thời gian thuê" value={`${formatShortDate(order.start_date)} - ${formatShortDate(order.end_date)} (${totalDays} ngày)`} />
+                <StatRow label="Tiền cọc thiết bị" value={`${formatCurrency(order.deposit_amount || order.depositCash || 0)} (${(order.deposit_type || order.depositType) === 'credit_line' ? 'Tín dụng Mutux' : 'Tiền mặt'})`} />
                 
                 <div className="flex justify-end">
                   <Link
@@ -154,7 +167,7 @@ export function OrdersOverview() {
           );
         })}
 
-        {!loading && filteredOrders.length === 0 && (
+        {!isLoading && filteredOrders.length === 0 && (
           <Card className="p-12 text-center">
             <p className="font-display text-lg font-bold">Không tìm thấy đơn thuê phù hợp</p>
             <p className="text-xs text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted mt-1">

@@ -4,7 +4,7 @@ import type { CartItem } from "@/features/cart/cart-context";
 
 type PricingSummaryProps = {
   items: CartItem[];
-  depositType: "cash" | "credit-line";
+  depositType: "traditional" | "credit-line";
 };
 
 export function PricingSummary({
@@ -17,7 +17,7 @@ export function PricingSummary({
   }, 0);
 
   const depositTotal = items.reduce((sum, item) => {
-    return sum + (depositType === "cash" ? item.gear.pricing.depositCash : item.gear.pricing.creditLineRequired);
+    return sum + (depositType === "traditional" ? item.gear.pricing.depositCash : item.gear.pricing.creditLineRequired);
   }, 0);
 
   return (
@@ -42,7 +42,7 @@ export function PricingSummary({
           <span>{formatCurrency(rentalTotal)}</span>
         </div>
         <div className="flex justify-between text-sm font-bold text-vanguard-primary">
-          <span>{depositType === "cash" ? "Tổng cọc tiền mặt" : "Credit line cần có"}</span>
+          <span>{depositType === "traditional" ? "Tổng cọc tiền mặt" : "Credit line cần có"}</span>
           <span>{formatCurrency(depositTotal)}</span>
         </div>
       </div>

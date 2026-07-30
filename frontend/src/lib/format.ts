@@ -14,11 +14,15 @@ export function formatCurrency(value: number) {
   return vnd.format(value);
 }
 
-export function formatShortDate(value: string | Date) {
-  return dateFormatter.format(new Date(value));
+export function formatShortDate(value?: string | Date | null) {
+  if (!value) return "N/A";
+  const date = new Date(value);
+  if (isNaN(date.getTime())) return "N/A";
+  return dateFormatter.format(date);
 }
 
-export function rentalDays(startDate: string, endDate: string) {
+export function rentalDays(startDate?: string | null, endDate?: string | null) {
+  if (!startDate || !endDate) return 0;
   const start = new Date(startDate);
   const end = new Date(endDate);
   const diff = end.getTime() - start.getTime();

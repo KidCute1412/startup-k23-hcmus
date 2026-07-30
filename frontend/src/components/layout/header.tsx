@@ -1,6 +1,6 @@
 "use client";
 
-import { Menu, ShoppingBag, ShoppingCart, X, User, LogOut, KeyRound, Wallet } from "lucide-react";
+import { Menu, ShoppingBag, ShoppingCart, X, User, LogOut, KeyRound, Wallet, ShieldCheck, Package } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
@@ -13,7 +13,6 @@ const navItems = [
   { href: "/", label: "Trang chủ" },
   { href: "/gears", label: "Sản phẩm" },
   { href: "/about", label: "About us" },
-  { href: "/lender/gears", label: "Cho thuê" },
 ];
 
 export function Header() {
@@ -81,6 +80,16 @@ export function Header() {
               </span>
             )}
           </Link>
+          {user?.role === "admin" && (
+            <Link
+              href="/admin/kyc"
+              className="relative inline-flex size-10 items-center justify-center rounded-full text-vanguard-primary transition-colors hover:bg-vanguard-light-surfDim dark:hover:bg-vanguard-dark-surfBright"
+              aria-label="Quản trị Admin"
+              title="Quản trị Admin"
+            >
+              <ShieldCheck size={18} />
+            </Link>
+          )}
 
           {/* User Profile / Login Dropdown */}
           {user ? (
@@ -123,6 +132,16 @@ export function Header() {
                     <Wallet size={14} />
                     Ví Mutux
                   </Link>
+                  {user.role === 'lender' && (
+                    <Link
+                      href="/lender/gears"
+                      onClick={() => setShowUserMenu(false)}
+                      className="flex w-full items-center gap-2 rounded-v-sm px-3 py-2 text-left text-xs font-semibold text-vanguard-light-text hover:bg-vanguard-light-surfDim dark:text-vanguard-dark-text dark:hover:bg-vanguard-dark-surfBright"
+                    >
+                      <Package size={14} />
+                      Quản lý cho thuê
+                    </Link>
+                  )}
                   <Link
                     href="/change-password"
                     onClick={() => setShowUserMenu(false)}
@@ -206,6 +225,15 @@ export function Header() {
                   >
                     Ví Mutux
                   </Link>
+                  {user.role === 'lender' && (
+                    <Link
+                      href="/lender/gears"
+                      onClick={() => setOpen(false)}
+                      className="flex w-full items-center gap-2 rounded-v-sm px-3 py-3 text-xs font-bold uppercase tracking-widest text-vanguard-light-textMuted hover:bg-vanguard-light-surfDim hover:text-vanguard-light-text dark:text-vanguard-dark-textMuted dark:hover:bg-vanguard-dark-surfBright dark:hover:text-vanguard-dark-text"
+                    >
+                      Quản lý cho thuê
+                    </Link>
+                  )}
                   <Link
                     href="/change-password"
                     onClick={() => setOpen(false)}

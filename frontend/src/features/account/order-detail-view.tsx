@@ -1,58 +1,98 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { StatRow } from "@/components/ui/stat-row";
 import { formatCurrency, formatShortDate } from "@/lib/format";
-import { mockRentalOrders, OrderStatusType, RentalOrderMock } from "@/lib/mock-account-data";
+import { useRentalOrder } from "@/hooks/useRentalOrder";
+import { useRentalProof } from "@/hooks/useRentalProof";
 import { statusConfig } from "./orders-overview";
+import type { RentalOrder } from "@/services/rentalOrderService";
 
 export interface OrderDetailViewProps {
   orderId: string;
 }
 
+function calculateDays(start?: string | null, end?: string | null) {
+  if (!start || !end) return 0;
+  const diff = new Date(end).getTime() - new Date(start).getTime();
+  if (isNaN(diff)) return 0;
+  return Math.max(1, Math.ceil(diff / (1000 * 3600 * 24)));
+}
+
+function generateTimeline(order: RentalOrder) {
+  const isCanceled = order.status === 'cancelled';
+  const steps = [
+    { title: "Tạo đơn thuê", description: "Người thuê đã gửi yêu cầu mượn gear", timestamp: order.createdAt, completed: true },
+    { title: "Xác nhận đơn", description: "Chủ gear đã duyệt và đóng băng tiền cọc", timestamp: "", completed: !isCanceled && order.status !== 'pending' },
+    { title: "Đang giao hàng", description: "Chủ gear đang chuyển gear cho bạn", timestamp: "", completed: !isCanceled && ['shipped', 'active', 'returning', 'completed'].includes(order.status) },
+    { title: "Đã nhận gear", description: "Đơn thuê đang trong thời gian sử dụng", timestamp: "", completed: !isCanceled && ['active', 'returning', 'completed'].includes(order.status) },
+    { title: "Đang hoàn trả gear", description: "Người thuê đã gửi trả gear cho chủ sở hữu", timestamp: "", completed: !isCanceled && ['returning', 'completed'].includes(order.status) },
+    { title: "Đã hoàn tất", description: "Chủ gear đã nhận lại và nghiệm thu an toàn", timestamp: "", completed: !isCanceled && order.status === 'completed' },
+  ];
+  if (isCanceled) {
+    steps.push({ title: "Đã hủy đơn", description: "Đơn thuê đã bị hủy", timestamp: order.updatedAt, completed: true });
+  }
+  return steps;
+}
+
 export function OrderDetailView({ orderId }: OrderDetailViewProps) {
-  const initialOrder = mockRentalOrders.find((o) => o.id === orderId) || mockRentalOrders[0];
-  const [order, setOrder] = useState<RentalOrderMock>(initialOrder);
+  const { currentOrder: order, isLoading: loadingOrder, fetchOrder, confirmReceipt, returnOrder, cancelOrder } = useRentalOrder();
+  const { proofs, isLoading: loadingProofs, fetchProofs } = useRentalProof(orderId);
   const [activeModal, setActiveModal] = useState<'receipt' | 'return' | 'cancel' | null>(null);
   const [actionSuccessMsg, setActionSuccessMsg] = useState<string | null>(null);
 
-  const config = statusConfig[order.status];
+  useEffect(() => {
+    fetchOrder(orderId).catch(console.error);
+    fetchProofs().catch(console.error);
+  }, [orderId, fetchOrder, fetchProofs]);
 
-  const handleConfirmReceipt = () => {
-    setOrder((prev) => ({
-      ...prev,
-      status: 'active' as OrderStatusType,
-      timeline: prev.timeline.map((item) =>
-        item.title.includes("Đã nhận gear") ? { ...item, completed: true, timestamp: "Bừa hoàn tất" } : item
-      ),
-    }));
-    setActiveModal(null);
-    showNotice("Đã xác nhận nhận gear thành công! Đơn thuê chuyển sang trạng thái 'Đang thuê'.");
+  if (loadingOrder && !order) {
+    return <div className="py-10 text-center text-sm">Đang tải thông tin chi tiết đơn thuê...</div>;
+  }
+
+  if (!order) {
+    return <div className="py-10 text-center text-sm text-red-500">Không tìm thấy đơn thuê!</div>;
+  }
+
+  const config = statusConfig[order.status] || statusConfig.pending;
+  const gearImage = order.gear?.media?.[0]?.url || "https://placehold.co/400x400?text=Gear";
+  const gearTitle = order.gear?.name || "Sản phẩm chưa rõ";
+  const code = order.id.slice(0, 8).toUpperCase();
+  const lenderName = order.lender?.full_name || order.lender?.fullName || "Chủ gear";
+  const totalDays = calculateDays(order.start_date, order.end_date);
+  const timeline = generateTimeline(order);
+
+  const handleConfirmReceipt = async () => {
+    try {
+      await confirmReceipt(orderId);
+      setActiveModal(null);
+      showNotice("Đã xác nhận nhận gear thành công! Đơn thuê chuyển sang trạng thái 'Đang thuê'.");
+    } catch (e: any) {
+      showNotice(`Lỗi: ${e.message}`);
+    }
   };
 
-  const handleRequestReturn = () => {
-    setOrder((prev) => ({
-      ...prev,
-      status: 'returning' as OrderStatusType,
-      timeline: [
-        ...prev.timeline,
-        { title: "Đang hoàn trả gear", description: "Người thuê đã gửi trả gear cho chủ sở hữu", timestamp: "Đã yêu cầu", completed: true },
-      ],
-    }));
-    setActiveModal(null);
-    showNotice("Đã gửi yêu cầu trả hàng! Đang chờ chủ gear kiểm tra & nghiệm thu.");
+  const handleRequestReturn = async () => {
+    try {
+      await returnOrder(orderId);
+      setActiveModal(null);
+      showNotice("Đã gửi yêu cầu trả hàng! Đang chờ chủ gear kiểm tra & nghiệm thu.");
+    } catch (e: any) {
+      showNotice(`Lỗi: ${e.message}`);
+    }
   };
 
-  const handleCancelOrder = () => {
-    setOrder((prev) => ({
-      ...prev,
-      status: 'cancelled' as OrderStatusType,
-    }));
-    setActiveModal(null);
-    showNotice("Đã hủy đơn thuê thành công. Tiền cọc/hạn mức đã được hoàn trả!");
+  const handleCancelOrder = async () => {
+    try {
+      await cancelOrder(orderId);
+      setActiveModal(null);
+      showNotice("Đã hủy đơn thuê thành công. Tiền cọc/hạn mức đã được hoàn trả!");
+    } catch (e: any) {
+      showNotice(`Lỗi: ${e.message}`);
+    }
   };
 
   const showNotice = (msg: string) => {
@@ -72,13 +112,17 @@ export function OrderDetailView({ orderId }: OrderDetailViewProps) {
         </Link>
         <div className="flex items-center space-x-3">
           <Badge tone={config.tone}>{config.label}</Badge>
-          <span className="font-mono text-sm font-bold text-vanguard-primary">{order.code}</span>
+          <span className="font-mono text-sm font-bold text-vanguard-primary">{code}</span>
         </div>
       </div>
 
       {actionSuccessMsg && (
-        <div className="rounded-v-sm bg-emerald-500/10 border border-emerald-500/30 px-4 py-3 text-xs text-emerald-500 font-semibold">
-          ✓ {actionSuccessMsg}
+        <div className={`rounded-v-sm border px-4 py-3 text-xs font-semibold ${
+          actionSuccessMsg.startsWith('Lỗi') 
+            ? 'bg-red-500/10 border-red-500/30 text-red-500' 
+            : 'bg-emerald-500/10 border-emerald-500/30 text-emerald-500'
+        }`}>
+          {actionSuccessMsg.startsWith('Lỗi') ? '✕' : '✓'} {actionSuccessMsg}
         </div>
       )}
 
@@ -90,7 +134,7 @@ export function OrderDetailView({ orderId }: OrderDetailViewProps) {
           <Card className="p-6">
             <h3 className="font-display text-lg font-bold mb-6">Tiến trình đơn thuê (Order Lifecycle)</h3>
             <div className="relative pl-6 border-l-2 border-vanguard-light-border dark:border-vanguard-dark-border space-y-6">
-              {order.timeline.map((step, idx) => (
+              {timeline.map((step, idx) => (
                 <div key={idx} className="relative">
                   <span
                     className={`absolute -left-[31px] top-0 h-4 w-4 rounded-full border-2 transition ${
@@ -107,7 +151,7 @@ export function OrderDetailView({ orderId }: OrderDetailViewProps) {
                       {step.description}
                     </p>
                     <span className="text-[10px] font-mono text-vanguard-primary mt-1 block">
-                      {step.timestamp}
+                      {step.timestamp ? new Date(step.timestamp).toLocaleString() : ''}
                     </span>
                   </div>
                 </div>
@@ -122,24 +166,24 @@ export function OrderDetailView({ orderId }: OrderDetailViewProps) {
               <div className="h-28 w-28 overflow-hidden rounded-v-sm border border-vanguard-light-border dark:border-vanguard-dark-border bg-vanguard-light-surfDim dark:bg-vanguard-dark-surfDim flex-shrink-0">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
-                  src={order.gearImage}
-                  alt={order.gearTitle}
+                  src={gearImage}
+                  alt={gearTitle}
                   className="h-full w-full object-cover"
                 />
               </div>
               <div className="flex-1">
-                <h4 className="font-display text-xl font-bold">{order.gearTitle}</h4>
+                <h4 className="font-display text-xl font-bold">{gearTitle}</h4>
                 <p className="text-xs text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted mt-1">
-                  Chủ sở hữu: <span className="font-semibold text-vanguard-light-text dark:text-vanguard-dark-text">{order.lenderName}</span> ({order.lenderPhone})
+                  Chủ sở hữu: <span className="font-semibold text-vanguard-light-text dark:text-vanguard-dark-text">{lenderName}</span>
                 </p>
                 <div className="mt-4 grid grid-cols-2 gap-4 text-xs">
                   <div>
                     <span className="text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted">Đơn giá thuê:</span>
-                    <p className="font-bold text-vanguard-primary">{formatCurrency(order.dailyRate)} / ngày</p>
+                    <p className="font-bold text-vanguard-primary">{formatCurrency((order.rental_fee || order.rentPrice || 0) / totalDays)} / ngày</p>
                   </div>
                   <div>
                     <span className="text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted">Thời hạn thuê:</span>
-                    <p className="font-bold">{order.totalDays} ngày ({formatShortDate(order.startDate)} - {formatShortDate(order.endDate)})</p>
+                    <p className="font-bold">{totalDays} ngày ({formatShortDate(order.start_date)} - {formatShortDate(order.end_date)})</p>
                   </div>
                 </div>
               </div>
@@ -147,26 +191,26 @@ export function OrderDetailView({ orderId }: OrderDetailViewProps) {
           </Card>
 
           {/* Proof Gallery (Handling photos) */}
-          {order.proofs && order.proofs.length > 0 && (
+          {!loadingProofs && proofs && proofs.length > 0 && (
             <Card className="p-6">
               <h3 className="font-display text-lg font-bold mb-4">Ảnh kiểm định & Bằng chứng nghiệm thu (Proof Photos)</h3>
               <div className="space-y-4">
-                {order.proofs.map((proof) => (
+                {proofs.map((proof) => (
                   <div key={proof.id} className="p-4 rounded-v-sm border border-vanguard-light-border dark:border-vanguard-dark-border bg-vanguard-light-surfDim/40 dark:bg-vanguard-dark-surfDim/40">
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-xs font-bold uppercase tracking-wider text-vanguard-primary">
-                        {proof.stage === 'handover' ? 'Ảnh bàn giao khi nhận hàng' : 'Ảnh trả hàng'}
+                        {proof.stage}
                       </span>
-                      <span className="text-[10px] text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted">{proof.createdAt}</span>
+                      <span className="text-[10px] text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted">{new Date(proof.createdAt).toLocaleString()}</span>
                     </div>
                     {proof.note && <p className="text-xs text-vanguard-light-text dark:text-vanguard-dark-text mb-3">{proof.note}</p>}
                     <div className="flex flex-wrap gap-3">
-                      {proof.images.map((img, i) => (
-                        <div key={i} className="h-20 w-20 overflow-hidden rounded border border-vanguard-light-border dark:border-vanguard-dark-border">
+                      {proof.proofType === 'image' && proof.fileUrl && (
+                        <div className="h-20 w-20 overflow-hidden rounded border border-vanguard-light-border dark:border-vanguard-dark-border">
                           {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img src={img} alt="Proof" className="h-full w-full object-cover" />
+                          <img src={proof.fileUrl} alt="Proof" className="h-full w-full object-cover" />
                         </div>
-                      ))}
+                      )}
                     </div>
                   </div>
                 ))}
@@ -181,7 +225,7 @@ export function OrderDetailView({ orderId }: OrderDetailViewProps) {
           <Card className="p-6">
             <h3 className="font-display text-lg font-bold mb-4">Hành động khả thi</h3>
             <div className="space-y-3">
-              {order.status === 'delivering' && (
+              {order.status === 'shipped' && (
                 <button
                   onClick={() => setActiveModal('receipt')}
                   className="w-full rounded-v-sm bg-vanguard-primary py-2.5 text-xs font-bold uppercase tracking-wider text-vanguard-dark-bg hover:opacity-90 transition"
@@ -199,7 +243,7 @@ export function OrderDetailView({ orderId }: OrderDetailViewProps) {
                 </button>
               )}
 
-              {order.status === 'pending_confirm' && (
+              {(order.status === 'pending' || order.status === 'confirmed') && (
                 <button
                   onClick={() => setActiveModal('cancel')}
                   className="w-full rounded-v-sm border border-red-500 text-red-500 py-2.5 text-xs font-bold uppercase tracking-wider hover:bg-red-500 hover:text-white transition"
@@ -219,7 +263,7 @@ export function OrderDetailView({ orderId }: OrderDetailViewProps) {
               <button
                 className="w-full rounded-v-sm border border-vanguard-light-border dark:border-vanguard-dark-border py-2.5 text-xs font-semibold text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted hover:text-vanguard-primary transition"
               >
-                💬 Liên hệ chủ gear ({order.lenderPhone})
+                💬 Liên hệ chủ gear
               </button>
             </div>
           </Card>
@@ -228,16 +272,16 @@ export function OrderDetailView({ orderId }: OrderDetailViewProps) {
           <Card className="p-6">
             <h3 className="font-display text-lg font-bold mb-4">Chi tiết thanh toán</h3>
             <div className="space-y-3">
-              <StatRow label="Tiền thuê thiết bị" value={formatCurrency(order.rentalFee)} />
+              <StatRow label="Tiền thuê thiết bị" value={formatCurrency(order.rental_fee || order.rentPrice || 0)} />
               <StatRow
                 label="Tiền cọc giữ chỗ"
-                value={`${formatCurrency(order.depositAmount)} (${order.depositType === 'credit_line' ? 'Tín dụng Mutux' : 'Tiền mặt'})`}
+                value={`${formatCurrency(order.deposit_amount || order.depositCash || 0)} (${(order.deposit_type || order.depositType) === 'credit_line' ? 'Tín dụng Mutux' : 'Tiền mặt'})`}
               />
-              <StatRow label="Địa chỉ giao nhận" value={order.shippingAddress} />
+              <StatRow label="Địa chỉ giao nhận" value={order.shipping_address || order.shippingAddress} />
               
               <div className="border-t border-vanguard-light-border dark:border-vanguard-dark-border pt-3 mt-3 flex items-center justify-between">
                 <span className="font-bold text-sm">Tổng cộng tiền thuê</span>
-                <span className="font-display text-xl font-bold text-vanguard-primary">{formatCurrency(order.rentalFee)}</span>
+                <span className="font-display text-xl font-bold text-vanguard-primary">{formatCurrency(order.rental_fee || order.rentPrice || 0)}</span>
               </div>
             </div>
           </Card>
