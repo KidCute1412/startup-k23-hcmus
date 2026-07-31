@@ -712,3 +712,24 @@ Với năm endpoint không gọi escrow, nếu trạng thái hiện tại không
   - `404 NOT_FOUND` nếu dispute không tồn tại.
 * **Success (200)**: Tranh chấp được đánh dấu `resolved`, escrow được release/compensate, đơn thuê chuyển về `completed`, và response dùng camelCase.
 
+# Credit limit APIs (MVP)
+
+Renters must send `creditConsentAccepted: true` to `POST /users/me/kyc`.
+Approving a renter KYC atomically grants the 3,000,000 VND tier. Credit tiers
+are fixed at 3,000,000, 5,000,000 and 10,000,000 VND.
+
+- `GET /wallets/mutux` returns a camelCase wallet snapshot. A renter without a
+  grant receives `200` with `granted: false` and `status: "not_granted"`.
+- `POST /wallets/mutux/debt/repay` repays all outstanding debt from the renter
+  wallet. Errors: `CREDIT_WALLET_NOT_FOUND`, `NO_OUTSTANDING_DEBT`,
+  `INSUFFICIENT_RENTER_BALANCE`, and `WALLET_INACTIVE`.
+- `POST /credit-limit-requests` accepts
+  `{ "requestedLimit": 5000000, "consentAccepted": true }`.
+- `GET /credit-limit-requests/me` returns `{ active, history }`.
+- `POST /credit-limit-requests/:id/cancel` cancels an owned pending request.
+- Admin endpoints under `/admin/credit-limit-requests` support paginated list,
+  `review`, `approve`, and `reject`. Approval must equal the requested tier.
+
+The backend requires 3 completed orders for 5,000,000 and 10 for 10,000,000,
+and blocks increases for debt, an open/under-review dispute, or any
+`deposit_deduct` resolution. It rechecks this policy at approval.

@@ -278,6 +278,7 @@ describeIntegration('Admin approval APIs (PostgreSQL integration)', () => {
         password_hash: 'x',
         role: 'renter',
         kyc_status: 'pending',
+        credit_consent_accepted_at: new Date(),
       },
     });
     await request(app.getHttpServer())
@@ -292,6 +293,21 @@ describeIntegration('Admin approval APIs (PostgreSQL integration)', () => {
       kyc_reviewed_by: adminId,
       kyc_rejection_reason: null,
     });
+    const wallet = await prisma.mutuxWallet.findUniqueOrThrow({
+      where: { user_id: targetId },
+    });
+    expect(wallet.total_limit.toNumber()).toBe(3_000_000);
+    expect(wallet.display_balance.toNumber()).toBe(3_000_000);
+    await expect(
+      prisma.creditTransaction.count({
+        where: {
+          mutux_wallet_id: wallet.id,
+          type: 'limit_granted',
+          ref_type: 'kyc_verification',
+          ref_id: targetId,
+        },
+      }),
+    ).resolves.toBe(1);
   });
 
   it('rejects KYC and persists the reason', async () => {

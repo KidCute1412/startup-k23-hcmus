@@ -37,6 +37,14 @@ export class WalletsController {
   }
 
   @UseGuards(JwtAuthGuard)
+  @Post('wallets/mutux/debt/repay')
+  @HttpCode(200)
+  repayMutuxDebt(@Req() req: AuthenticatedRequest) {
+    this.requireRole(req, 'renter');
+    return this.service.repayMutuxDebt(req.user.id);
+  }
+
+  @UseGuards(JwtAuthGuard)
   @Get('wallets/lender')
   getLender(
     @Req() req: AuthenticatedRequest,

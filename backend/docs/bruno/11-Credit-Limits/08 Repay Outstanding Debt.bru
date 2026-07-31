@@ -1,0 +1,4 @@
+meta { name: Repay Outstanding Debt type: http seq: 8 }
+post { url: {{baseUrl}}/wallets/mutux/debt/repay body: none auth: inherit }
+headers { Origin: http://localhost:3000 }
+tests { test("returns repayment fields", function () { expect(res.getBody().data).to.have.property("repaidAmount"); }); }

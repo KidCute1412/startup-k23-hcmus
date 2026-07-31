@@ -7,12 +7,17 @@ import type {
   TopupCompletion,
   TopupRequest,
   WithdrawRequest,
+  RepayCreditDebtResult,
 } from '@/types/wallet';
 
 export const walletService = {
   getRenterWallet: () => apiClient<RenterWallet>('/wallets/renter'),
   getLenderWallet: () => apiClient<LenderWallet>('/wallets/lender'),
   getMutuxCreditLine: () => apiClient<MutuxCreditLine>('/wallets/mutux'),
+  repayMutuxDebt: () =>
+    apiClient<RepayCreditDebtResult>('/wallets/mutux/debt/repay', {
+      method: 'POST',
+    }),
   
   createTopupCheckout: (request: TopupRequest) =>
     apiClient<TopupCheckout>('/wallets/topups/checkout', {

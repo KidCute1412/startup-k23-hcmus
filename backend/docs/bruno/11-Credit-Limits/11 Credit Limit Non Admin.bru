@@ -1,0 +1,3 @@
+meta { name: Credit Limit Non Admin type: http seq: 11 }
+get { url: {{baseUrl}}/admin/credit-limit-requests body: none auth: inherit }
+tests { test("non-admin is forbidden", function () { expect(res.getStatus()).to.equal(403); }); }

@@ -23,8 +23,9 @@ CREATE TYPE credit_tx_type      AS ENUM (
     'rental_fee_charge', 'compensation', 'debt_repay', 'limit_adjustment'
 );
 CREATE TYPE credit_direction    AS ENUM ('in', 'out');
-CREATE TYPE credit_ref_type     AS ENUM ('rental_order', 'credit_usage', 'dispute');
+CREATE TYPE credit_ref_type     AS ENUM ('rental_order', 'credit_usage', 'dispute', 'kyc_verification', 'credit_limit_request');
 CREATE TYPE credit_tx_status    AS ENUM ('pending', 'success', 'failed', 'reversed');
+CREATE TYPE credit_limit_request_status AS ENUM ('pending', 'under_review', 'approved', 'rejected', 'cancelled');
 
 CREATE TYPE order_status_type   AS ENUM (
     'pending_confirm', 'confirmed', 'delivering', 'active',
@@ -79,6 +80,7 @@ CREATE TABLE users (
     total_reviews   INT DEFAULT 0,
     role            user_role NOT NULL DEFAULT 'renter',
     kyc_status      kyc_status_type NOT NULL DEFAULT 'pending',
+    credit_consent_accepted_at TIMESTAMP,
     is_active       BOOLEAN NOT NULL DEFAULT TRUE,
     created_at      TIMESTAMP NOT NULL DEFAULT NOW(),
     updated_at      TIMESTAMP NOT NULL DEFAULT NOW()
@@ -195,6 +197,30 @@ CREATE TABLE credit_transactions (
     status                  credit_tx_status NOT NULL DEFAULT 'pending',
     created_at              TIMESTAMP NOT NULL DEFAULT NOW()
 );
+
+CREATE TABLE credit_limit_requests (
+    id                          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id                     UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    requested_limit             DECIMAL(15, 2) NOT NULL,
+    current_limit               DECIMAL(15, 2) NOT NULL,
+    approved_limit              DECIMAL(15, 2),
+    consent_accepted_at         TIMESTAMP NOT NULL,
+    credit_consent_snapshot_at  TIMESTAMP NOT NULL,
+    status                      credit_limit_request_status NOT NULL DEFAULT 'pending',
+    review_note                 TEXT,
+    reviewed_by                 UUID REFERENCES users(id) ON DELETE SET NULL,
+    reviewed_at                 TIMESTAMP,
+    created_at                  TIMESTAMP NOT NULL DEFAULT NOW(),
+    updated_at                  TIMESTAMP NOT NULL DEFAULT NOW()
+);
+CREATE UNIQUE INDEX uq_credit_limit_requests_active_user
+    ON credit_limit_requests(user_id) WHERE status IN ('pending', 'under_review');
+CREATE UNIQUE INDEX uq_credit_tx_kyc_grant
+    ON credit_transactions(mutux_wallet_id, ref_type, ref_id)
+    WHERE type = 'limit_granted' AND ref_type = 'kyc_verification';
+CREATE UNIQUE INDEX uq_credit_tx_limit_adjustment
+    ON credit_transactions(ref_type, ref_id)
+    WHERE type = 'limit_adjustment' AND ref_type = 'credit_limit_request';
 
 -- =============================================================
 -- RENTAL ORDERS

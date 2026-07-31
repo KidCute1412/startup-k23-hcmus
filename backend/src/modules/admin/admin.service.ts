@@ -2,6 +2,7 @@ import {
   BadRequestException,
   ConflictException,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import {
@@ -29,10 +30,13 @@ const kycUserSelect = {
   kyc_reviewed_at: true,
   created_at: true,
   updated_at: true,
+  credit_consent_accepted_at: true,
 } satisfies Prisma.UserSelect;
 
 @Injectable()
 export class AdminService {
+  private readonly logger = new Logger(AdminService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly escrowService: EscrowService,
@@ -90,28 +94,125 @@ export class AdminService {
   }
 
   async approveKyc(userId: string, adminId: string) {
-    const user = await this.requireUser(userId);
-    if (user.kyc_status === KycStatusType.verified) return user;
-    if (user.kyc_status !== KycStatusType.pending) {
-      this.invalidKycTransition(user.kyc_status, KycStatusType.verified);
-    }
+    const result = await this.prisma.$transaction(async (tx) => {
+      await tx.$queryRaw`SELECT id FROM users WHERE id = ${userId}::uuid FOR UPDATE`;
+      const user = await tx.user.findUnique({
+        where: { id: userId },
+        select: kycUserSelect,
+      });
+      if (!user) throw new NotFoundException('User not found');
+      if (
+        user.kyc_status !== KycStatusType.pending &&
+        user.kyc_status !== KycStatusType.verified
+      ) {
+        this.invalidKycTransition(user.kyc_status, KycStatusType.verified);
+      }
+      if (
+        user.kyc_status === KycStatusType.pending &&
+        user.role === 'renter' &&
+        !user.credit_consent_accepted_at
+      ) {
+        throw new ConflictException({
+          error: 'CREDIT_CONSENT_REQUIRED',
+          message: 'Renter credit consent is required before KYC approval',
+        });
+      }
 
-    await this.prisma.user.updateMany({
-      where: { id: userId, kyc_status: KycStatusType.pending },
-      data: {
-        kyc_status: KycStatusType.verified,
-        kyc_rejection_reason: null,
-        kyc_reviewed_by: adminId,
-        kyc_reviewed_at: new Date(),
-      },
+      let verified = user;
+      if (user.kyc_status === KycStatusType.pending) {
+        await tx.user.updateMany({
+          where: { id: userId, kyc_status: KycStatusType.pending },
+          data: {
+            kyc_status: KycStatusType.verified,
+            kyc_rejection_reason: null,
+            kyc_reviewed_by: adminId,
+            kyc_reviewed_at: new Date(),
+          },
+        });
+        verified = (await tx.user.findUnique({
+          where: { id: userId },
+          select: kycUserSelect,
+        }))!;
+      }
+      if (verified.role !== 'renter') return verified;
+
+      let wallet = await tx.mutuxWallet.findUnique({
+        where: { user_id: userId },
+      });
+      if (!wallet) {
+        wallet = await tx.mutuxWallet.create({
+          data: {
+            user_id: userId,
+            total_limit: 3_000_000,
+            display_balance: 3_000_000,
+            locked_balance: 0,
+            outstanding_debt: 0,
+            approved_at: new Date(),
+            expired_at: null,
+          },
+        });
+      } else if (
+        wallet.total_limit.equals(0) &&
+        wallet.locked_balance.equals(0) &&
+        wallet.outstanding_debt.equals(0)
+      ) {
+        wallet = await tx.mutuxWallet.update({
+          where: { id: wallet.id },
+          data: {
+            total_limit: 3_000_000,
+            display_balance: 3_000_000,
+            approved_at: wallet.approved_at ?? new Date(),
+            expired_at: null,
+          },
+        });
+      }
+      const existingGrant = await tx.creditTransaction.findFirst({
+        where: {
+          mutux_wallet_id: wallet.id,
+          type: 'limit_granted',
+          ref_type: 'kyc_verification',
+          ref_id: userId,
+        },
+      });
+      if (!existingGrant && wallet.total_limit.equals(3_000_000)) {
+        await tx.creditTransaction.create({
+          data: {
+            mutux_wallet_id: wallet.id,
+            type: 'limit_granted',
+            amount: 3_000_000,
+            display_balance_before: 0,
+            display_balance_after: wallet.display_balance,
+            direction: 'in',
+            ref_type: 'kyc_verification',
+            ref_id: userId,
+            note: 'Automatic credit grant after KYC verification',
+            status: 'success',
+          },
+        });
+      }
+      return verified;
     });
 
-    const current = await this.requireUser(userId);
-    if (current.kyc_status === KycStatusType.verified) return current;
-    return this.invalidKycTransition(
-      current.kyc_status,
-      KycStatusType.verified,
-    );
+    try {
+      await this.prisma.notification.create({
+        data: {
+          user_id: userId,
+          title: 'KYC đã được xác minh',
+          body:
+            result.role === 'renter'
+              ? 'Bạn đã được cấp hạn mức tín dụng Mutux 3.000.000đ.'
+              : 'Hồ sơ KYC của bạn đã được xác minh.',
+          type: 'kyc_verified',
+          ref_type: 'user',
+          ref_id: userId,
+        },
+      });
+    } catch (error) {
+      this.logger.warn(
+        `Could not create KYC approval notification for ${userId}: ${String(error)}`,
+      );
+    }
+    return result;
   }
 
   async rejectKyc(userId: string, adminId: string, reason?: string) {

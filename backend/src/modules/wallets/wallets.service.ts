@@ -34,12 +34,106 @@ export class WalletsService {
       where: { user_id: userId },
     });
     if (!wallet) {
-      throw new NotFoundException({
-        error: 'NOT_FOUND',
-        message: 'Mutux credit line wallet not found',
-      });
+      return {
+        id: null,
+        granted: false,
+        userId,
+        totalLimit: 0,
+        displayBalance: 0,
+        lockedBalance: 0,
+        outstandingDebt: 0,
+        status: 'not_granted' as const,
+        approvedAt: null,
+        expiredAt: null,
+      };
     }
-    return wallet;
+    return this.toMutuxWallet(wallet);
+  }
+
+  async repayMutuxDebt(userId: string) {
+    return this.prisma.$transaction(async (tx) => {
+      await tx.$queryRaw`SELECT id FROM renter_wallets WHERE user_id = ${userId}::uuid FOR UPDATE`;
+      await tx.$queryRaw`SELECT id FROM mutux_wallets WHERE user_id = ${userId}::uuid FOR UPDATE`;
+      const [renterWallet, mutuxWallet] = await Promise.all([
+        tx.renterWallet.findUnique({ where: { user_id: userId } }),
+        tx.mutuxWallet.findUnique({ where: { user_id: userId } }),
+      ]);
+      if (!mutuxWallet) {
+        throw new NotFoundException({
+          error: 'CREDIT_WALLET_NOT_FOUND',
+          message: 'Mutux credit wallet not found',
+        });
+      }
+      if (!renterWallet) {
+        throw new ConflictException({
+          error: 'INSUFFICIENT_RENTER_BALANCE',
+          message: 'Renter wallet balance is insufficient',
+        });
+      }
+      if (renterWallet.status !== 'active' || mutuxWallet.status !== 'active') {
+        throw new ConflictException({
+          error: 'WALLET_INACTIVE',
+          message: 'Both wallets must be active',
+        });
+      }
+      const debt = mutuxWallet.outstanding_debt;
+      if (!debt.greaterThan(0)) {
+        throw new ConflictException({
+          error: 'NO_OUTSTANDING_DEBT',
+          message: 'There is no outstanding credit debt',
+        });
+      }
+      if (renterWallet.balance.lessThan(debt)) {
+        throw new ConflictException({
+          error: 'INSUFFICIENT_RENTER_BALANCE',
+          message: 'Renter wallet balance is insufficient',
+        });
+      }
+      const renterBalanceAfter = renterWallet.balance.minus(debt);
+      const creditBalanceAfter = mutuxWallet.display_balance.plus(debt);
+      await tx.renterWallet.update({
+        where: { id: renterWallet.id },
+        data: { balance: renterBalanceAfter },
+      });
+      await tx.mutuxWallet.update({
+        where: { id: mutuxWallet.id },
+        data: {
+          outstanding_debt: 0,
+          display_balance: creditBalanceAfter,
+        },
+      });
+      await tx.renterWalletTransaction.create({
+        data: {
+          wallet_id: renterWallet.id,
+          type: 'credit_debt_repay',
+          amount: debt,
+          balance_before: renterWallet.balance,
+          balance_after: renterBalanceAfter,
+          reference: `credit-debt-repay:${mutuxWallet.id}:${Date.now()}`,
+        },
+      });
+      await tx.creditTransaction.create({
+        data: {
+          mutux_wallet_id: mutuxWallet.id,
+          type: 'debt_repay',
+          amount: debt,
+          display_balance_before: mutuxWallet.display_balance,
+          display_balance_after: creditBalanceAfter,
+          direction: 'in',
+          note: 'Outstanding debt repaid from renter wallet',
+          status: 'success',
+        },
+      });
+      return {
+        repaidAmount: debt.toNumber(),
+        renterWalletBalance: renterBalanceAfter.toNumber(),
+        mutuxWallet: this.toMutuxWallet({
+          ...mutuxWallet,
+          outstanding_debt: new Prisma.Decimal(0),
+          display_balance: creditBalanceAfter,
+        }),
+      };
+    });
   }
 
   async getLender(userId: string, page: number, limit: number) {
@@ -343,6 +437,31 @@ export class WalletsService {
       topupId,
       status: 'success' as const,
       walletBalance: balance.toNumber(),
+    };
+  }
+
+  private toMutuxWallet(wallet: {
+    id: string;
+    user_id: string;
+    total_limit: Prisma.Decimal;
+    display_balance: Prisma.Decimal;
+    locked_balance: Prisma.Decimal;
+    outstanding_debt: Prisma.Decimal;
+    status: string;
+    approved_at: Date | null;
+    expired_at: Date | null;
+  }) {
+    return {
+      id: wallet.id,
+      granted: true,
+      userId: wallet.user_id,
+      totalLimit: wallet.total_limit.toNumber(),
+      displayBalance: wallet.display_balance.toNumber(),
+      lockedBalance: wallet.locked_balance.toNumber(),
+      outstandingDebt: wallet.outstanding_debt.toNumber(),
+      status: wallet.status,
+      approvedAt: wallet.approved_at,
+      expiredAt: wallet.expired_at,
     };
   }
 }

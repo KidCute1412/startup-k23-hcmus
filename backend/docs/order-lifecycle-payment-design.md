@@ -857,3 +857,9 @@ Thiết kế đề xuất cho MVP demo là:
 10. Cần bổ sung schema cho ví renter hoặc bảng top-up/ledger tương đương trước khi code sạch.
 
 Nếu team backend review và thống nhất các business rules ở mục 15, tài liệu này có thể dùng làm baseline để implement code ví ảo, top-up mock theo shape PayOS, payment ledger và order lifecycle ở sprint tiếp theo.
+# Credit debt repayment note
+
+When a compensated credit-line deposit becomes debt, the renter repays the full
+`outstanding_debt` from the renter wallet. The operation locks both wallets,
+debits the renter wallet, restores the Mutux display balance, clears debt, and
+writes both ledgers in one transaction. Partial repayment is outside MVP.

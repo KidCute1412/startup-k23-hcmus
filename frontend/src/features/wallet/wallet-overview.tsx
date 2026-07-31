@@ -10,6 +10,7 @@ import { PayosModal } from "./payos-modal";
 import { TopupModal } from "./topup-modal";
 import { WithdrawModal } from "./withdraw-modal";
 import type { TopupCheckout, WalletTransaction } from "@/types/wallet";
+import { CreditLimitPanel } from "./credit-limit-panel";
 
 const toAmount = (value: number | string | undefined) => {
   const parsed = Number(value ?? 0);
@@ -58,8 +59,8 @@ export function WalletOverview() {
   const lockedBalance = toAmount(wallet.renterWallet?.locked_balance ?? wallet.renterWallet?.lockedBalance);
   const lenderBalance = toAmount(wallet.lenderWallet?.balance);
   const totalWithdrawn = toAmount(wallet.lenderWallet?.total_withdrawn);
-  const creditLimit = toAmount(wallet.creditLine?.creditLimit ?? wallet.creditLine?.credit_limit);
-  const usedCredit = toAmount(wallet.creditLine?.usedAmount ?? wallet.creditLine?.used_amount);
+  const creditLimit = toAmount(wallet.creditLine?.totalLimit);
+  const availableCredit = toAmount(wallet.creditLine?.displayBalance);
 
   return (
     <div className="space-y-6 px-4 sm:px-0">
@@ -94,7 +95,7 @@ export function WalletOverview() {
         {role === "renter" ? (
           <>
             <MetricCard icon={<WalletCards />} label="Số dư tiêu dùng" value={renterBalance} />
-            <MetricCard icon={<CreditCard />} label="Hạn mức tín dụng khả dụng" value={Math.max(0, creditLimit - usedCredit)} detail={`Đã dùng ${formatCurrency(usedCredit)}`} />
+            <MetricCard icon={<CreditCard />} label="Hạn mức tín dụng khả dụng" value={availableCredit} detail={`Tổng hạn mức ${formatCurrency(creditLimit)}`} />
             <MetricCard icon={<Landmark />} label="Tiền cọc đang giữ" value={lockedBalance} />
           </>
         ) : (
@@ -104,6 +105,14 @@ export function WalletOverview() {
           </>
         )}
       </section>
+
+      {role === "renter" && <CreditLimitPanel
+        credit={wallet.creditLine}
+        renterBalance={renterBalance}
+        busy={wallet.isLoading}
+        onRepay={async () => { await wallet.repayMutuxDebt(); await loadData(); }}
+        onRefresh={loadData}
+      />}
 
       <TransactionHistory transactions={transactions} loading={wallet.isLoading} lender={role === "lender"} />
 

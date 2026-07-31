@@ -113,6 +113,34 @@ export function useWallet() {
     }
   }, []);
 
+  const repayMutuxDebt = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const result = await walletService.repayMutuxDebt();
+      setCreditLine(result.mutuxWallet);
+      await fetchRenterWallet();
+      return result;
+    } catch (cause) {
+      const codes: Record<string, string> = {
+        NO_OUTSTANDING_DEBT: 'Không có dư nợ cần thanh toán.',
+        INSUFFICIENT_RENTER_BALANCE: 'Số dư ví tiêu dùng không đủ để trả toàn bộ dư nợ.',
+        WALLET_INACTIVE: 'Ví đang bị khóa hoặc không hoạt động.',
+        CREDIT_WALLET_NOT_FOUND: 'Bạn chưa được cấp hạn mức tín dụng.',
+      };
+      setError(
+        cause instanceof ApiError && cause.code
+          ? codes[cause.code] ?? cause.message
+          : cause instanceof Error
+            ? cause.message
+            : 'Không thể thanh toán dư nợ.',
+      );
+      throw cause;
+    } finally {
+      setIsLoading(false);
+    }
+  }, [fetchRenterWallet]);
+
   return {
     renterWallet,
     lenderWallet,
@@ -125,5 +153,6 @@ export function useWallet() {
     createTopupCheckout,
     withdraw,
     simulateTopupSuccess,
+    repayMutuxDebt,
   };
 }

@@ -9,6 +9,7 @@ import {
   PackageCheck,
   Scale,
   ArrowLeft,
+  BadgeDollarSign,
 } from "lucide-react";
 import { cn } from "@/lib/cn";
 
@@ -20,6 +21,11 @@ export interface AdminNavItem {
 }
 
 const ADMIN_NAV_ITEMS: AdminNavItem[] = [
+  {
+    href: "/admin/credit-limits",
+    label: "Duyệt Hạn mức Tín dụng",
+    icon: BadgeDollarSign,
+  },
   {
     href: "/admin",
     label: "Tổng quan Dashboard",

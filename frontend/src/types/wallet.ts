@@ -70,14 +70,22 @@ export interface LenderWallet {
 }
 
 export interface MutuxCreditLine {
-  id: string;
-  user_id?: string;
-  userId?: string;
-  credit_limit?: number | string;
-  creditLimit?: number;
-  used_amount?: number | string;
-  usedAmount?: number;
+  id: string | null;
+  granted: boolean;
+  userId: string;
+  totalLimit: number;
+  displayBalance: number;
+  lockedBalance: number;
+  outstandingDebt: number;
   status: string;
+  approvedAt: string | null;
+  expiredAt: string | null;
+}
+
+export interface RepayCreditDebtResult {
+  repaidAmount: number;
+  renterWalletBalance: number;
+  mutuxWallet: MutuxCreditLine;
 }
 
 export interface TopupRequest {

@@ -44,9 +44,11 @@ export class UsersController {
     @Req() req: AuthenticatedRequest,
     @Body() body: SubmitKycDto,
   ) {
-    return this.usersService.update(req.user.id, {
-      cccd: body.cccd,
-      kyc_status: 'pending',
-    });
+    return this.usersService.submitKyc(
+      req.user.id,
+      req.user.role,
+      body.cccd,
+      body.creditConsentAccepted,
+    );
   }
 }

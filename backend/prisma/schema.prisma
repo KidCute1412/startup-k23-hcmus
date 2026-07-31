@@ -75,8 +75,20 @@ enum CreditRefType {
   rental_order
   credit_usage
   dispute
+  kyc_verification
+  credit_limit_request
 
   @@map("credit_ref_type")
+}
+
+enum CreditLimitRequestStatus {
+  pending
+  under_review
+  approved
+  rejected
+  cancelled
+
+  @@map("credit_limit_request_status")
 }
 
 enum CreditTxStatus {
@@ -284,6 +296,7 @@ model User {
   kyc_rejection_reason String?
   kyc_reviewed_by    String?       @db.Uuid
   kyc_reviewed_at    DateTime?
+  credit_consent_accepted_at DateTime?
   is_active          Boolean       @default(true)
   created_at         DateTime      @default(now())
   updated_at         DateTime      @default(now()) @updatedAt
@@ -312,6 +325,8 @@ model User {
   notifications           Notification[]
   user_memberships        UserMembership[]
   bank_accounts           BankAccount[]
+  credit_limit_requests   CreditLimitRequest[] @relation("CreditLimitApplicant")
+  credit_limit_reviews    CreditLimitRequest[] @relation("CreditLimitReviewer")
 
   @@map("users")
 }
@@ -441,6 +456,29 @@ model CreditTransaction {
 
   @@index([mutux_wallet_id], name: "idx_credit_tx_wallet")
   @@map("credit_transactions")
+}
+
+model CreditLimitRequest {
+  id                          String                   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id                     String                   @db.Uuid
+  requested_limit             Decimal                  @db.Decimal(15, 2)
+  current_limit               Decimal                  @db.Decimal(15, 2)
+  approved_limit              Decimal?                 @db.Decimal(15, 2)
+  consent_accepted_at         DateTime
+  credit_consent_snapshot_at  DateTime
+  status                      CreditLimitRequestStatus @default(pending)
+  review_note                 String?
+  reviewed_by                 String?                  @db.Uuid
+  reviewed_at                 DateTime?
+  created_at                  DateTime                 @default(now())
+  updated_at                  DateTime                 @default(now()) @updatedAt
+
+  applicant User  @relation("CreditLimitApplicant", fields: [user_id], references: [id], onDelete: Cascade)
+  reviewer  User? @relation("CreditLimitReviewer", fields: [reviewed_by], references: [id], onDelete: SetNull)
+
+  @@index([user_id, created_at], name: "idx_credit_limit_requests_user")
+  @@index([status, created_at], name: "idx_credit_limit_requests_status")
+  @@map("credit_limit_requests")
 }
 
 model RentalOrder {
