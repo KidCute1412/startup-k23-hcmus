@@ -3,6 +3,8 @@ export interface RentalOrder {
   gearId: string;
   renterId: string;
   lenderId: string;
+  renter_id?: string;
+  lender_id?: string;
   status: 'pending' | 'confirmed' | 'shipped' | 'active' | 'returning' | 'completed' | 'cancelled' | 'disputed';
   startDate: string;
   endDate: string;
@@ -40,6 +42,8 @@ export interface GetRentalOrdersParams {
   limit?: number;
   status?: string;
 }
+
+export type ProofStage = 'pre_shipment' | 'post_received' | 'pre_return' | 'post_returned';
 
 export interface RentalProof {
   id: string;

@@ -8,13 +8,28 @@ import { StatRow } from "@/components/ui/stat-row";
 import { formatCurrency, formatShortDate } from "@/lib/format";
 import { useRentalOrder } from "@/hooks/useRentalOrder";
 import { useRentalProof } from "@/hooks/useRentalProof";
+import { useAuth } from "@/hooks/useAuth";
 import { statusConfig } from "./orders-overview";
-import type { RentalOrder } from "@/types/rentals";
+import type { ProofStage, RentalOrder } from "@/types/rentals";
 import { resolveMediaUrl } from "@/lib/media";
 import { SubmitDisputeModal } from "./submit-dispute-modal";
+import { UploadProofModal } from "./upload-proof-modal";
 
 export interface OrderDetailViewProps {
   orderId: string;
+}
+
+function getAllowedProofStage(order: RentalOrder, userId?: string): ProofStage | null {
+  if (!userId) return null;
+
+  const renterId = order.renterId ?? order.renter_id;
+  const lenderId = order.lenderId ?? order.lender_id;
+
+  if (order.status === 'confirmed' && userId === lenderId) return 'pre_shipment';
+  if (order.status === 'active' && userId === renterId) return 'post_received';
+  if (order.status === 'returning' && userId === renterId) return 'pre_return';
+  if (order.status === 'returning' && userId === lenderId) return 'post_returned';
+  return null;
 }
 
 function calculateDays(start?: string | null, end?: string | null) {
@@ -41,9 +56,10 @@ function generateTimeline(order: RentalOrder) {
 }
 
 export function OrderDetailView({ orderId }: OrderDetailViewProps) {
+  const { user } = useAuth();
   const { currentOrder: order, isLoading: loadingOrder, fetchOrder, confirmReceipt, returnOrder, cancelOrder } = useRentalOrder();
   const { proofs, isLoading: loadingProofs, fetchProofs } = useRentalProof(orderId);
-  const [activeModal, setActiveModal] = useState<'receipt' | 'return' | 'cancel' | 'dispute' | null>(null);
+  const [activeModal, setActiveModal] = useState<'receipt' | 'return' | 'cancel' | 'dispute' | 'proof' | null>(null);
   const [actionSuccessMsg, setActionSuccessMsg] = useState<string | null>(null);
 
   useEffect(() => {
@@ -66,6 +82,7 @@ export function OrderDetailView({ orderId }: OrderDetailViewProps) {
   const lenderName = order.lender?.full_name || order.lender?.fullName || "Chủ gear";
   const totalDays = calculateDays(order.start_date, order.end_date);
   const timeline = generateTimeline(order);
+  const allowedProofStage = getAllowedProofStage(order, user?.id);
 
   const handleConfirmReceipt = async () => {
     try {
@@ -277,6 +294,15 @@ export function OrderDetailView({ orderId }: OrderDetailViewProps) {
                 </button>
               )}
 
+              {allowedProofStage && (
+                <button
+                  onClick={() => setActiveModal('proof')}
+                  className="w-full rounded-v-sm border border-vanguard-primary/50 bg-vanguard-primary/10 text-vanguard-primary py-2.5 text-xs font-bold uppercase tracking-wider hover:bg-vanguard-primary hover:text-vanguard-dark-bg transition"
+                >
+                  📷 Tải lên ảnh bàn giao thiết bị
+                </button>
+              )}
+
               <button
                 className="w-full rounded-v-sm border border-vanguard-light-border dark:border-vanguard-dark-border py-2.5 text-xs font-semibold text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted hover:text-vanguard-primary transition"
               >
@@ -390,6 +416,19 @@ export function OrderDetailView({ orderId }: OrderDetailViewProps) {
           onSuccess={() => {
             fetchOrder(orderId).catch(console.error);
             showNotice("Đã gửi khiếu nại tranh chấp thành công! Trạng thái đơn chuyển sang 'Đang khiếu nại'.");
+          }}
+        />
+      )}
+
+      {activeModal === 'proof' && allowedProofStage && (
+        <UploadProofModal
+          isOpen={activeModal === 'proof'}
+          onClose={() => setActiveModal(null)}
+          orderId={orderId}
+          allowedStages={[allowedProofStage]}
+          onSuccess={() => {
+            fetchProofs().catch(console.error);
+            showNotice("Đã tải lên ảnh bằng chứng bàn giao thành công!");
           }}
         />
       )}
