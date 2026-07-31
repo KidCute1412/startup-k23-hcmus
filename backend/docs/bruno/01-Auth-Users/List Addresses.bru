@@ -1,0 +1,18 @@
+meta {
+  name: List Addresses
+  type: http
+  seq: 7
+}
+
+get {
+  url: {{baseUrl}}/users/me/addresses
+  body: none
+  auth: inherit
+}
+
+tests {
+  test("returns only the current user's addresses", function() {
+    expect(res.status).to.equal(200);
+    expect(res.body.data).to.be.an("array");
+  });
+}

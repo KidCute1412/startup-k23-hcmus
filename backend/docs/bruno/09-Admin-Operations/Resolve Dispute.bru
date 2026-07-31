@@ -31,7 +31,7 @@ body:json {
 docs {
   # POST /api/v1/admin/disputes/:id/resolve
   
-  Atomically updates dispute status and triggers financial settlement via `EscrowService` within a single `prisma.$transaction`.
+  Atomically updates dispute status and triggers financial settlement via `EscrowService` within a single `prisma.$transaction`. `no_action` follows the same release path as `refund` and does not accept `deductAmount`.
   
   ## Resolution Types & Expected Balances
   

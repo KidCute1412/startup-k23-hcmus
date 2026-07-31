@@ -62,7 +62,7 @@ export class AuthService {
       where: { id: userId },
     });
 
-    if (!user || !user.hashedRefreshToken) {
+    if (!user || !user.is_active || !user.hashedRefreshToken) {
       throw new UnauthorizedException('Access denied / Token invalid');
     }
 
@@ -104,7 +104,11 @@ export class AuthService {
     const user = await this.prisma.user.findUnique({
       where: { email: dto.email },
     });
-    if (!user || !(await bcrypt.compare(dto.password, user.password_hash))) {
+    if (
+      !user ||
+      !user.is_active ||
+      !(await bcrypt.compare(dto.password, user.password_hash))
+    ) {
       throw new UnauthorizedException('Email hoặc mật khẩu không chính xác');
     }
 

@@ -72,9 +72,13 @@ CREATE TABLE users (
     phone           VARCHAR(20),
     password_hash   VARCHAR(255) NOT NULL,
     full_name       VARCHAR(255),
+    dob             DATE,
     cccd            VARCHAR(20),
     avatar_url      TEXT,
     bio             TEXT,
+    kyc_front_card_url TEXT,
+    kyc_back_card_url TEXT,
+    kyc_portrait_url TEXT,
     rating          FLOAT DEFAULT 0,
     address         TEXT,
     total_reviews   INT DEFAULT 0,
@@ -85,6 +89,25 @@ CREATE TABLE users (
     created_at      TIMESTAMP NOT NULL DEFAULT NOW(),
     updated_at      TIMESTAMP NOT NULL DEFAULT NOW()
 );
+
+CREATE TABLE user_addresses (
+    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id         UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    receiver_name   VARCHAR(255) NOT NULL,
+    phone           VARCHAR(20) NOT NULL,
+    detail_address  TEXT NOT NULL,
+    ward            VARCHAR(255) NOT NULL,
+    district        VARCHAR(255) NOT NULL,
+    province        VARCHAR(255) NOT NULL,
+    is_default      BOOLEAN NOT NULL DEFAULT FALSE,
+    created_at      TIMESTAMP NOT NULL DEFAULT NOW(),
+    updated_at      TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX idx_user_addresses_user_id ON user_addresses(user_id);
+CREATE UNIQUE INDEX uq_user_addresses_one_default_per_user
+  ON user_addresses(user_id)
+  WHERE is_default = true;
 
 -- =============================================================
 -- GEAR CATEGORIES

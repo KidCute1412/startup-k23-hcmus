@@ -11,6 +11,7 @@ import {
 export enum ResolutionType {
   refund = 'refund',
   deposit_deduct = 'deposit_deduct',
+  no_action = 'no_action',
 }
 
 function IsValidDeductAmount(validationOptions?: ValidationOptions) {
@@ -23,7 +24,7 @@ function IsValidDeductAmount(validationOptions?: ValidationOptions) {
       validator: {
         validate(value: unknown, args: ValidationArguments) {
           const dto = args.object as ResolveDisputeDto;
-          if (dto.resolutionType === ResolutionType.refund) {
+          if (dto.resolutionType !== ResolutionType.deposit_deduct) {
             return value === undefined;
           }
           return (
@@ -32,8 +33,8 @@ function IsValidDeductAmount(validationOptions?: ValidationOptions) {
         },
         defaultMessage(args: ValidationArguments) {
           const dto = args.object as ResolveDisputeDto;
-          return dto.resolutionType === ResolutionType.refund
-            ? 'deductAmount is not allowed for refund'
+          return dto.resolutionType !== ResolutionType.deposit_deduct
+            ? `deductAmount is not allowed for ${dto.resolutionType}`
             : 'deductAmount must be a positive integer for deposit_deduct';
         },
       },

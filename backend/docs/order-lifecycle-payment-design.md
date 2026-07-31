@@ -4,6 +4,8 @@
 > Scope of this version: **demo / chạy ảo**, không xử lý tiền thật. PayOS chỉ được mô phỏng ở mức **top-up flow + webhook callback shape** để tăng số dư ví ảo. Sau khi ví đã tăng số dư, toàn bộ cơ chế thanh toán/giữ cọc/settlement chạy bằng ledger nội bộ, tương tự mô hình ví như MoMo.  
 > Updated: 2026-06-26
 
+> **Sprint 3 hardening (2026-07-29):** ma trận runtime chính thức nằm trong [`api.md`](./api.md). Lean MVP chỉ cho renter cancel ở `pending_confirm`, không auto-refund sau payment và không tự tính late fee.
+
 ---
 
 ## 1. Mục tiêu
@@ -166,7 +168,8 @@ Flow mới cần renter có **ví ảo** để:
 - nhận top-up mô phỏng từ PayOS
 - trả `rental_fee`
 - lock `deposit`
-- nhận refund nếu order complete/cancel/dispute resolve
+- mở khóa cọc khi order complete hoặc dispute được resolve
+- cancel ở `pending_confirm` không có cọc để mở khóa và không tạo refund
 
 Schema hiện tại có `mutux_wallets`, nhưng bảng này đang mô tả **credit line** chứ không phải ví số dư ảo dùng để chi tiêu.
 
@@ -242,9 +245,8 @@ renter_wallet_transactions
 stateDiagram-v2
     [*] --> pending_confirm
     pending_confirm --> confirmed: lender accepts + wallet/credit obligations locked
-    pending_confirm --> cancelled: renter/lender/system cancel
+    pending_confirm --> cancelled: renter cancel (no money locked)
     confirmed --> delivering: lender ships
-    confirmed --> cancelled: cancel before ship + wallet refund/release
     delivering --> active: renter confirms received
     active --> returning: renter initiates return
     active --> disputed: issue during rental
@@ -260,13 +262,12 @@ stateDiagram-v2
 | `-` | Renter tạo order | Gear hợp lệ, còn khả dụng, date range hợp lệ | Tạo `rental_orders` | Chưa settle | `pending_confirm` |
 | `pending_confirm` | Lender accept | Lender đồng ý booking | Ghi nhận accept event/field nếu có | Chưa finalize nếu ví chưa đủ tiền | `pending_confirm` |
 | `pending_confirm` | Ví/credit line đủ tiền và lock thành công | Lender đã accept | Tạo internal `payments`, lock escrow/cọc | Debit ví cho rental fee, lock cọc | `confirmed` |
-| `pending_confirm` | Renter/Lender/System cancel | Chưa ship | Mark cancelled | Release lock nếu đã có | `cancelled` |
-| `confirmed` | Lender ship | Order đã đảm bảo tài chính | Set `lender_shipped_at`, proof `pre_shipment` | Không đổi | `delivering` |
-| `confirmed` | Cancel before ship | Theo policy cho phép | Mark cancelled | Hoàn rental fee về ví + release deposit/credit lock | `cancelled` |
-| `delivering` | Renter xác nhận nhận hàng | Có giao hàng thành công | Set `renter_received_at`, proof `post_received` | Không đổi | `active` |
-| `active` | Renter gửi trả | Chuẩn bị kết thúc thuê | Set `renter_returned_at`, proof `pre_return` | Chưa release escrow | `returning` |
+| `pending_confirm` | Renter cancel | Chưa debit/lock tiền | Mark cancelled | Không thay đổi ví/escrow | `cancelled` |
+| `confirmed` | Lender ship | Đã có proof `pre_shipment` của lender | Set `lender_shipped_at` | Không đổi | `delivering` |
+| `delivering` | Renter xác nhận nhận hàng | Có giao hàng thành công | Set `renter_received_at`; `post_received` là proof độc lập sau khi order sang `active` | Không đổi | `active` |
+| `active` | Renter gửi trả | Chuẩn bị kết thúc thuê | Set `renter_returned_at`; renter upload `pre_return` khi order đã sang `returning` | Chưa release escrow | `returning` |
 | `active` | Renter/Lender mở dispute | Có vấn đề trong lúc thuê | Tạo `disputes` | Tạm dừng settlement | `disputed` |
-| `returning` | Lender xác nhận nhận lại, hàng OK | Không có dispute | Set `lender_received_back_at`, proof `post_returned` | Release escrow + settle lender income | `completed` |
+| `returning` | Lender xác nhận nhận lại, hàng OK | Có `pre_return` của renter và `post_returned` của lender; không có dispute | Set `lender_received_back_at` | Release escrow + settle lender income | `completed` |
 | `returning` | Lender mở dispute | Có hư hỏng/mất phụ kiện/trả muộn | Tạo `disputes` | Tạm dừng settlement | `disputed` |
 | `disputed` | Admin resolve | Có quyết định cuối cùng | Update `disputes`, escrow, wallet tx | Refund/release/compensate theo resolution | `completed` |
 
@@ -444,9 +445,8 @@ Ví renter:
 
 ```text
 topup:         + amount mô phỏng
-rental_fee:    - rental_fee
-deposit_lock:  - deposit_amount
-refund:        + deposit_amount khi completed
+order_lock:    balance - rental_fee; locked_balance + deposit_amount
+deposit_release khi completed: locked_balance - deposit_amount; balance không đổi
 ```
 
 Escrow:
@@ -536,52 +536,21 @@ credit_transactions.type = deposit_release
 
 ## 9.4 Case D — Late return
 
-### Rule đề xuất cho MVP
-
-- Late fee được coi là một dạng `compensation`/`penalty`.
-- Ưu tiên trừ từ escrow trước.
-- Nếu escrow không đủ:
-  - phần còn lại trở thành nghĩa vụ ảo phải thu bổ sung
-  - chưa bắt buộc xử lý trong v1 demo
-
-### Công thức business tạm chốt
-
-```text
-late_fee = snapped_rent_price_per_day * số_ngày_trễ
-```
-
-### Settlement thứ tự ưu tiên
-
-1. Trừ late fee từ escrow.
-2. Nếu còn tranh chấp khác, resolve chung trong dispute.
-3. Nếu escrow vẫn dư, release phần còn lại về ví renter hoặc credit line.
-4. Nếu escrow thiếu, ghi nhận outstanding receivable cho phase sau.
+Sprint 3 **không tự động tính hoặc khấu trừ late fee** vì chưa có policy thời gian/mức phạt được duyệt. Trả trễ phải mở dispute; admin review proof và xử lý thủ công bằng resolution hiện có. Không có cron/controller nào tự thay đổi ví hoặc escrow do quá hạn.
 
 ---
 
 ## 9.5 Case E — Cancelled order
 
-### Trường hợp 1: chưa lock tiền order
+Lean MVP chỉ hỗ trợ một trường hợp:
 
+- actor là renter của order
+- order đang `pending_confirm`
+- chưa debit rental fee, chưa lock cọc
 - `rental_orders.status = cancelled`
-- Không có settlement
+- không có settlement/refund hay thay đổi ledger
 
-### Trường hợp 2: đã lock/debit nhưng chưa ship
-
-- Hoàn `rental_fee` về ví renter
-- Release deposit về ví renter hoặc credit line
-- Escrow `released`
-- Order `cancelled`
-
-### Trường hợp 3: top-up pending nhưng order bị cancel
-
-- Không ảnh hưởng order nếu top-up success về sau
-- Callback vẫn cộng tiền vào ví renter vì top-up là giao dịch ví độc lập, không phải order payment trực tiếp
-
-### Trường hợp 4: đã ship rồi
-
-- Không cho cancel kiểu đơn giản
-- Chuyển sang xử lý `returning` hoặc `disputed`
+Từ `confirmed` trở đi API trả `400 CANCEL_NOT_ALLOWED`. Cancel-after-payment/refund nằm ngoài Sprint 3; vấn đề sau khi giao/nhận đi qua `returning` hoặc `disputed`.
 
 ---
 
@@ -764,8 +733,8 @@ Có thể reuse `notifications` cho các mốc:
    - đề xuất: **đúng**
 5. `credit_line` chỉ dùng để bảo đảm deposit đúng không?
    - đề xuất: **đúng**
-6. Late fee có trừ từ escrow trước không?
-   - đề xuất: **có**
+6. Late fee có tự động trừ từ escrow không?
+   - Sprint 3: **không**, bắt buộc dispute/manual resolution
 7. Platform fee cho lender income có đang là rule chính thức không?
    - seed đang ngụ ý khoảng **15%**, nhưng chưa thấy tài liệu nghiệp vụ chốt chính thức
 8. Có giữ `confirmed` là trạng thái riêng trước `delivering` không?
@@ -793,7 +762,7 @@ Có thể reuse `notifications` cho các mốc:
 - [ ] Tạo order payment service để debit `rental_fee` từ ví renter
 - [ ] Tạo escrow service để lock/release deposit
 - [ ] Tạo settlement logic sang `lender_wallets`
-- [ ] Tạo dispute resolution logic cho refund / compensation / late fee
+- [ ] Tạo dispute resolution logic cho refund / compensation thủ công
 
 ### 16.3 APIs
 
@@ -811,7 +780,7 @@ Có thể reuse `notifications` cho các mốc:
 - [ ] Test order `credit_line` đủ rental fee + đủ limit -> `confirmed`
 - [ ] Test complete order -> release deposit / settle lender income
 - [ ] Test dispute `deposit_deduct` -> compensation + refund/unlock phần còn lại
-- [ ] Test cancel trước ship -> hoàn ví / release lock
+- [ ] Test cancel ở `pending_confirm` không thay đổi ví/escrow
 
 ## 17. Acceptance checklist cho tài liệu này
 

@@ -22,6 +22,9 @@ describe('DisputesService', () => {
     findFirst: jest.fn(),
     create: jest.fn(),
   };
+  const rootDisputeModel = {
+    findFirst: jest.fn(),
+  };
   const tx = {
     $queryRaw: jest.fn(),
     rentalOrder: orderModel,
@@ -29,6 +32,7 @@ describe('DisputesService', () => {
   };
   const prisma = {
     rentalOrder: { findUnique: jest.fn() },
+    dispute: rootDisputeModel,
     $transaction: jest.fn((callback: (client: typeof tx) => unknown) =>
       callback(tx),
     ),
@@ -65,6 +69,7 @@ describe('DisputesService', () => {
       status: OrderStatusType.active,
     });
     disputeModel.findFirst.mockResolvedValue(null);
+    rootDisputeModel.findFirst.mockResolvedValue(null);
     (media.assertOwnedImageFile as jest.Mock).mockImplementation(
       (_userId: string, url: string) => Promise.resolve(url),
     );
@@ -190,11 +195,26 @@ describe('DisputesService', () => {
     });
   });
 
-  it('rejects a duplicate active dispute under the order lock', async () => {
-    disputeModel.findFirst.mockResolvedValueOnce({ id: 'existing' });
-    await expect(service.create(renterId, dto)).rejects.toMatchObject({
-      status: 409,
-      response: { error: 'DISPUTE_ALREADY_OPEN' },
+  it('returns the existing active dispute under the order lock on retry', async () => {
+    disputeModel.findFirst.mockResolvedValueOnce({
+      id: 'existing',
+      rental_order_id: orderId,
+      reported_by: renterId,
+      reporter_role: ReporterRoleEnum.renter,
+      reason: dto.reason,
+      description: dto.description,
+      status: DisputeStatusType.open,
+      resolved_by: null,
+      resolution_note: null,
+      resolution_type: null,
+      deduct_amount: null,
+      created_at: now,
+      resolved_at: null,
+      evidences: [],
+    });
+    await expect(service.create(renterId, dto)).resolves.toMatchObject({
+      id: 'existing',
+      status: DisputeStatusType.open,
     });
     expect(disputeModel.create).not.toHaveBeenCalled();
     expect(orderModel.update).not.toHaveBeenCalled();

@@ -1,5 +1,22 @@
 import { apiClient } from '@/lib/apiClient';
-import type { LoginRequest, RegisterRequest, User } from '@/types/auth';
+import type { AccountUser } from './accountService';
+
+export interface User {
+  id: string;
+  email: string;
+  role: 'renter' | 'lender' | 'admin';
+}
+
+export interface RegisterRequest {
+  email: string;
+  password: string;
+  fullName: string;
+}
+
+export interface LoginRequest {
+  email: string;
+  password: string;
+}
 
 export const authService = {
   register: (request: RegisterRequest) =>
@@ -14,7 +31,7 @@ export const authService = {
       body: JSON.stringify(request),
     }),
 
-  me: () => apiClient<User>('/users/me'),
+  me: () => apiClient<AccountUser>('/users/me'),
 
   changePassword: (oldPassword: string, newPassword: string) =>
     apiClient<null>('/auth/change-password', {

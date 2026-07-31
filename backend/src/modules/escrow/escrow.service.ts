@@ -34,23 +34,36 @@ export class EscrowService implements IEscrowService {
       });
 
       if (!order) throw new NotFoundException('Order not found');
-      if (order.escrow_wallet) return this.toResult(order.escrow_wallet);
-
       const reference = `LOCK-${orderId}`;
-
       const existingTransaction =
         await client.renterWalletTransaction.findUnique({
           where: { reference },
         });
+      if (order.escrow_wallet) {
+        const expectedSource =
+          order.deposit_type === DepositTypeEnum.credit_line
+            ? 'credit_line'
+            : 'renter_cash';
+        if (
+          order.escrow_wallet.status !== 'locked' ||
+          order.escrow_wallet.source !== expectedSource ||
+          !order.escrow_wallet.amount.equals(order.deposit_amount) ||
+          !existingTransaction
+        ) {
+          throw new BadRequestException({
+            error: 'ESCROW_LOCK_INCONSISTENT',
+            message:
+              'Existing escrow does not match the order deposit and lock ledger',
+          });
+        }
+        return this.toResult(order.escrow_wallet);
+      }
+
       if (existingTransaction) {
-        const escrow = await client.escrowWallet.findUnique({
-          where: { rental_order_id: orderId },
-        });
-        if (escrow) return this.toResult(escrow);
         throw new BadRequestException({
           error: 'ESCROW_LOCK_INCONSISTENT',
           message:
-            'Escrow lock transaction already exists without escrow wallet',
+            'Escrow lock transaction exists without a matching locked escrow',
         });
       }
 
@@ -233,7 +246,23 @@ export class EscrowService implements IEscrowService {
         });
       }
 
-      if (escrow.status === 'released') return this.toResult(escrow);
+      const existingIncomeTx = await client.lenderWalletTransaction.findFirst({
+        where: { rental_order_id: orderId, type: 'income' },
+      });
+      const existingCompensationTx =
+        await client.lenderWalletTransaction.findFirst({
+          where: { rental_order_id: orderId, type: 'compensation' },
+        });
+      if (escrow.status === 'released') {
+        if (!existingIncomeTx || existingCompensationTx) {
+          throw new BadRequestException({
+            error: 'SETTLEMENT_STATE_INCONSISTENT',
+            message:
+              'Escrow is released without the matching lender income ledger',
+          });
+        }
+        return this.toResult(escrow);
+      }
       if (escrow.status !== 'locked') {
         throw new BadRequestException({
           error: 'ESCROW_INVALID_STATUS',
@@ -241,10 +270,13 @@ export class EscrowService implements IEscrowService {
         });
       }
 
-      const existingLenderTx = await client.lenderWalletTransaction.findFirst({
-        where: { rental_order_id: orderId, type: 'income' },
-      });
-      if (existingLenderTx) return this.toResult(escrow);
+      if (existingIncomeTx || existingCompensationTx) {
+        throw new BadRequestException({
+          error: 'SETTLEMENT_STATE_INCONSISTENT',
+          message:
+            'A lender settlement ledger exists while escrow is still locked; manual reconciliation is required',
+        });
+      }
 
       const lenderIncome =
         order.lender_income.toNumber() > 0
@@ -371,7 +403,23 @@ export class EscrowService implements IEscrowService {
         });
       }
 
-      if (escrow.status === 'compensated') return this.toResult(escrow);
+      const existingIncomeTx = await client.lenderWalletTransaction.findFirst({
+        where: { rental_order_id: orderId, type: 'income' },
+      });
+      const existingCompensationTx =
+        await client.lenderWalletTransaction.findFirst({
+          where: { rental_order_id: orderId, type: 'compensation' },
+        });
+      if (escrow.status === 'compensated') {
+        if (!existingIncomeTx || !existingCompensationTx) {
+          throw new BadRequestException({
+            error: 'SETTLEMENT_STATE_INCONSISTENT',
+            message:
+              'Compensated escrow is missing an income or compensation ledger',
+          });
+        }
+        return this.toResult(escrow);
+      }
       if (escrow.status !== 'locked') {
         throw new BadRequestException({
           error: 'ESCROW_INVALID_STATUS',
@@ -387,10 +435,13 @@ export class EscrowService implements IEscrowService {
         });
       }
 
-      const existingLenderTx = await client.lenderWalletTransaction.findFirst({
-        where: { rental_order_id: orderId, type: 'compensation' },
-      });
-      if (existingLenderTx) return this.toResult(escrow);
+      if (existingIncomeTx || existingCompensationTx) {
+        throw new BadRequestException({
+          error: 'SETTLEMENT_STATE_INCONSISTENT',
+          message:
+            'A lender settlement ledger exists while escrow is still locked; manual reconciliation is required',
+        });
+      }
 
       const lenderIncome =
         order.lender_income.toNumber() > 0

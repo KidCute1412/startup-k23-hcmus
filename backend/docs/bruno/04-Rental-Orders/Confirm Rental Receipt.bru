@@ -5,7 +5,23 @@ meta {
 }
 
 patch {
-  url: {{baseUrl}}/rental-orders/80000000-0000-0000-0000-000000000004/confirm-receipt
+  url: {{baseUrl}}/rental-orders/{{rentalOrderId}}/confirm-receipt
   body: none
   auth: inherit
+}
+
+headers {
+  Origin: http://localhost:3000
+}
+
+tests {
+  test("renter confirms receipt", function() {
+    expect(res.getStatus()).to.equal(200);
+    expect(res.getBody().data.status).to.equal("active");
+  });
+}
+
+docs {
+  # Prerequisite
+  Switch to the renter session after lender ships the order (`delivering`).
 }

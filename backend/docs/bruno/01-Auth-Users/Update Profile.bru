@@ -1,0 +1,32 @@
+meta {
+  name: Update Profile
+  type: http
+  seq: 6
+}
+
+patch {
+  url: {{baseUrl}}/users/me
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "fullName": "Mutux Account Demo",
+    "phone": "0908123456",
+    "dob": "1999-05-15",
+    "bio": "Gaming gear enthusiast"
+  }
+}
+
+headers {
+  Origin: http://localhost:3000
+}
+
+tests {
+  test("updates profile without exposing secrets", function() {
+    expect(res.status).to.equal(200);
+    expect(res.body.data.fullName).to.equal("Mutux Account Demo");
+    expect(res.body.data).not.to.include.keys("password_hash", "hashedRefreshToken");
+  });
+}

@@ -34,7 +34,14 @@ describe('ResolveDisputeDto', () => {
       },
       1,
     ],
-    [{ resolutionType: 'no_action' }, 2],
+    [{ resolutionType: ResolutionType.no_action }, 0],
+    [
+      {
+        resolutionType: ResolutionType.no_action,
+        deductAmount: 1,
+      },
+      1,
+    ],
   ])(
     'validates conditional deduction rules for %o',
     async (body, errorCount) => {

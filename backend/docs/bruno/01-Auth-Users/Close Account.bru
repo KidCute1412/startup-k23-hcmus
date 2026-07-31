@@ -1,0 +1,25 @@
+meta {
+  name: Close Account
+  type: http
+  seq: 12
+}
+
+delete {
+  url: {{baseUrl}}/users/me
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "password": "SecurePassword123"
+  }
+}
+
+headers {
+  Origin: http://localhost:3000
+}
+
+docs {
+  This request permanently disables the current login session. Run it only with a disposable account after completing the other account requests.
+}

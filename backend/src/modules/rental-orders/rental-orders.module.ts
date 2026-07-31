@@ -6,11 +6,17 @@ import { RentalOrdersService } from './rental-orders.service';
 import { MediaModule } from '../media/media.module';
 import { RentalProofsController } from './rental-proofs.controller';
 import { RentalProofsService } from './rental-proofs.service';
+import { RentalOrderOrchestrationService } from './rental-order-orchestration.service';
 
 @Module({
   imports: [EscrowModule, MediaModule],
   controllers: [RentalOrdersController, RentalProofsController],
-  providers: [RentalOrdersService, RentalOrdersRepository, RentalProofsService],
+  providers: [
+    RentalOrdersService,
+    RentalOrdersRepository,
+    RentalProofsService,
+    RentalOrderOrchestrationService,
+  ],
   exports: [RentalOrdersService],
 })
 export class RentalOrdersModule {}

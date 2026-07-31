@@ -9,6 +9,15 @@ interface FindRentalOrdersOptions {
   status?: OrderStatusType;
 }
 
+export const BLOCKING_ORDER_STATUSES: readonly OrderStatusType[] = [
+  OrderStatusType.pending_confirm,
+  OrderStatusType.confirmed,
+  OrderStatusType.delivering,
+  OrderStatusType.active,
+  OrderStatusType.returning,
+  OrderStatusType.disputed,
+] as const;
+
 @Injectable()
 export class RentalOrdersRepository {
   constructor(private readonly prisma: PrismaService) {}
@@ -26,7 +35,7 @@ export class RentalOrdersRepository {
       where: {
         gear_id: gearId,
         status: {
-          notIn: [OrderStatusType.cancelled, OrderStatusType.completed],
+          in: [...BLOCKING_ORDER_STATUSES],
         },
         start_date: { lt: endDate },
         end_date: { gt: startDate },
@@ -133,19 +142,5 @@ export class RentalOrdersRepository {
       where: { rental_order_id: rentalOrderId },
       orderBy: [{ uploaded_at: 'asc' }, { id: 'asc' }],
     });
-  }
-
-  async transition(
-    id: string,
-    expectedStatus: OrderStatusType,
-    data: Prisma.RentalOrderUpdateManyMutationInput,
-  ) {
-    const result = await this.prisma.rentalOrder.updateMany({
-      where: { id, status: expectedStatus },
-      data,
-    });
-
-    if (result.count !== 1) return null;
-    return this.findById(id);
   }
 }

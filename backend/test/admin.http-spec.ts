@@ -14,6 +14,7 @@ describe('Admin and lender management routes (HTTP)', () => {
     user: {
       findMany: jest.fn().mockResolvedValue([]),
       count: jest.fn().mockResolvedValue(0),
+      findUnique: jest.fn().mockResolvedValue({ is_active: true }),
     },
     gear: {
       findMany: jest.fn().mockResolvedValue([]),

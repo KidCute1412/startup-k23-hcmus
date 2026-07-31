@@ -9,3 +9,11 @@ get {
   body: none
   auth: inherit
 }
+
+tests {
+  test("returns a safe camelCase account profile", function() {
+    expect(res.status).to.equal(200);
+    expect(res.body.data).to.include.keys("id", "email", "fullName", "kycStatus");
+    expect(res.body.data).not.to.include.keys("password_hash", "hashedRefreshToken", "full_name");
+  });
+}

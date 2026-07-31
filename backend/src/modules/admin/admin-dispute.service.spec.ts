@@ -147,6 +147,7 @@ describe('AdminService — resolveDispute', () => {
 
   it.each([
     [ResolutionType.refund, undefined, 'release'],
+    [ResolutionType.no_action, undefined, 'release'],
     [ResolutionType.deposit_deduct, 500, 'compensate'],
   ] as const)(
     'uses the correct escrow operation for %s and completes the order',
@@ -163,7 +164,9 @@ describe('AdminService — resolveDispute', () => {
         status: DisputeStatusType.resolved,
         resolutionType,
         deductAmount:
-          resolutionType === ResolutionType.refund ? null : deductAmount,
+          resolutionType === ResolutionType.deposit_deduct
+            ? deductAmount
+            : null,
       });
       expect(escrowService[method]).toHaveBeenCalled();
       expect(mockTx.rentalOrder.update).toHaveBeenCalledWith({
@@ -177,7 +180,9 @@ describe('AdminService — resolveDispute', () => {
           resolved_by: adminId,
           resolution_type: resolutionType,
           deduct_amount:
-            resolutionType === ResolutionType.refund ? null : deductAmount,
+            resolutionType === ResolutionType.deposit_deduct
+              ? deductAmount
+              : null,
         }),
       });
     },

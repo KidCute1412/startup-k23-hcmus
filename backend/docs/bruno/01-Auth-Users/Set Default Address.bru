@@ -1,0 +1,15 @@
+meta {
+  name: Set Default Address
+  type: http
+  seq: 10
+}
+
+patch {
+  url: {{baseUrl}}/users/me/addresses/{{addressId}}/default
+  body: none
+  auth: inherit
+}
+
+headers {
+  Origin: http://localhost:3000
+}

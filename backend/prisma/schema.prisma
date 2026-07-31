@@ -285,9 +285,13 @@ model User {
   password_hash      String        @db.VarChar(255)
   hashedRefreshToken String?       @map("hashed_refresh_token")
   full_name          String?       @db.VarChar(255)
+  dob                DateTime?     @db.Date
   cccd               String?       @db.VarChar(20)
   avatar_url         String?
   bio                String?
+  kyc_front_card_url String?
+  kyc_back_card_url  String?
+  kyc_portrait_url   String?
   rating             Float         @default(0)
   address            String?
   total_reviews      Int           @default(0)
@@ -328,8 +332,28 @@ model User {
   credit_limit_requests   CreditLimitRequest[] @relation("CreditLimitApplicant")
   credit_limit_reviews    CreditLimitRequest[] @relation("CreditLimitReviewer")
   cart                    Cart?
+  addresses               UserAddress[]
 
   @@map("users")
+}
+
+model UserAddress {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id        String   @db.Uuid
+  receiver_name  String   @db.VarChar(255)
+  phone          String   @db.VarChar(20)
+  detail_address String
+  ward           String   @db.VarChar(255)
+  district       String   @db.VarChar(255)
+  province       String   @db.VarChar(255)
+  is_default     Boolean  @default(false)
+  created_at     DateTime @default(now())
+  updated_at     DateTime @default(now()) @updatedAt
+
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([user_id], name: "idx_user_addresses_user_id")
+  @@map("user_addresses")
 }
 
 model GearCategory {

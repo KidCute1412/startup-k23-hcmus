@@ -49,6 +49,9 @@ describe('AdminService', () => {
     email: 'user@example.com',
     full_name: 'User',
     cccd: '012345678912',
+    kyc_front_card_url: '/uploads/user-id/front.jpg',
+    kyc_back_card_url: '/uploads/user-id/back.jpg',
+    kyc_portrait_url: '/uploads/user-id/portrait.jpg',
     role: UserRole.renter,
     kyc_status: KycStatusType.pending,
     kyc_rejection_reason: null,
@@ -109,7 +112,13 @@ describe('AdminService', () => {
     });
     expect(userModel.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
-        where: { kyc_status: KycStatusType.pending },
+        where: {
+          kyc_status: KycStatusType.pending,
+          cccd: { not: null },
+          kyc_front_card_url: { not: null },
+          kyc_back_card_url: { not: null },
+          kyc_portrait_url: { not: null },
+        },
         skip: 5,
         take: 5,
       }),

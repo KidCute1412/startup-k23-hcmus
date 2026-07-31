@@ -21,6 +21,7 @@ import { EscrowService } from '../src/modules/escrow/escrow.service';
 import { RentalOrdersController } from '../src/modules/rental-orders/rental-orders.controller';
 import { RentalOrdersRepository } from '../src/modules/rental-orders/rental-orders.repository';
 import { RentalOrdersService } from '../src/modules/rental-orders/rental-orders.service';
+import { RentalOrderOrchestrationService } from '../src/modules/rental-orders/rental-order-orchestration.service';
 
 describe('RentalOrdersController (HTTP)', () => {
   let app: INestApplication<App>;
@@ -99,6 +100,9 @@ describe('RentalOrdersController (HTTP)', () => {
           return Promise.resolve({ ...txOrder });
         }),
       },
+      rentalProof: {
+        findFirst: jest.fn().mockResolvedValue({ id: 'proof-id' }),
+      },
     };
     prismaService = {
       $transaction: jest
@@ -110,6 +114,7 @@ describe('RentalOrdersController (HTTP)', () => {
       controllers: [RentalOrdersController],
       providers: [
         RentalOrdersService,
+        RentalOrderOrchestrationService,
         { provide: PrismaService, useValue: prismaService },
         { provide: RentalOrdersRepository, useValue: repository },
         { provide: EscrowService, useValue: escrowService },
@@ -126,6 +131,15 @@ describe('RentalOrdersController (HTTP)', () => {
         },
       })
       .compile();
+    const orchestration = moduleFixture.get(RentalOrderOrchestrationService);
+    jest
+      .spyOn(
+        orchestration as unknown as {
+          assertRequiredProofs: (...args: unknown[]) => Promise<void>;
+        },
+        'assertRequiredProofs',
+      )
+      .mockResolvedValue(undefined);
 
     app = moduleFixture.createNestApplication();
     app.setGlobalPrefix('api/v1');
@@ -146,8 +160,8 @@ describe('RentalOrdersController (HTTP)', () => {
       .post('/api/v1/rental-orders')
       .send({
         gearId: '30000000-0000-0000-0000-000000000001',
-        startDate: '2026-08-01',
-        endDate: '2026-08-06',
+        startDate: '2099-08-01',
+        endDate: '2099-08-06',
         depositType: 'credit_line',
         shippingAddress: '123 Nguyen Hue, District 1, HCMC',
         shippingName: 'Nguyen Van A',

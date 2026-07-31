@@ -1,26 +1,23 @@
+import type { Metadata } from "next";
+import { AccountView } from "@/features/account/account-view";
 
-import { ProfileOverview } from "@/features/account/profile-overview";
-import { AddressList } from "@/features/account/address-list";
+export const metadata: Metadata = {
+  title: "Tài khoản cá nhân | Mutux Gaming Gear",
+  description: "Quản lý hồ sơ cá nhân, xác minh KYC, bảo mật và sổ địa chỉ nhận hàng Mutux.",
+};
 
 export default function AccountPage() {
   return (
-    <section className="mx-auto max-w-5xl px-4 py-10 sm:px-6">
-      <div className="mb-6">
+    <section className="mx-auto max-w-5xl px-4 py-8 sm:px-6 sm:py-10">
+      <div className="mb-6 flex flex-col gap-1">
         <p className="font-display text-xs font-semibold uppercase tracking-widest text-vanguard-primary">
-          Tổng quan tài khoản
+          Vanguard Account Dashboard
         </p>
-        <h1 className="mt-2 font-display text-4xl font-bold">Tài khoản cá nhân</h1>
+        <h1 className="font-display text-3xl font-bold tracking-tight sm:text-4xl">
+          Tài Khoản Cá Nhân
+        </h1>
       </div>
-
-
-
-      <div className="space-y-8">
-        {/* Profile & KYC Section */}
-        <ProfileOverview />
-
-        {/* Address Book Section */}
-        <AddressList />
-      </div>
+      <AccountView />
     </section>
   );
 }

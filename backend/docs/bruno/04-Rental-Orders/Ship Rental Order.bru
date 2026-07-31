@@ -5,7 +5,25 @@ meta {
 }
 
 patch {
-  url: {{baseUrl}}/rental-orders/80000000-0000-0000-0000-000000000004/ship
+  url: {{baseUrl}}/rental-orders/{{rentalOrderId}}/ship
   body: none
   auth: inherit
+}
+
+headers {
+  Origin: http://localhost:3000
+}
+
+tests {
+  test("ships only after pre_shipment proof", function() {
+    expect(res.getStatus()).to.equal(200);
+    expect(res.getBody().data.status).to.equal("delivering");
+  });
+}
+
+docs {
+  # Prerequisite
+  Run as lender after `Confirm Rental Order`, upload media, then create a `pre_shipment` proof for `rentalOrderId`.
+
+  Without that proof this request returns `400 PROOF_REQUIRED` and keeps the order `confirmed`.
 }

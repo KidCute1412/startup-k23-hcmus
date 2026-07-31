@@ -13,15 +13,33 @@ erDiagram
         string    password_hash
         string    hashed_refresh_token
         string    full_name
+        date      dob
         string    cccd
         string    avatar_url
         text      bio
+        text      kyc_front_card_url
+        text      kyc_back_card_url
+        text      kyc_portrait_url
         float     rating
         text      address
         int       total_reviews
         string    role
         string    kyc_status
         boolean   is_active
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    user_addresses {
+        uuid      id PK
+        uuid      user_id FK
+        string    receiver_name
+        string    phone
+        text      detail_address
+        string    ward
+        string    district
+        string    province
+        boolean   is_default
         timestamp created_at
         timestamp updated_at
     }
@@ -352,6 +370,7 @@ erDiagram
 
     %% RELATIONSHIPS
     users ||--o{ bank_accounts : owns
+    users ||--o{ user_addresses : owns
     bank_accounts ||--o{ withdrawals : receives
     users ||--o| mutux_wallets : holds
     users ||--o| renter_wallets : owns
@@ -408,6 +427,7 @@ erDiagram
 | Prisma model | Database table |
 |---|---|
 | `User` | `users` |
+| `UserAddress` | `user_addresses` |
 | `GearCategory` | `gear_categories` |
 | `Gear` | `gears` |
 | `GearPriceHistory` | `gear_price_history` |
@@ -461,6 +481,7 @@ erDiagram
 | Table | Constraint/index |
 |---|---|
 | `users` | `email` unique |
+| `user_addresses` | index `user_id`; partial unique index plus application transaction enforce one default per user |
 | `gear_categories` | `slug` unique |
 | `gears` | index `lender_id`, `category_id`, `status` |
 | `mutux_wallets` | `user_id` unique |

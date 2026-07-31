@@ -62,7 +62,11 @@ async function request<T>(
   retryAfterRefresh: boolean,
 ): Promise<ApiSuccess<T>> {
   const headers = new Headers(init.headers);
-  if (init.body && !headers.has("Content-Type")) headers.set("Content-Type", "application/json");
+  const isFormData =
+    typeof FormData !== "undefined" && init.body instanceof FormData;
+  if (init.body && !isFormData && !headers.has("Content-Type")) {
+    headers.set("Content-Type", "application/json");
+  }
   const response = await fetch(`${API_URL}${path}`, { ...init, headers, credentials: "include" });
   const shouldRefresh = retryAfterRefresh && path !== "/auth/login";
   if (response.status === 401 && shouldRefresh && (await refreshSession())) {
