@@ -37,6 +37,61 @@ const kycUserSelect = {
   credit_consent_accepted_at: true,
 } satisfies Prisma.UserSelect;
 
+interface DisputeEvidencePayload {
+  id: string;
+  uploaded_by: string;
+  media_type: string;
+  url: string;
+  uploaded_at: Date;
+}
+
+interface DisputeRentalUserPayload {
+  id: string;
+  full_name: string | null;
+  email: string;
+  avatar_url: string | null;
+  phone: string | null;
+}
+
+interface DisputeMediaPayload {
+  url: string;
+}
+
+interface DisputeGearPayload {
+  id: string;
+  name: string;
+  media?: DisputeMediaPayload[];
+}
+
+interface DisputeRentalOrderPayload {
+  id: string;
+  order_code: string;
+  status: OrderStatusType;
+  deposit_amount: Prisma.Decimal | number;
+  rental_fee?: Prisma.Decimal | number;
+  renter?: DisputeRentalUserPayload | null;
+  lender?: DisputeRentalUserPayload | null;
+  gear?: DisputeGearPayload | null;
+}
+
+interface DisputePayload {
+  id: string;
+  rental_order_id: string;
+  reported_by: string;
+  reporter_role: string;
+  reason: string;
+  description?: string | null;
+  status: DisputeStatusType;
+  resolved_by?: string | null;
+  resolution_note?: string | null;
+  resolution_type?: string | null;
+  deduct_amount?: Prisma.Decimal | number | null;
+  created_at: Date;
+  resolved_at?: Date | null;
+  evidences?: DisputeEvidencePayload[];
+  rental_order?: DisputeRentalOrderPayload | null;
+}
+
 @Injectable()
 export class AdminService {
   private readonly logger = new Logger(AdminService.name);
@@ -443,7 +498,7 @@ export class AdminService {
     });
   }
 
-  private toApiDispute(dispute: any) {
+  private toApiDispute(dispute: DisputePayload) {
     return {
       id: dispute.id,
       rentalOrderId: dispute.rental_order_id,
@@ -463,7 +518,7 @@ export class AdminService {
       createdAt: dispute.created_at,
       resolvedAt: dispute.resolved_at,
       evidences: dispute.evidences
-        ? dispute.evidences.map((e: any) => ({
+        ? dispute.evidences.map((e: DisputeEvidencePayload) => ({
             id: e.id,
             uploadedBy: e.uploaded_by,
             mediaType: e.media_type,
@@ -484,9 +539,9 @@ export class AdminService {
             totalRentFee: dispute.rental_order.rental_fee
               ? typeof dispute.rental_order.rental_fee === 'number'
                 ? dispute.rental_order.rental_fee
-                : (dispute.rental_order.rental_fee as any).toNumber
-                ? (dispute.rental_order.rental_fee as any).toNumber()
-                : Number(dispute.rental_order.rental_fee)
+                : typeof dispute.rental_order.rental_fee.toNumber === 'function'
+                  ? dispute.rental_order.rental_fee.toNumber()
+                  : Number(dispute.rental_order.rental_fee)
               : 0,
             renter: dispute.rental_order.renter
               ? {
@@ -511,7 +566,9 @@ export class AdminService {
                   id: dispute.rental_order.gear.id,
                   name: dispute.rental_order.gear.name,
                   mediaUrls: dispute.rental_order.gear.media
-                    ? dispute.rental_order.gear.media.map((m: any) => m.url)
+                    ? dispute.rental_order.gear.media.map(
+                        (m: DisputeMediaPayload) => m.url,
+                      )
                     : [],
                 }
               : undefined,
