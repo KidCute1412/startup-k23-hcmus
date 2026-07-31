@@ -39,6 +39,9 @@ export interface TopupCompletion {
 
 export interface RenterWallet {
   id: string;
+  availableBalance: number;
+  currency: 'VND';
+  status: string;
   user_id?: string;
   userId?: string;
   balance: number | string;
@@ -55,6 +58,7 @@ export interface LenderWallet {
   userId?: string;
   balance: number | string;
   total_withdrawn?: number | string;
+  totalWithdrawn?: number | string;
   frozenBalance?: number;
   status?: string;
   isActive?: boolean;

@@ -7,6 +7,8 @@ Required environment variables:
 - `baseUrl`: API base URL, for example `http://localhost:8080/api/v1`.
 - Login first so Bruno's cookie jar holds the renter session cookies. The collection sends the local frontend `Origin` header.
 - `PAYOS_WEBHOOK_SECRET`: must match backend `PAYOS_WEBHOOK_SECRET`. If omitted, request 04 uses `test-secret`. Webhooks sign the deterministic, recursively key-sorted JSON and send the HMAC via `x-payos-signature`.
+- Requests 07-09 require a lender session. Set `insufficientCashOrderId`, `insufficientCreditOrderId`, and `invalidEscrowReturnOrderId` to fixtures in the stated precondition.
+- Request 10 requires an admin session. Set `excessDeductionDisputeId` and `excessDeductionAmount` (strictly greater than that dispute escrow amount).
 
 Flow:
 

@@ -5,7 +5,7 @@ export interface RentalOrder {
   lenderId: string;
   renter_id?: string;
   lender_id?: string;
-  status: 'pending' | 'confirmed' | 'shipped' | 'active' | 'returning' | 'completed' | 'cancelled' | 'disputed';
+  status: 'pending_confirm' | 'confirmed' | 'delivering' | 'active' | 'returning' | 'completed' | 'cancelled' | 'disputed';
   startDate: string;
   endDate: string;
   rentPrice: number;

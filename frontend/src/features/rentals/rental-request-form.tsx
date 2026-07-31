@@ -20,7 +20,7 @@ type RentalRequestFormProps = {
 
 export function RentalRequestForm({ items }: RentalRequestFormProps) {
   const { checkout, mutating: isCreating } = useCart();
-  const { renterWallet, fetchRenterWallet } = useWallet();
+  const { renterWallet, creditLine, fetchRenterWallet, fetchCreditLine } = useWallet();
   const router = useRouter();
 
   const [draft, setDraft] = useState<Omit<RentalRequestDraft, "gearId" | "startDate" | "endDate">>({
@@ -34,28 +34,32 @@ export function RentalRequestForm({ items }: RentalRequestFormProps) {
   const [insufficientError, setInsufficientError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetchRenterWallet().catch(console.error);
-  }, [fetchRenterWallet]);
+    Promise.allSettled([fetchRenterWallet(), fetchCreditLine()]).catch(console.error);
+  }, [fetchCreditLine, fetchRenterWallet]);
 
   // Compute total required amount (rental total + traditional deposit)
-  const { totalRentalAmount, totalDepositAmount, totalRequired } = useMemo(() => {
+  const { totalRentalAmount, totalDepositAmount } = useMemo(() => {
     let rentalSum = 0;
     let depositSum = 0;
     for (const item of items) {
       rentalSum += item.rentalFee;
       depositSum += item.depositAmount;
     }
-    const required = draft.depositType === "traditional" ? rentalSum + depositSum : rentalSum;
     return {
       totalRentalAmount: rentalSum,
       totalDepositAmount: depositSum,
-      totalRequired: required,
     };
-  }, [items, draft.depositType]);
+  }, [items]);
 
-  const rawBalance = renterWallet?.balance ?? 0;
+  const rawBalance = renterWallet?.availableBalance ?? renterWallet?.balance ?? 0;
   const currentBalance = typeof rawBalance === "string" ? parseFloat(rawBalance) : rawBalance;
-  const isBalanceSufficient = currentBalance >= totalRequired;
+  const availableCredit = creditLine?.displayBalance ?? 0;
+  const cashRequired = draft.depositType === "traditional"
+    ? totalRentalAmount + totalDepositAmount
+    : totalRentalAmount;
+  const isBalanceSufficient = currentBalance >= cashRequired;
+  const isCreditSufficient = draft.depositType !== "credit_line" || availableCredit >= totalDepositAmount;
+  const isFinanciallyReady = isBalanceSufficient && isCreditSufficient;
 
   const canSubmit = useMemo(
     () =>
@@ -78,21 +82,28 @@ export function RentalRequestForm({ items }: RentalRequestFormProps) {
             </div>
           </div>
 
-          {!isBalanceSufficient && (
+          {!isFinanciallyReady && (
             <div className="mb-6 rounded-v-sm border border-amber-500/40 bg-amber-500/10 p-4 text-amber-800 dark:text-amber-200">
               <div className="flex items-start gap-3">
                 <AlertCircle size={20} className="mt-0.5 text-amber-500 shrink-0" />
                 <div className="flex-1 text-sm">
                   <p className="font-bold">Ví Mutux của bạn chưa đủ số dư để hoàn tất đơn thuê này!</p>
                   <p className="mt-1 text-xs text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted">
-                    Tổng cần thanh toán: <span className="font-bold">{formatCurrency(totalRequired)}</span> — Số dư hiện tại: <span className="font-bold text-vanguard-primary">{formatCurrency(currentBalance)}</span>.
+                    Cần {formatCurrency(cashRequired)} từ ví tiêu dùng
+                    {draft.depositType === "credit_line" && ` và ${formatCurrency(totalDepositAmount)} hạn mức khả dụng`}.
+                    {" "}Hiện có {formatCurrency(currentBalance)} trong ví
+                    {draft.depositType === "credit_line" && ` và ${formatCurrency(availableCredit)} hạn mức`}.
                   </p>
                   <button
                     type="button"
-                    onClick={() => setIsQuickTopupOpen(true)}
+                    onClick={() => {
+                      if (!isBalanceSufficient) setIsQuickTopupOpen(true);
+                      else router.push("/wallet");
+                    }}
                     className="mt-3 inline-flex items-center gap-1.5 rounded-v-sm bg-vanguard-primary px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-vanguard-dark-bg hover:opacity-90 transition"
                   >
-                    <WalletCards size={14} /> Nạp tiền ngay qua PayOS
+                    <WalletCards size={14} />
+                    {!isBalanceSufficient ? "Nạp tiền ngay qua PayOS" : "Quản lý hạn mức Mutux"}
                   </button>
                 </div>
               </div>
@@ -111,11 +122,6 @@ export function RentalRequestForm({ items }: RentalRequestFormProps) {
               event.preventDefault();
               if (!canSubmit) return;
               setInsufficientError(null);
-
-              if (!isBalanceSufficient) {
-                setIsQuickTopupOpen(true);
-                return;
-              }
 
               try {
                 await checkout({
@@ -157,6 +163,27 @@ export function RentalRequestForm({ items }: RentalRequestFormProps) {
                     className="accent-vanguard-primary"
                   />
                   Cọc tiền mặt (Ví ảo)
+                </label>
+                <label
+                  key="credit_line"
+                  className="flex cursor-pointer items-center gap-3 rounded-v-sm border border-vanguard-light-border p-4 text-sm dark:border-vanguard-dark-border"
+                >
+                  <input
+                    type="radio"
+                    name="depositType"
+                    value="credit_line"
+                    checked={draft.depositType === "credit_line"}
+                    disabled={!creditLine?.granted}
+                    onChange={() =>
+                      setDraft((current) => ({
+                        ...current,
+                        depositType: "credit_line",
+                      }))
+                    }
+                    className="accent-vanguard-primary"
+                  />
+                  Cọc bằng hạn mức Mutux
+                  {!creditLine?.granted && <span className="text-xs text-vanguard-light-textMuted">(chưa được cấp)</span>}
                 </label>
               </div>
             </fieldset>
@@ -230,11 +257,11 @@ export function RentalRequestForm({ items }: RentalRequestFormProps) {
 
       <QuickTopupModal
         isOpen={isQuickTopupOpen}
-        requiredAmount={totalRequired}
+        requiredAmount={cashRequired}
         currentBalance={currentBalance}
         onClose={() => setIsQuickTopupOpen(false)}
         onSuccess={() => {
-          fetchRenterWallet().catch(console.error);
+          Promise.allSettled([fetchRenterWallet(), fetchCreditLine()]).catch(console.error);
           setInsufficientError(null);
         }}
       />

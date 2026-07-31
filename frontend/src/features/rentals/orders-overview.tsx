@@ -11,13 +11,12 @@ import type { RentalOrder } from "@/types/rentals";
 import { resolveMediaUrl } from "@/lib/media";
 import { SubmitDisputeModal } from "./submit-dispute-modal";
 
-export type OrderStatusType = RentalOrder['status'] | 'disputed';
+export type OrderStatusType = RentalOrder['status'];
 
-export const statusConfig: Record<OrderStatusType | 'pending_confirm', { label: string; tone: "gold" | "muted" | "destructive" }> = {
-  pending: { label: "Chờ xác nhận", tone: "gold" },
+export const statusConfig: Record<OrderStatusType, { label: string; tone: "gold" | "muted" | "destructive" }> = {
   pending_confirm: { label: "Chờ xác nhận", tone: "gold" },
   confirmed: { label: "Đã xác nhận", tone: "gold" },
-  shipped: { label: "Đang giao hàng", tone: "gold" },
+  delivering: { label: "Đang giao hàng", tone: "gold" },
   active: { label: "Đang thuê", tone: "gold" },
   returning: { label: "Đang trả hàng", tone: "gold" },
   completed: { label: "Đã hoàn tất", tone: "muted" },
@@ -45,7 +44,7 @@ export function OrdersOverview() {
   const filterTabs = [
     { id: "all", label: "Tất cả đơn" },
     { id: "active", label: "Đang thuê" },
-    { id: "pending", label: "Chờ xác nhận" },
+    { id: "pending_confirm", label: "Chờ xác nhận" },
     { id: "completed", label: "Đã hoàn tất" },
     { id: "cancelled", label: "Đã hủy" },
   ];
@@ -107,7 +106,7 @@ export function OrdersOverview() {
           </div>
         )}
         {!isLoading && filteredOrders.map((order) => {
-          const config = statusConfig[order.status] || statusConfig.pending;
+          const config = statusConfig[order.status] || statusConfig.pending_confirm;
           const gearImage = resolveMediaUrl(order.gear?.media?.[0]?.url);
           const gearTitle = order.gear?.name || "Sản phẩm chưa rõ";
           const code = order.id.slice(0, 8).toUpperCase();

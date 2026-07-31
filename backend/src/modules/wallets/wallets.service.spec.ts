@@ -69,6 +69,26 @@ describe('WalletsService', () => {
     service = new WalletsService(prisma as unknown as PrismaService);
   });
 
+  it('subtracts locked_balance from total balance for availableBalance in getRenter', async () => {
+    prisma.renterWallet.upsert.mockResolvedValue({
+      id: walletId,
+      user_id: userId,
+      balance: new Prisma.Decimal(5000000),
+      locked_balance: new Prisma.Decimal(3000000),
+      status: 'active',
+      transactions: [],
+    });
+
+    const result = await service.getRenter(userId);
+
+    expect(result).toMatchObject({
+      id: walletId,
+      userId,
+      availableBalance: 2000000,
+      lockedBalance: 3000000,
+    });
+  });
+
   it('rejects checkout amount = 0 with validation error', async () => {
     await expect(service.checkout(userId, 0, 'payos')).rejects.toMatchObject({
       status: 400,

@@ -55,10 +55,10 @@ export function WalletOverview() {
     return <WalletState title="Ví không áp dụng cho quản trị viên" message="Tài khoản admin không sử dụng ví tiêu dùng của renter hoặc ví doanh thu của lender." />;
   }
 
-  const renterBalance = toAmount(wallet.renterWallet?.balance);
+  const renterBalance = toAmount(wallet.renterWallet?.availableBalance ?? wallet.renterWallet?.balance);
   const lockedBalance = toAmount(wallet.renterWallet?.locked_balance ?? wallet.renterWallet?.lockedBalance);
   const lenderBalance = toAmount(wallet.lenderWallet?.balance);
-  const totalWithdrawn = toAmount(wallet.lenderWallet?.total_withdrawn);
+  const totalWithdrawn = toAmount(wallet.lenderWallet?.totalWithdrawn ?? wallet.lenderWallet?.total_withdrawn);
   const creditLimit = toAmount(wallet.creditLine?.totalLimit);
   const availableCredit = toAmount(wallet.creditLine?.displayBalance);
 
@@ -166,7 +166,7 @@ function TransactionHistory({ transactions, loading, lender }: { transactions: W
       ) : (
         <div className="divide-y divide-vanguard-light-border dark:divide-vanguard-dark-border">
           {transactions.map((transaction) => {
-            const outgoing = transaction.type === "withdrawal" || transaction.type === "withdraw" || transaction.type.includes("lock");
+            const outgoing = ["withdrawal", "withdraw", "rental_fee", "compensation", "credit_debt_repay"].includes(transaction.type) || transaction.type.includes("lock");
             const createdAt = transaction.created_at ?? transaction.createdAt;
             return (
               <article key={transaction.id} className="flex flex-col gap-2 p-4 sm:flex-row sm:items-center sm:justify-between">

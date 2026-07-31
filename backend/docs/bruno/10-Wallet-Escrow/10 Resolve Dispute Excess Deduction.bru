@@ -1,0 +1,26 @@
+meta {
+  name: Resolve Dispute Excess Deduction
+  type: http
+  seq: 10
+}
+
+post {
+  url: {{baseUrl}}/admin/disputes/{{excessDeductionDisputeId}}/resolve
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "resolutionType": "deposit_deduct",
+    "deductAmount": {{excessDeductionAmount}},
+    "adminNote": "Bruno escrow boundary verification"
+  }
+}
+
+tests {
+  test("rejects a deduction larger than the escrow", function() {
+    expect(res.status).to.equal(400);
+    expect(res.body.error.code).to.equal("DEDUCT_EXCEEDS_DEPOSIT");
+  });
+}

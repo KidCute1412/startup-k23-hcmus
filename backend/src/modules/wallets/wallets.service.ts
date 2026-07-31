@@ -16,7 +16,7 @@ export class WalletsService {
   constructor(private readonly prisma: PrismaService) {}
 
   async getRenter(userId: string) {
-    return this.prisma.renterWallet.upsert({
+    const wallet = await this.prisma.renterWallet.upsert({
       where: { user_id: userId },
       create: { user_id: userId },
       update: {},
@@ -27,6 +27,26 @@ export class WalletsService {
         },
       },
     });
+    const balance = wallet.balance ?? new Prisma.Decimal(0);
+    const lockedBalance = wallet.locked_balance ?? new Prisma.Decimal(0);
+    return {
+      id: wallet.id,
+      userId: wallet.user_id,
+      availableBalance: balance.minus(lockedBalance).toNumber(),
+      lockedBalance: lockedBalance.toNumber(),
+      currency: 'VND',
+      status: wallet.status,
+      transactions: (wallet.transactions ?? []).map((transaction) => ({
+        id: transaction.id,
+        walletId: transaction.wallet_id,
+        type: transaction.type,
+        amount: transaction.amount.toNumber(),
+        balanceBefore: transaction.balance_before.toNumber(),
+        balanceAfter: transaction.balance_after.toNumber(),
+        reference: transaction.reference,
+        createdAt: transaction.created_at,
+      })),
+    };
   }
 
   async getMutux(userId: string) {
@@ -160,11 +180,23 @@ export class WalletsService {
     ]);
 
     return {
-      balance: wallet.balance,
-      totalWithdrawn: wallet.total_withdrawn,
+      id: wallet.id,
+      userId: wallet.lender_id,
+      balance: wallet.balance.toNumber(),
+      totalWithdrawn: wallet.total_withdrawn.toNumber(),
       status: wallet.status,
       transactions: {
-        data: transactions,
+        data: transactions.map((transaction) => ({
+          id: transaction.id,
+          walletId: transaction.lender_wallet_id,
+          rentalOrderId: transaction.rental_order_id,
+          type: transaction.type,
+          amount: transaction.amount.toNumber(),
+          balanceBefore: transaction.balance_before.toNumber(),
+          balanceAfter: transaction.balance_after.toNumber(),
+          note: transaction.note,
+          createdAt: transaction.created_at,
+        })),
         meta: {
           total,
           page,

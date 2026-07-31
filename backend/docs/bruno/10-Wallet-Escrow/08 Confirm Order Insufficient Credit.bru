@@ -1,0 +1,18 @@
+meta {
+  name: Confirm Order Insufficient Credit
+  type: http
+  seq: 8
+}
+
+patch {
+  url: {{baseUrl}}/rental-orders/{{insufficientCreditOrderId}}/confirm
+  body: none
+  auth: inherit
+}
+
+tests {
+  test("rejects confirmation when renter credit is insufficient", function() {
+    expect(res.status).to.equal(400);
+    expect(res.body.error.code).to.equal("INSUFFICIENT_CREDIT");
+  });
+}
