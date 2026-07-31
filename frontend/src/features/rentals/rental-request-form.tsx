@@ -9,19 +9,17 @@ import { Input, Textarea } from "@/components/ui/field";
 import { PricingSummary } from "./pricing-summary";
 import type { RentalRequestDraft } from "./types";
 import { useCart, type CartItem } from "@/features/cart/cart-context";
-import { useRentalOrder } from "@/hooks/useRentalOrder";
 import { useWallet } from "@/hooks/useWallet";
 import { useRouter } from "next/navigation";
 import { QuickTopupModal } from "@/features/wallet/quick-topup-modal";
-import { formatCurrency, rentalDays } from "@/lib/format";
+import { formatCurrency } from "@/lib/format";
 
 type RentalRequestFormProps = {
   items: CartItem[];
 };
 
 export function RentalRequestForm({ items }: RentalRequestFormProps) {
-  const { clearCart } = useCart();
-  const { createOrder, isLoading: isCreating } = useRentalOrder();
+  const { checkout, mutating: isCreating } = useCart();
   const { renterWallet, fetchRenterWallet } = useWallet();
   const router = useRouter();
 
@@ -44,14 +42,8 @@ export function RentalRequestForm({ items }: RentalRequestFormProps) {
     let rentalSum = 0;
     let depositSum = 0;
     for (const item of items) {
-      const days = rentalDays(item.startDate, item.endDate);
-      const validDays = days > 0 ? days : 1;
-      const gearPrice = (item.gear as any).pricePerDay ?? (item.gear as any).price_per_day ?? item.gear.pricing?.dailyPrice ?? 0;
-      const pricePerDay = typeof gearPrice === "string" ? parseFloat(gearPrice) : gearPrice;
-      const rawDeposit = (item.gear as any).depositValue ?? (item.gear as any).deposit_value ?? (draft.depositType === "traditional" ? item.gear.pricing?.depositCash : item.gear.pricing?.creditLineRequired) ?? 0;
-      const depositVal = typeof rawDeposit === "string" ? parseFloat(rawDeposit) : rawDeposit;
-      rentalSum += pricePerDay * validDays;
-      depositSum += depositVal;
+      rentalSum += item.rentalFee;
+      depositSum += item.depositAmount;
     }
     const required = draft.depositType === "traditional" ? rentalSum + depositSum : rentalSum;
     return {
@@ -126,19 +118,14 @@ export function RentalRequestForm({ items }: RentalRequestFormProps) {
               }
 
               try {
-                for (const item of items) {
-                  await createOrder({
-                    gearId: item.gear.id,
-                    startDate: item.startDate,
-                    endDate: item.endDate,
-                    depositType: draft.depositType as "traditional" | "credit_line",
-                    shippingName: draft.shippingName,
-                    shippingPhone: draft.shippingPhone,
-                    shippingAddress: draft.shippingAddress,
-                  });
-                }
+                await checkout({
+                  cartItemIds: items.map((item) => item.id),
+                  depositType: draft.depositType as "traditional" | "credit_line",
+                  shippingName: draft.shippingName,
+                  shippingPhone: draft.shippingPhone,
+                  shippingAddress: draft.shippingAddress,
+                });
                 setSubmitted(true);
-                clearCart();
                 alert("Tạo đơn thuê thành công!");
                 router.push("/orders");
               } catch (e: any) {

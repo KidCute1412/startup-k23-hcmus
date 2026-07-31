@@ -863,3 +863,8 @@ When a compensated credit-line deposit becomes debt, the renter repays the full
 `outstanding_debt` from the renter wallet. The operation locks both wallets,
 debits the renter wallet, restores the Mutux display balance, clears debt, and
 writes both ledgers in one transaction. Partial repayment is outside MVP.
+# Batch cart checkout clarification
+
+Batch checkout creates one independent `RentalOrder` per selected cart item in
+`pending_confirm`. It does not lock escrow; the existing escrow flow still
+starts only when the lender confirms each order.

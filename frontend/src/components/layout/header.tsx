@@ -67,7 +67,7 @@ export function Header() {
 
         <div className="flex items-center gap-2">
           <ThemeToggle />
-          <Link
+          {user?.role === "renter" ? <Link
             href="/cart"
             className="relative inline-flex size-10 items-center justify-center rounded-full text-vanguard-light-text transition-colors hover:bg-vanguard-light-surfDim dark:text-vanguard-dark-text dark:hover:bg-vanguard-dark-surfBright"
             aria-label="Giỏ hàng"
@@ -79,7 +79,7 @@ export function Header() {
                 {totalItems}
               </span>
             )}
-          </Link>
+          </Link> : null}
           {user?.role === "admin" && (
             <Link
               href="/admin/kyc"

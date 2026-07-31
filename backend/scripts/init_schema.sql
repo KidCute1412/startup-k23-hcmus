@@ -464,6 +464,27 @@ CREATE TABLE bank_accounts (
 -- INDEXES (performance)
 -- =============================================================
 
+CREATE TABLE carts (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    renter_id UUID NOT NULL UNIQUE REFERENCES users(id) ON DELETE CASCADE,
+    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+);
+CREATE TABLE cart_items (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    cart_id UUID NOT NULL REFERENCES carts(id) ON DELETE CASCADE,
+    gear_id UUID NOT NULL REFERENCES gears(id) ON DELETE CASCADE,
+    start_date DATE NOT NULL,
+    end_date DATE NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    UNIQUE (cart_id, gear_id),
+    CONSTRAINT cart_items_valid_period CHECK (start_date < end_date)
+);
+CREATE INDEX idx_cart_items_cart ON cart_items(cart_id);
+CREATE INDEX idx_cart_items_gear ON cart_items(gear_id);
+CREATE INDEX idx_cart_items_gear_period ON cart_items(gear_id, start_date, end_date);
+
 CREATE INDEX idx_gears_lender_id         ON gears(lender_id);
 CREATE INDEX idx_gears_category_id       ON gears(category_id);
 CREATE INDEX idx_gears_status            ON gears(status);

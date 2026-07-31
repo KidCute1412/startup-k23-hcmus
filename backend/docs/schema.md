@@ -529,3 +529,9 @@ Mutux wallet rows must satisfy:
 
 MVP configured tiers are 3, 5, and 10 million VND and `expired_at` is null.
 Legacy positive limits remain intact during migration.
+# Database cart
+
+`carts` has one row per renter (`renter_id` is unique). `cart_items` stores a
+date-only rental interval and enforces `start_date < end_date` and uniqueness
+of `(cart_id, gear_id)`. Cart deletion cascades items; gear deletion removes
+the related items. UI selection is not persisted.

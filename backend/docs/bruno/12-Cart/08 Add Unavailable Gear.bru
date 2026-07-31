@@ -1,0 +1,5 @@
+meta { name: Add Unavailable Gear type: http seq: 8 }
+put { url: {{baseUrl}}/cart/items/30000000-0000-0000-0000-000000000003 body: json auth: inherit }
+headers { Origin: http://localhost:3000 }
+body:json { { "startDate": "2026-08-01", "endDate": "2026-08-05" } }
+tests { test("rejects unavailable period or gear", function () { expect([400,409]).to.include(res.status); expect(res.body.success).to.equal(false); }); }

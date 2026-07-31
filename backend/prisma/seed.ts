@@ -1810,6 +1810,22 @@ async function main() {
     ],
     skipDuplicates: true,
   })
+  await prisma.cart.upsert({
+    where: { renter_id: '00000000-0000-0000-0000-000000000006' },
+    create: {
+      id: 'ca000000-0000-0000-0000-000000000001',
+      renter_id: '00000000-0000-0000-0000-000000000006',
+      items: {
+        create: {
+          id: 'cb000000-0000-0000-0000-000000000001',
+          gear_id: '30000000-0000-0000-0000-000000000005',
+          start_date: new Date('2027-08-01T00:00:00.000Z'),
+          end_date: new Date('2027-08-05T00:00:00.000Z'),
+        },
+      },
+    },
+    update: {},
+  })
   console.log('✅ Gear Price History')
 
   console.log('\n🎉 Seed hoàn tất!')

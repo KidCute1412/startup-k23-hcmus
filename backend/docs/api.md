@@ -733,3 +733,21 @@ are fixed at 3,000,000, 5,000,000 and 10,000,000 VND.
 The backend requires 3 completed orders for 5,000,000 and 10 for 10,000,000,
 and blocks increases for debt, an open/under-review dispute, or any
 `deposit_deduct` resolution. It rechecks this policy at approval.
+# Cart and batch checkout
+
+All routes require authentication and renter role (`403 RENTER_ONLY`).
+
+- `GET /cart` returns or lazily creates the renter cart.
+- `PUT /cart/items/:gearId` with `{ startDate, endDate }` creates or updates
+  the unique gear item.
+- `DELETE /cart/items/:itemId` removes an owned item.
+- `DELETE /cart` clears items while retaining the cart.
+- `POST /rental-orders/batch` accepts `cartItemIds`, `depositType`,
+  `shippingName`, `shippingPhone`, and `shippingAddress`; it returns
+  `{ orders, removedCartItemIds }` with status 201.
+
+Cart quotes and availability use database values. Batch checkout locks rows,
+creates one `pending_confirm` order per selected item, and removes only those
+items atomically. Errors include `GEAR_NOT_FOUND`, `CART_ITEM_NOT_FOUND`,
+`INVALID_DATE_RANGE`, `GEAR_NOT_AVAILABLE`, `CANNOT_RENT_OWN_GEAR`, and
+`GEAR_UNAVAILABLE_FOR_PERIOD`.

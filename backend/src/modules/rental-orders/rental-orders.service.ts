@@ -15,6 +15,7 @@ import {
 } from '@prisma/client';
 import { randomInt } from 'crypto';
 import { CreateRentalOrderDto } from './dto/create-rental-order.dto';
+import { CreateBatchRentalOrdersDto } from './dto/create-batch-rental-orders.dto';
 import { GetRentalOrdersQueryDto } from './dto/get-rental-orders-query.dto';
 import { PrismaService } from '../../prisma/prisma.service';
 import { EscrowService } from '../escrow/escrow.service';
@@ -121,6 +122,181 @@ export class RentalOrdersService {
     };
 
     return this.rentalOrdersRepository.create(data);
+  }
+
+  async createLocked(renterId: string, dto: CreateRentalOrderDto) {
+    const startDate = this.parseDateOnly(dto.startDate);
+    const endDate = this.parseDateOnly(dto.endDate);
+    if (startDate >= endDate) {
+      throw new BadRequestException({
+        error: 'INVALID_DATE_RANGE',
+        message: 'startDate must be earlier than endDate',
+      });
+    }
+    return this.prisma.$transaction(async (tx) => {
+      await tx.$queryRaw`SELECT id FROM gears WHERE id = ${dto.gearId}::uuid FOR UPDATE`;
+      const gear = await tx.gear.findUnique({ where: { id: dto.gearId } });
+      if (
+        !gear ||
+        gear.approval_status !== ApprovalStatusType.approved ||
+        gear.status !== GearStatusType.available
+      ) {
+        throw new BadRequestException({
+          error: 'GEAR_NOT_AVAILABLE',
+          message: 'Gear is not available for rental',
+        });
+      }
+      if (gear.lender_id === renterId) {
+        throw new BadRequestException({
+          error: 'CANNOT_RENT_OWN_GEAR',
+          message: 'You cannot rent your own gear',
+        });
+      }
+      const overlap = await tx.rentalOrder.findFirst({
+        where: {
+          gear_id: gear.id,
+          status: {
+            notIn: [OrderStatusType.cancelled, OrderStatusType.completed],
+          },
+          start_date: { lt: endDate },
+          end_date: { gt: startDate },
+        },
+        select: { id: true },
+      });
+      if (overlap) {
+        throw new ConflictException({
+          error: 'GEAR_UNAVAILABLE_FOR_PERIOD',
+          message: 'Gear is already booked for the requested period',
+        });
+      }
+      const durationDays =
+        (endDate.getTime() - startDate.getTime()) / MILLISECONDS_PER_DAY;
+      const dailyPrice = Number(gear.rent_price_per_day);
+      const rentalFee = dailyPrice * durationDays;
+      return tx.rentalOrder.create({
+        data: {
+          order_code: this.newOrderCode(),
+          renter_id: renterId,
+          gear_id: gear.id,
+          lender_id: gear.lender_id,
+          start_date: startDate,
+          end_date: endDate,
+          duration_days: durationDays,
+          snapped_rent_price_per_day: dailyPrice,
+          rental_fee: rentalFee,
+          base_rental_fee: rentalFee,
+          deposit_amount: Number(gear.value ?? rentalFee * 2),
+          deposit_type: dto.depositType,
+          status: OrderStatusType.pending_confirm,
+          shipping_address: dto.shippingAddress,
+          shipping_name: dto.shippingName,
+          shipping_phone: dto.shippingPhone,
+        },
+      });
+    });
+  }
+
+  async createBatch(renterId: string, dto: CreateBatchRentalOrdersDto) {
+    const itemIds = [...dto.cartItemIds].sort();
+    return this.prisma.$transaction(async (tx) => {
+      await tx.$queryRaw(
+        Prisma.sql`SELECT ci.id
+          FROM cart_items ci
+          JOIN carts c ON c.id = ci.cart_id
+          WHERE ci.id IN (${Prisma.join(itemIds.map((id) => Prisma.sql`${id}::uuid`))})
+          ORDER BY ci.id FOR UPDATE`,
+      );
+      const items = await tx.cartItem.findMany({
+        where: { id: { in: itemIds }, cart: { renter_id: renterId } },
+        include: { gear: true },
+        orderBy: { id: 'asc' },
+      });
+      if (items.length !== itemIds.length) {
+        throw new NotFoundException({
+          error: 'CART_ITEM_NOT_FOUND',
+          message: 'One or more cart items were not found',
+        });
+      }
+
+      const gearIds = items.map((item) => item.gear_id).sort();
+      await tx.$queryRaw(
+        Prisma.sql`SELECT id FROM gears
+          WHERE id IN (${Prisma.join(gearIds.map((id) => Prisma.sql`${id}::uuid`))})
+          ORDER BY id FOR UPDATE`,
+      );
+
+      const orders: object[] = [];
+      for (const item of items) {
+        const gear = item.gear;
+        if (
+          gear.approval_status !== ApprovalStatusType.approved ||
+          gear.status !== GearStatusType.available
+        ) {
+          throw new BadRequestException({
+            error: 'GEAR_NOT_AVAILABLE',
+            message: 'Gear is not available for rental',
+          });
+        }
+        if (gear.lender_id === renterId) {
+          throw new BadRequestException({
+            error: 'CANNOT_RENT_OWN_GEAR',
+            message: 'You cannot rent your own gear',
+          });
+        }
+        const overlap = await tx.rentalOrder.findFirst({
+          where: {
+            gear_id: gear.id,
+            status: {
+              notIn: [OrderStatusType.cancelled, OrderStatusType.completed],
+            },
+            start_date: { lt: item.end_date },
+            end_date: { gt: item.start_date },
+          },
+          select: { id: true },
+        });
+        if (overlap) {
+          throw new ConflictException({
+            error: 'GEAR_UNAVAILABLE_FOR_PERIOD',
+            message: 'Gear is already booked for the requested period',
+          });
+        }
+        const durationDays =
+          (item.end_date.getTime() - item.start_date.getTime()) /
+          MILLISECONDS_PER_DAY;
+        if (durationDays <= 0) {
+          throw new BadRequestException({
+            error: 'INVALID_DATE_RANGE',
+            message: 'Cart item has an invalid rental period',
+          });
+        }
+        const dailyPrice = Number(gear.rent_price_per_day);
+        const rentalFee = dailyPrice * durationDays;
+        orders.push(
+          await tx.rentalOrder.create({
+            data: {
+              order_code: this.newOrderCode(),
+              renter_id: renterId,
+              gear_id: gear.id,
+              lender_id: gear.lender_id,
+              start_date: item.start_date,
+              end_date: item.end_date,
+              duration_days: durationDays,
+              snapped_rent_price_per_day: dailyPrice,
+              rental_fee: rentalFee,
+              base_rental_fee: rentalFee,
+              deposit_amount: Number(gear.value ?? rentalFee * 2),
+              deposit_type: dto.depositType,
+              status: OrderStatusType.pending_confirm,
+              shipping_address: dto.shippingAddress,
+              shipping_name: dto.shippingName,
+              shipping_phone: dto.shippingPhone,
+            },
+          }),
+        );
+      }
+      await tx.cartItem.deleteMany({ where: { id: { in: itemIds } } });
+      return { orders, removedCartItemIds: itemIds };
+    });
   }
 
   async findAll(user: CurrentUser, query: GetRentalOrdersQueryDto) {
@@ -375,5 +551,11 @@ export class RentalOrdersService {
       error: 'ORDER_CODE_GENERATION_FAILED',
       message: 'Could not generate a unique rental order code',
     });
+  }
+
+  private newOrderCode() {
+    const now = new Date();
+    const datePart = now.toISOString().slice(0, 10).replaceAll('-', '');
+    return `ORD-${datePart}-${String(randomInt(0, 1_000_000)).padStart(6, '0')}`;
   }
 }

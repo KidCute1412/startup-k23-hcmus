@@ -327,6 +327,7 @@ model User {
   bank_accounts           BankAccount[]
   credit_limit_requests   CreditLimitRequest[] @relation("CreditLimitApplicant")
   credit_limit_reviews    CreditLimitRequest[] @relation("CreditLimitReviewer")
+  cart                    Cart?
 
   @@map("users")
 }
@@ -371,11 +372,43 @@ model Gear {
   media         GearMedia[]
   rental_orders RentalOrder[]
   reviews       Review[]
+  cart_items    CartItem[]
 
   @@index([lender_id], name: "idx_gears_lender_id")
   @@index([category_id], name: "idx_gears_category_id")
   @@index([status], name: "idx_gears_status")
   @@map("gears")
+}
+
+model Cart {
+  id         String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  renter_id  String     @unique @db.Uuid
+  created_at DateTime   @default(now())
+  updated_at DateTime   @default(now()) @updatedAt
+
+  renter User       @relation(fields: [renter_id], references: [id], onDelete: Cascade)
+  items  CartItem[]
+
+  @@map("carts")
+}
+
+model CartItem {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  cart_id    String   @db.Uuid
+  gear_id    String   @db.Uuid
+  start_date DateTime @db.Date
+  end_date   DateTime @db.Date
+  created_at DateTime @default(now())
+  updated_at DateTime @default(now()) @updatedAt
+
+  cart Cart @relation(fields: [cart_id], references: [id], onDelete: Cascade)
+  gear Gear @relation(fields: [gear_id], references: [id], onDelete: Cascade)
+
+  @@unique([cart_id, gear_id])
+  @@index([cart_id], name: "idx_cart_items_cart")
+  @@index([gear_id], name: "idx_cart_items_gear")
+  @@index([gear_id, start_date, end_date], name: "idx_cart_items_gear_period")
+  @@map("cart_items")
 }
 
 model GearPriceHistory {
