@@ -49,7 +49,7 @@ export interface GetGearQueueParams {
 }
 
 export interface ResolveDisputePayload {
-  resolutionType: 'refund' | 'deposit_deduct' | 'compensation' | 'account_ban' | 'no_action';
+  resolutionType: 'refund' | 'deposit_deduct' | 'no_action';
   deductAmount?: number;
   resolutionNote?: string;
 }

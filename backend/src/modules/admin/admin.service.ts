@@ -15,6 +15,7 @@ import {
 import { PrismaService } from '../../prisma/prisma.service';
 import { GetGearQueueQueryDto } from './dto/get-gear-queue-query.dto';
 import { GetKycQueueQueryDto } from './dto/get-kyc-queue-query.dto';
+import { GetDisputeQueueQueryDto } from './dto/get-dispute-queue-query.dto';
 import { EscrowService } from '../escrow/escrow.service';
 import { ResolutionType } from './dto/resolve-dispute.dto';
 
@@ -97,6 +98,67 @@ export class AdminService {
 
     return {
       data,
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
+  }
+
+  async getDisputeQueue(query: GetDisputeQueueQueryDto) {
+    const { status, page = 1, limit = 10 } = query;
+    const where: Prisma.DisputeWhereInput = status ? { status } : {};
+
+    const [disputes, total] = await Promise.all([
+      this.prisma.dispute.findMany({
+        where,
+        include: {
+          evidences: true,
+          rental_order: {
+            include: {
+              renter: {
+                select: {
+                  id: true,
+                  full_name: true,
+                  email: true,
+                  avatar_url: true,
+                  phone: true,
+                },
+              },
+              lender: {
+                select: {
+                  id: true,
+                  full_name: true,
+                  email: true,
+                  avatar_url: true,
+                  phone: true,
+                },
+              },
+              gear: {
+                select: {
+                  id: true,
+                  name: true,
+                  media: {
+                    select: {
+                      url: true,
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+        orderBy: [{ created_at: 'desc' }, { id: 'asc' }],
+        skip: (page - 1) * limit,
+        take: limit,
+      }),
+      this.prisma.dispute.count({ where }),
+    ]);
+
+    return {
+      data: disputes.map((dispute) => this.toApiDispute(dispute)),
       meta: {
         total,
         page,
@@ -381,21 +443,7 @@ export class AdminService {
     });
   }
 
-  private toApiDispute(dispute: {
-    id: string;
-    rental_order_id: string;
-    reported_by: string;
-    reporter_role: string;
-    reason: string;
-    description: string | null;
-    status: string;
-    resolved_by: string | null;
-    resolution_note: string | null;
-    resolution_type: string | null;
-    deduct_amount: Prisma.Decimal | null;
-    created_at: Date;
-    resolved_at: Date | null;
-  }) {
+  private toApiDispute(dispute: any) {
     return {
       id: dispute.id,
       rentalOrderId: dispute.rental_order_id,
@@ -407,9 +455,68 @@ export class AdminService {
       resolvedBy: dispute.resolved_by,
       resolutionNote: dispute.resolution_note,
       resolutionType: dispute.resolution_type,
-      deductAmount: dispute.deduct_amount?.toNumber() ?? null,
+      deductAmount: dispute.deduct_amount
+        ? typeof dispute.deduct_amount === 'number'
+          ? dispute.deduct_amount
+          : dispute.deduct_amount.toNumber()
+        : null,
       createdAt: dispute.created_at,
       resolvedAt: dispute.resolved_at,
+      evidences: dispute.evidences
+        ? dispute.evidences.map((e: any) => ({
+            id: e.id,
+            uploadedBy: e.uploaded_by,
+            mediaType: e.media_type,
+            url: e.url,
+            uploadedAt: e.uploaded_at,
+          }))
+        : undefined,
+      rentalOrder: dispute.rental_order
+        ? {
+            id: dispute.rental_order.id,
+            orderCode: dispute.rental_order.order_code,
+            status: dispute.rental_order.status,
+            depositAmount: dispute.rental_order.deposit_amount
+              ? typeof dispute.rental_order.deposit_amount === 'number'
+                ? dispute.rental_order.deposit_amount
+                : dispute.rental_order.deposit_amount.toNumber()
+              : 0,
+            totalRentFee: dispute.rental_order.rental_fee
+              ? typeof dispute.rental_order.rental_fee === 'number'
+                ? dispute.rental_order.rental_fee
+                : (dispute.rental_order.rental_fee as any).toNumber
+                ? (dispute.rental_order.rental_fee as any).toNumber()
+                : Number(dispute.rental_order.rental_fee)
+              : 0,
+            renter: dispute.rental_order.renter
+              ? {
+                  id: dispute.rental_order.renter.id,
+                  fullName: dispute.rental_order.renter.full_name,
+                  email: dispute.rental_order.renter.email,
+                  avatarUrl: dispute.rental_order.renter.avatar_url,
+                  phone: dispute.rental_order.renter.phone,
+                }
+              : undefined,
+            lender: dispute.rental_order.lender
+              ? {
+                  id: dispute.rental_order.lender.id,
+                  fullName: dispute.rental_order.lender.full_name,
+                  email: dispute.rental_order.lender.email,
+                  avatarUrl: dispute.rental_order.lender.avatar_url,
+                  phone: dispute.rental_order.lender.phone,
+                }
+              : undefined,
+            gear: dispute.rental_order.gear
+              ? {
+                  id: dispute.rental_order.gear.id,
+                  name: dispute.rental_order.gear.name,
+                  mediaUrls: dispute.rental_order.gear.media
+                    ? dispute.rental_order.gear.media.map((m: any) => m.url)
+                    : [],
+                }
+              : undefined,
+          }
+        : undefined,
     };
   }
 

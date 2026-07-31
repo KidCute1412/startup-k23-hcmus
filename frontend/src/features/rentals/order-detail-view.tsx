@@ -10,6 +10,8 @@ import { useRentalOrder } from "@/hooks/useRentalOrder";
 import { useRentalProof } from "@/hooks/useRentalProof";
 import { statusConfig } from "./orders-overview";
 import type { RentalOrder } from "@/types/rentals";
+import { resolveMediaUrl } from "@/lib/media";
+import { SubmitDisputeModal } from "./submit-dispute-modal";
 
 export interface OrderDetailViewProps {
   orderId: string;
@@ -41,7 +43,7 @@ function generateTimeline(order: RentalOrder) {
 export function OrderDetailView({ orderId }: OrderDetailViewProps) {
   const { currentOrder: order, isLoading: loadingOrder, fetchOrder, confirmReceipt, returnOrder, cancelOrder } = useRentalOrder();
   const { proofs, isLoading: loadingProofs, fetchProofs } = useRentalProof(orderId);
-  const [activeModal, setActiveModal] = useState<'receipt' | 'return' | 'cancel' | null>(null);
+  const [activeModal, setActiveModal] = useState<'receipt' | 'return' | 'cancel' | 'dispute' | null>(null);
   const [actionSuccessMsg, setActionSuccessMsg] = useState<string | null>(null);
 
   useEffect(() => {
@@ -50,7 +52,7 @@ export function OrderDetailView({ orderId }: OrderDetailViewProps) {
   }, [orderId, fetchOrder, fetchProofs]);
 
   if (loadingOrder && !order) {
-    return <div className="py-10 text-center text-sm">Đang tải thông tin chi tiết đơn thuê...</div>;
+    return <div className="py-10 text-center text-sm text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted">Đang tải thông tin chi tiết đơn thuê...</div>;
   }
 
   if (!order) {
@@ -58,7 +60,7 @@ export function OrderDetailView({ orderId }: OrderDetailViewProps) {
   }
 
   const config = statusConfig[order.status] || statusConfig.pending;
-  const gearImage = order.gear?.media?.[0]?.url || "https://placehold.co/400x400?text=Gear";
+  const gearImage = resolveMediaUrl(order.gear?.media?.[0]?.url);
   const gearTitle = order.gear?.name || "Sản phẩm chưa rõ";
   const code = order.id.slice(0, 8).toUpperCase();
   const lenderName = order.lender?.full_name || order.lender?.fullName || "Chủ gear";
@@ -130,6 +132,20 @@ export function OrderDetailView({ orderId }: OrderDetailViewProps) {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left Column (2 cols): Timeline & Gear Details */}
         <div className="lg:col-span-2 space-y-6">
+          {/* Dispute Banner if Disputed */}
+          {order.status === 'disputed' && (
+            <Card className="p-6 border-red-500/40 bg-red-500/10">
+              <div className="flex items-center space-x-2 text-red-400 mb-2">
+                <span className="font-display text-lg font-bold uppercase tracking-wider">
+                  ⚠️ Đơn thuê đang ở trạng thái khiếu nại (Disputed)
+                </span>
+              </div>
+              <p className="text-xs text-gray-300 leading-relaxed">
+                Khiếu nại/báo cáo sự cố đã được ghi nhận. Tiền cọc và khoản thanh toán của đơn thuê hiện đang được hệ thống Mutux phong tỏa an toàn. Quản trị viên (Admin) sẽ đối soát bằng chứng của hai bên và đưa ra quyết định phân xử sớm nhất.
+              </p>
+            </Card>
+          )}
+
           {/* Order Lifecycle Progress Timeline */}
           <Card className="p-6">
             <h3 className="font-display text-lg font-bold mb-6">Tiến trình đơn thuê (Order Lifecycle)</h3>
@@ -208,7 +224,7 @@ export function OrderDetailView({ orderId }: OrderDetailViewProps) {
                       {proof.proofType === 'image' && proof.fileUrl && (
                         <div className="h-20 w-20 overflow-hidden rounded border border-vanguard-light-border dark:border-vanguard-dark-border">
                           {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img src={proof.fileUrl} alt="Proof" className="h-full w-full object-cover" />
+                          <img src={resolveMediaUrl(proof.fileUrl)} alt="Proof" className="h-full w-full object-cover" />
                         </div>
                       )}
                     </div>
@@ -243,20 +259,21 @@ export function OrderDetailView({ orderId }: OrderDetailViewProps) {
                 </button>
               )}
 
+              {(order.status === 'active' || order.status === 'returning') && (
+                <button
+                  onClick={() => setActiveModal('dispute')}
+                  className="w-full rounded-v-sm border border-red-500/50 bg-red-500/10 text-red-400 py-2.5 text-xs font-bold uppercase tracking-wider hover:bg-red-500 hover:text-white transition"
+                >
+                  ⚠️ Báo cáo khiếu nại / Sự cố
+                </button>
+              )}
+
               {(order.status === 'pending' || order.status === 'confirmed') && (
                 <button
                   onClick={() => setActiveModal('cancel')}
                   className="w-full rounded-v-sm border border-red-500 text-red-500 py-2.5 text-xs font-bold uppercase tracking-wider hover:bg-red-500 hover:text-white transition"
                 >
                   ✕ Hủy đơn thuê này
-                </button>
-              )}
-
-              {order.status === 'completed' && (
-                <button
-                  className="w-full rounded-v-sm border border-vanguard-light-border dark:border-vanguard-dark-border py-2.5 text-xs font-bold uppercase tracking-wider hover:border-vanguard-primary transition"
-                >
-                  ★ Đánh giá sản phẩm / Thuê lại
                 </button>
               )}
 
@@ -362,6 +379,19 @@ export function OrderDetailView({ orderId }: OrderDetailViewProps) {
             </div>
           </div>
         </div>
+      )}
+
+      {activeModal === 'dispute' && (
+        <SubmitDisputeModal
+          isOpen={activeModal === 'dispute'}
+          onClose={() => setActiveModal(null)}
+          orderId={orderId}
+          orderCode={code}
+          onSuccess={() => {
+            fetchOrder(orderId).catch(console.error);
+            showNotice("Đã gửi khiếu nại tranh chấp thành công! Trạng thái đơn chuyển sang 'Đang khiếu nại'.");
+          }}
+        />
       )}
     </div>
   );

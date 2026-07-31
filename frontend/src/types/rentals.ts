@@ -3,7 +3,7 @@ export interface RentalOrder {
   gearId: string;
   renterId: string;
   lenderId: string;
-  status: 'pending' | 'confirmed' | 'shipped' | 'active' | 'returning' | 'completed' | 'cancelled';
+  status: 'pending' | 'confirmed' | 'shipped' | 'active' | 'returning' | 'completed' | 'cancelled' | 'disputed';
   startDate: string;
   endDate: string;
   rentPrice: number;

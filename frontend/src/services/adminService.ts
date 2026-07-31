@@ -7,6 +7,7 @@ import type {
   RejectKycPayload,
   ResolveDisputePayload,
 } from '@/types/admin';
+import type { DisputeItem, GetDisputeQueueParams } from '@/types/dispute';
 
 export const adminService = {
   getKycQueue: (params: GetKycQueueParams = {}) => {
@@ -52,6 +53,17 @@ export const adminService = {
       method: 'POST',
       body: JSON.stringify(payload),
     }),
+
+  getDisputeQueue: (params: GetDisputeQueueParams = {}) => {
+    const query = new URLSearchParams();
+    if (params.status) query.set('status', params.status);
+    if (params.page) query.set('page', String(params.page));
+    if (params.limit) query.set('limit', String(params.limit));
+
+    const queryString = query.toString();
+    const path = `/admin/disputes${queryString ? `?${queryString}` : ''}`;
+    return apiClientPaginated<DisputeItem[]>(path);
+  },
 
   resolveDispute: (id: string, payload: ResolveDisputePayload) =>
     apiClient<unknown>(`/admin/disputes/${id}/resolve`, {

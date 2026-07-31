@@ -19,6 +19,7 @@ import { ResolveDisputeDto } from './dto/resolve-dispute.dto';
 import type { AuthenticatedRequest } from '../../common/types/authentication';
 import { GetGearQueueQueryDto } from './dto/get-gear-queue-query.dto';
 import { GetKycQueueQueryDto } from './dto/get-kyc-queue-query.dto';
+import { GetDisputeQueueQueryDto } from './dto/get-dispute-queue-query.dto';
 
 @Controller('admin')
 @UseGuards(JwtAuthGuard, AdminGuard)
@@ -33,6 +34,11 @@ export class AdminController {
   @Get('gears')
   getGearQueue(@Query() query: GetGearQueueQueryDto) {
     return this.adminService.getGearQueue(query);
+  }
+
+  @Get('disputes')
+  getDisputeQueue(@Query() query: GetDisputeQueueQueryDto) {
+    return this.adminService.getDisputeQueue(query);
   }
 
   @Post('kyc/:id/approve')

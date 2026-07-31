@@ -599,7 +599,7 @@ Ngoài retry ở đúng target, status sai trả `400 INVALID_TRANSITION` (hoặ
 
 ---
 
-### 3.7 Disputes & Reviews (2 APIs)
+### 3.7 Disputes (1 API)
 
 #### [POST] `/disputes` (Gửi khiếu nại tranh chấp - Renter hoặc Lender)
 * **Authentication**: `accessToken` cookie (and valid `Origin` for state changes).
@@ -626,20 +626,6 @@ Ngoài retry ở đúng target, status sai trả `400 INVALID_TRANSITION` (hoặ
   - `403 FORBIDDEN` nếu người gọi không phải participant.
   - `404 NOT_FOUND` nếu order không tồn tại.
 * **Success (201)**: Tạo tranh chấp cùng evidence thành công, server trả dữ liệu camelCase và order đổi sang `disputed`. Retry trả cùng dispute hiện hữu.
-
-#### [POST] `/reviews` (Đánh giá sau khi hoàn thành đơn thuê)
-* **Authentication**: `accessToken` cookie and valid `Origin`.
-* **Body**:
-  ```json
-  {
-    "rentalOrderId": "uuid",
-    "targetId": "uuid", // ID thiết bị hoặc ID người dùng đối phương
-    "targetType": "gear", // "gear" | "lender" | "renter"
-    "rating": 5,
-    "comment": "Rất tốt"
-  }
-  ```
-* **Success (201)**: Ghi nhận đánh giá thành công.
 
 ---
 
@@ -727,6 +713,54 @@ Ngoài retry ở đúng target, status sai trả `400 INVALID_TRANSITION` (hoặ
 * **Authentication**: `accessToken` cookie, admin role, and valid `Origin`.
 * **Success (201)**: Chuyển gear `pending` hoặc `approved` sang `rejected`, lưu admin review và loại gear khỏi catalog công khai. Gọi lại trên gear đã `rejected` là idempotent.
 * **Errors**: `404` khi gear không tồn tại.
+
+#### [GET] `/admin/disputes` (Lấy danh sách tranh chấp - Admin Queue)
+* **Authentication**: `accessToken` cookie, admin role.
+* **Query Params**:
+  - `status`: `open` | `under_review` | `resolved` | `closed` (tùy chọn).
+  - `page`: mặc định `1`.
+  - `limit`: mặc định `10`, tối đa `100`.
+* **Success (200)**: Danh sách tranh chấp kèm chi tiết đơn thuê, thông tin Renter, Lender, Gear và danh sách bằng chứng ảnh.
+  ```json
+  {
+    "success": true,
+    "data": [
+      {
+        "id": "uuid",
+        "rentalOrderId": "uuid",
+        "reportedBy": "uuid",
+        "reporterRole": "renter",
+        "reason": "device_damaged",
+        "description": "Bàn phím bị nứt góc",
+        "status": "open",
+        "resolvedBy": null,
+        "resolutionNote": null,
+        "resolutionType": null,
+        "deductAmount": null,
+        "createdAt": "2026-07-29T10:15:00.000Z",
+        "resolvedAt": null,
+        "evidences": [],
+        "rentalOrder": {
+          "id": "uuid",
+          "orderCode": "ORD-2026-8812",
+          "status": "disputed",
+          "depositAmount": 3500000,
+          "totalRentFee": 360000,
+          "renter": { "id": "uuid", "fullName": "Nguyễn Văn An", "email": "an@gmail.com" },
+          "lender": { "id": "uuid", "fullName": "Trần Minh Hoàng", "email": "hoang@gmail.com" },
+          "gear": { "id": "uuid", "name": "Bàn phím cơ Keychron Q1 Pro", "mediaUrls": ["/uploads/..."] }
+        }
+      }
+    ],
+    "meta": {
+      "total": 1,
+      "page": 1,
+      "limit": 10,
+      "totalPages": 1
+    }
+  }
+  ```
+* **Errors**: `400` khi status hoặc pagination không hợp lệ; `403 ADMIN_ONLY` nếu người dùng không phải admin.
 
 #### [POST] `/admin/disputes/:id/resolve` (Giải quyết tranh chấp đơn thuê)
 * **Authentication**: `accessToken` cookie, admin role, and valid `Origin`.
