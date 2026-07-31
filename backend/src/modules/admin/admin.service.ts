@@ -493,6 +493,9 @@ export class AdminService {
           resolution_note: resolutionNote ?? null,
           resolved_at: new Date(),
         },
+        include: {
+          rental_order: true,
+        },
       });
       return this.toApiDispute(resolved);
     });

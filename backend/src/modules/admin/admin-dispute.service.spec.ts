@@ -184,6 +184,9 @@ describe('AdminService — resolveDispute', () => {
               ? deductAmount
               : null,
         }),
+        include: {
+          rental_order: true,
+        },
       });
     },
   );
