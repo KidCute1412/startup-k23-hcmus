@@ -130,6 +130,7 @@ describeIntegration(
         frontCardUrl: front,
         backCardUrl: back,
         portraitUrl: portrait,
+        creditConsentAccepted: true,
       };
       const response = await request(app.getHttpServer())
         .post('/api/v1/users/me/kyc')
