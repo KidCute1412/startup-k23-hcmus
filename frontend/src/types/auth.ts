@@ -8,7 +8,7 @@ export interface User {
   avatarUrl?: string | null;
   bio?: string | null;
   address?: string | null;
-  kycStatus?: 'pending' | 'verified' | 'rejected';
+  kycStatus?: 'unverified' | 'pending' | 'verified' | 'rejected';
   kycRejectionReason?: string | null;
   creditConsentAcceptedAt?: string | null;
   createdAt?: string;

@@ -14,6 +14,7 @@ import {
   UserRole,
 } from '@prisma/client';
 import { randomInt } from 'crypto';
+import { PrismaService } from '../../prisma/prisma.service';
 import { CreateRentalOrderDto } from './dto/create-rental-order.dto';
 import { CreateBatchRentalOrdersDto } from './dto/create-batch-rental-orders.dto';
 import { GetRentalOrdersQueryDto } from './dto/get-rental-orders-query.dto';
@@ -33,6 +34,7 @@ export class RentalOrdersService {
   constructor(
     private readonly rentalOrdersRepository: RentalOrdersRepository,
     private readonly orchestration: RentalOrderOrchestrationService,
+    private readonly prisma: PrismaService,
   ) {}
 
   async create(renterId: string, dto: CreateRentalOrderDto) {
