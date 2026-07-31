@@ -6,14 +6,14 @@ Required environment variables:
 
 - `baseUrl`: API base URL, for example `http://localhost:8080/api/v1`.
 - Login first so Bruno's cookie jar holds the renter session cookies. The collection sends the local frontend `Origin` header.
-- `PAYOS_WEBHOOK_SECRET`: must match backend `PAYOS_WEBHOOK_SECRET`. If omitted, request 04 uses `test-secret`.
+- `PAYOS_WEBHOOK_SECRET`: must match backend `PAYOS_WEBHOOK_SECRET`. If omitted, request 04 uses `test-secret`. Webhooks sign the deterministic, recursively key-sorted JSON and send the HMAC via `x-payos-signature`.
 
 Flow:
 
 1. `01 Topup Checkout Amount Zero` verifies amount `0` returns `400`.
 2. `02 Create Topup Checkout` creates a pending top-up and stores `topupId`, `topupOrderCode`, `topupAmount`.
 3. `03 PayOS Webhook Invalid Signature` verifies bad HMAC returns `401 INVALID_SIGNATURE`.
-4. `04 PayOS Webhook Valid Signature` signs the payload, completes the top-up, and stores `completedTopupId`.
+4. `04 PayOS Webhook Valid Signature` signs the numeric order code, exact amount, success code, and unique provider reference; it completes the top-up and stores `completedTopupId`.
 5. `05 PayOS Webhook Duplicate Same Payload` resends the same payload/signature and should not credit again.
 6. `06 Simulate Success Already Successful` calls simulate-success again and should return the existing successful top-up.
 

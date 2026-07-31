@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/field";
 import { StatRow } from "@/components/ui/stat-row";
 import { useCart } from "@/features/cart/cart-context";
 import { formatCurrency } from "@/lib/format";
-import type { Gear } from "./types";
+import type { Gear } from "@/types/catalog";
 
 function dateOffset(days: number) {
   const value = new Date();

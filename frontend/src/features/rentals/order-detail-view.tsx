@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -9,7 +9,7 @@ import { formatCurrency, formatShortDate } from "@/lib/format";
 import { useRentalOrder } from "@/hooks/useRentalOrder";
 import { useRentalProof } from "@/hooks/useRentalProof";
 import { statusConfig } from "./orders-overview";
-import type { RentalOrder } from "@/services/rentalOrderService";
+import type { RentalOrder } from "@/types/rentals";
 
 export interface OrderDetailViewProps {
   orderId: string;

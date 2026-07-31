@@ -15,7 +15,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import type { GearCategory } from "./types";
+import type { GearCategory } from "@/types/catalog";
 
 type CatalogFilterProps = {
   categories: GearCategory[];

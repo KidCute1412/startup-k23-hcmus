@@ -1,5 +1,5 @@
 
-import { OrdersOverview } from "@/features/account/orders-overview";
+import { OrdersOverview } from "@/features/rentals/orders-overview";
 
 export default function OrdersPage() {
   return (

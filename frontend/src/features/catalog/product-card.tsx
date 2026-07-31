@@ -6,7 +6,7 @@ import { formatCurrency } from "@/lib/format";
 import { getGearDetailUrl } from "@/lib/slug";
 import { availabilityLabel, availabilityTone } from "./availability";
 import { SafeGearImage } from "./safe-gear-image";
-import type { Gear } from "./types";
+import type { Gear } from "@/types/catalog";
 
 type ProductCardProps = {
   gear: Gear;

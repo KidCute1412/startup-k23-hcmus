@@ -1,5 +1,5 @@
 import { Star } from "lucide-react";
-import type { GearReview } from "./types";
+import type { GearReview } from "@/types/catalog";
 
 export function GearReviews({ reviews }: { reviews: GearReview[] }) {
   if (!reviews.length) {

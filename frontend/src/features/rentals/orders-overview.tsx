@@ -1,13 +1,13 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { StatRow } from "@/components/ui/stat-row";
 import { formatCurrency, formatShortDate } from "@/lib/format";
 import { useRentalOrder } from "@/hooks/useRentalOrder";
-import type { RentalOrder } from "@/services/rentalOrderService";
+import type { RentalOrder } from "@/types/rentals";
 
 export type OrderStatusType = RentalOrder['status'] | 'disputed';
 

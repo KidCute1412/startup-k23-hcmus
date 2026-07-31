@@ -1,21 +1,5 @@
 import { apiClient } from '@/lib/apiClient';
-
-export interface User {
-  id: string;
-  email: string;
-  role: 'renter' | 'lender' | 'admin';
-}
-
-export interface RegisterRequest {
-  email: string;
-  password: string;
-  fullName: string;
-}
-
-export interface LoginRequest {
-  email: string;
-  password: string;
-}
+import type { LoginRequest, RegisterRequest, User } from '@/types/auth';
 
 export const authService = {
   register: (request: RegisterRequest) =>

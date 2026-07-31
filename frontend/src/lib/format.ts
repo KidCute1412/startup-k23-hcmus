@@ -33,3 +33,5 @@ export function rentalDays(startDate?: string | null, endDate?: string | null) {
 
   return Math.ceil(diff / 86_400_000) + 1;
 }
+
+export const calculateRentalDays = rentalDays;

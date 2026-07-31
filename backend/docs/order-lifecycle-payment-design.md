@@ -322,7 +322,7 @@ Luồng demo:
 1. Renter yêu cầu nạp tiền vào ví.
 2. Backend validate amount.
 3. Backend tạo một top-up record ở trạng thái `pending`.
-4. Backend trả về `checkoutUrl` mô phỏng hoặc `mockCheckoutId`.
+4. Backend trả về `topupId`, numeric `orderCode` và `paymentInstructions` mô phỏng lấy từ cấu hình local; không tạo checkout URL hay QR giả.
 5. Frontend redirect sang trang giả lập / màn test.
 6. Từ flow test, hệ thống gọi webhook callback để mark top-up thành công.
 

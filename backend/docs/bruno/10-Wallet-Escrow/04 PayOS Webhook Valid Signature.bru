@@ -3,58 +3,43 @@ meta {
   type: http
   seq: 4
 }
-
 post {
   url: {{baseUrl}}/payments/webhook/payos
   body: json
   auth: none
 }
-
 headers {
   x-payos-signature: {{payosSignature}}
 }
-
 body:json {
   {
-    "orderCode": "{{topupOrderCode}}",
+    "code": "00",
+    "success": true,
     "data": {
+      "orderCode": {{topupOrderCode}},
+      "amount": {{topupAmount}},
       "reference": "{{payosReference}}"
     }
   }
 }
-
-vars:pre-request {
-  topupOrderCode: TOPUP-1784369292344-1535
-  payosReference: PAYOS-REF-1721290000000
-}
-
 script:pre-request {
   const crypto = require("crypto");
-  const secret = bru.getEnvVar("PAYOS_WEBHOOK_SECRET") || "test-secret";
+  const stable = (value) => Array.isArray(value)
+    ? `[${value.map(stable).join(",")}]`
+    : value && typeof value === "object"
+      ? `{${Object.keys(value).sort().map((key) => `${JSON.stringify(key)}:${stable(value[key])}`).join(",")}}`
+      : JSON.stringify(value);
   const reference = `PAYOS-REF-${Date.now()}`;
-  const payload = JSON.stringify({
-    orderCode: bru.getEnvVar("topupOrderCode"),
-    data: { reference }
-  });
-  
+  const payload = { code: "00", success: true, data: { orderCode: Number(bru.getEnvVar("topupOrderCode")), amount: Number(bru.getEnvVar("topupAmount")), reference } };
   bru.setEnvVar("payosReference", reference);
-  bru.setEnvVar(
-    "payosSignature",
-    crypto.createHmac("sha256", secret).update(payload).digest("hex")
-  );
+  bru.setEnvVar("payosSignature", crypto.createHmac("sha256", bru.getEnvVar("PAYOS_WEBHOOK_SECRET") || "test-secret").update(stable(payload)).digest("hex"));
 }
-
 script:post-response {
-  if (res.status === 201 || res.status === 200) {
-    const topup = res.body.data || res.body;
-    bru.setEnvVar("completedTopupId", topup.id);
-  }
+  if (res.status === 200) bru.setEnvVar("completedTopupId", res.body.data.topupId);
 }
-
 tests {
   test("completes topup", function() {
-    expect([200, 201]).to.include(res.status);
-    expect(res.body.data || res.body).to.have.property("status", "success");
+    expect(res.status).to.equal(200);
+    expect(res.body.data.status).to.equal("success");
   });
 }
-​

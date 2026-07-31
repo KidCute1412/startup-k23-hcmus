@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
-import type { Gear } from "@/features/catalog/types";
+import type { Gear } from "@/types/catalog";
 
 export type CartItem = {
   id: string; // usually gear.id + "-" + startDate + "-" + endDate, but gear.id is fine for now if they only rent once

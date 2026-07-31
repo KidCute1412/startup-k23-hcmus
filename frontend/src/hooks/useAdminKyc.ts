@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
-import { adminService, AdminKycUser, KycStatus } from '@/services/adminService';
+import { adminService } from '@/services/adminService';
 import { ApiError, PaginationMeta } from '@/lib/apiClient';
+import type { AdminKycUser, KycStatus } from '@/types/admin';
 
 export function useAdminKyc(initialStatus: KycStatus = 'pending', initialPage = 1, limit = 10) {
   const [kycUsers, setKycUsers] = useState<AdminKycUser[]>([]);

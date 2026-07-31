@@ -4,7 +4,8 @@ import { useCallback, useEffect, useState } from 'react';
 import {
   clearSession,
 } from '@/lib/apiClient';
-import { authService, type LoginRequest, type RegisterRequest, type User } from '@/services/authService';
+import { authService } from '@/services/authService';
+import type { LoginRequest, RegisterRequest, User } from '@/types/auth';
 
 const USER_KEY = 'user';
 

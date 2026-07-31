@@ -1,21 +1,5 @@
 import { apiClient } from '@/lib/apiClient';
-
-export interface RentalProof {
-  id: string;
-  rentalOrderId: string;
-  uploaderId: string;
-  stage: 'pre_shipment' | 'post_receipt' | 'pre_return' | 'post_return' | string;
-  proofType: 'image' | 'video';
-  fileUrl: string;
-  note?: string | null;
-  createdAt: string;
-}
-
-export interface UploadProofRequest {
-  stage: string;
-  fileUrl: string;
-  note?: string;
-}
+import type { RentalProof, UploadProofRequest } from '@/types/rentals';
 
 export const rentalProofService = {
   getRentalProofs: (rentalOrderId: string) =>

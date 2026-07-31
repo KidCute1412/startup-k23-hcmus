@@ -236,8 +236,8 @@ HTTP Status: `400`, `401`, `403`, `404`, `422`, `500`.
 ### 3.3 Wallets (5 APIs)
 
 #### [GET] `/wallets/renter` (Thông tin ví ảo của Renter)
-* **Authentication**: `accessToken` cookie (and valid `Origin` for state changes).
-* **Mô tả**: Trả về số dư ví ảo dùng để thanh toán phí thuê, lock cọc truyền thống và nhận refund trong môi trường demo.
+* **Authentication**: `accessToken` cookie; chỉ role `renter`.
+* **Mô tả**: Trả về số dư ví ảo dùng để thanh toán phí thuê, lock cọc truyền thống và nhận refund trong môi trường demo. Đây là ví tiêu dùng nội bộ, **không hỗ trợ rút tiền trong MVP**.
 * **Success (200)**:
   ```json
   {
@@ -251,7 +251,7 @@ HTTP Status: `400`, `401`, `403`, `404`, `422`, `500`.
   ```
 
 #### [POST] `/wallets/topups/checkout` (Tạo phiên nạp tiền ví ảo - PayOS mock)
-* **Authentication**: `accessToken` cookie (and valid `Origin` for state changes).
+* **Authentication**: `accessToken` cookie (and valid `Origin`); chỉ role `renter`.
 * **Mô tả**: Tạo top-up intent để nạp tiền vào ví ảo. Với MVP demo, PayOS chỉ được mô phỏng ở mức checkout/callback shape, không xử lý tiền thật.
 * **Body**:
   ```json
@@ -260,20 +260,27 @@ HTTP Status: `400`, `401`, `403`, `404`, `422`, `500`.
     "method": "payos"
   }
   ```
-* **Success (200)**:
+* **Success (201)**:
   ```json
   {
     "success": true,
     "data": {
       "topupId": "uuid",
-      "checkoutUrl": "http://localhost:3000/mock-payos?topupId=uuid",
-      "status": "pending"
+      "orderCode": 1785500000123456,
+      "amount": 500000,
+      "status": "pending",
+      "paymentInstructions": {
+        "bankCode": "MB",
+        "accountNumber": "999988886666",
+        "accountName": "MUTUX DEMO",
+        "transferContent": "MUTUX 1785500000123456"
+      }
     }
   }
   ```
 
 #### [GET] `/wallets/mutux` (Thông tin Ví trả sau / Credit Line - Renter)
-* **Authentication**: `accessToken` cookie (and valid `Origin` for state changes).
+* **Authentication**: `accessToken` cookie; chỉ role `renter`.
 * **Success (200)**: Trả về hạn mức khả dụng (`displayBalance`), hạn mức bị khóa (`lockedBalance`), dư nợ (`outstandingDebt`), tổng hạn mức (`totalLimit`), trạng thái (`status`). Ví này chỉ dùng để bảo đảm cọc khi `depositType = credit_line`.
 * **Response**:
   ```json
@@ -293,9 +300,9 @@ HTTP Status: `400`, `401`, `403`, `404`, `422`, `500`.
   > `displayBalance` luôn được tính theo invariant: `displayBalance = totalLimit - lockedBalance - outstandingDebt`.
 
 #### [GET] `/wallets/lender` (Thông tin Ví thu nhập ảo & Yêu cầu rút tiền - Lender)
-* **Authentication**: `accessToken` cookie (and valid `Origin` for state changes).
+* **Authentication**: `accessToken` cookie; chỉ role `lender`.
 * **Query Params**: `page` (default: 1), `limit` (default: 20)
-* **Mô tả**: Trả về số dư thu nhập ảo của lender kèm danh sách giao dịch phân trang. Với MVP demo, withdraw chỉ ghi nhận request/trạng thái, không chuyển khoản ngân hàng thật.
+* **Mô tả**: Trả về số dư doanh thu ảo của lender kèm danh sách giao dịch phân trang. Với MVP demo, withdraw là thao tác rút doanh thu demo: chỉ ghi nhận request/trạng thái và ledger nội bộ, không chuyển khoản ngân hàng thật.
 * **Success (200)**:
   ```json
   {
@@ -327,6 +334,7 @@ HTTP Status: `400`, `401`, `403`, `404`, `422`, `500`.
   }
   ```
 * **Trường hợp Yêu cầu rút tiền (POST `/wallets/lender/withdraw`):**
+  - **Authentication**: `accessToken` cookie (and valid `Origin`); chỉ role `lender`.
   - **Body**:
     ```json
     {
@@ -343,7 +351,7 @@ HTTP Status: `400`, `401`, `403`, `404`, `422`, `500`.
 ### 3.4 Rental Orders (9 APIs)
 
 #### [POST] `/rental-orders` (Tạo yêu cầu thuê thiết bị - Renter)
-* **Authentication**: `accessToken` cookie (and valid `Origin` for state changes).
+* **Authentication**: `accessToken` cookie (and valid `Origin`); chỉ role `renter`.
 * **Body**:
   ```json
   {
@@ -496,25 +504,24 @@ Với năm endpoint không gọi escrow, nếu trạng thái hiện tại không
   ```json
   {
     "code": "00",
-    "desc": "success",
     "success": true,
     "data": {
       "orderCode": 123456,
       "amount": 500000,
-      "description": "TOPUP-123456",
-      "reference": "MOCK-PAYOS-REF-001",
-      "paymentLinkId": "mock-payment-link-id",
-      "code": "00",
-      "desc": "Thành công"
-    },
-    "signature": "mock-signature"
+      "reference": "MOCK-PAYOS-REF-001"
+    }
   }
   ```
+* **Signature**: HMAC-SHA256 của JSON deterministic (object keys được sắp xếp tăng dần ở mọi cấp), gửi qua header `x-payos-signature`. Secret lấy từ `PAYOS_WEBHOOK_SECRET`; body không chứa `signature`.
 * **Success (200)**:
   ```json
   {
     "success": true,
-    "message": "Top-up processed"
+    "data": {
+      "topupId": "uuid",
+      "status": "success",
+      "walletBalance": 1500000
+    }
   }
   ```
 

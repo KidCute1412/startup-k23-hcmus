@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { cn } from "@/lib/cn";
 import { SafeGearImage } from "./safe-gear-image";
-import type { GearMedia } from "./types";
+import type { GearMedia } from "@/types/catalog";
 
 type ProductGalleryProps = {
   media: GearMedia[];

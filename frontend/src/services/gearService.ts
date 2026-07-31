@@ -1,4 +1,4 @@
-import type { Gear, GearCategory, GearSpecification } from "@/features/catalog/types";
+import type { Gear, GearCategory, GearSpecification } from "@/types/catalog";
 import { apiClient, apiClientPaginated, type PaginationMeta } from "@/lib/apiClient";
 
 export type GearCatalogSort =

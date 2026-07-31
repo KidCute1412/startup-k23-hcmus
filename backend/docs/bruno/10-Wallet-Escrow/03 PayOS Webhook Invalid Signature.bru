@@ -16,8 +16,11 @@ headers {
 
 body:json {
   {
-    "orderCode": "{{topupOrderCode}}",
+    "code": "00",
+    "success": true,
     "data": {
+      "orderCode": {{topupOrderCode}},
+      "amount": {{topupAmount}},
       "reference": "PAYOS-INVALID-SIGNATURE-REF"
     }
   }

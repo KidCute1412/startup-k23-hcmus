@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { mockUserAddresses, UserAddress } from "@/lib/mock-account-data";
+import { mockUserAddresses, UserAddress } from "@/features/account/mock-data";
 
 export function AddressList() {
   const [addresses, setAddresses] = useState<UserAddress[]>(mockUserAddresses);

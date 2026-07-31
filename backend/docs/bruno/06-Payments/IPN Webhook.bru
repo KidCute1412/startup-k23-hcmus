@@ -10,20 +10,50 @@ post {
   auth: none
 }
 
+headers {
+  x-payos-signature: {{payosSignature}}
+}
+
 body:json {
   {
     "code": "00",
-    "desc": "success",
     "success": true,
     "data": {
-      "orderCode": 123456,
-      "amount": 500000,
-      "description": "TOPUP-123456",
-      "reference": "MOCK-PAYOS-REF-001",
-      "paymentLinkId": "mock-payment-link-id",
-      "code": "00",
-      "desc": "Thành công"
-    },
-    "signature": "mock-signature"
+      "orderCode": {{topupOrderCode}},
+      "amount": {{topupAmount}},
+      "reference": "{{payosReference}}"
+    }
   }
+}
+
+script:pre-request {
+  const crypto = require("crypto");
+  const stableStringify = (value) => {
+    if (Array.isArray(value)) return `[${value.map(stableStringify).join(",")}]`;
+    if (value && typeof value === "object") {
+      return `{${Object.keys(value).sort().map((key) => `${JSON.stringify(key)}:${stableStringify(value[key])}`).join(",")}}`;
+    }
+    return JSON.stringify(value);
+  };
+  const reference = `PAYOS-REF-${Date.now()}`;
+  const payload = {
+    code: "00",
+    success: true,
+    data: {
+      orderCode: Number(bru.getEnvVar("topupOrderCode")),
+      amount: Number(bru.getEnvVar("topupAmount")),
+      reference
+    }
+  };
+  bru.setEnvVar("payosReference", reference);
+  bru.setEnvVar("payosSignature", crypto.createHmac("sha256", bru.getEnvVar("PAYOS_WEBHOOK_SECRET") || "test-secret").update(stableStringify(payload)).digest("hex"));
+}
+
+tests {
+  test("credits the wallet with the exact completion contract", function() {
+    expect(res.status).to.equal(200);
+    expect(res.body.data.topupId).to.equal(bru.getEnvVar("topupId"));
+    expect(res.body.data.status).to.equal("success");
+    expect(res.body.data.walletBalance).to.be.a("number");
+  });
 }

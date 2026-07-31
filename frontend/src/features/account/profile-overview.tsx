@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { mockUserProfile, UserProfile } from "@/lib/mock-account-data";
+import { mockUserProfile, UserProfile } from "@/features/account/mock-data";
 
 export function ProfileOverview() {
   const [user, setUser] = useState<UserProfile>(mockUserProfile);

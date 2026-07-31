@@ -3,7 +3,7 @@
 import { X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useMemo } from "react";
-import type { GearCategory } from "./types";
+import type { GearCategory } from "@/types/catalog";
 
 type ActiveFiltersProps = {
   categories: GearCategory[];
