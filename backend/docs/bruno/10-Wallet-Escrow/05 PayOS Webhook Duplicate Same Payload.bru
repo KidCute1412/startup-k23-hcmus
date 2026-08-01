@@ -16,8 +16,11 @@ headers {
 
 body:json {
   {
-    "orderCode": "{{topupOrderCode}}",
+    "code": "00",
+    "success": true,
     "data": {
+      "orderCode": {{topupOrderCode}},
+      "amount": {{topupAmount}},
       "reference": "{{payosReference}}"
     }
   }
@@ -30,7 +33,7 @@ vars:pre-request {
 
 tests {
   test("duplicate webhook returns current successful topup", function() {
-    expect([200, 201]).to.include(res.status);
+    expect(res.status).to.equal(200);
     expect(res.body.data || res.body).to.have.property("status", "success");
   });
 }

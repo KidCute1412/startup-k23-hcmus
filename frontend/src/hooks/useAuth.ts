@@ -4,7 +4,8 @@ import { useCallback, useEffect, useState } from 'react';
 import {
   clearSession,
 } from '@/lib/apiClient';
-import { authService, type LoginRequest, type RegisterRequest, type User } from '@/services/authService';
+import { authService } from '@/services/authService';
+import type { LoginRequest, RegisterRequest, User } from '@/types/auth';
 
 const USER_KEY = 'user';
 
@@ -16,6 +17,13 @@ function readStoredUser(): User | null {
   } catch {
     return null;
   }
+}
+
+function storeUser(profile: User): boolean {
+  const serialized = JSON.stringify(profile);
+  if (localStorage.getItem(USER_KEY) === serialized) return false;
+  localStorage.setItem(USER_KEY, serialized);
+  return true;
 }
 
 export function useAuth() {
@@ -35,9 +43,9 @@ export function useAuth() {
     void authService.me()
       .then((profile) => {
         if (!active) return;
-        localStorage.setItem(USER_KEY, JSON.stringify(profile));
+        const changed = storeUser(profile);
         setUser(profile);
-        window.dispatchEvent(new Event('auth:changed'));
+        if (changed) window.dispatchEvent(new Event('auth:changed'));
       })
       .catch(() => {
         if (active) clearSession();
@@ -51,7 +59,7 @@ export function useAuth() {
     setIsLoading(true); setError(null);
     try {
       const result = await authService.login(request);
-      localStorage.setItem(USER_KEY, JSON.stringify(result.user));
+      storeUser(result.user);
       setUser(result.user);
       window.dispatchEvent(new Event('auth:changed'));
       return result;

@@ -12,23 +12,24 @@ post {
 
 body:json {
   {
-    "amount": 500000
+    "amount": 500000,
+    "method": "payos"
   }
 }
 
 script:post-response {
-  if (res.status === 201 || res.status === 200) {
-    const topup = res.body.data || res.body;
-    bru.setEnvVar("topupId", topup.id);
-    bru.setEnvVar("topupOrderCode", topup.order_code);
+  if (res.status === 201) {
+    const topup = res.body.data;
+    bru.setEnvVar("topupId", topup.topupId);
+    bru.setEnvVar("topupOrderCode", String(topup.orderCode));
     bru.setEnvVar("topupAmount", String(topup.amount));
   }
 }
 
 tests {
   test("creates pending topup", function() {
-    expect([200, 201]).to.include(res.status);
-    expect(res.body.data || res.body).to.have.property("id");
-    expect(res.body.data || res.body).to.have.property("order_code");
+    expect(res.status).to.equal(201);
+    expect(res.body.data).to.have.property("topupId");
+    expect(res.body.data.orderCode).to.be.a("number");
   });
 }

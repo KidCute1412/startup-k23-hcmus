@@ -1,4 +1,4 @@
-import { OrderDetailView } from "@/features/account/order-detail-view";
+import { OrderDetailView } from "@/features/rentals/order-detail-view";
 
 interface OrderDetailPageProps {
   params: Promise<{ id: string }>;

@@ -1,7 +1,8 @@
 'use client';
 
 import { useCallback, useState } from 'react';
-import { rentalProofService, type RentalProof, type UploadProofRequest } from '@/services/rentalProofService';
+import { rentalProofService } from '@/services/rentalProofService';
+import type { RentalProof, UploadProofRequest } from '@/types/rentals';
 
 export function useRentalProof(rentalOrderId: string) {
   const [isLoading, setIsLoading] = useState(false);

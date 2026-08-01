@@ -3,11 +3,11 @@
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
-import { useAddresses } from "@/hooks/useAddresses";
 import type {
   AddressRequest,
   UserAddress,
-} from "@/services/accountService";
+} from "@/hooks/useAddresses";
+import { useAddresses } from "@/hooks/useAddresses";
 
 const emptyForm: AddressRequest = {
   receiverName: "",

@@ -1,0 +1,7 @@
+meta { name: Batch Checkout Foreign Item type: http seq: 11 }
+post { url: {{baseUrl}}/rental-orders/batch body: json auth: inherit }
+headers { Origin: http://localhost:3000 }
+body:json {
+  { "cartItemIds": ["00000000-0000-0000-0000-999999999999"], "depositType": "traditional", "shippingName": "Nguyễn Văn A", "shippingPhone": "0987654321", "shippingAddress": "TP.HCM" }
+}
+tests { test("foreign item rejected", function () { expect(res.status).to.equal(404); expect(res.body.error.code).to.equal("CART_ITEM_NOT_FOUND"); }); }

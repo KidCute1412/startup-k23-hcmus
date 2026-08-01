@@ -139,6 +139,7 @@ describe('RentalOrdersService', () => {
     service = new RentalOrdersService(
       repository as unknown as RentalOrdersRepository,
       orchestration,
+      prisma,
     );
   });
 

@@ -323,7 +323,7 @@ Luồng demo:
 1. Renter yêu cầu nạp tiền vào ví.
 2. Backend validate amount.
 3. Backend tạo một top-up record ở trạng thái `pending`.
-4. Backend trả về `checkoutUrl` mô phỏng hoặc `mockCheckoutId`.
+4. Backend trả về `topupId`, numeric `orderCode` và `paymentInstructions` mô phỏng lấy từ cấu hình local; không tạo checkout URL hay QR giả.
 5. Frontend redirect sang trang giả lập / màn test.
 6. Từ flow test, hệ thống gọi webhook callback để mark top-up thành công.
 
@@ -826,3 +826,14 @@ Thiết kế đề xuất cho MVP demo là:
 10. Cần bổ sung schema cho ví renter hoặc bảng top-up/ledger tương đương trước khi code sạch.
 
 Nếu team backend review và thống nhất các business rules ở mục 15, tài liệu này có thể dùng làm baseline để implement code ví ảo, top-up mock theo shape PayOS, payment ledger và order lifecycle ở sprint tiếp theo.
+# Credit debt repayment note
+
+When a compensated credit-line deposit becomes debt, the renter repays the full
+`outstanding_debt` from the renter wallet. The operation locks both wallets,
+debits the renter wallet, restores the Mutux display balance, clears debt, and
+writes both ledgers in one transaction. Partial repayment is outside MVP.
+# Batch cart checkout clarification
+
+Batch checkout creates one independent `RentalOrder` per selected cart item in
+`pending_confirm`. It does not lock escrow; the existing escrow flow still
+starts only when the lender confirms each order.

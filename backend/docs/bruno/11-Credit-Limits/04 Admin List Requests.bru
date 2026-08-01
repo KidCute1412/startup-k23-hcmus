@@ -1,0 +1,3 @@
+meta { name: Admin List Requests type: http seq: 4 }
+get { url: {{baseUrl}}/admin/credit-limit-requests?status=pending&page=1&limit=20 body: none auth: inherit }
+tests { test("has pagination meta", function () { expect(res.getBody()).to.have.property("meta"); }); }

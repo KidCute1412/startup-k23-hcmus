@@ -1,0 +1,3 @@
+meta { name: Admin Start Review type: http seq: 5 }
+post { url: {{baseUrl}}/admin/credit-limit-requests/{{creditLimitRequestId}}/review body: none auth: inherit }
+headers { Origin: http://localhost:3000 }

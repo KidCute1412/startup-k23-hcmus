@@ -75,8 +75,20 @@ enum CreditRefType {
   rental_order
   credit_usage
   dispute
+  kyc_verification
+  credit_limit_request
 
   @@map("credit_ref_type")
+}
+
+enum CreditLimitRequestStatus {
+  pending
+  under_review
+  approved
+  rejected
+  cancelled
+
+  @@map("credit_limit_request_status")
 }
 
 enum CreditTxStatus {
@@ -267,30 +279,31 @@ enum WithdrawalStatusType {
 // =============================================================
 
 model User {
-  id                   String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  email                String        @unique @db.VarChar(255)
-  phone                String?       @db.VarChar(20)
-  password_hash        String        @db.VarChar(255)
-  hashedRefreshToken   String?       @map("hashed_refresh_token")
-  full_name            String?       @db.VarChar(255)
-  dob                  DateTime?     @db.Date
-  cccd                 String?       @db.VarChar(20)
-  avatar_url           String?
-  bio                  String?
-  kyc_front_card_url   String?
-  kyc_back_card_url    String?
-  kyc_portrait_url     String?
-  rating               Float         @default(0)
-  address              String?
-  total_reviews        Int           @default(0)
-  role                 UserRole      @default(renter)
-  kyc_status           KycStatusType @default(pending)
+  id                 String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  email              String        @unique @db.VarChar(255)
+  phone              String?       @db.VarChar(20)
+  password_hash      String        @db.VarChar(255)
+  hashedRefreshToken String?       @map("hashed_refresh_token")
+  full_name          String?       @db.VarChar(255)
+  dob                DateTime?     @db.Date
+  cccd               String?       @db.VarChar(20)
+  avatar_url         String?
+  bio                String?
+  kyc_front_card_url String?
+  kyc_back_card_url  String?
+  kyc_portrait_url   String?
+  rating             Float         @default(0)
+  address            String?
+  total_reviews      Int           @default(0)
+  role               UserRole      @default(renter)
+  kyc_status         KycStatusType @default(pending)
   kyc_rejection_reason String?
-  kyc_reviewed_by      String?       @db.Uuid
-  kyc_reviewed_at      DateTime?
-  is_active            Boolean       @default(true)
-  created_at           DateTime      @default(now())
-  updated_at           DateTime      @default(now()) @updatedAt
+  kyc_reviewed_by    String?       @db.Uuid
+  kyc_reviewed_at    DateTime?
+  credit_consent_accepted_at DateTime?
+  is_active          Boolean       @default(true)
+  created_at         DateTime      @default(now())
+  updated_at         DateTime      @default(now()) @updatedAt
 
   // Relations
   gears_as_lender         Gear[]             @relation("LenderGears")
@@ -316,6 +329,9 @@ model User {
   notifications           Notification[]
   user_memberships        UserMembership[]
   bank_accounts           BankAccount[]
+  credit_limit_requests   CreditLimitRequest[] @relation("CreditLimitApplicant")
+  credit_limit_reviews    CreditLimitRequest[] @relation("CreditLimitReviewer")
+  cart                    Cart?
   addresses               UserAddress[]
 
   @@map("users")
@@ -380,11 +396,43 @@ model Gear {
   media         GearMedia[]
   rental_orders RentalOrder[]
   reviews       Review[]
+  cart_items    CartItem[]
 
   @@index([lender_id], name: "idx_gears_lender_id")
   @@index([category_id], name: "idx_gears_category_id")
   @@index([status], name: "idx_gears_status")
   @@map("gears")
+}
+
+model Cart {
+  id         String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  renter_id  String     @unique @db.Uuid
+  created_at DateTime   @default(now())
+  updated_at DateTime   @default(now()) @updatedAt
+
+  renter User       @relation(fields: [renter_id], references: [id], onDelete: Cascade)
+  items  CartItem[]
+
+  @@map("carts")
+}
+
+model CartItem {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  cart_id    String   @db.Uuid
+  gear_id    String   @db.Uuid
+  start_date DateTime @db.Date
+  end_date   DateTime @db.Date
+  created_at DateTime @default(now())
+  updated_at DateTime @default(now()) @updatedAt
+
+  cart Cart @relation(fields: [cart_id], references: [id], onDelete: Cascade)
+  gear Gear @relation(fields: [gear_id], references: [id], onDelete: Cascade)
+
+  @@unique([cart_id, gear_id])
+  @@index([cart_id], name: "idx_cart_items_cart")
+  @@index([gear_id], name: "idx_cart_items_gear")
+  @@index([gear_id, start_date, end_date], name: "idx_cart_items_gear_period")
+  @@map("cart_items")
 }
 
 model GearPriceHistory {
@@ -465,6 +513,29 @@ model CreditTransaction {
 
   @@index([mutux_wallet_id], name: "idx_credit_tx_wallet")
   @@map("credit_transactions")
+}
+
+model CreditLimitRequest {
+  id                          String                   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id                     String                   @db.Uuid
+  requested_limit             Decimal                  @db.Decimal(15, 2)
+  current_limit               Decimal                  @db.Decimal(15, 2)
+  approved_limit              Decimal?                 @db.Decimal(15, 2)
+  consent_accepted_at         DateTime
+  credit_consent_snapshot_at  DateTime
+  status                      CreditLimitRequestStatus @default(pending)
+  review_note                 String?
+  reviewed_by                 String?                  @db.Uuid
+  reviewed_at                 DateTime?
+  created_at                  DateTime                 @default(now())
+  updated_at                  DateTime                 @default(now()) @updatedAt
+
+  applicant User  @relation("CreditLimitApplicant", fields: [user_id], references: [id], onDelete: Cascade)
+  reviewer  User? @relation("CreditLimitReviewer", fields: [reviewed_by], references: [id], onDelete: SetNull)
+
+  @@index([user_id, created_at], name: "idx_credit_limit_requests_user")
+  @@index([status, created_at], name: "idx_credit_limit_requests_status")
+  @@map("credit_limit_requests")
 }
 
 model RentalOrder {

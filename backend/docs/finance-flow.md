@@ -381,3 +381,11 @@ Mutux trừ phí nền tảng
         ↓
 Chuyển khoản ngân hàng
 ```
+# MVP credit line clarification
+
+KYC-verified renters receive 3,000,000 VND automatically. Higher configured
+tiers are 5,000,000 and 10,000,000 VND and are policy-controlled; admins cannot
+override the requested result. Credit has no expiry in the MVP. Outstanding
+debt is repaid in full from the renter wallet through
+`POST /wallets/mutux/debt/repay`; partial repayment and a separate payment
+gateway are later-phase features. `CreditPartner` remains metadata only.

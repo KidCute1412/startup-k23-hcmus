@@ -1,0 +1,4 @@
+meta { name: Admin Reject Request type: http seq: 7 }
+post { url: {{baseUrl}}/admin/credit-limit-requests/{{creditLimitRequestId}}/reject body: json auth: inherit }
+headers { Origin: http://localhost:3000 }
+body:json { { "reviewNote": "Policy requirements not met" } }

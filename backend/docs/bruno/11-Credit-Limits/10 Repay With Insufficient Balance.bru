@@ -1,0 +1,4 @@
+meta { name: Repay With Insufficient Balance type: http seq: 10 }
+post { url: {{baseUrl}}/wallets/mutux/debt/repay body: none auth: inherit }
+headers { Origin: http://localhost:3000 }
+tests { test("insufficient balance is conflict", function () { expect(res.getStatus()).to.equal(409); }); }

@@ -1,0 +1,3 @@
+meta { name: Cancel Pending Request type: http seq: 3 }
+post { url: {{baseUrl}}/credit-limit-requests/{{creditLimitRequestId}}/cancel body: none auth: inherit }
+headers { Origin: http://localhost:3000 }

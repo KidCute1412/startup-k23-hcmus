@@ -1,0 +1,4 @@
+meta { name: Admin Approve Request type: http seq: 6 }
+post { url: {{baseUrl}}/admin/credit-limit-requests/{{creditLimitRequestId}}/approve body: json auth: inherit }
+headers { Origin: http://localhost:3000 }
+body:json { { "approvedLimit": 5000000, "reviewNote": "Eligible" } }

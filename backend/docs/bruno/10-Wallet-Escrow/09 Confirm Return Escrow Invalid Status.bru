@@ -1,0 +1,18 @@
+meta {
+  name: Confirm Return Escrow Invalid Status
+  type: http
+  seq: 9
+}
+
+patch {
+  url: {{baseUrl}}/rental-orders/{{invalidEscrowReturnOrderId}}/confirm-return
+  body: none
+  auth: inherit
+}
+
+tests {
+  test("rejects settlement when escrow is not locked", function() {
+    expect(res.status).to.equal(400);
+    expect(res.body.error.code).to.equal("ESCROW_INVALID_STATUS");
+  });
+}

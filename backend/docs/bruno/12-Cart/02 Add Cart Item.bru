@@ -1,0 +1,8 @@
+meta { name: Add Cart Item type: http seq: 2 }
+put { url: {{baseUrl}}/cart/items/{{gearId}} body: json auth: inherit }
+headers { Origin: http://localhost:3000 }
+body:json { { "startDate": "2027-08-01", "endDate": "2027-08-05" } }
+script:post-response {
+  bru.setEnvVar("cartItemId", res.body.data.id);
+}
+tests { test("stores camelCase item", function () { expect(res.status).to.equal(200); expect(res.body.data).to.have.property("gearId"); }); }

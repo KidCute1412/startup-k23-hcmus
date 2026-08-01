@@ -1,0 +1,5 @@
+meta { name: Create Invalid Tier type: http seq: 9 }
+post { url: {{baseUrl}}/credit-limit-requests body: json auth: inherit }
+headers { Origin: http://localhost:3000 }
+body:json { { "requestedLimit": 7000000, "consentAccepted": true } }
+tests { test("invalid tier is rejected", function () { expect(res.getStatus()).to.equal(400); }); }

@@ -17,6 +17,16 @@ describe('AdminService', () => {
     findUnique: jest.fn(),
     updateMany: jest.fn(),
   };
+  const mutuxWalletModel = {
+    findUnique: jest.fn(),
+    create: jest.fn(),
+    update: jest.fn(),
+  };
+  const creditTransactionModel = {
+    findFirst: jest.fn(),
+    create: jest.fn(),
+  };
+  const notificationModel = { create: jest.fn() };
   const escrowService = {
     release: jest.fn(),
     compensate: jest.fn(),
@@ -24,6 +34,13 @@ describe('AdminService', () => {
   const prisma = {
     user: userModel,
     gear: gearModel,
+    mutuxWallet: mutuxWalletModel,
+    creditTransaction: creditTransactionModel,
+    notification: notificationModel,
+    $queryRaw: jest.fn(),
+    $transaction: jest.fn((callback: (tx: unknown) => unknown) =>
+      Promise.resolve(callback(prisma)),
+    ),
   } as unknown as PrismaService;
   let service: AdminService;
 
@@ -42,6 +59,7 @@ describe('AdminService', () => {
     kyc_reviewed_at: null,
     created_at: new Date('2026-01-01T00:00:00.000Z'),
     updated_at: new Date('2026-01-01T00:00:00.000Z'),
+    credit_consent_accepted_at: new Date('2026-01-01T00:00:00.000Z'),
   };
   const pendingGear = {
     id: 'gear-id',
@@ -65,6 +83,16 @@ describe('AdminService', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    mutuxWalletModel.findUnique.mockResolvedValue({
+      id: 'wallet-id',
+      total_limit: { equals: (value: number) => value === 3000000 },
+      display_balance: 3000000,
+      locked_balance: { equals: () => true },
+      outstanding_debt: { equals: () => true },
+      approved_at: new Date(),
+    });
+    creditTransactionModel.findFirst.mockResolvedValue({ id: 'grant-id' });
+    notificationModel.create.mockResolvedValue({ id: 'notification-id' });
     service = new AdminService(prisma, escrowService);
   });
 

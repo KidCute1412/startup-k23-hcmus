@@ -75,7 +75,23 @@ describe('RentalOrdersController (HTTP)', () => {
     };
     const mockTx = {
       $queryRaw: jest.fn().mockResolvedValue([]),
+      gear: {
+        findUnique: jest.fn().mockResolvedValue({
+          id: '30000000-0000-0000-0000-000000000001',
+          lender_id: 'lender-id',
+          approval_status: ApprovalStatusType.approved,
+          status: GearStatusType.available,
+          rent_price_per_day: 80_000,
+          value: 4_500_000,
+        }),
+      },
       rentalOrder: {
+        findFirst: jest.fn().mockResolvedValue(null),
+        create: jest
+          .fn()
+          .mockImplementation(({ data }) =>
+            Promise.resolve({ id: 'order-id', ...data }),
+          ),
         findUnique: jest
           .fn()
           .mockImplementation(() => Promise.resolve({ ...txOrder })),

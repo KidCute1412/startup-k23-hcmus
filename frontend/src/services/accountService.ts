@@ -33,6 +33,7 @@ export interface KycSubmissionRequest {
   frontCardUrl: string;
   backCardUrl: string;
   portraitUrl: string;
+  creditConsentAccepted?: boolean;
 }
 
 export interface UserAddress {

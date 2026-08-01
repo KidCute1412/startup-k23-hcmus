@@ -2,7 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { StaggerContainer } from "@/components/ui/animations/stagger-container";
 import { TiltCard } from "@/components/ui/animations/tilt-card";
-import type { GearCategory } from "./types";
+import type { GearCategory } from "@/types/catalog";
 
 const CATEGORY_IMAGE_MAP: Record<string, string> = {
   // Real backend category slugs

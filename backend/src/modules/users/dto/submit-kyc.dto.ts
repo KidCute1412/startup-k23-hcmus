@@ -1,4 +1,10 @@
-import { IsString, Length, Matches } from 'class-validator';
+import {
+  IsBoolean,
+  IsOptional,
+  IsString,
+  Length,
+  Matches,
+} from 'class-validator';
 
 export class SubmitKycDto {
   @IsString()
@@ -17,4 +23,8 @@ export class SubmitKycDto {
   @IsString()
   @Matches(/^\/uploads\/[a-zA-Z0-9_-]+\/[^/?#]+$/)
   portraitUrl: string;
+
+  @IsOptional()
+  @IsBoolean()
+  creditConsentAccepted?: boolean;
 }

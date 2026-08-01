@@ -7,6 +7,8 @@ import {
   type UserAddress,
 } from "@/services/accountService";
 
+export type { AddressRequest, UserAddress } from "@/services/accountService";
+
 export function useAddresses() {
   const [addresses, setAddresses] = useState<UserAddress[]>([]);
   const [isLoading, setIsLoading] = useState(true);

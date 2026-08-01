@@ -54,6 +54,13 @@ export class UsersService {
     const current = await this.usersRepository.findProfileById(id);
     if (!current) throw new NotFoundException('User not found');
 
+    if (current.role === 'renter' && dto.creditConsentAccepted !== true) {
+      throw new BadRequestException({
+        error: 'CREDIT_CONSENT_REQUIRED',
+        message: 'Renters must accept the credit terms before submitting KYC',
+      });
+    }
+
     const hasSubmission = Boolean(
       current.cccd &&
       current.kyc_front_card_url &&
@@ -88,6 +95,8 @@ export class UsersService {
       kyc_rejection_reason: null,
       kyc_reviewed_by: null,
       kyc_reviewed_at: null,
+      credit_consent_accepted_at:
+        current.role === 'renter' ? new Date() : undefined,
     });
     return toCurrentUserResponse(user);
   }

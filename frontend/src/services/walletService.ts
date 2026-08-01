@@ -1,62 +1,32 @@
 import { apiClient } from '@/lib/apiClient';
-
-export interface WalletTransaction {
-  id: string;
-  type: string;
-  amount: number;
-  status: string;
-  referenceId?: string | null;
-  createdAt: string;
-}
-
-export interface RenterWallet {
-  id: string;
-  userId: string;
-  balance: number;
-  frozenBalance: number;
-  isActive: boolean;
-}
-
-export interface LenderWallet {
-  id: string;
-  userId: string;
-  balance: number;
-  frozenBalance: number;
-  isActive: boolean;
-}
-
-export interface MutuxCreditLine {
-  id: string;
-  userId: string;
-  creditLimit: number;
-  usedAmount: number;
-  status: string;
-}
-
-export interface TopupRequest {
-  amount: number;
-}
-
-export interface WithdrawRequest {
-  amount: number;
-  bankCode: string;
-  accountNumber: string;
-  accountHolder: string;
-}
+import type {
+  LenderWallet,
+  MutuxCreditLine,
+  RenterWallet,
+  TopupCheckout,
+  TopupCompletion,
+  TopupRequest,
+  WithdrawRequest,
+  RepayCreditDebtResult,
+} from '@/types/wallet';
 
 export const walletService = {
   getRenterWallet: () => apiClient<RenterWallet>('/wallets/renter'),
   getLenderWallet: () => apiClient<LenderWallet>('/wallets/lender'),
   getMutuxCreditLine: () => apiClient<MutuxCreditLine>('/wallets/mutux'),
+  repayMutuxDebt: () =>
+    apiClient<RepayCreditDebtResult>('/wallets/mutux/debt/repay', {
+      method: 'POST',
+    }),
   
   createTopupCheckout: (request: TopupRequest) =>
-    apiClient<any>('/wallets/topups/checkout', {
+    apiClient<TopupCheckout>('/wallets/topups/checkout', {
       method: 'POST',
       body: JSON.stringify(request),
     }),
 
   simulateTopupSuccess: (topupId: string) =>
-    apiClient<null>(`/wallets/topups/${encodeURIComponent(topupId)}/simulate-success`, {
+    apiClient<TopupCompletion>(`/wallets/topups/${encodeURIComponent(topupId)}/simulate-success`, {
       method: 'POST',
     }),
 

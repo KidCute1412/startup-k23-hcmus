@@ -12,6 +12,8 @@ import { EscrowModule } from './modules/escrow/escrow.module';
 import { CsrfOriginMiddleware } from './common/middleware/csrf-origin.middleware';
 import { MediaModule } from './modules/media/media.module';
 import { DisputesModule } from './modules/disputes/disputes.module';
+import { CreditLimitsModule } from './modules/credit-limits/credit-limits.module';
+import { CartsModule } from './modules/carts/carts.module';
 
 @Module({
   imports: [
@@ -27,6 +29,8 @@ import { DisputesModule } from './modules/disputes/disputes.module';
     AdminModule,
     EscrowModule,
     DisputesModule,
+    CreditLimitsModule,
+    CartsModule,
   ],
   controllers: [],
   providers: [],

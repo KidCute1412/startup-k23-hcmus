@@ -14,7 +14,7 @@ import {
   RefreshCw,
 } from "lucide-react";
 import { useAdminKyc } from "@/hooks/useAdminKyc";
-import { KycStatus } from "@/services/adminService";
+import type { KycStatus } from "@/types/admin";
 
 const STATUS_TABS: { label: string; value: KycStatus }[] = [
   { label: "Chờ duyệt", value: "pending" },

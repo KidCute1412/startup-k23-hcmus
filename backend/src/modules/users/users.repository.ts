@@ -24,6 +24,7 @@ export const safeUserSelect = {
   kyc_front_card_url: true,
   kyc_back_card_url: true,
   kyc_portrait_url: true,
+  credit_consent_accepted_at: true,
   created_at: true,
   updated_at: true,
 } satisfies Prisma.UserSelect;

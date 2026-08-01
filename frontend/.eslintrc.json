@@ -1,3 +1,40 @@
 {
-  "extends": "next/core-web-vitals"
+  "extends": "next/core-web-vitals",
+  "overrides": [
+    {
+      "files": [
+        "src/features/**/*.{ts,tsx}",
+        "src/components/**/*.{ts,tsx}"
+      ],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": ["@/services/*", "@/lib/apiClient"],
+                "message": "Client UI must access APIs through a hook, never through a service or apiClient."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/services/**/*.ts"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": ["@/features/*"],
+                "message": "Services must depend on neutral types and infrastructure, never feature UI."
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
 }

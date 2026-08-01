@@ -4,12 +4,11 @@ import { useEffect, useMemo, useState, useRef } from "react";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
-import { useAccount } from "@/hooks/useAccount";
 import {
-  accountService,
   resolveMediaUrl,
   type AccountUser,
-} from "@/services/accountService";
+  useAccount,
+} from "@/hooks/useAccount";
 import { ImageDropzone } from "./components/image-dropzone";
 
 const inputClass =
@@ -61,6 +60,7 @@ export function ProfileOverview({
     reload,
     updateProfile,
     submitKyc,
+    uploadImage,
     closeAccount,
   } = useAccount();
 
@@ -117,7 +117,7 @@ export function ProfileOverview({
     setLocalError(null);
     setSuccess(null);
     try {
-      const uploadRes = await accountService.uploadImage(file);
+      const uploadRes = await uploadImage(file);
       await updateProfile({ avatarUrl: uploadRes.url });
       setSuccess("Cập nhật ảnh đại diện thành công.");
     } catch (cause) {
@@ -607,6 +607,8 @@ export function ProfileOverview({
       {isKycOpen && (
         <KycDialog
           isSaving={isSaving}
+          isRenter={user.role === "renter"}
+          uploadImage={uploadImage}
           onCancel={() => setIsKycOpen(false)}
           onSubmit={async (values) => {
             await submitKyc(values);
@@ -684,27 +686,39 @@ function ProfileField({
 
 function KycDialog({
   isSaving,
+  isRenter,
+  uploadImage,
   onCancel,
   onSubmit,
 }: {
   isSaving: boolean;
+  isRenter: boolean;
+  uploadImage: (file: File) => Promise<{ url: string }>;
   onCancel: () => void;
   onSubmit: (values: {
     cccd: string;
     frontCardUrl: string;
     backCardUrl: string;
     portraitUrl: string;
+    creditConsentAccepted?: boolean;
   }) => Promise<void>;
 }) {
   const [cccd, setCccd] = useState("");
   const [front, setFront] = useState<File | null>(null);
   const [back, setBack] = useState<File | null>(null);
   const [portrait, setPortrait] = useState<File | null>(null);
+  const [creditConsentAccepted, setCreditConsentAccepted] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const completedCount = [front, back, portrait].filter(Boolean).length;
-  const isFormComplete = Boolean(cccd.trim() && front && back && portrait);
+  const isFormComplete = Boolean(
+    cccd.trim() &&
+      front &&
+      back &&
+      portrait &&
+      (!isRenter || creditConsentAccepted),
+  );
 
   const submit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -716,15 +730,16 @@ function KycDialog({
     setError(null);
     try {
       const [frontResult, backResult, portraitResult] = await Promise.all([
-        accountService.uploadImage(front),
-        accountService.uploadImage(back),
-        accountService.uploadImage(portrait),
+        uploadImage(front),
+        uploadImage(back),
+        uploadImage(portrait),
       ]);
       await onSubmit({
         cccd,
         frontCardUrl: frontResult.url,
         backCardUrl: backResult.url,
         portraitUrl: portraitResult.url,
+        creditConsentAccepted: isRenter ? creditConsentAccepted : undefined,
       });
     } catch (cause) {
       setError(
@@ -817,6 +832,24 @@ function KycDialog({
             />
           </div>
         </div>
+
+        {isRenter && (
+          <label className="flex items-start gap-3 rounded-v-sm border border-vanguard-primary/30 bg-vanguard-primary/5 p-3 text-xs">
+            <input
+              required
+              type="checkbox"
+              checked={creditConsentAccepted}
+              onChange={(event) =>
+                setCreditConsentAccepted(event.target.checked)
+              }
+              className="mt-0.5 h-4 w-4 accent-vanguard-primary"
+            />
+            <span>
+              Tôi đồng ý với điều khoản hạn mức tín dụng Mutux và
+              cho phép hệ thống ghi nhận thời điểm chấp thuận.
+            </span>
+          </label>
+        )}
 
         {error && (
           <div className="rounded-v-sm border border-red-500/40 bg-red-500/10 px-3 py-2 text-xs font-semibold text-red-600 dark:text-red-400">

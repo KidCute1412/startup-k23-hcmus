@@ -1,0 +1,5 @@
+meta { name: Add Invalid Date Range type: http seq: 7 }
+put { url: {{baseUrl}}/cart/items/{{gearId}} body: json auth: inherit }
+headers { Origin: http://localhost:3000 }
+body:json { { "startDate": "2027-08-05", "endDate": "2027-08-01" } }
+tests { test("rejects invalid dates", function () { expect(res.status).to.equal(400); expect(res.body.error.code).to.equal("INVALID_DATE_RANGE"); }); }

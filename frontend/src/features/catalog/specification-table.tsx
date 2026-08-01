@@ -1,4 +1,4 @@
-import type { GearSpecification } from "./types";
+import type { GearSpecification } from "@/types/catalog";
 
 type SpecificationTableProps = {
   specifications: GearSpecification[];

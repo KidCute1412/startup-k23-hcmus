@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Playfair_Display, Plus_Jakarta_Sans } from "next/font/google";
+import { Playfair_Display, Outfit } from "next/font/google";
 import { Footer } from "@/components/layout/footer";
 import { Header } from "@/components/layout/header";
 import "./globals.css";
@@ -9,8 +9,8 @@ const display = Playfair_Display({
   variable: "--font-display",
 });
 
-const body = Plus_Jakarta_Sans({
-  subsets: ["latin", "vietnamese"],
+const body = Outfit({
+  subsets: ["latin"],
   variable: "--font-body",
 });
 
@@ -21,6 +21,7 @@ export const metadata: Metadata = {
 };
 
 import { CartProvider } from "@/features/cart/cart-context";
+import { ToastProvider } from "@/components/ui/toast";
 
 export default function RootLayout({
   children,
@@ -49,13 +50,15 @@ export default function RootLayout({
         />
       </head>
       <body className={`${display.variable} ${body.variable} font-body`}>
-        <CartProvider>
-          <div className="flex min-h-screen flex-col bg-vanguard-light-bg text-vanguard-light-text transition-colors duration-300 dark:bg-vanguard-dark-bg dark:text-vanguard-dark-text">
-            <Header />
-            <main className="flex-1">{children}</main>
-            <Footer />
-          </div>
-        </CartProvider>
+        <ToastProvider>
+          <CartProvider>
+            <div className="flex min-h-screen flex-col bg-vanguard-light-bg text-vanguard-light-text transition-colors duration-300 dark:bg-vanguard-dark-bg dark:text-vanguard-dark-text">
+              <Header />
+              <main className="flex-1">{children}</main>
+              <Footer />
+            </div>
+          </CartProvider>
+        </ToastProvider>
       </body>
     </html>
   );

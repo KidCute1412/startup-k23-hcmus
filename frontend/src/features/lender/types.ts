@@ -1,4 +1,4 @@
-import type { AvailabilityStatus, GearCategory } from "@/features/catalog/types";
+import type { AvailabilityStatus, GearCategory } from "@/types/catalog";
 
 export type ListingStatus =
   | "draft"

@@ -16,7 +16,7 @@ vars:pre-request {
 
 tests {
   test("returns current successful topup", function() {
-    expect([200, 201]).to.include(res.status);
+    expect(res.status).to.equal(200);
     expect(res.body.data || res.body).to.have.property("status", "success");
   });
 }

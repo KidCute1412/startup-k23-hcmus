@@ -1,6 +1,8 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access */
 import type { INestApplication } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { createHmac } from 'crypto';
+import { stableStringify } from '../src/modules/wallets/wallets.service';
 import request from 'supertest';
 import { App } from 'supertest/types';
 import { PrismaService } from '../src/prisma/prisma.service';
@@ -21,6 +23,10 @@ describeIntegration('Wallet topups (PostgreSQL integration)', () => {
   let renterId: string;
   let renterToken: string;
   let walletId: string;
+  let lenderId: string;
+  let lenderToken: string;
+  let lenderWalletId: string;
+  let adminToken: string;
   const { ids: fixtureIds, newId } = createFixtureIds();
 
   beforeAll(async () => {
@@ -45,6 +51,33 @@ describeIntegration('Wallet topups (PostgreSQL integration)', () => {
     });
     walletId = wallet.id;
     renterToken = createJwt(renterId, 'renter');
+
+    lenderId = newId();
+    const adminId = newId();
+    await prisma.user.createMany({
+      data: [
+        {
+          id: lenderId,
+          email: `wallet-lender-${lenderId}@integration.test`,
+          password_hash: 'x',
+          role: 'lender',
+          kyc_status: 'verified',
+        },
+        {
+          id: adminId,
+          email: `wallet-admin-${adminId}@integration.test`,
+          password_hash: 'x',
+          role: 'admin',
+          kyc_status: 'verified',
+        },
+      ],
+    });
+    const lenderWallet = await prisma.lenderWallet.create({
+      data: { lender_id: lenderId, balance: 500_000 },
+    });
+    lenderWalletId = lenderWallet.id;
+    lenderToken = createJwt(lenderId, 'lender');
+    adminToken = createJwt(adminId, 'admin');
   });
 
   it('rejects checkout amount = 0 with validation error and creates no topup', async () => {
@@ -52,7 +85,7 @@ describeIntegration('Wallet topups (PostgreSQL integration)', () => {
       .post('/api/v1/wallets/topups/checkout')
       .set('Cookie', createAccessTokenCookie(renterToken))
       .set('Origin', INTEGRATION_FRONTEND_ORIGIN)
-      .send({ amount: 0 })
+      .send({ amount: 0, method: 'payos' })
       .expect(400);
 
     expect(
@@ -76,7 +109,15 @@ describeIntegration('Wallet topups (PostgreSQL integration)', () => {
     const response = await request(app.getHttpServer())
       .post('/api/v1/payments/webhook/payos')
       .set('x-payos-signature', 'bad-signature')
-      .send({ data: { orderCode, reference: 'PAYOS-BAD-SIG' } })
+      .send({
+        code: '00',
+        success: true,
+        data: {
+          orderCode,
+          amount: 100_000,
+          reference: 'PAYOS-BAD-SIG',
+        },
+      })
       .expect(401);
 
     expect(response.body).toMatchObject({
@@ -97,23 +138,26 @@ describeIntegration('Wallet topups (PostgreSQL integration)', () => {
   });
 
   it('credits duplicate PayOS webhooks for the same order_code only once and records ledger balances', async () => {
-    const orderCode = 91000002;
     const reference = 'PAYOS-DUPLICATE-REF';
     await prisma.renterWallet.update({
       where: { id: walletId },
       data: { balance: 50_000, locked_balance: 0 },
     });
-    await prisma.walletTopup.create({
-      data: {
-        wallet_id: walletId,
-        amount: 100_000,
-        order_code: String(orderCode),
-      },
-    });
-    const body = { data: { orderCode, reference } };
+    const checkout = await request(app.getHttpServer())
+      .post('/api/v1/wallets/topups/checkout')
+      .set('Cookie', createAccessTokenCookie(renterToken))
+      .set('Origin', INTEGRATION_FRONTEND_ORIGIN)
+      .send({ amount: 100_000, method: 'payos' })
+      .expect(201);
+    const { orderCode, topupId } = checkout.body.data;
+    const body = {
+      code: '00',
+      success: true,
+      data: { orderCode, amount: 100_000, reference },
+    };
     const rawBody = JSON.stringify(body);
     const signature = createHmac('sha256', 'wallet-webhook-secret')
-      .update(rawBody)
+      .update(stableStringify(body))
       .digest('hex');
 
     await request(app.getHttpServer())
@@ -121,29 +165,44 @@ describeIntegration('Wallet topups (PostgreSQL integration)', () => {
       .set('Content-Type', 'application/json')
       .set('x-payos-signature', signature)
       .send(rawBody)
-      .expect(201);
+      .expect(200);
     await request(app.getHttpServer())
       .post('/api/v1/payments/webhook/payos')
       .set('Content-Type', 'application/json')
       .set('x-payos-signature', signature)
       .send(rawBody)
-      .expect(201);
+      .expect(200);
+
+    expect(checkout.body.data).toMatchObject({
+      topupId,
+      orderCode,
+      amount: 100_000,
+      status: 'pending',
+    });
 
     const walletAfter = await prisma.renterWallet.findUniqueOrThrow({
       where: { id: walletId },
     });
     expect(walletAfter.balance).toEqual(new Prisma.Decimal(150_000));
     expect(
-      await prisma.renterWalletTransaction.count({ where: { reference } }),
+      await prisma.renterWalletTransaction.count({
+        where: { reference: String(orderCode) },
+      }),
     ).toBe(1);
     await expect(
       prisma.renterWalletTransaction.findUniqueOrThrow({
-        where: { reference },
+        where: { reference: String(orderCode) },
       }),
     ).resolves.toMatchObject({
       amount: new Prisma.Decimal(100_000),
       balance_before: new Prisma.Decimal(50_000),
       balance_after: new Prisma.Decimal(150_000),
+    });
+    await expect(
+      prisma.walletTopup.findUniqueOrThrow({ where: { id: topupId } }),
+    ).resolves.toMatchObject({
+      status: 'success',
+      provider_reference: reference,
     });
   });
 
@@ -164,16 +223,16 @@ describeIntegration('Wallet topups (PostgreSQL integration)', () => {
       .post(`/api/v1/wallets/topups/${topup.id}/simulate-success`)
       .set('Cookie', createAccessTokenCookie(renterToken))
       .set('Origin', INTEGRATION_FRONTEND_ORIGIN)
-      .expect(201);
+      .expect(200);
     const repeated = await request(app.getHttpServer())
       .post(`/api/v1/wallets/topups/${topup.id}/simulate-success`)
       .set('Cookie', createAccessTokenCookie(renterToken))
       .set('Origin', INTEGRATION_FRONTEND_ORIGIN)
-      .expect(201);
+      .expect(200);
 
     expect(repeated.body).toMatchObject({
       success: true,
-      data: { id: topup.id, status: 'success' },
+      data: { topupId: topup.id, status: 'success', walletBalance: 80_000 },
     });
     expect(
       await prisma.renterWallet.findUniqueOrThrow({ where: { id: walletId } }),
@@ -193,8 +252,94 @@ describeIntegration('Wallet topups (PostgreSQL integration)', () => {
     });
   });
 
+  it.each([
+    ['renter', () => renterToken],
+    ['admin', () => adminToken],
+  ])(
+    'rejects lender withdrawal for %s without changing balance, withdrawal, bank account, or ledger',
+    async (_role, token) => {
+      const walletBefore = await prisma.lenderWallet.findUniqueOrThrow({
+        where: { id: lenderWalletId },
+      });
+      const [withdrawalsBefore, bankAccountsBefore, ledgerBefore] =
+        await Promise.all([
+          prisma.withdrawal.count(),
+          prisma.bankAccount.count(),
+          prisma.lenderWalletTransaction.count({
+            where: { lender_wallet_id: lenderWalletId },
+          }),
+        ]);
+
+      await request(app.getHttpServer())
+        .post('/api/v1/wallets/lender/withdraw')
+        .set('Cookie', createAccessTokenCookie(token()))
+        .set('Origin', INTEGRATION_FRONTEND_ORIGIN)
+        .send({
+          amount: 100_000,
+          bankCode: 'MB',
+          accountNumber: '123456789',
+          accountHolder: 'NGUYEN VAN A',
+        })
+        .expect(403);
+
+      await expect(
+        prisma.lenderWallet.findUniqueOrThrow({
+          where: { id: lenderWalletId },
+        }),
+      ).resolves.toMatchObject({
+        balance: walletBefore.balance,
+        total_withdrawn: walletBefore.total_withdrawn,
+      });
+      await expect(prisma.withdrawal.count()).resolves.toBe(withdrawalsBefore);
+      await expect(prisma.bankAccount.count()).resolves.toBe(
+        bankAccountsBefore,
+      );
+      await expect(
+        prisma.lenderWalletTransaction.count({
+          where: { lender_wallet_id: lenderWalletId },
+        }),
+      ).resolves.toBe(ledgerBefore);
+    },
+  );
+
+  it('allows a lender to create an atomic demo withdrawal', async () => {
+    await request(app.getHttpServer())
+      .post('/api/v1/wallets/lender/withdraw')
+      .set('Cookie', createAccessTokenCookie(lenderToken))
+      .set('Origin', INTEGRATION_FRONTEND_ORIGIN)
+      .send({
+        amount: 100_000,
+        bankCode: 'MB',
+        accountNumber: '987654321',
+        accountHolder: 'NGUYEN VAN B',
+      })
+      .expect(200);
+
+    await expect(
+      prisma.lenderWallet.findUniqueOrThrow({
+        where: { id: lenderWalletId },
+      }),
+    ).resolves.toMatchObject({
+      balance: new Prisma.Decimal(400_000),
+      total_withdrawn: new Prisma.Decimal(100_000),
+    });
+    await expect(
+      prisma.lenderWalletTransaction.count({
+        where: { lender_wallet_id: lenderWalletId, type: 'withdrawal' },
+      }),
+    ).resolves.toBe(1);
+  });
+
   afterAll(async () => {
     if (prisma) {
+      await prisma.withdrawal.deleteMany({
+        where: { lender_wallet_id: lenderWalletId },
+      });
+      await prisma.lenderWalletTransaction.deleteMany({
+        where: { lender_wallet_id: lenderWalletId },
+      });
+      await prisma.bankAccount.deleteMany({ where: { user_id: lenderId } });
+      await prisma.lenderWallet.deleteMany({ where: { id: lenderWalletId } });
       await prisma.walletTopup.deleteMany({ where: { wallet_id: walletId } });
       await prisma.renterWalletTransaction.deleteMany({
         where: { wallet_id: walletId },

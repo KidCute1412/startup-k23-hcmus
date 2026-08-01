@@ -1,7 +1,7 @@
 import { Card } from "@/components/ui/card";
 import { StaggerContainer } from "@/components/ui/animations/stagger-container";
 import { ProductCard } from "./product-card";
-import type { Gear } from "./types";
+import type { Gear } from "@/types/catalog";
 
 type ProductGridProps = {
   gears: Gear[];
@@ -27,4 +27,3 @@ export function ProductGrid({ gears }: ProductGridProps) {
     </StaggerContainer>
   );
 }
-

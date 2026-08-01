@@ -1,69 +1,32 @@
 import { Type } from 'class-transformer';
 import {
   IsBoolean,
+  IsDefined,
   IsNumber,
-  IsOptional,
   IsString,
   ValidateNested,
 } from 'class-validator';
 
 export class PayosWebhookDataDto {
-  @IsOptional()
   @IsNumber()
-  orderCode?: number;
+  orderCode: number;
 
-  @IsOptional()
   @IsNumber()
-  amount?: number;
+  amount: number;
 
-  @IsOptional()
   @IsString()
-  description?: string;
-
-  @IsOptional()
-  @IsString()
-  reference?: string;
-
-  @IsOptional()
-  @IsString()
-  paymentLinkId?: string;
-
-  @IsOptional()
-  @IsString()
-  code?: string;
-
-  @IsOptional()
-  @IsString()
-  desc?: string;
+  reference: string;
 }
 
 export class PayosWebhookDto {
-  @IsOptional()
-  @IsNumber()
-  orderCode?: number;
-
-  @IsOptional()
   @IsString()
-  code?: string;
+  code: string;
 
-  @IsOptional()
-  @IsString()
-  desc?: string;
-
-  @IsOptional()
   @IsBoolean()
-  success?: boolean;
+  success: boolean;
 
-  @IsOptional()
-  @IsString()
-  description?: string;
-
-  @IsOptional()
-  @IsString()
-  signature?: string;
-
-  @IsOptional()
+  @IsDefined()
   @ValidateNested()
   @Type(() => PayosWebhookDataDto)
-  data?: PayosWebhookDataDto;
+  data: PayosWebhookDataDto;
 }

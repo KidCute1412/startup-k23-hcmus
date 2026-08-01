@@ -1,21 +1,22 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { StatRow } from "@/components/ui/stat-row";
 import { formatCurrency, formatShortDate } from "@/lib/format";
 import { useRentalOrder } from "@/hooks/useRentalOrder";
-import type { RentalOrder } from "@/services/rentalOrderService";
+import type { RentalOrder } from "@/types/rentals";
+import { resolveMediaUrl } from "@/lib/media";
+import { SubmitDisputeModal } from "./submit-dispute-modal";
 
-export type OrderStatusType = RentalOrder['status'] | 'disputed';
+export type OrderStatusType = RentalOrder['status'];
 
-export const statusConfig: Record<OrderStatusType | 'pending_confirm', { label: string; tone: "gold" | "muted" | "destructive" }> = {
-  pending: { label: "Chờ xác nhận", tone: "gold" },
+export const statusConfig: Record<OrderStatusType, { label: string; tone: "gold" | "muted" | "destructive" }> = {
   pending_confirm: { label: "Chờ xác nhận", tone: "gold" },
   confirmed: { label: "Đã xác nhận", tone: "gold" },
-  shipped: { label: "Đang giao hàng", tone: "gold" },
+  delivering: { label: "Đang giao hàng", tone: "gold" },
   active: { label: "Đang thuê", tone: "gold" },
   returning: { label: "Đang trả hàng", tone: "gold" },
   completed: { label: "Đã hoàn tất", tone: "muted" },
@@ -34,6 +35,7 @@ export function OrdersOverview() {
   const { orders, isLoading, fetchOrders } = useRentalOrder();
   const [selectedStatus, setSelectedStatus] = useState<string>("all");
   const [searchTerm, setSearchTerm] = useState<string>("");
+  const [disputeOrder, setDisputeOrder] = useState<{ id: string; code: string } | null>(null);
 
   useEffect(() => {
     fetchOrders().catch(console.error);
@@ -42,7 +44,7 @@ export function OrdersOverview() {
   const filterTabs = [
     { id: "all", label: "Tất cả đơn" },
     { id: "active", label: "Đang thuê" },
-    { id: "pending", label: "Chờ xác nhận" },
+    { id: "pending_confirm", label: "Chờ xác nhận" },
     { id: "completed", label: "Đã hoàn tất" },
     { id: "cancelled", label: "Đã hủy" },
   ];
@@ -51,9 +53,9 @@ export function OrdersOverview() {
     return orders.filter((order) => {
       const matchesStatus = selectedStatus === "all" || order.status === selectedStatus;
       const searchLower = searchTerm.toLowerCase();
-      const code = order.id.slice(0, 8); // simplified code
+      const code = order.id.slice(0, 8);
       const title = order.gear?.name || "";
-      const lender = order.lender?.fullName || "";
+      const lender = order.lender?.fullName || order.lender?.full_name || "";
       
       const matchesSearch =
         code.toLowerCase().includes(searchLower) ||
@@ -104,8 +106,8 @@ export function OrdersOverview() {
           </div>
         )}
         {!isLoading && filteredOrders.map((order) => {
-          const config = statusConfig[order.status] || statusConfig.pending;
-          const gearImage = order.gear?.media?.[0]?.url || "https://placehold.co/400x400?text=Gear";
+          const config = statusConfig[order.status] || statusConfig.pending_confirm;
+          const gearImage = resolveMediaUrl(order.gear?.media?.[0]?.url);
           const gearTitle = order.gear?.name || "Sản phẩm chưa rõ";
           const code = order.id.slice(0, 8).toUpperCase();
           const lenderName = order.lender?.full_name || order.lender?.fullName || "Chủ gear";
@@ -154,7 +156,16 @@ export function OrdersOverview() {
                 <StatRow label="Thời gian thuê" value={`${formatShortDate(order.start_date)} - ${formatShortDate(order.end_date)} (${totalDays} ngày)`} />
                 <StatRow label="Tiền cọc thiết bị" value={`${formatCurrency(order.deposit_amount || order.depositCash || 0)} (${(order.deposit_type || order.depositType) === 'credit_line' ? 'Tín dụng Mutux' : 'Tiền mặt'})`} />
                 
-                <div className="flex justify-end">
+                <div className="flex justify-end space-x-2">
+                  {(order.status === 'active' || order.status === 'returning') && (
+                    <button
+                      type="button"
+                      onClick={() => setDisputeOrder({ id: order.id, code })}
+                      className="inline-flex items-center justify-center rounded-v-sm border border-red-500/50 bg-red-500/10 px-3 py-2 text-xs font-bold uppercase tracking-wider text-red-400 hover:bg-red-500 hover:text-white transition"
+                    >
+                      Báo cáo khiếu nại
+                    </button>
+                  )}
                   <Link
                     href={`/orders/${order.id}`}
                     className="inline-flex items-center justify-center rounded-v-sm border border-vanguard-primary px-4 py-2 text-xs font-bold uppercase tracking-wider text-vanguard-primary hover:bg-vanguard-primary hover:text-vanguard-dark-bg transition"
@@ -176,6 +187,18 @@ export function OrdersOverview() {
           </Card>
         )}
       </div>
+
+      {disputeOrder && (
+        <SubmitDisputeModal
+          isOpen={!!disputeOrder}
+          onClose={() => setDisputeOrder(null)}
+          orderId={disputeOrder.id}
+          orderCode={disputeOrder.code}
+          onSuccess={() => {
+            fetchOrders().catch(console.error);
+          }}
+        />
+      )}
     </div>
   );
 }

@@ -3,11 +3,13 @@
 import { useCallback, useState } from 'react';
 import {
   rentalOrderService,
-  type CreateRentalOrderRequest,
-  type RentalOrder,
-  type GetRentalOrdersParams,
 } from '@/services/rentalOrderService';
 import { type PaginationMeta } from '@/lib/apiClient';
+import type {
+  CreateRentalOrderRequest,
+  GetRentalOrdersParams,
+  RentalOrder,
+} from '@/types/rentals';
 
 export function useRentalOrder() {
   const [isLoading, setIsLoading] = useState(false);

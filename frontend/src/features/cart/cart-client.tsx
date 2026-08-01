@@ -1,39 +1,34 @@
 "use client";
 
-import { Trash2 } from "lucide-react";
+import { AlertTriangle, Trash2 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { LinkButton } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { formatCurrency } from "@/lib/format";
+import { DatePicker, Input } from "@/components/ui/field";
 import { useCart } from "@/features/cart/cart-context";
+import { formatCurrency } from "@/lib/format";
 
 export function CartClient() {
-  const { items, removeFromCart, totalItems, selectedItemIds, toggleSelectItem, selectAll, clearSelected } = useCart();
+  const {
+    items, removeItem, selectedItemIds, toggleSelectItem, selectAll, clearSelected,
+    upsertItem, loading, mutating, error, role,
+  } = useCart();
+  const eligible = items.filter((item) => item.availability.eligible);
+  const selected = items.filter((item) => selectedItemIds.includes(item.id));
+  const total = selected.reduce((sum, item) => sum + item.rentalFee, 0);
+  const allSelected = eligible.length > 0 && eligible.every((item) => selectedItemIds.includes(item.id));
 
-  const calculateSubtotal = (dailyPrice: number, startDate: string, endDate: string) => {
-    const start = new Date(startDate);
-    const end = new Date(endDate);
-    const diffTime = Math.abs(end.getTime() - start.getTime());
-    const durationDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    return dailyPrice * (durationDays > 0 ? durationDays : 1);
-  };
-
-  const selectedItems = items.filter(item => selectedItemIds.includes(item.id));
-  const totalPrice = selectedItems.reduce((sum, item) => {
-    return sum + calculateSubtotal(item.gear.pricing.dailyPrice, item.startDate, item.endDate);
-  }, 0);
-
-  const isAllSelected = items.length > 0 && selectedItemIds.length === items.length;
-  const toggleAll = () => {
-    if (isAllSelected) {
-      clearSelected();
-    } else {
-      selectAll(items.map(i => i.id));
-    }
-  };
-
-  if (totalItems === 0) {
+  if (loading) return <Card className="p-12 text-center">Đang tải giỏ hàng…</Card>;
+  if (role !== "renter") {
+    return (
+      <Card className="p-12 text-center">
+        <p className="mb-6">Vui lòng đăng nhập bằng tài khoản người thuê để sử dụng giỏ hàng.</p>
+        <LinkButton href="/login?redirect=/cart">Đăng nhập</LinkButton>
+      </Card>
+    );
+  }
+  if (!items.length) {
     return (
       <Card className="p-12 text-center">
         <p className="mb-6 text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted">
@@ -47,95 +42,51 @@ export function CartClient() {
   return (
     <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_360px]">
       <div className="space-y-4">
-        <div className="flex items-center justify-between px-4 py-2 bg-vanguard-light-surfDim dark:bg-vanguard-dark-surfDim rounded-v-sm border border-vanguard-light-border dark:border-vanguard-dark-border">
-          <label className="flex items-center gap-3 cursor-pointer">
+        {error ? <p className="rounded-v-sm border border-red-500/40 p-3 text-sm text-red-500">{error}</p> : null}
+        <label className="flex items-center gap-3 border border-vanguard-light-border p-4 dark:border-vanguard-dark-border">
+          <input type="checkbox" checked={allSelected} onChange={() => allSelected ? clearSelected() : selectAll(eligible.map((item) => item.id))} />
+          Chọn tất cả sản phẩm khả dụng ({eligible.length})
+        </label>
+        {items.map((item) => (
+          <Card key={item.id} className="grid gap-4 p-4 sm:grid-cols-[auto_96px_1fr_auto] sm:items-center">
             <input
               type="checkbox"
-              checked={isAllSelected}
-              onChange={toggleAll}
-              className="size-5 rounded-sm accent-vanguard-primary"
+              disabled={!item.availability.eligible || mutating}
+              checked={selectedItemIds.includes(item.id)}
+              onChange={() => toggleSelectItem(item.id)}
+              aria-label={`Chọn ${item.gear.name}`}
             />
-            <span className="font-display font-semibold text-sm">Chọn tất cả ({items.length})</span>
-          </label>
-        </div>
-        
-        {items.map((item) => {
-          const primaryMedia = item.gear.media[0];
-          const subtotal = calculateSubtotal(
-            item.gear.pricing.dailyPrice,
-            item.startDate,
-            item.endDate
-          );
-
-          return (
-            <Card key={item.id} className="flex flex-col gap-4 p-4 sm:flex-row sm:items-center">
-              <label className="flex items-center cursor-pointer px-2">
-                <input
-                  type="checkbox"
-                  checked={selectedItemIds.includes(item.id)}
-                  onChange={() => toggleSelectItem(item.id)}
-                  className="size-5 rounded-sm accent-vanguard-primary"
-                />
-              </label>
-              <div className="relative aspect-square w-24 shrink-0 overflow-hidden rounded-v-sm bg-vanguard-light-surfDim dark:bg-vanguard-dark-surfDim">
-                {primaryMedia ? (
-                  <Image
-                    src={primaryMedia.imageUrl}
-                    alt={primaryMedia.alt || "Gear thumbnail"}
-                    fill
-                    className="object-cover"
-                  />
-                ) : null}
+            <div className="relative aspect-square overflow-hidden bg-vanguard-light-surfDim dark:bg-vanguard-dark-surfDim">
+              {item.gear.primaryMediaUrl ? <Image src={item.gear.primaryMediaUrl} alt={item.gear.name} fill className="object-cover" /> : null}
+            </div>
+            <div>
+              <Link href={`/gears/${item.gear.id}`} className="font-display text-lg font-bold hover:text-vanguard-primary">{item.gear.name}</Link>
+              <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                <DatePicker value={item.startDate} disabled={mutating} onChange={(val) => void upsertItem(item.gearId, val, item.endDate)} placeholder="Từ ngày" />
+                <DatePicker value={item.endDate} disabled={mutating} min={item.startDate} onChange={(val) => void upsertItem(item.gearId, item.startDate, val)} placeholder="Đến ngày" />
               </div>
-              <div className="flex-1">
-                <Link
-                  href={`/gears/${item.gear.slug}`}
-                  className="font-display text-lg font-bold hover:text-vanguard-primary"
-                >
-                  {item.gear.name}
-                </Link>
-                <div className="mt-2 grid gap-1 text-sm text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted">
-                  <p>Từ: {item.startDate} &mdash; Đến: {item.endDate}</p>
-                  <p>Giá: {formatCurrency(item.gear.pricing.dailyPrice)}/ngày</p>
-                </div>
-              </div>
-              <div className="flex items-center justify-between gap-4 sm:flex-col sm:items-end">
-                <p className="font-display font-bold text-vanguard-primary">
-                  {formatCurrency(subtotal)}
+              <p className="mt-2 text-sm">{formatCurrency(item.rentPricePerDay)}/ngày · {item.durationDays} ngày</p>
+              {!item.availability.eligible ? (
+                <p className="mt-2 flex items-center gap-2 text-sm text-amber-500">
+                  <AlertTriangle size={15} /> {item.availability.code === "period_conflict" ? "Khoảng ngày đã có lịch thuê" : "Gear không còn khả dụng"}
                 </p>
-                <button
-                  type="button"
-                  onClick={() => removeFromCart(item.id)}
-                  className="text-vanguard-light-textMuted hover:text-red-500 dark:text-vanguard-dark-textMuted dark:hover:text-red-400"
-                  aria-label="Xóa khỏi giỏ"
-                >
-                  <Trash2 size={18} />
-                </button>
-              </div>
-            </Card>
-          );
-        })}
+              ) : null}
+            </div>
+            <div className="flex items-center justify-between gap-4 sm:flex-col sm:items-end">
+              <p className="font-display font-bold text-vanguard-primary">{formatCurrency(item.rentalFee)}</p>
+              <button disabled={mutating} onClick={() => void removeItem(item.id)} aria-label="Xóa khỏi giỏ"><Trash2 size={18} /></button>
+            </div>
+          </Card>
+        ))}
       </div>
-
-      <div className="self-start">
-        <Card className="p-5">
-          <h2 className="mb-4 font-display text-lg font-bold uppercase tracking-wider">
-            Tổng cộng
-          </h2>
-          <div className="flex justify-between font-display text-xl font-bold text-vanguard-primary">
-            <span>Tạm tính</span>
-            <span>{formatCurrency(totalPrice)}</span>
-          </div>
-          <p className="mt-2 text-xs text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted">
-            Chưa bao gồm phí cọc. Phí cọc sẽ được tính ở bước thanh toán.
-          </p>
-          <div className="mt-6 border-t border-vanguard-light-border pt-6 dark:border-vanguard-dark-border">
-            <LinkButton href={selectedItemIds.length > 0 ? "/checkout" : "#"} className={`w-full justify-center ${selectedItemIds.length === 0 ? "opacity-50 cursor-not-allowed pointer-events-none" : ""}`}>
-              Tiến hành thanh toán ({selectedItemIds.length})
-            </LinkButton>
-          </div>
-        </Card>
-      </div>
+      <Card className="self-start p-5">
+        <h2 className="font-display text-lg font-bold uppercase tracking-wider">Tổng cộng</h2>
+        <div className="mt-4 flex justify-between text-xl font-bold text-vanguard-primary"><span>Tạm tính</span><span>{formatCurrency(total)}</span></div>
+        <p className="mt-2 text-xs">Giá và tiền cọc được báo trực tiếp từ hệ thống.</p>
+        <LinkButton href={selected.length ? "/checkout" : "#"} className={`mt-6 w-full justify-center ${selected.length ? "" : "pointer-events-none opacity-50"}`}>
+          Tiến hành thanh toán ({selected.length})
+        </LinkButton>
+      </Card>
     </div>
   );
 }

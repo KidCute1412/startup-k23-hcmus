@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -8,11 +8,28 @@ import { StatRow } from "@/components/ui/stat-row";
 import { formatCurrency, formatShortDate } from "@/lib/format";
 import { useRentalOrder } from "@/hooks/useRentalOrder";
 import { useRentalProof } from "@/hooks/useRentalProof";
+import { useAuth } from "@/hooks/useAuth";
 import { statusConfig } from "./orders-overview";
-import type { RentalOrder } from "@/services/rentalOrderService";
+import type { ProofStage, RentalOrder } from "@/types/rentals";
+import { resolveMediaUrl } from "@/lib/media";
+import { SubmitDisputeModal } from "./submit-dispute-modal";
+import { UploadProofModal } from "./upload-proof-modal";
 
 export interface OrderDetailViewProps {
   orderId: string;
+}
+
+function getAllowedProofStage(order: RentalOrder, userId?: string): ProofStage | null {
+  if (!userId) return null;
+
+  const renterId = order.renterId ?? order.renter_id;
+  const lenderId = order.lenderId ?? order.lender_id;
+
+  if (order.status === 'confirmed' && userId === lenderId) return 'pre_shipment';
+  if (order.status === 'active' && userId === renterId) return 'post_received';
+  if (order.status === 'returning' && userId === renterId) return 'pre_return';
+  if (order.status === 'returning' && userId === lenderId) return 'post_returned';
+  return null;
 }
 
 function calculateDays(start?: string | null, end?: string | null) {
@@ -26,8 +43,8 @@ function generateTimeline(order: RentalOrder) {
   const isCanceled = order.status === 'cancelled';
   const steps = [
     { title: "Tạo đơn thuê", description: "Người thuê đã gửi yêu cầu mượn gear", timestamp: order.createdAt, completed: true },
-    { title: "Xác nhận đơn", description: "Chủ gear đã duyệt và đóng băng tiền cọc", timestamp: "", completed: !isCanceled && order.status !== 'pending' },
-    { title: "Đang giao hàng", description: "Chủ gear đang chuyển gear cho bạn", timestamp: "", completed: !isCanceled && ['shipped', 'active', 'returning', 'completed'].includes(order.status) },
+    { title: "Xác nhận đơn", description: "Chủ gear đã duyệt và đóng băng tiền cọc", timestamp: "", completed: !isCanceled && order.status !== 'pending_confirm' },
+    { title: "Đang giao hàng", description: "Chủ gear đang chuyển gear cho bạn", timestamp: "", completed: !isCanceled && ['delivering', 'active', 'returning', 'completed'].includes(order.status) },
     { title: "Đã nhận gear", description: "Đơn thuê đang trong thời gian sử dụng", timestamp: "", completed: !isCanceled && ['active', 'returning', 'completed'].includes(order.status) },
     { title: "Đang hoàn trả gear", description: "Người thuê đã gửi trả gear cho chủ sở hữu", timestamp: "", completed: !isCanceled && ['returning', 'completed'].includes(order.status) },
     { title: "Đã hoàn tất", description: "Chủ gear đã nhận lại và nghiệm thu an toàn", timestamp: "", completed: !isCanceled && order.status === 'completed' },
@@ -39,9 +56,10 @@ function generateTimeline(order: RentalOrder) {
 }
 
 export function OrderDetailView({ orderId }: OrderDetailViewProps) {
-  const { currentOrder: order, isLoading: loadingOrder, fetchOrder, confirmReceipt, returnOrder, cancelOrder } = useRentalOrder();
+  const { user } = useAuth();
+  const { currentOrder: order, isLoading: loadingOrder, fetchOrder, confirmOrder, shipOrder, confirmReceipt, returnOrder, confirmReturn, cancelOrder } = useRentalOrder();
   const { proofs, isLoading: loadingProofs, fetchProofs } = useRentalProof(orderId);
-  const [activeModal, setActiveModal] = useState<'receipt' | 'return' | 'cancel' | null>(null);
+  const [activeModal, setActiveModal] = useState<'receipt' | 'return' | 'cancel' | 'dispute' | 'proof' | null>(null);
   const [actionSuccessMsg, setActionSuccessMsg] = useState<string | null>(null);
 
   useEffect(() => {
@@ -50,20 +68,26 @@ export function OrderDetailView({ orderId }: OrderDetailViewProps) {
   }, [orderId, fetchOrder, fetchProofs]);
 
   if (loadingOrder && !order) {
-    return <div className="py-10 text-center text-sm">Đang tải thông tin chi tiết đơn thuê...</div>;
+    return <div className="py-10 text-center text-sm text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted">Đang tải thông tin chi tiết đơn thuê...</div>;
   }
 
   if (!order) {
     return <div className="py-10 text-center text-sm text-red-500">Không tìm thấy đơn thuê!</div>;
   }
 
-  const config = statusConfig[order.status] || statusConfig.pending;
-  const gearImage = order.gear?.media?.[0]?.url || "https://placehold.co/400x400?text=Gear";
+  const config = statusConfig[order.status] || statusConfig.pending_confirm;
+  const gearImage = resolveMediaUrl(order.gear?.media?.[0]?.url);
   const gearTitle = order.gear?.name || "Sản phẩm chưa rõ";
   const code = order.id.slice(0, 8).toUpperCase();
   const lenderName = order.lender?.full_name || order.lender?.fullName || "Chủ gear";
   const totalDays = calculateDays(order.start_date, order.end_date);
   const timeline = generateTimeline(order);
+  const allowedProofStage = getAllowedProofStage(order, user?.id);
+
+  const hasPreShipmentProof = (proofs ?? []).some((p) => p.stage === "pre_shipment");
+  const hasPreReturnProof = (proofs ?? []).some((p) => p.stage === "pre_return");
+  const hasPostReturnedProof = (proofs ?? []).some((p) => p.stage === "post_returned");
+  const canConfirmReturn = hasPreReturnProof && hasPostReturnedProof;
 
   const handleConfirmReceipt = async () => {
     try {
@@ -89,9 +113,23 @@ export function OrderDetailView({ orderId }: OrderDetailViewProps) {
     try {
       await cancelOrder(orderId);
       setActiveModal(null);
-      showNotice("Đã hủy đơn thuê thành công. Tiền cọc/hạn mức đã được hoàn trả!");
+      showNotice("Đã hủy yêu cầu thuê thành công.");
     } catch (e: any) {
       showNotice(`Lỗi: ${e.message}`);
+    }
+  };
+
+  const runLifecycleAction = async (
+    action: () => Promise<unknown>,
+    successMessage: string,
+  ) => {
+    try {
+      await action();
+      showNotice(successMessage);
+    } catch (error) {
+      showNotice(
+        `Lỗi: ${error instanceof Error ? error.message : "Không thể cập nhật đơn thuê."}`,
+      );
     }
   };
 
@@ -130,6 +168,20 @@ export function OrderDetailView({ orderId }: OrderDetailViewProps) {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left Column (2 cols): Timeline & Gear Details */}
         <div className="lg:col-span-2 space-y-6">
+          {/* Dispute Banner if Disputed */}
+          {order.status === 'disputed' && (
+            <Card className="p-6 border-red-500/40 bg-red-500/10">
+              <div className="flex items-center space-x-2 text-red-400 mb-2">
+                <span className="font-display text-lg font-bold uppercase tracking-wider">
+                  ⚠️ Đơn thuê đang ở trạng thái khiếu nại (Disputed)
+                </span>
+              </div>
+              <p className="text-xs text-gray-300 leading-relaxed">
+                Khiếu nại/báo cáo sự cố đã được ghi nhận. Tiền cọc và khoản thanh toán của đơn thuê hiện đang được hệ thống Mutux phong tỏa an toàn. Quản trị viên (Admin) sẽ đối soát bằng chứng của hai bên và đưa ra quyết định phân xử sớm nhất.
+              </p>
+            </Card>
+          )}
+
           {/* Order Lifecycle Progress Timeline */}
           <Card className="p-6">
             <h3 className="font-display text-lg font-bold mb-6">Tiến trình đơn thuê (Order Lifecycle)</h3>
@@ -208,7 +260,7 @@ export function OrderDetailView({ orderId }: OrderDetailViewProps) {
                       {proof.proofType === 'image' && proof.fileUrl && (
                         <div className="h-20 w-20 overflow-hidden rounded border border-vanguard-light-border dark:border-vanguard-dark-border">
                           {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img src={proof.fileUrl} alt="Proof" className="h-full w-full object-cover" />
+                          <img src={resolveMediaUrl(proof.fileUrl)} alt="Proof" className="h-full w-full object-cover" />
                         </div>
                       )}
                     </div>
@@ -225,7 +277,39 @@ export function OrderDetailView({ orderId }: OrderDetailViewProps) {
           <Card className="p-6">
             <h3 className="font-display text-lg font-bold mb-4">Hành động khả thi</h3>
             <div className="space-y-3">
-              {order.status === 'shipped' && (
+              {user?.role === 'lender' && order.status === 'pending_confirm' && (
+                <button
+                  onClick={() => void runLifecycleAction(
+                    () => confirmOrder(orderId),
+                    "Đã xác nhận đơn và khóa nghĩa vụ thanh toán/cọc.",
+                  )}
+                  className="w-full rounded-v-sm bg-vanguard-primary py-2.5 text-xs font-bold uppercase tracking-wider text-vanguard-dark-bg hover:opacity-90 transition"
+                >
+                  Xác nhận đơn thuê
+                </button>
+              )}
+
+              {user?.role === 'lender' && order.status === 'confirmed' && (
+                <div className="space-y-1.5">
+                  <button
+                    onClick={() => void runLifecycleAction(
+                      () => shipOrder(orderId),
+                      "Đã chuyển đơn sang trạng thái đang giao hàng.",
+                    )}
+                    disabled={!hasPreShipmentProof}
+                    className="w-full rounded-v-sm bg-vanguard-primary py-2.5 text-xs font-bold uppercase tracking-wider text-vanguard-dark-bg hover:opacity-90 transition disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    Xác nhận giao hàng
+                  </button>
+                  {!hasPreShipmentProof && (
+                    <p className="text-[11px] text-amber-500 font-medium">
+                      ⚠️ Cần tải lên ảnh giao hàng (pre_shipment) trước khi xác nhận giao.
+                    </p>
+                  )}
+                </div>
+              )}
+
+              {user?.role === 'renter' && order.status === 'delivering' && (
                 <button
                   onClick={() => setActiveModal('receipt')}
                   className="w-full rounded-v-sm bg-vanguard-primary py-2.5 text-xs font-bold uppercase tracking-wider text-vanguard-dark-bg hover:opacity-90 transition"
@@ -234,7 +318,7 @@ export function OrderDetailView({ orderId }: OrderDetailViewProps) {
                 </button>
               )}
 
-              {order.status === 'active' && (
+              {user?.role === 'renter' && order.status === 'active' && (
                 <button
                   onClick={() => setActiveModal('return')}
                   className="w-full rounded-v-sm border border-vanguard-primary text-vanguard-primary py-2.5 text-xs font-bold uppercase tracking-wider hover:bg-vanguard-primary hover:text-vanguard-dark-bg transition"
@@ -243,7 +327,16 @@ export function OrderDetailView({ orderId }: OrderDetailViewProps) {
                 </button>
               )}
 
-              {(order.status === 'pending' || order.status === 'confirmed') && (
+              {(order.status === 'active' || order.status === 'returning') && (
+                <button
+                  onClick={() => setActiveModal('dispute')}
+                  className="w-full rounded-v-sm border border-red-500/50 bg-red-500/10 text-red-400 py-2.5 text-xs font-bold uppercase tracking-wider hover:bg-red-500 hover:text-white transition"
+                >
+                  ⚠️ Báo cáo khiếu nại / Sự cố
+                </button>
+              )}
+
+              {user?.role === 'renter' && order.status === 'pending_confirm' && (
                 <button
                   onClick={() => setActiveModal('cancel')}
                   className="w-full rounded-v-sm border border-red-500 text-red-500 py-2.5 text-xs font-bold uppercase tracking-wider hover:bg-red-500 hover:text-white transition"
@@ -252,11 +345,32 @@ export function OrderDetailView({ orderId }: OrderDetailViewProps) {
                 </button>
               )}
 
-              {order.status === 'completed' && (
+              {user?.role === 'lender' && order.status === 'returning' && (
+                <div className="space-y-1.5">
+                  <button
+                    onClick={() => void runLifecycleAction(
+                      () => confirmReturn(orderId),
+                      "Đã nghiệm thu gear, giải phóng escrow và hoàn tất đơn.",
+                    )}
+                    disabled={!canConfirmReturn}
+                    className="w-full rounded-v-sm bg-vanguard-primary py-2.5 text-xs font-bold uppercase tracking-wider text-vanguard-dark-bg hover:opacity-90 transition disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    Xác nhận đã nhận lại gear
+                  </button>
+                  {!canConfirmReturn && (
+                    <p className="text-[11px] text-amber-500 font-medium">
+                      ⚠️ Cần đủ ảnh trả hàng của Renter ({hasPreReturnProof ? '✓ pre_return' : '✗ pre_return'}) và ảnh nghiệm thu của Lender ({hasPostReturnedProof ? '✓ post_returned' : '✗ post_returned'}).
+                    </p>
+                  )}
+                </div>
+              )}
+
+              {allowedProofStage && (
                 <button
-                  className="w-full rounded-v-sm border border-vanguard-light-border dark:border-vanguard-dark-border py-2.5 text-xs font-bold uppercase tracking-wider hover:border-vanguard-primary transition"
+                  onClick={() => setActiveModal('proof')}
+                  className="w-full rounded-v-sm border border-vanguard-primary/50 bg-vanguard-primary/10 text-vanguard-primary py-2.5 text-xs font-bold uppercase tracking-wider hover:bg-vanguard-primary hover:text-vanguard-dark-bg transition"
                 >
-                  ★ Đánh giá sản phẩm / Thuê lại
+                  📷 Tải lên ảnh bàn giao thiết bị
                 </button>
               )}
 
@@ -344,7 +458,7 @@ export function OrderDetailView({ orderId }: OrderDetailViewProps) {
           <div className="w-full max-w-md rounded-v-lg border border-vanguard-light-border bg-vanguard-light-surf dark:border-vanguard-dark-border dark:bg-vanguard-dark-surf p-6 shadow-2xl">
             <h4 className="font-display text-xl font-bold text-red-500 mb-2">Xác nhận hủy đơn thuê</h4>
             <p className="text-xs text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted mb-6">
-              Bạn có chắc chắn muốn hủy đơn thuê này không? Tiền cọc hoặc hạn mức giữ chỗ sẽ được mở lại tự động.
+              Bạn có chắc chắn muốn hủy yêu cầu này không? Đơn đang chờ xác nhận nên chưa khấu trừ ví hoặc khóa cọc.
             </p>
             <div className="flex justify-end space-x-3">
               <button
@@ -362,6 +476,32 @@ export function OrderDetailView({ orderId }: OrderDetailViewProps) {
             </div>
           </div>
         </div>
+      )}
+
+      {activeModal === 'dispute' && (
+        <SubmitDisputeModal
+          isOpen={activeModal === 'dispute'}
+          onClose={() => setActiveModal(null)}
+          orderId={orderId}
+          orderCode={code}
+          onSuccess={() => {
+            fetchOrder(orderId).catch(console.error);
+            showNotice("Đã gửi khiếu nại tranh chấp thành công! Trạng thái đơn chuyển sang 'Đang khiếu nại'.");
+          }}
+        />
+      )}
+
+      {activeModal === 'proof' && allowedProofStage && (
+        <UploadProofModal
+          isOpen={activeModal === 'proof'}
+          onClose={() => setActiveModal(null)}
+          orderId={orderId}
+          allowedStages={[allowedProofStage]}
+          onSuccess={() => {
+            fetchProofs().catch(console.error);
+            showNotice("Đã tải lên ảnh bằng chứng bàn giao thành công!");
+          }}
+        />
       )}
     </div>
   );

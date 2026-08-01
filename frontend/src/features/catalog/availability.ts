@@ -1,4 +1,4 @@
-import type { AvailabilityStatus } from "./types";
+import type { AvailabilityStatus } from "@/types/catalog";
 
 export function availabilityLabel(status: AvailabilityStatus) {
   if (status === "available") return "Sẵn sàng thuê";

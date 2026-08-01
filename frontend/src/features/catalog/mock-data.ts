@@ -1,4 +1,4 @@
-import type { Gear, GearCategory } from "./types";
+import type { Gear, GearCategory } from "@/types/catalog";
 
 const categories: GearCategory[] = [
   {

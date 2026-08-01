@@ -1,0 +1,7 @@
+meta { name: Batch Checkout type: http seq: 10 }
+post { url: {{baseUrl}}/rental-orders/batch body: json auth: inherit }
+headers { Origin: http://localhost:3000 }
+body:json {
+  { "cartItemIds": ["{{cartItemId}}"], "depositType": "traditional", "shippingName": "Nguyễn Văn A", "shippingPhone": "0987654321", "shippingAddress": "Quận 1, TP.HCM" }
+}
+tests { test("creates orders and removes selected", function () { expect(res.status).to.equal(201); expect(res.body.data.orders.length).to.equal(res.body.data.removedCartItemIds.length); }); }

@@ -1,8 +1,11 @@
 import { useCallback, useEffect, useState } from 'react';
-import { adminService, AdminKycUser, KycStatus } from '@/services/adminService';
+import { adminService } from '@/services/adminService';
 import { ApiError, PaginationMeta } from '@/lib/apiClient';
+import { useToast } from '@/components/ui/toast';
+import type { AdminKycUser, KycStatus } from '@/types/admin';
 
 export function useAdminKyc(initialStatus: KycStatus = 'pending', initialPage = 1, limit = 10) {
+  const toast = useToast();
   const [kycUsers, setKycUsers] = useState<AdminKycUser[]>([]);
   const [meta, setMeta] = useState<PaginationMeta | null>(null);
   const [statusFilter, setStatusFilter] = useState<KycStatus>(initialStatus);
@@ -54,7 +57,7 @@ export function useAdminKyc(initialStatus: KycStatus = 'pending', initialPage = 
       await fetchKycQueue();
     } catch (err) {
       if (err instanceof ApiError) {
-        alert(`Lỗi phê duyệt: ${err.message}`);
+        toast.error(`Lỗi phê duyệt: ${err.message}`);
       }
       throw err;
     } finally {
@@ -69,7 +72,7 @@ export function useAdminKyc(initialStatus: KycStatus = 'pending', initialPage = 
       await fetchKycQueue();
     } catch (err) {
       if (err instanceof ApiError) {
-        alert(`Lỗi từ chối: ${err.message}`);
+        toast.error(`Lỗi từ chối: ${err.message}`);
       }
       throw err;
     } finally {

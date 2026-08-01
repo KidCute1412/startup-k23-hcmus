@@ -5,11 +5,12 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Input } from "@/components/ui/field";
+import { DatePicker } from "@/components/ui/field";
 import { StatRow } from "@/components/ui/stat-row";
 import { useCart } from "@/features/cart/cart-context";
+import { useAuth } from "@/hooks/useAuth";
 import { formatCurrency } from "@/lib/format";
-import type { Gear } from "./types";
+import type { Gear } from "@/types/catalog";
 
 function dateOffset(days: number) {
   const value = new Date();
@@ -19,10 +20,19 @@ function dateOffset(days: number) {
 
 export function ProductDetail({ gear }: { gear: Gear }) {
   const router = useRouter();
-  const { addToCart } = useCart();
+  const { upsertItem, mutating } = useCart();
+  const { user } = useAuth();
   const [startDate, setStartDate] = useState(dateOffset(1));
   const [endDate, setEndDate] = useState(dateOffset(3));
-  const add = () => addToCart({ id: `${gear.id}-${startDate}-${endDate}`, gear, startDate, endDate });
+  const add = async () => {
+    if (!user) {
+      router.push(`/login?redirect=${encodeURIComponent(`/gears/${gear.id}`)}`);
+      return false;
+    }
+    if (user.role !== "renter") return false;
+    await upsertItem(gear.id, startDate, endDate);
+    return true;
+  };
 
   return (
     <div className="space-y-8">
@@ -45,14 +55,16 @@ export function ProductDetail({ gear }: { gear: Gear }) {
       </Card>
 
       <Card className="grid gap-4 p-5 sm:grid-cols-2">
-        <label className="grid gap-2"><span className="field-label">Ngày bắt đầu</span><Input type="date" value={startDate} onChange={(event) => setStartDate(event.target.value)} /></label>
-        <label className="grid gap-2"><span className="field-label">Ngày trả</span><Input type="date" value={endDate} onChange={(event) => setEndDate(event.target.value)} /></label>
+        <label className="grid gap-2"><span className="field-label">Ngày bắt đầu</span><DatePicker value={startDate} onChange={(val) => setStartDate(val)} placeholder="Từ ngày" /></label>
+        <label className="grid gap-2"><span className="field-label">Ngày trả</span><DatePicker value={endDate} min={startDate} onChange={(val) => setEndDate(val)} placeholder="Đến ngày" /></label>
       </Card>
 
-      <div className="flex flex-col gap-3 sm:flex-row">
-        <Button onClick={add} className="flex-1" icon={<ShoppingCart size={15} />}>Thêm vào giỏ</Button>
-        <Button onClick={() => { add(); router.push("/checkout"); }} className="flex-1" icon={<Zap size={15} />}>Thuê ngay</Button>
-      </div>
+      {!user || user.role === "renter" ? (
+        <div className="flex flex-col gap-3 sm:flex-row">
+          <Button disabled={mutating} onClick={() => void add()} className="flex-1" icon={<ShoppingCart size={15} />}>Thêm vào giỏ</Button>
+          <Button disabled={mutating} onClick={() => void add().then((added) => added && router.push("/cart"))} className="flex-1" icon={<Zap size={15} />}>Thuê ngay</Button>
+        </div>
+      ) : null}
 
       <Card className="p-5">
         <h2 className="font-display text-base font-bold uppercase tracking-widest">Chủ gear</h2>

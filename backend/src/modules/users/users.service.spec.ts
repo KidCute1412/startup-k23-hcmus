@@ -41,6 +41,7 @@ describe('UsersService', () => {
     kyc_front_card_url: null,
     kyc_back_card_url: null,
     kyc_portrait_url: null,
+    credit_consent_accepted_at: null,
     created_at: new Date('2026-01-01T00:00:00.000Z'),
     updated_at: new Date('2026-01-02T00:00:00.000Z'),
   };
@@ -115,6 +116,7 @@ describe('UsersService', () => {
         frontCardUrl: `${prefix}/front.jpg`,
         backCardUrl: `${prefix}/back.jpg`,
         portraitUrl: `${prefix}/portrait.jpg`,
+        creditConsentAccepted: true,
       }),
     ).resolves.toMatchObject({ kycStatus: KycStatusType.pending });
     expect(media.assertOwnedImageFile).toHaveBeenCalledTimes(3);
@@ -135,6 +137,7 @@ describe('UsersService', () => {
         frontCardUrl: '/uploads/user/front.jpg',
         backCardUrl: '/uploads/user/back.jpg',
         portraitUrl: '/uploads/user/portrait.jpg',
+        creditConsentAccepted: true,
       }),
     ).rejects.toMatchObject({
       status: 409,

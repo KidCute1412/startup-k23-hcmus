@@ -1,8 +1,10 @@
 "use client";
 
-import { CheckCircle, ChevronRight, ImageIcon, Plus, Trash2, X } from "lucide-react";
+import { CheckCircle, ChevronRight, ImageIcon, Plus, Trash2, X, Upload, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { useMedia } from "@/hooks/useMedia";
+import { resolveMediaUrl } from "@/lib/media";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -41,6 +43,7 @@ const STEPS: { key: Step; label: string }[] = [
 
 export function AddGearForm() {
   const router = useRouter();
+  const { uploadImage } = useMedia();
 
   // Multi-step state
   const [step, setStep] = useState<Step>("info");
@@ -55,8 +58,23 @@ export function AddGearForm() {
   const [badge, setBadge] = useState("");
   const [imageUrls, setImageUrls] = useState<string[]>([]);
   const [imageUrlInput, setImageUrlInput] = useState("");
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [dailyPrice, setDailyPrice] = useState("");
   const [depositCash, setDepositCash] = useState("");
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setIsUploadingImage(true);
+    try {
+      const url = await uploadImage(file);
+      setImageUrls((prev) => [...prev, url]);
+    } catch (err) {
+      console.error('Upload gear image failed:', err);
+    } finally {
+      setIsUploadingImage(false);
+    }
+  };
 
   const [specs, setSpecs] = useState<SpecRow[]>([{ ...defaultSpec }]);
   const [submitted, setSubmitted] = useState(false);
@@ -261,47 +279,60 @@ export function AddGearForm() {
 
               <div className="space-y-1.5">
                 <label htmlFor="gear-image" className="field-label">
-                  URL ảnh (Có thể thêm nhiều ảnh)
+                  Hình ảnh thiết bị (Tải lên từ máy hoặc nhập URL)
                 </label>
-                <div className="flex gap-2">
-                  <Input
-                    id="gear-image"
-                    type="url"
-                    placeholder="https://…"
-                    value={imageUrlInput}
-                    onChange={(e) => setImageUrlInput(e.target.value)}
-                    onBlur={() => {
-                      const val = imageUrlInput.trim();
-                      if (val && val.startsWith('http') && !imageUrls.includes(val)) {
-                        setImageUrls([...imageUrls, val]);
-                        setImageUrlInput("");
-                      }
-                    }}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
-                        e.preventDefault();
+                <div className="flex flex-wrap gap-2">
+                  <label className="flex cursor-pointer items-center gap-2 rounded-v-sm border border-vanguard-primary bg-vanguard-primary/10 px-3 py-2 text-xs font-bold text-vanguard-primary hover:bg-vanguard-primary hover:text-vanguard-dark-bg transition">
+                    {isUploadingImage ? <Loader2 size={14} className="animate-spin" /> : <Upload size={14} />}
+                    <span>{isUploadingImage ? "Đang tải ảnh..." : "Chọn ảnh từ máy"}</span>
+                    <input
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp"
+                      onChange={handleFileUpload}
+                      disabled={isUploadingImage}
+                      className="hidden"
+                    />
+                  </label>
+                  <div className="flex flex-1 gap-2 min-w-[200px]">
+                    <Input
+                      id="gear-image"
+                      type="url"
+                      placeholder="hoặc dán URL https://…"
+                      value={imageUrlInput}
+                      onChange={(e) => setImageUrlInput(e.target.value)}
+                      onBlur={() => {
                         const val = imageUrlInput.trim();
-                        if (val && !imageUrls.includes(val)) {
+                        if (val && val.startsWith('http') && !imageUrls.includes(val)) {
                           setImageUrls([...imageUrls, val]);
                           setImageUrlInput("");
                         }
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          const val = imageUrlInput.trim();
+                          if (val && !imageUrls.includes(val)) {
+                            setImageUrls([...imageUrls, val]);
+                            setImageUrlInput("");
+                          }
+                        }
+                      }}
+                    />
+                    <Button type="button" onClick={() => {
+                      const val = imageUrlInput.trim();
+                      if (val && !imageUrls.includes(val)) {
+                        setImageUrls([...imageUrls, val]);
+                        setImageUrlInput("");
                       }
-                    }}
-                  />
-                  <Button type="button" onClick={() => {
-                    const val = imageUrlInput.trim();
-                    if (val && !imageUrls.includes(val)) {
-                      setImageUrls([...imageUrls, val]);
-                      setImageUrlInput("");
-                    }
-                  }}>Thêm</Button>
+                    }}>Thêm</Button>
+                  </div>
                 </div>
                 {imageUrls.length > 0 && (
                   <div className="mt-2 grid grid-cols-3 gap-2">
                     {imageUrls.map((url, i) => (
                       <div key={i} className="relative aspect-video w-full overflow-hidden rounded-v-sm border border-vanguard-light-border dark:border-vanguard-dark-border group">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={url} alt={`Preview ${i}`} className="h-full w-full object-cover" />
+                        <img src={resolveMediaUrl(url) ?? url} alt={`Preview ${i}`} className="h-full w-full object-cover" />
                         <button type="button" onClick={() => setImageUrls(imageUrls.filter((_, idx) => idx !== i))} className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity">
                           <X size={12} />
                         </button>
@@ -484,7 +515,7 @@ export function AddGearForm() {
                   {imageUrls.length > 0 ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
-                      src={imageUrls[0]}
+                      src={resolveMediaUrl(imageUrls[0]) ?? imageUrls[0]}
                       alt={name}
                       className="h-full w-full object-cover"
                     />

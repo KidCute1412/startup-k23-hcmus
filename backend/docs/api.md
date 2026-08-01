@@ -147,10 +147,12 @@ HTTP Status: `400`, `401`, `403`, `404`, `422`, `500`.
     "cccd": "012345678912",
     "frontCardUrl": "/uploads/current-user-id/front.jpg",
     "backCardUrl": "/uploads/current-user-id/back.jpg",
-    "portraitUrl": "/uploads/current-user-id/portrait.jpg"
+    "portraitUrl": "/uploads/current-user-id/portrait.jpg",
+    "creditConsentAccepted": true
   }
   ```
 * **File ownership**: Cả ba URL phải là ảnh tồn tại do chính user upload qua `/media/upload`.
+* **Credit consent**: Renter phải gửi `creditConsentAccepted: true`; lender có thể bỏ qua trường này.
 * **Transitions**: Cho phép user chưa submit hoặc đã bị reject gửi hồ sơ. Hồ sơ `pending` hoặc `verified` không thể gửi đè.
 * **Success (200)**: Trạng thái KYC cập nhật về `pending`, xóa audit/rejection cũ và chờ Admin duyệt thủ công.
 
@@ -261,8 +263,8 @@ HTTP Status: `400`, `401`, `403`, `404`, `422`, `500`.
 ### 3.3 Wallets (5 APIs)
 
 #### [GET] `/wallets/renter` (Thông tin ví ảo của Renter)
-* **Authentication**: `accessToken` cookie (and valid `Origin` for state changes).
-* **Mô tả**: Trả về số dư ví ảo dùng để thanh toán phí thuê, lock cọc truyền thống và nhận refund trong môi trường demo.
+* **Authentication**: `accessToken` cookie; chỉ role `renter`.
+* **Mô tả**: Trả về số dư ví ảo dùng để thanh toán phí thuê, lock cọc truyền thống và nhận refund trong môi trường demo. Đây là ví tiêu dùng nội bộ, **không hỗ trợ rút tiền trong MVP**.
 * **Success (200)**:
   ```json
   {
@@ -276,7 +278,7 @@ HTTP Status: `400`, `401`, `403`, `404`, `422`, `500`.
   ```
 
 #### [POST] `/wallets/topups/checkout` (Tạo phiên nạp tiền ví ảo - PayOS mock)
-* **Authentication**: `accessToken` cookie (and valid `Origin` for state changes).
+* **Authentication**: `accessToken` cookie (and valid `Origin`); chỉ role `renter`.
 * **Mô tả**: Tạo top-up intent để nạp tiền vào ví ảo. Với MVP demo, PayOS chỉ được mô phỏng ở mức checkout/callback shape, không xử lý tiền thật.
 * **Body**:
   ```json
@@ -285,20 +287,27 @@ HTTP Status: `400`, `401`, `403`, `404`, `422`, `500`.
     "method": "payos"
   }
   ```
-* **Success (200)**:
+* **Success (201)**:
   ```json
   {
     "success": true,
     "data": {
       "topupId": "uuid",
-      "checkoutUrl": "http://localhost:3000/mock-payos?topupId=uuid",
-      "status": "pending"
+      "orderCode": 1785500000123456,
+      "amount": 500000,
+      "status": "pending",
+      "paymentInstructions": {
+        "bankCode": "MB",
+        "accountNumber": "999988886666",
+        "accountName": "MUTUX DEMO",
+        "transferContent": "MUTUX 1785500000123456"
+      }
     }
   }
   ```
 
 #### [GET] `/wallets/mutux` (Thông tin Ví trả sau / Credit Line - Renter)
-* **Authentication**: `accessToken` cookie (and valid `Origin` for state changes).
+* **Authentication**: `accessToken` cookie; chỉ role `renter`.
 * **Success (200)**: Trả về hạn mức khả dụng (`displayBalance`), hạn mức bị khóa (`lockedBalance`), dư nợ (`outstandingDebt`), tổng hạn mức (`totalLimit`), trạng thái (`status`). Ví này chỉ dùng để bảo đảm cọc khi `depositType = credit_line`.
 * **Response**:
   ```json
@@ -318,9 +327,9 @@ HTTP Status: `400`, `401`, `403`, `404`, `422`, `500`.
   > `displayBalance` luôn được tính theo invariant: `displayBalance = totalLimit - lockedBalance - outstandingDebt`.
 
 #### [GET] `/wallets/lender` (Thông tin Ví thu nhập ảo & Yêu cầu rút tiền - Lender)
-* **Authentication**: `accessToken` cookie (and valid `Origin` for state changes).
+* **Authentication**: `accessToken` cookie; chỉ role `lender`.
 * **Query Params**: `page` (default: 1), `limit` (default: 20)
-* **Mô tả**: Trả về số dư thu nhập ảo của lender kèm danh sách giao dịch phân trang. Với MVP demo, withdraw chỉ ghi nhận request/trạng thái, không chuyển khoản ngân hàng thật.
+* **Mô tả**: Trả về số dư doanh thu ảo của lender kèm danh sách giao dịch phân trang. Với MVP demo, withdraw là thao tác rút doanh thu demo: chỉ ghi nhận request/trạng thái và ledger nội bộ, không chuyển khoản ngân hàng thật.
 * **Success (200)**:
   ```json
   {
@@ -352,6 +361,7 @@ HTTP Status: `400`, `401`, `403`, `404`, `422`, `500`.
   }
   ```
 * **Trường hợp Yêu cầu rút tiền (POST `/wallets/lender/withdraw`):**
+  - **Authentication**: `accessToken` cookie (and valid `Origin`); chỉ role `lender`.
   - **Body**:
     ```json
     {
@@ -388,7 +398,7 @@ HTTP Status: `400`, `401`, `403`, `404`, `422`, `500`.
 **Late return**: Sprint 3 không tự tính late fee. Trả trễ phải đi qua dispute và admin resolution thủ công.
 
 #### [POST] `/rental-orders` (Tạo yêu cầu thuê thiết bị - Renter)
-* **Authentication**: `accessToken` cookie (and valid `Origin` for state changes).
+* **Authentication**: `accessToken` cookie (and valid `Origin`); chỉ role `renter`.
 * **Body**:
   ```json
   {
@@ -549,25 +559,24 @@ Ngoài retry ở đúng target, status sai trả `400 INVALID_TRANSITION` (hoặ
   ```json
   {
     "code": "00",
-    "desc": "success",
     "success": true,
     "data": {
       "orderCode": 123456,
       "amount": 500000,
-      "description": "TOPUP-123456",
-      "reference": "MOCK-PAYOS-REF-001",
-      "paymentLinkId": "mock-payment-link-id",
-      "code": "00",
-      "desc": "Thành công"
-    },
-    "signature": "mock-signature"
+      "reference": "MOCK-PAYOS-REF-001"
+    }
   }
   ```
+* **Signature**: HMAC-SHA256 của JSON deterministic (object keys được sắp xếp tăng dần ở mọi cấp), gửi qua header `x-payos-signature`. Secret lấy từ `PAYOS_WEBHOOK_SECRET`; body không chứa `signature`.
 * **Success (200)**:
   ```json
   {
     "success": true,
-    "message": "Top-up processed"
+    "data": {
+      "topupId": "uuid",
+      "status": "success",
+      "walletBalance": 1500000
+    }
   }
   ```
 
@@ -590,7 +599,7 @@ Ngoài retry ở đúng target, status sai trả `400 INVALID_TRANSITION` (hoặ
 
 ---
 
-### 3.7 Disputes & Reviews (2 APIs)
+### 3.7 Disputes (1 API)
 
 #### [POST] `/disputes` (Gửi khiếu nại tranh chấp - Renter hoặc Lender)
 * **Authentication**: `accessToken` cookie (and valid `Origin` for state changes).
@@ -617,20 +626,6 @@ Ngoài retry ở đúng target, status sai trả `400 INVALID_TRANSITION` (hoặ
   - `403 FORBIDDEN` nếu người gọi không phải participant.
   - `404 NOT_FOUND` nếu order không tồn tại.
 * **Success (201)**: Tạo tranh chấp cùng evidence thành công, server trả dữ liệu camelCase và order đổi sang `disputed`. Retry trả cùng dispute hiện hữu.
-
-#### [POST] `/reviews` (Đánh giá sau khi hoàn thành đơn thuê)
-* **Authentication**: `accessToken` cookie and valid `Origin`.
-* **Body**:
-  ```json
-  {
-    "rentalOrderId": "uuid",
-    "targetId": "uuid", // ID thiết bị hoặc ID người dùng đối phương
-    "targetType": "gear", // "gear" | "lender" | "renter"
-    "rating": 5,
-    "comment": "Rất tốt"
-  }
-  ```
-* **Success (201)**: Ghi nhận đánh giá thành công.
 
 ---
 
@@ -719,6 +714,54 @@ Ngoài retry ở đúng target, status sai trả `400 INVALID_TRANSITION` (hoặ
 * **Success (201)**: Chuyển gear `pending` hoặc `approved` sang `rejected`, lưu admin review và loại gear khỏi catalog công khai. Gọi lại trên gear đã `rejected` là idempotent.
 * **Errors**: `404` khi gear không tồn tại.
 
+#### [GET] `/admin/disputes` (Lấy danh sách tranh chấp - Admin Queue)
+* **Authentication**: `accessToken` cookie, admin role.
+* **Query Params**:
+  - `status`: `open` | `under_review` | `resolved` | `closed` (tùy chọn).
+  - `page`: mặc định `1`.
+  - `limit`: mặc định `10`, tối đa `100`.
+* **Success (200)**: Danh sách tranh chấp kèm chi tiết đơn thuê, thông tin Renter, Lender, Gear và danh sách bằng chứng ảnh.
+  ```json
+  {
+    "success": true,
+    "data": [
+      {
+        "id": "uuid",
+        "rentalOrderId": "uuid",
+        "reportedBy": "uuid",
+        "reporterRole": "renter",
+        "reason": "device_damaged",
+        "description": "Bàn phím bị nứt góc",
+        "status": "open",
+        "resolvedBy": null,
+        "resolutionNote": null,
+        "resolutionType": null,
+        "deductAmount": null,
+        "createdAt": "2026-07-29T10:15:00.000Z",
+        "resolvedAt": null,
+        "evidences": [],
+        "rentalOrder": {
+          "id": "uuid",
+          "orderCode": "ORD-2026-8812",
+          "status": "disputed",
+          "depositAmount": 3500000,
+          "totalRentFee": 360000,
+          "renter": { "id": "uuid", "fullName": "Nguyễn Văn An", "email": "an@gmail.com" },
+          "lender": { "id": "uuid", "fullName": "Trần Minh Hoàng", "email": "hoang@gmail.com" },
+          "gear": { "id": "uuid", "name": "Bàn phím cơ Keychron Q1 Pro", "mediaUrls": ["/uploads/..."] }
+        }
+      }
+    ],
+    "meta": {
+      "total": 1,
+      "page": 1,
+      "limit": 10,
+      "totalPages": 1
+    }
+  }
+  ```
+* **Errors**: `400` khi status hoặc pagination không hợp lệ; `403 ADMIN_ONLY` nếu người dùng không phải admin.
+
 #### [POST] `/admin/disputes/:id/resolve` (Giải quyết tranh chấp đơn thuê)
 * **Authentication**: `accessToken` cookie, admin role, and valid `Origin`.
 * **Mô tả**: Quyết định số tiền khấu trừ từ khoản cọc của Renter để đền bù cho Lender. Hệ thống tự động gọi `EscrowService.compensate()` hoặc `release()` và chuyển order về `completed` trong cùng transaction nguyên tử (`prisma.$transaction`).
@@ -758,3 +801,42 @@ Ngoài retry ở đúng target, status sai trả `400 INVALID_TRANSITION` (hoặ
   - `404 NOT_FOUND` nếu dispute không tồn tại.
 * **Success (200)**: Tranh chấp được đánh dấu `resolved`, escrow được release/compensate, đơn thuê chuyển về `completed`, và response dùng camelCase.
 
+# Credit limit APIs (MVP)
+
+Renters must send `creditConsentAccepted: true` to `POST /users/me/kyc`.
+Approving a renter KYC atomically grants the 3,000,000 VND tier. Credit tiers
+are fixed at 3,000,000, 5,000,000 and 10,000,000 VND.
+
+- `GET /wallets/mutux` returns a camelCase wallet snapshot. A renter without a
+  grant receives `200` with `granted: false` and `status: "not_granted"`.
+- `POST /wallets/mutux/debt/repay` repays all outstanding debt from the renter
+  wallet. Errors: `CREDIT_WALLET_NOT_FOUND`, `NO_OUTSTANDING_DEBT`,
+  `INSUFFICIENT_RENTER_BALANCE`, and `WALLET_INACTIVE`.
+- `POST /credit-limit-requests` accepts
+  `{ "requestedLimit": 5000000, "consentAccepted": true }`.
+- `GET /credit-limit-requests/me` returns `{ active, history }`.
+- `POST /credit-limit-requests/:id/cancel` cancels an owned pending request.
+- Admin endpoints under `/admin/credit-limit-requests` support paginated list,
+  `review`, `approve`, and `reject`. Approval must equal the requested tier.
+
+The backend requires 3 completed orders for 5,000,000 and 10 for 10,000,000,
+and blocks increases for debt, an open/under-review dispute, or any
+`deposit_deduct` resolution. It rechecks this policy at approval.
+# Cart and batch checkout
+
+All routes require authentication and renter role (`403 RENTER_ONLY`).
+
+- `GET /cart` returns or lazily creates the renter cart.
+- `PUT /cart/items/:gearId` with `{ startDate, endDate }` creates or updates
+  the unique gear item.
+- `DELETE /cart/items/:itemId` removes an owned item.
+- `DELETE /cart` clears items while retaining the cart.
+- `POST /rental-orders/batch` accepts `cartItemIds`, `depositType`,
+  `shippingName`, `shippingPhone`, and `shippingAddress`; it returns
+  `{ orders, removedCartItemIds }` with status 201.
+
+Cart quotes and availability use database values. Batch checkout locks rows,
+creates one `pending_confirm` order per selected item, and removes only those
+items atomically. Errors include `GEAR_NOT_FOUND`, `CART_ITEM_NOT_FOUND`,
+`INVALID_DATE_RANGE`, `GEAR_NOT_AVAILABLE`, `CANNOT_RENT_OWN_GEAR`, and
+`GEAR_UNAVAILABLE_FOR_PERIOD`.

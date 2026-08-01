@@ -16,3 +16,25 @@ body:json {
     "method": "payos"
   }
 }
+
+script:post-response {
+  if (res.status === 201) {
+    const checkout = res.body.data;
+    bru.setEnvVar("topupId", checkout.topupId);
+    bru.setEnvVar("topupOrderCode", String(checkout.orderCode));
+    bru.setEnvVar("topupAmount", String(checkout.amount));
+    bru.setEnvVar("topupTransferContent", checkout.paymentInstructions.transferContent);
+  }
+}
+
+tests {
+  test("returns the exact pending checkout contract", function() {
+    expect(res.status).to.equal(201);
+    const checkout = res.body.data;
+    expect(checkout.topupId).to.be.a("string");
+    expect(checkout.orderCode).to.be.a("number");
+    expect(checkout.amount).to.equal(500000);
+    expect(checkout.status).to.equal("pending");
+    expect(checkout.paymentInstructions.transferContent).to.be.a("string");
+  });
+}

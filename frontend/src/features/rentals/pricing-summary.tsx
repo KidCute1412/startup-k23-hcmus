@@ -1,59 +1,99 @@
 import { Card } from "@/components/ui/card";
-import { formatCurrency, rentalDays } from "@/lib/format";
-import type { CartItem } from "@/features/cart/cart-context";
+import { formatCurrency, formatShortDate } from "@/lib/format";
+import { SafeGearImage } from "@/features/catalog/safe-gear-image";
+import type { CartItem } from "@/types/cart";
 
-type PricingSummaryProps = {
-  items: CartItem[];
-  depositType: "traditional" | "credit-line";
-};
+function formatDateRange(startDate?: string, endDate?: string) {
+  const start = formatShortDate(startDate);
+  const end = formatShortDate(endDate);
+  return `${start} - ${end}`;
+}
 
 export function PricingSummary({
   items,
   depositType,
-}: PricingSummaryProps) {
-  const rentalTotal = items.reduce((sum, item) => {
-    const days = rentalDays(item.startDate, item.endDate);
-    return sum + (days > 0 ? days : 1) * item.gear.pricing.dailyPrice;
-  }, 0);
-
-  const depositTotal = items.reduce((sum, item) => {
-    return sum + (depositType === "traditional" ? item.gear.pricing.depositCash : item.gear.pricing.creditLineRequired);
-  }, 0);
+}: {
+  items: CartItem[];
+  depositType: "traditional" | "credit_line";
+}) {
+  const rentalTotal = items.reduce((sum, item) => sum + item.rentalFee, 0);
+  const depositTotal = items.reduce((sum, item) => sum + item.depositAmount, 0);
+  const grandTotal = depositType === "traditional" ? rentalTotal + depositTotal : rentalTotal;
 
   return (
-    <Card className="p-5">
-      <h2 className="font-display text-base font-bold uppercase tracking-widest">
-        Tạm tính
+    <Card className="p-5 space-y-5">
+      <h2 className="font-display text-base font-bold uppercase tracking-widest border-b border-vanguard-light-border pb-3 dark:border-vanguard-dark-border">
+        Tóm tắt đơn thuê ({items.length})
       </h2>
-      <div className="mt-4 space-y-3">
-        {items.map((item) => {
-          const days = rentalDays(item.startDate, item.endDate);
-          const validDays = days > 0 ? days : 1;
-          const subtotal = validDays * item.gear.pricing.dailyPrice;
-          return (
-            <div key={item.id} className="flex justify-between text-sm">
-              <span className="truncate pr-4">{item.gear.name} x {validDays} ngày</span>
-              <span className="shrink-0">{formatCurrency(subtotal)}</span>
+
+      {/* Itemized Breakdown */}
+      <div className="space-y-4">
+        {items.map((item) => (
+          <div
+            key={item.id}
+            className="flex gap-3 text-sm pb-3 border-b border-vanguard-light-border/60 dark:border-vanguard-dark-border/60 last:border-0 last:pb-0"
+          >
+            {/* Gear Photo Thumbnail */}
+            <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-v-sm bg-vanguard-light-surfDim dark:bg-vanguard-dark-surfDim border border-vanguard-light-border dark:border-vanguard-dark-border">
+              <SafeGearImage
+                src={item.gear.primaryMediaUrl || "/gear-placeholder.svg"}
+                alt={item.gear.name}
+                fill
+                className="object-cover"
+              />
             </div>
-          );
-        })}
-        <div className="border-t border-vanguard-light-border pt-3 dark:border-vanguard-dark-border flex justify-between text-sm font-bold">
-          <span>Tổng tiền thuê</span>
-          <span>{formatCurrency(rentalTotal)}</span>
+
+            {/* Gear Details */}
+            <div className="flex-1 min-w-0">
+              <p className="font-bold text-xs truncate">{item.gear.name}</p>
+              
+              {/* Formatted Rental Dates */}
+              <p className="text-[11px] text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted mt-0.5">
+                Thời gian: <span className="font-medium text-vanguard-light-text dark:text-vanguard-dark-text">{formatDateRange(item.startDate, item.endDate)}</span> ({item.durationDays} ngày)
+              </p>
+
+              {/* Daily Rate & Rental Subtotal */}
+              <div className="mt-1 flex flex-wrap items-center justify-between text-xs gap-1">
+                <span className="text-[11px] text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted">
+                  Đơn giá: {formatCurrency(item.rentPricePerDay)}/ngày
+                </span>
+                <span>
+                  Tiền thuê: <strong className="text-vanguard-primary">{formatCurrency(item.rentalFee)}</strong>
+                </span>
+              </div>
+
+              {/* Item Deposit Amount */}
+              <div className="mt-0.5 text-right text-[11px] text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted">
+                Tiền cọc: <span className="font-medium">{formatCurrency(item.depositAmount)}</span>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Totals Summary Breakdown */}
+      <div className="space-y-2.5 border-t border-vanguard-light-border pt-4 text-xs dark:border-vanguard-dark-border">
+        <div className="flex justify-between">
+          <span className="text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted">Tổng phí thuê:</span>
+          <span className="font-semibold">{formatCurrency(rentalTotal)}</span>
         </div>
-        <div className="flex justify-between text-sm font-bold text-vanguard-primary">
-          <span>{depositType === "traditional" ? "Tổng cọc tiền mặt" : "Credit line cần có"}</span>
-          <span>{formatCurrency(depositTotal)}</span>
+        <div className="flex justify-between">
+          <span className="text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted">
+            {depositType === "traditional" ? "Tổng tiền cọc tiền mặt:" : "Hạn mức Mutux cọc:"}
+          </span>
+          <span className="font-semibold text-vanguard-secondary dark:text-vanguard-primary">
+            {formatCurrency(depositTotal)}
+          </span>
+        </div>
+        <div className="flex justify-between border-t border-vanguard-light-border pt-3 text-sm font-bold dark:border-vanguard-dark-border">
+          <span>Tổng thanh toán từ ví:</span>
+          <span className="text-vanguard-primary font-display">{formatCurrency(grandTotal)}</span>
         </div>
       </div>
-      <div className="mt-5 rounded-v-sm border border-vanguard-primary/30 bg-vanguard-primary/5 p-4">
-        <p className="font-display text-xs font-semibold uppercase tracking-widest text-vanguard-primary">
-          Thanh toán khi backend sẵn sàng
-        </p>
-        <p className="mt-2 text-xs leading-5 text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted">
-          Flow hiện tại chỉ tạo bản nháp yêu cầu thuê để kiểm thử UX và dữ liệu mock.
-        </p>
-      </div>
+
+      <p className="border border-vanguard-primary/30 bg-vanguard-primary/5 p-3 text-[11px] rounded-v-sm text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted">
+        Giá thuê, tiền cọc và thông tin chủ gear được xác thực chính xác từ database khi thanh toán.
+      </p>
     </Card>
   );
 }

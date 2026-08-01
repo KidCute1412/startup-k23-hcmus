@@ -3,7 +3,7 @@ import { ActiveFilters } from "@/features/catalog/active-filters";
 import { CatalogFilter } from "@/features/catalog/catalog-filter";
 import { CatalogPagination } from "@/features/catalog/catalog-pagination";
 import { ProductGrid } from "@/features/catalog/product-grid";
-import type { Gear, GearCategory } from "@/features/catalog/types";
+import type { Gear, GearCategory } from "@/types/catalog";
 import { getCategories, getGears, type GearCatalogSort } from "@/services/gearService";
 
 export const metadata: Metadata = {

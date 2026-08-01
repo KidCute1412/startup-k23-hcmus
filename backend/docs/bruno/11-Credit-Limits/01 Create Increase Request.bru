@@ -1,0 +1,11 @@
+meta { name: Create Increase Request type: http seq: 1 }
+post { url: {{baseUrl}}/credit-limit-requests body: json auth: inherit }
+headers { Origin: http://localhost:3000 }
+body:json { { "requestedLimit": 5000000, "consentAccepted": true } }
+script:post-response {
+  test("201 and wrapped camelCase response", function () {
+    expect(res.getStatus()).to.equal(201);
+    expect(res.getBody().success).to.equal(true);
+    bru.setEnvVar("creditLimitRequestId", res.getBody().data.id);
+  });
+}

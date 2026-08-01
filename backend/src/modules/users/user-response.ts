@@ -17,6 +17,7 @@ export interface SafeUserRecord {
   kyc_front_card_url: string | null;
   kyc_back_card_url: string | null;
   kyc_portrait_url: string | null;
+  credit_consent_accepted_at: Date | null;
   created_at: Date;
   updated_at: Date;
 }
@@ -46,6 +47,7 @@ export function toCurrentUserResponse(user: SafeUserRecord) {
         ? ('unverified' as const)
         : user.kyc_status,
     kycRejectionReason: user.kyc_rejection_reason,
+    creditConsentAcceptedAt: user.credit_consent_accepted_at,
     createdAt: user.created_at,
     updatedAt: user.updated_at,
   };

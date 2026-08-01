@@ -534,3 +534,25 @@ erDiagram
 | `LenderTxType` | `lender_tx_type` | `income`, `withdrawal`, `compensation`, `fee_deduction` |
 | `TopupStatusType` | `TopupStatusType` | `pending`, `success`, `failed` |
 | `WithdrawalStatusType` | `withdrawal_status_type` | `pending`, `approved`, `rejected`, `completed` |
+# Credit consent and limit requests
+
+`users.credit_consent_accepted_at` stores the renter's latest accepted credit
+terms timestamp. `credit_limit_requests` stores the requested/current/approved
+limit, consent snapshot, reviewer audit fields, and the
+`pending -> under_review -> approved|rejected` state machine; owners may cancel
+only while pending. Partial unique indexes enforce one active request per user,
+one KYC auto-grant ledger per wallet/user reference, and one limit-adjustment
+ledger per request.
+
+Mutux wallet rows must satisfy:
+
+`display_balance = total_limit - locked_balance - outstanding_debt`
+
+MVP configured tiers are 3, 5, and 10 million VND and `expired_at` is null.
+Legacy positive limits remain intact during migration.
+# Database cart
+
+`carts` has one row per renter (`renter_id` is unique). `cart_items` stores a
+date-only rental interval and enforces `start_date < end_date` and uniqueness
+of `(cart_id, gear_id)`. Cart deletion cascades items; gear deletion removes
+the related items. UI selection is not persisted.

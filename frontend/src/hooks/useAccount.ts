@@ -10,6 +10,9 @@ import {
   type UpdateAccountRequest,
 } from "@/services/accountService";
 
+export { resolveMediaUrl } from "@/services/accountService";
+export type { AccountUser } from "@/services/accountService";
+
 export function useAccount() {
   const router = useRouter();
   const [user, setUser] = useState<AccountUser | null>(null);
@@ -71,6 +74,11 @@ export function useAccount() {
     [runMutation],
   );
 
+  const uploadImage = useCallback(
+    (file: File) => accountService.uploadImage(file),
+    [],
+  );
+
   const closeAccount = useCallback(
     async (password: string) => {
       setIsSaving(true);
@@ -99,6 +107,7 @@ export function useAccount() {
     reload: load,
     updateProfile,
     submitKyc,
+    uploadImage,
     closeAccount,
   };
 }

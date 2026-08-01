@@ -1,0 +1,9 @@
+meta { name: Get Empty Cart type: http seq: 1 }
+get { url: {{baseUrl}}/cart auth: inherit }
+tests {
+  test("200 wrapped camelCase cart", function () {
+    expect(res.status).to.equal(200);
+    expect(res.body.success).to.equal(true);
+    expect(res.body.data).to.have.property("updatedAt");
+  });
+}
