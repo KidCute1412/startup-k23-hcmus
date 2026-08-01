@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Input } from "@/components/ui/field";
+import { DatePicker } from "@/components/ui/field";
 import { StatRow } from "@/components/ui/stat-row";
 import { useCart } from "@/features/cart/cart-context";
 import { useAuth } from "@/hooks/useAuth";
@@ -55,8 +55,8 @@ export function ProductDetail({ gear }: { gear: Gear }) {
       </Card>
 
       <Card className="grid gap-4 p-5 sm:grid-cols-2">
-        <label className="grid gap-2"><span className="field-label">Ngày bắt đầu</span><Input type="date" value={startDate} onChange={(event) => setStartDate(event.target.value)} /></label>
-        <label className="grid gap-2"><span className="field-label">Ngày trả</span><Input type="date" value={endDate} onChange={(event) => setEndDate(event.target.value)} /></label>
+        <label className="grid gap-2"><span className="field-label">Ngày bắt đầu</span><DatePicker value={startDate} onChange={(val) => setStartDate(val)} placeholder="Từ ngày" /></label>
+        <label className="grid gap-2"><span className="field-label">Ngày trả</span><DatePicker value={endDate} min={startDate} onChange={(val) => setEndDate(val)} placeholder="Đến ngày" /></label>
       </Card>
 
       {!user || user.role === "renter" ? (

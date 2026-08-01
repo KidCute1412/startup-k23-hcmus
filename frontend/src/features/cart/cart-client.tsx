@@ -5,7 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { LinkButton } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Input } from "@/components/ui/field";
+import { DatePicker, Input } from "@/components/ui/field";
 import { useCart } from "@/features/cart/cart-context";
 import { formatCurrency } from "@/lib/format";
 
@@ -62,8 +62,8 @@ export function CartClient() {
             <div>
               <Link href={`/gears/${item.gear.id}`} className="font-display text-lg font-bold hover:text-vanguard-primary">{item.gear.name}</Link>
               <div className="mt-3 grid gap-2 sm:grid-cols-2">
-                <Input type="date" value={item.startDate} disabled={mutating} onChange={(event) => void upsertItem(item.gearId, event.target.value, item.endDate)} />
-                <Input type="date" value={item.endDate} disabled={mutating} onChange={(event) => void upsertItem(item.gearId, item.startDate, event.target.value)} />
+                <DatePicker value={item.startDate} disabled={mutating} onChange={(val) => void upsertItem(item.gearId, val, item.endDate)} placeholder="Từ ngày" />
+                <DatePicker value={item.endDate} disabled={mutating} min={item.startDate} onChange={(val) => void upsertItem(item.gearId, item.startDate, val)} placeholder="Đến ngày" />
               </div>
               <p className="mt-2 text-sm">{formatCurrency(item.rentPricePerDay)}/ngày · {item.durationDays} ngày</p>
               {!item.availability.eligible ? (

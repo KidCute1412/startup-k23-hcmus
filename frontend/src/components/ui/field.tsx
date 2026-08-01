@@ -2,6 +2,8 @@ import type { ComponentPropsWithoutRef } from "react";
 import { cn } from "@/lib/cn";
 export { FormSelect as Select, FormSelect } from "./select";
 export type { FormSelectProps, FormSelectOption } from "./select";
+export { DatePicker } from "./date-picker";
+export type { DatePickerProps } from "./date-picker";
 
 export function Input({ className, ...props }: ComponentPropsWithoutRef<"input">) {
   return (
