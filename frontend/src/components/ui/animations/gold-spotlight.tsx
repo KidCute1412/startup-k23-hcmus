@@ -137,9 +137,6 @@ export function GoldSpotlight({
       const x = e.clientX - rect.left;
       const y = e.clientY - rect.top;
 
-      el.style.setProperty("--spotlight-x", `${x}px`);
-      el.style.setProperty("--spotlight-y", `${y}px`);
-
       const dist = Math.hypot(x - lastSpawnPosRef.current.x, y - lastSpawnPosRef.current.y);
 
       // Spawn smooth star particle when cursor moves > 12px
@@ -176,44 +173,8 @@ export function GoldSpotlight({
       }}
       onMouseMove={handleMouseMove}
       className={`group relative ${className}`}
-      style={
-        {
-          "--spotlight-x": "50%",
-          "--spotlight-y": "50%",
-        } as React.CSSProperties
-      }
     >
       <div className="relative z-10">{children}</div>
-
-      {/* Outer Soft Aura Spotlight Overlay */}
-      <div
-        className={`pointer-events-none absolute inset-0 z-30 transition-opacity duration-700 ease-out ${
-          isHovered ? "opacity-100" : "opacity-0"
-        }`}
-        style={{
-          background: `radial-gradient(${radius}px circle at var(--spotlight-x) var(--spotlight-y), rgba(212, 175, 55, 0.1) 0%, rgba(212, 175, 55, 0.02) 60%, transparent 85%)`,
-        }}
-      />
-
-      {/* Inner Focused Soft Core Spotlight Overlay */}
-      <div
-        className={`pointer-events-none absolute inset-0 z-30 transition-opacity duration-500 ease-out ${
-          isHovered ? "opacity-100" : "opacity-0"
-        }`}
-        style={{
-          background: `radial-gradient(130px circle at var(--spotlight-x) var(--spotlight-y), rgba(245, 225, 140, 0.16) 0%, rgba(212, 175, 55, 0.03) 70%, transparent 100%)`,
-        }}
-      />
-
-      {/* Micro Specular Point Highlight Overlay */}
-      <div
-        className={`pointer-events-none absolute inset-0 z-30 transition-opacity duration-300 ease-out ${
-          isHovered ? "opacity-100" : "opacity-0"
-        }`}
-        style={{
-          background: `radial-gradient(35px circle at var(--spotlight-x) var(--spotlight-y), rgba(255, 250, 220, 0.3) 0%, transparent 100%)`,
-        }}
-      />
 
       {/* Ultra-Smooth 60FPS Canvas Stars Layer Overlay */}
       <canvas

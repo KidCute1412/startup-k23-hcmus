@@ -5,6 +5,7 @@ import {
   OrderStatusType,
   Prisma,
   UserRole,
+  WalletStatusType,
 } from '@prisma/client';
 import { CreateRentalOrderDto } from './dto/create-rental-order.dto';
 import { EscrowService } from '../escrow/escrow.service';
@@ -145,6 +146,213 @@ describe('RentalOrdersService', () => {
 
   afterAll(() => {
     jest.useRealTimers();
+  });
+
+  function checkoutWalletTx(options?: {
+    cashBalance?: number;
+    cashLocked?: number;
+    cashStatus?: WalletStatusType;
+    creditBalance?: number;
+    creditStatus?: WalletStatusType;
+    creditExpiredAt?: Date | null;
+    hasCredit?: boolean;
+  }) {
+    const values = {
+      cashBalance: 5_000_000,
+      cashLocked: 100_000,
+      cashStatus: WalletStatusType.active,
+      creditBalance: 4_500_000,
+      creditStatus: WalletStatusType.active,
+      creditExpiredAt: null,
+      hasCredit: true,
+      ...options,
+    };
+    return {
+      $queryRaw: jest.fn().mockResolvedValue([]),
+      renterWallet: {
+        findUnique: jest.fn().mockResolvedValue({ id: 'cash-wallet-id' }),
+        findUniqueOrThrow: jest.fn().mockResolvedValue({
+          id: 'cash-wallet-id',
+          balance: new Prisma.Decimal(values.cashBalance),
+          locked_balance: new Prisma.Decimal(values.cashLocked),
+          status: values.cashStatus,
+        }),
+      },
+      mutuxWallet: {
+        findUnique: jest
+          .fn()
+          .mockResolvedValue(
+            values.hasCredit ? { id: 'credit-wallet-id' } : null,
+          ),
+        findUniqueOrThrow: jest.fn().mockResolvedValue({
+          id: 'credit-wallet-id',
+          display_balance: new Prisma.Decimal(values.creditBalance),
+          status: values.creditStatus,
+          expired_at: values.creditExpiredAt,
+        }),
+      },
+    } as unknown as Prisma.TransactionClient;
+  }
+
+  it('accepts a traditional checkout when aggregate available cash exactly covers fee and deposit', async () => {
+    const tx = checkoutWalletTx();
+
+    await expect(
+      service.assertCheckoutFunds(
+        tx,
+        'renter-id',
+        DepositTypeEnum.traditional,
+        new Prisma.Decimal(400_000),
+        new Prisma.Decimal(4_500_000),
+      ),
+    ).resolves.toBeUndefined();
+  });
+
+  it('rejects a traditional checkout one unit below the aggregate cash requirement', async () => {
+    const tx = checkoutWalletTx({ cashBalance: 4_999_999 });
+
+    await expect(
+      service.assertCheckoutFunds(
+        tx,
+        'renter-id',
+        DepositTypeEnum.traditional,
+        new Prisma.Decimal(400_000),
+        new Prisma.Decimal(4_500_000),
+      ),
+    ).rejects.toMatchObject({
+      status: 400,
+      response: { error: 'INSUFFICIENT_CASH' },
+    });
+  });
+
+  it('rejects credit checkout when cash covers rent but aggregate credit is insufficient', async () => {
+    const tx = checkoutWalletTx({
+      cashBalance: 500_000,
+      cashLocked: 0,
+      creditBalance: 4_499_999,
+    });
+
+    await expect(
+      service.assertCheckoutFunds(
+        tx,
+        'renter-id',
+        DepositTypeEnum.credit_line,
+        new Prisma.Decimal(400_000),
+        new Prisma.Decimal(4_500_000),
+      ),
+    ).rejects.toMatchObject({
+      status: 400,
+      response: { error: 'INSUFFICIENT_CREDIT' },
+    });
+  });
+
+  it('rejects checkout when the renter wallet is inactive', async () => {
+    const tx = checkoutWalletTx({ cashStatus: WalletStatusType.suspended });
+
+    await expect(
+      service.assertCheckoutFunds(
+        tx,
+        'renter-id',
+        DepositTypeEnum.traditional,
+        new Prisma.Decimal(400_000),
+        new Prisma.Decimal(4_500_000),
+      ),
+    ).rejects.toMatchObject({
+      status: 400,
+      response: { error: 'WALLET_INACTIVE' },
+    });
+  });
+
+  it('rejects credit checkout when an otherwise active credit wallet has expired', async () => {
+    const tx = checkoutWalletTx({
+      cashBalance: 500_000,
+      cashLocked: 0,
+      creditExpiredAt: new Date('2026-07-28T23:59:59.000Z'),
+    });
+
+    await expect(
+      service.assertCheckoutFunds(
+        tx,
+        'renter-id',
+        DepositTypeEnum.credit_line,
+        new Prisma.Decimal(400_000),
+        new Prisma.Decimal(4_500_000),
+      ),
+    ).rejects.toMatchObject({
+      status: 400,
+      response: { error: 'INSUFFICIENT_CREDIT' },
+    });
+  });
+
+  it('does not create orders or remove cart items when aggregate batch cash is insufficient', async () => {
+    const createOrder = jest.fn();
+    const deleteCartItems = jest.fn();
+    const batchTx = {
+      $queryRaw: jest.fn().mockResolvedValue([]),
+      cartItem: {
+        findMany: jest.fn().mockResolvedValue([
+          {
+            id: '40000000-0000-0000-0000-000000000001',
+            gear_id: approvedGear.id,
+            start_date: new Date('2026-08-01T00:00:00.000Z'),
+            end_date: new Date('2026-08-06T00:00:00.000Z'),
+            gear: {
+              ...approvedGear,
+              rent_price_per_day: new Prisma.Decimal(80_000),
+              value: new Prisma.Decimal(4_500_000),
+            },
+          },
+        ]),
+        deleteMany: deleteCartItems,
+      },
+      gear: {},
+      rentalOrder: {
+        findFirst: jest.fn().mockResolvedValue(null),
+        create: createOrder,
+      },
+      renterWallet: {
+        findUnique: jest.fn().mockResolvedValue({ id: 'cash-wallet-id' }),
+        findUniqueOrThrow: jest.fn().mockResolvedValue({
+          id: 'cash-wallet-id',
+          balance: new Prisma.Decimal(4_899_999),
+          locked_balance: new Prisma.Decimal(0),
+          status: WalletStatusType.active,
+        }),
+      },
+      mutuxWallet: {
+        findUnique: jest.fn(),
+        findUniqueOrThrow: jest.fn(),
+      },
+    };
+    const batchPrisma = {
+      $transaction: jest.fn(
+        (callback: (tx: Prisma.TransactionClient) => Promise<unknown>) =>
+          callback(batchTx as unknown as Prisma.TransactionClient),
+      ),
+    } as unknown as PrismaService;
+    const batchService = new RentalOrdersService(
+      repository as unknown as RentalOrdersRepository,
+      new RentalOrderOrchestrationService(
+        batchPrisma,
+        escrowService as unknown as EscrowService,
+      ),
+      batchPrisma,
+    );
+
+    await expect(
+      batchService.createBatch('renter-id', {
+        cartItemIds: ['40000000-0000-0000-0000-000000000001'],
+        depositType: DepositTypeEnum.traditional,
+        shippingAddress: '123 Nguyen Hue, District 1, HCMC',
+        shippingName: 'Nguyen Van A',
+        shippingPhone: '0987654321',
+      }),
+    ).rejects.toMatchObject({
+      status: 400,
+      response: { error: 'INSUFFICIENT_CASH' },
+    });
+    expect(createOrder).not.toHaveBeenCalled();
+    expect(deleteCartItems).not.toHaveBeenCalled();
   });
 
   it('rejects a gear that is not approved with GEAR_NOT_AVAILABLE', async () => {

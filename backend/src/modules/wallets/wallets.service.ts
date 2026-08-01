@@ -483,15 +483,17 @@ export class WalletsService {
     approved_at: Date | null;
     expired_at: Date | null;
   }) {
+    const expired =
+      wallet.expired_at !== null && wallet.expired_at <= new Date();
     return {
       id: wallet.id,
-      granted: true,
+      granted: wallet.status === 'active' && !expired,
       userId: wallet.user_id,
       totalLimit: wallet.total_limit.toNumber(),
       displayBalance: wallet.display_balance.toNumber(),
       lockedBalance: wallet.locked_balance.toNumber(),
       outstandingDebt: wallet.outstanding_debt.toNumber(),
-      status: wallet.status,
+      status: expired ? 'expired' : wallet.status,
       approvedAt: wallet.approved_at,
       expiredAt: wallet.expired_at,
     };

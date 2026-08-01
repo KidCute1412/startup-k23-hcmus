@@ -1,7 +1,7 @@
 "use client";
 
 import { AlertCircle, CheckCircle2, Send, WalletCards } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -20,6 +20,8 @@ import { ApiError, errorText } from "@/hooks/useCart";
 type RentalRequestFormProps = {
   items: CartItem[];
 };
+
+type WalletLoadStatus = "loading" | "ready" | "error";
 
 export function RentalRequestForm({ items }: RentalRequestFormProps) {
   const toast = useToast();
@@ -44,6 +46,9 @@ export function RentalRequestForm({ items }: RentalRequestFormProps) {
   const [submitted, setSubmitted] = useState(false);
   const [isQuickTopupOpen, setIsQuickTopupOpen] = useState(false);
   const [insufficientError, setInsufficientError] = useState<string | null>(null);
+  const [checkoutErrorCode, setCheckoutErrorCode] = useState<string | null>(null);
+  const [cashWalletStatus, setCashWalletStatus] = useState<WalletLoadStatus>("loading");
+  const [creditWalletStatus, setCreditWalletStatus] = useState<WalletLoadStatus>("loading");
 
   // Auto-fill delivery info from authenticated user profile if available
   useEffect(() => {
@@ -64,9 +69,21 @@ export function RentalRequestForm({ items }: RentalRequestFormProps) {
     }
   }, [user]);
 
-  useEffect(() => {
-    Promise.allSettled([fetchRenterWallet(), fetchCreditLine()]).catch(console.error);
+  const refreshWallets = useCallback(async () => {
+    setCashWalletStatus("loading");
+    setCreditWalletStatus("loading");
+    const cashRequest = fetchRenterWallet()
+      .then(() => setCashWalletStatus("ready" as const))
+      .catch(() => setCashWalletStatus("error" as const));
+    const creditRequest = fetchCreditLine()
+      .then(() => setCreditWalletStatus("ready" as const))
+      .catch(() => setCreditWalletStatus("error" as const));
+    await Promise.allSettled([cashRequest, creditRequest]);
   }, [fetchCreditLine, fetchRenterWallet]);
+
+  useEffect(() => {
+    void refreshWallets();
+  }, [refreshWallets]);
 
   // Real-time Form Validation
   const trimmedName = draft.shippingName.trim();
@@ -102,7 +119,16 @@ export function RentalRequestForm({ items }: RentalRequestFormProps) {
     : totalRentalAmount;
   const isBalanceSufficient = currentBalance >= cashRequired;
   const isCreditSufficient = draft.depositType !== "credit_line" || availableCredit >= totalDepositAmount;
-  const isFinanciallyReady = isBalanceSufficient && isCreditSufficient;
+  const isSelectedWalletReady = cashWalletStatus === "ready" &&
+    (draft.depositType !== "credit_line" || creditWalletStatus === "ready");
+  const isCreditUsable = creditWalletStatus === "ready" &&
+    creditLine?.granted === true && creditLine.status === "active";
+  const areWalletsActive = renterWallet?.status === "active" &&
+    (draft.depositType !== "credit_line" || isCreditUsable);
+  const isFinanciallyReady = isSelectedWalletReady &&
+    areWalletsActive && isBalanceSufficient && isCreditSufficient;
+  const cashShortfall = Math.max(0, cashRequired - currentBalance);
+  const creditShortfall = Math.max(0, totalDepositAmount - availableCredit);
 
   return (
     <>
@@ -117,7 +143,44 @@ export function RentalRequestForm({ items }: RentalRequestFormProps) {
             </div>
           </div>
 
-          {!isFinanciallyReady && (
+          {(cashWalletStatus === "loading" ||
+            (draft.depositType === "credit_line" && creditWalletStatus === "loading")) && (
+            <div className="mb-6 rounded-v-sm border border-vanguard-primary/40 bg-vanguard-primary/10 p-4 text-sm text-vanguard-secondary dark:text-vanguard-primary">
+              Đang xác minh số dư ví và hạn mức Mutux…
+            </div>
+          )}
+
+          {cashWalletStatus === "error" && (
+            <div role="alert" className="mb-6 rounded-v-sm border border-rose-500/40 bg-rose-500/10 p-4 text-sm text-rose-800 dark:text-rose-200">
+              <p className="font-bold">Không thể xác minh số dư ví tiêu dùng.</p>
+              <p className="mt-1 text-xs">Vui lòng tải lại thông tin ví trước khi gửi yêu cầu thuê.</p>
+              <button
+                type="button"
+                onClick={() => void refreshWallets()}
+                className="mt-3 rounded-v-sm border border-rose-500/50 px-3 py-1.5 text-xs font-bold uppercase tracking-wider"
+              >
+                Thử lại
+              </button>
+            </div>
+          )}
+
+          {creditWalletStatus === "error" && cashWalletStatus === "ready" && (
+            <div role="alert" className="mb-6 rounded-v-sm border border-amber-500/40 bg-amber-500/10 p-4 text-sm text-amber-800 dark:text-amber-200">
+              <p className="font-bold">Không thể tải hạn mức Mutux.</p>
+              <p className="mt-1 text-xs">
+                Bạn vẫn có thể chọn cọc tiền mặt bằng ví ảo hoặc thử tải lại hạn mức.
+              </p>
+              <button
+                type="button"
+                onClick={() => void refreshWallets()}
+                className="mt-3 rounded-v-sm border border-amber-500/50 px-3 py-1.5 text-xs font-bold uppercase tracking-wider"
+              >
+                Thử lại
+              </button>
+            </div>
+          )}
+
+          {isSelectedWalletReady && !isFinanciallyReady && (
             <div className="mb-6 rounded-v-sm border border-amber-500/40 bg-amber-500/10 p-4 text-amber-800 dark:text-amber-200">
               <div className="flex items-start gap-3">
                 <AlertCircle size={20} className="mt-0.5 text-amber-500 shrink-0" />
@@ -129,6 +192,13 @@ export function RentalRequestForm({ items }: RentalRequestFormProps) {
                     {" "}Hiện có {formatCurrency(currentBalance)} trong ví
                     {draft.depositType === "credit_line" && ` và ${formatCurrency(availableCredit)} hạn mức`}.
                   </p>
+                  {(!isBalanceSufficient || !isCreditSufficient) && (
+                    <p className="mt-1 text-xs font-semibold">
+                      Còn thiếu {!isBalanceSufficient ? formatCurrency(cashShortfall) : ""}
+                      {!isBalanceSufficient && !isCreditSufficient ? " trong ví và " : ""}
+                      {!isCreditSufficient ? `${formatCurrency(creditShortfall)} hạn mức` : ""}.
+                    </p>
+                  )}
                   <button
                     type="button"
                     onClick={() => {
@@ -152,17 +222,21 @@ export function RentalRequestForm({ items }: RentalRequestFormProps) {
                 <div className="flex-1">
                   <p className="font-bold">Không thể khởi tạo yêu cầu thuê!</p>
                   <p className="mt-1 text-xs">{insufficientError}</p>
-                  {(insufficientError.toLowerCase().includes("số dư") ||
-                    insufficientError.toLowerCase().includes("ví") ||
-                    insufficientError.toLowerCase().includes("tiền") ||
-                    !isBalanceSufficient) && (
+                  {(checkoutErrorCode === "INSUFFICIENT_CASH" ||
+                    checkoutErrorCode === "INSUFFICIENT_FUNDS" ||
+                    checkoutErrorCode === "INSUFFICIENT_CREDIT") && (
                     <button
                       type="button"
-                      onClick={() => setIsQuickTopupOpen(true)}
+                      onClick={() => {
+                        if (checkoutErrorCode === "INSUFFICIENT_CREDIT") router.push("/wallet");
+                        else setIsQuickTopupOpen(true);
+                      }}
                       className="mt-3 inline-flex items-center gap-1.5 rounded-v-sm bg-vanguard-primary px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-vanguard-dark-bg hover:opacity-90 transition"
                     >
                       <WalletCards size={14} />
-                      Nạp tiền bổ sung qua PayOS
+                      {checkoutErrorCode === "INSUFFICIENT_CREDIT"
+                        ? "Quản lý hạn mức Mutux"
+                        : "Nạp tiền bổ sung qua PayOS"}
                     </button>
                   )}
                 </div>
@@ -188,12 +262,23 @@ export function RentalRequestForm({ items }: RentalRequestFormProps) {
               onSubmit={async (event) => {
                 event.preventDefault();
                 setInsufficientError(null);
+                setCheckoutErrorCode(null);
 
                 // Mark all touched
                 setTouched({ shippingName: true, shippingPhone: true, shippingAddress: true });
 
                 if (!isFormValid) {
                   toast.warning("Vui lòng điền đầy đủ và chính xác thông tin giao nhận.");
+                  return;
+                }
+
+                if (!isSelectedWalletReady) {
+                  toast.warning("Chưa thể xác minh thông tin ví. Vui lòng thử lại.");
+                  return;
+                }
+
+                if (!isFinanciallyReady) {
+                  toast.warning("Số dư ví hoặc hạn mức Mutux chưa đủ để gửi yêu cầu thuê.");
                   return;
                 }
 
@@ -215,13 +300,15 @@ export function RentalRequestForm({ items }: RentalRequestFormProps) {
                   const msg = errorText(e);
                   toast.error(msg);
                   setInsufficientError(msg);
+                  setCheckoutErrorCode(code ?? null);
 
                   if (
                     code === "INSUFFICIENT_FUNDS" ||
                     code === "INSUFFICIENT_CASH" ||
                     code === "INSUFFICIENT_CREDIT"
                   ) {
-                    setIsQuickTopupOpen(true);
+                    await refreshWallets();
+                    if (code !== "INSUFFICIENT_CREDIT") setIsQuickTopupOpen(true);
                   }
                 }
               }}
@@ -259,7 +346,7 @@ export function RentalRequestForm({ items }: RentalRequestFormProps) {
                       name="depositType"
                       value="credit_line"
                       checked={draft.depositType === "credit_line"}
-                      disabled={!creditLine?.granted}
+                      disabled={!isCreditUsable}
                       onChange={() =>
                         setDraft((current) => ({
                           ...current,
@@ -269,7 +356,15 @@ export function RentalRequestForm({ items }: RentalRequestFormProps) {
                       className="accent-vanguard-primary"
                     />
                     Cọc bằng hạn mức Mutux
-                    {!creditLine?.granted && <span className="text-xs text-vanguard-light-textMuted">(chưa được cấp)</span>}
+                    {!isCreditUsable && (
+                      <span className="text-xs text-vanguard-light-textMuted">
+                        {creditWalletStatus === "error"
+                          ? "(không tải được)"
+                          : creditLine?.status === "expired"
+                            ? "(đã hết hạn)"
+                            : "(chưa được cấp)"}
+                      </span>
+                    )}
                   </label>
                 </div>
               </fieldset>
@@ -347,11 +442,11 @@ export function RentalRequestForm({ items }: RentalRequestFormProps) {
 
               <Button
                 type="submit"
-                disabled={!isFormValid || isCreating}
+                disabled={!isFormValid || !isFinanciallyReady || isCreating}
                 icon={<Send size={15} />}
                 className="w-full bg-vanguard-primary font-bold text-vanguard-dark-bg hover:opacity-90 disabled:opacity-50 py-3"
               >
-                {isCreating ? "Đang xử lý..." : "Tạo yêu cầu thuê & Thanh toán"}
+                {isCreating ? "Đang xử lý..." : "Gửi yêu cầu thuê"}
               </Button>
             </form>
           )}
@@ -369,8 +464,9 @@ export function RentalRequestForm({ items }: RentalRequestFormProps) {
         currentBalance={currentBalance}
         onClose={() => setIsQuickTopupOpen(false)}
         onSuccess={() => {
-          Promise.allSettled([fetchRenterWallet(), fetchCreditLine()]).catch(console.error);
+          void refreshWallets();
           setInsufficientError(null);
+          setCheckoutErrorCode(null);
         }}
       />
     </>

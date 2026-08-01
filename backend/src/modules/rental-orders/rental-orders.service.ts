@@ -8,10 +8,12 @@ import {
 } from '@nestjs/common';
 import {
   ApprovalStatusType,
+  DepositTypeEnum,
   GearStatusType,
   OrderStatusType,
   Prisma,
   UserRole,
+  WalletStatusType,
 } from '@prisma/client';
 import { randomInt } from 'crypto';
 import { PrismaService } from '../../prisma/prisma.service';
@@ -162,8 +164,16 @@ export class RentalOrdersService {
       }
       const durationDays =
         (endDate.getTime() - startDate.getTime()) / MILLISECONDS_PER_DAY;
-      const dailyPrice = Number(gear.rent_price_per_day);
-      const rentalFee = dailyPrice * durationDays;
+      const dailyPrice = new Prisma.Decimal(gear.rent_price_per_day);
+      const rentalFee = dailyPrice.mul(durationDays);
+      const depositAmount = new Prisma.Decimal(gear.value ?? rentalFee.mul(2));
+      await this.assertCheckoutFunds(
+        tx,
+        renterId,
+        dto.depositType,
+        rentalFee,
+        depositAmount,
+      );
       return tx.rentalOrder.create({
         data: {
           order_code: this.newOrderCode(),
@@ -173,10 +183,10 @@ export class RentalOrdersService {
           start_date: startDate,
           end_date: endDate,
           duration_days: durationDays,
-          snapped_rent_price_per_day: dailyPrice,
-          rental_fee: rentalFee,
-          base_rental_fee: rentalFee,
-          deposit_amount: Number(gear.value ?? rentalFee * 2),
+          snapped_rent_price_per_day: dailyPrice.toNumber(),
+          rental_fee: rentalFee.toNumber(),
+          base_rental_fee: rentalFee.toNumber(),
+          deposit_amount: depositAmount.toNumber(),
           deposit_type: dto.depositType,
           status: OrderStatusType.pending_confirm,
           shipping_address: dto.shippingAddress,
@@ -216,7 +226,9 @@ export class RentalOrdersService {
           ORDER BY id FOR UPDATE`,
       );
 
-      const orders: object[] = [];
+      const orderInputs: Prisma.RentalOrderUncheckedCreateInput[] = [];
+      let totalRentalFee = new Prisma.Decimal(0);
+      let totalDepositAmount = new Prisma.Decimal(0);
       for (const item of items) {
         const gear = item.gear;
         if (
@@ -260,30 +272,44 @@ export class RentalOrdersService {
             message: 'Cart item has an invalid rental period',
           });
         }
-        const dailyPrice = Number(gear.rent_price_per_day);
-        const rentalFee = dailyPrice * durationDays;
-        orders.push(
-          await tx.rentalOrder.create({
-            data: {
-              order_code: this.newOrderCode(),
-              renter_id: renterId,
-              gear_id: gear.id,
-              lender_id: gear.lender_id,
-              start_date: item.start_date,
-              end_date: item.end_date,
-              duration_days: durationDays,
-              snapped_rent_price_per_day: dailyPrice,
-              rental_fee: rentalFee,
-              base_rental_fee: rentalFee,
-              deposit_amount: Number(gear.value ?? rentalFee * 2),
-              deposit_type: dto.depositType,
-              status: OrderStatusType.pending_confirm,
-              shipping_address: dto.shippingAddress,
-              shipping_name: dto.shippingName,
-              shipping_phone: dto.shippingPhone,
-            },
-          }),
+        const dailyPrice = new Prisma.Decimal(gear.rent_price_per_day);
+        const rentalFee = dailyPrice.mul(durationDays);
+        const depositAmount = new Prisma.Decimal(
+          gear.value ?? rentalFee.mul(2),
         );
+        totalRentalFee = totalRentalFee.plus(rentalFee);
+        totalDepositAmount = totalDepositAmount.plus(depositAmount);
+        orderInputs.push({
+          order_code: this.newOrderCode(),
+          renter_id: renterId,
+          gear_id: gear.id,
+          lender_id: gear.lender_id,
+          start_date: item.start_date,
+          end_date: item.end_date,
+          duration_days: durationDays,
+          snapped_rent_price_per_day: dailyPrice.toNumber(),
+          rental_fee: rentalFee.toNumber(),
+          base_rental_fee: rentalFee.toNumber(),
+          deposit_amount: depositAmount.toNumber(),
+          deposit_type: dto.depositType,
+          status: OrderStatusType.pending_confirm,
+          shipping_address: dto.shippingAddress,
+          shipping_name: dto.shippingName,
+          shipping_phone: dto.shippingPhone,
+        });
+      }
+
+      await this.assertCheckoutFunds(
+        tx,
+        renterId,
+        dto.depositType,
+        totalRentalFee,
+        totalDepositAmount,
+      );
+
+      const orders: object[] = [];
+      for (const data of orderInputs) {
+        orders.push(await tx.rentalOrder.create({ data }));
       }
       await tx.cartItem.deleteMany({ where: { id: { in: itemIds } } });
       return { orders, removedCartItemIds: itemIds };
@@ -364,6 +390,82 @@ export class RentalOrdersService {
 
     if (user.role === UserRole.lender) return { lender_id: user.id };
     return { renter_id: user.id };
+  }
+
+  async assertCheckoutFunds(
+    tx: Prisma.TransactionClient,
+    renterId: string,
+    depositType: DepositTypeEnum,
+    rentalFee: Prisma.Decimal,
+    depositAmount: Prisma.Decimal,
+  ): Promise<void> {
+    const walletRef = await tx.renterWallet.findUnique({
+      where: { user_id: renterId },
+      select: { id: true },
+    });
+    if (!walletRef) {
+      throw new BadRequestException({
+        error: 'INSUFFICIENT_CASH',
+        message: 'Renter wallet balance is insufficient for this order',
+      });
+    }
+
+    await tx.$queryRaw`SELECT id FROM renter_wallets WHERE id = ${walletRef.id}::uuid FOR UPDATE`;
+    const cashWallet = await tx.renterWallet.findUniqueOrThrow({
+      where: { id: walletRef.id },
+    });
+    if (cashWallet.status !== WalletStatusType.active) {
+      throw new BadRequestException({
+        error: 'WALLET_INACTIVE',
+        message: 'Renter wallet is not active',
+      });
+    }
+
+    const cashRequired =
+      depositType === DepositTypeEnum.traditional
+        ? rentalFee.plus(depositAmount)
+        : rentalFee;
+    const availableCash = cashWallet.balance.minus(cashWallet.locked_balance);
+    if (availableCash.lessThan(cashRequired)) {
+      throw new BadRequestException({
+        error: 'INSUFFICIENT_CASH',
+        message: 'Renter wallet balance is insufficient for this order',
+      });
+    }
+
+    if (depositType !== DepositTypeEnum.credit_line) return;
+
+    const creditRef = await tx.mutuxWallet.findUnique({
+      where: { user_id: renterId },
+      select: { id: true },
+    });
+    if (!creditRef) {
+      throw new BadRequestException({
+        error: 'INSUFFICIENT_CREDIT',
+        message: 'Mutux credit is not granted or is insufficient',
+      });
+    }
+
+    await tx.$queryRaw`SELECT id FROM mutux_wallets WHERE id = ${creditRef.id}::uuid FOR UPDATE`;
+    const creditWallet = await tx.mutuxWallet.findUniqueOrThrow({
+      where: { id: creditRef.id },
+    });
+    const creditExpired =
+      creditWallet.expired_at !== null && creditWallet.expired_at <= new Date();
+    if (creditWallet.status !== WalletStatusType.active || creditExpired) {
+      throw new BadRequestException({
+        error: creditExpired ? 'INSUFFICIENT_CREDIT' : 'WALLET_INACTIVE',
+        message: creditExpired
+          ? 'Mutux credit has expired'
+          : 'Mutux credit wallet is not active',
+      });
+    }
+    if (creditWallet.display_balance.lessThan(depositAmount)) {
+      throw new BadRequestException({
+        error: 'INSUFFICIENT_CREDIT',
+        message: 'Mutux credit is not granted or is insufficient',
+      });
+    }
   }
 
   private parseDateOnly(value: string): Date {
