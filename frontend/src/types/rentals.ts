@@ -1,6 +1,7 @@
 export interface RentalOrder {
   id: string;
   gearId: string;
+  gear_id?: string;
   renterId: string;
   lenderId: string;
   renter_id?: string;
@@ -22,7 +23,7 @@ export interface RentalOrder {
   deposit_amount?: number;
   deposit_type?: 'traditional' | 'credit_line';
   shipping_address?: string;
-  gear?: { name: string; media?: { url: string }[] };
+  gear?: { id?: string; name: string; media?: { url: string }[] };
   renter?: { fullName?: string; avatarUrl?: string; full_name?: string; avatar_url?: string };
   lender?: { fullName?: string; avatarUrl?: string; full_name?: string; avatar_url?: string };
 }
