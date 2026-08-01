@@ -16,6 +16,8 @@ import {
 } from "lucide-react";
 import { LinkButton } from "@/components/ui/button";
 import { SectionHeading } from "@/components/ui/section-heading";
+import { GoldSpotlight } from "@/components/ui/animations/gold-spotlight";
+import { GoldDustParticles } from "@/components/ui/animations/gold-dust-particles";
 
 export const metadata: Metadata = {
   title: "Về Chúng Tôi | Mutux - Nền Tảng Cho Thuê Gaming Gear Cao Cấp",
@@ -103,56 +105,58 @@ const securityFeatures = [
 
 export default function AboutPage() {
   return (
-    <div className="space-y-16 py-8 sm:space-y-24 sm:py-12">
-      {/* Hero Banner Section */}
-      <section className="relative overflow-hidden px-4 sm:px-6">
-        <div className="mx-auto grid max-w-7xl items-center gap-12 lg:grid-cols-12">
-          <div className="space-y-6 lg:col-span-7">
-            <div className="inline-flex items-center gap-2 rounded-full border border-vanguard-primary/30 bg-vanguard-primary/5 px-4 py-1.5 font-display text-xs font-semibold uppercase tracking-widest text-vanguard-primary">
-              <span className="size-1.5 rounded-full bg-vanguard-primary" />
-              Heritage Gaming Gear Marketplace
-            </div>
-
-            <h1 className="text-balance font-display text-3xl font-bold leading-[1.15] tracking-wide sm:text-5xl lg:text-6xl">
-              Nâng tầm trải nghiệm gaming,{" "}
-              <span className="text-gradient font-normal italic">
-                tối ưu hóa giá trị tài sản gear
-              </span>
-            </h1>
-
-            <p className="max-w-2xl text-base leading-8 text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted sm:text-lg">
-              <strong>Mutux</strong> là marketplace chuyên biệt cho thuê thiết bị gaming hi-end và audio gear cao cấp. Chúng tôi kết nối cộng đồng yêu công nghệ, giúp người chơi dễ dàng trải nghiệm siêu phẩm flagship trước khi quyết định sở hữu, đồng thời hỗ trợ chủ gear biến thiết bị nhàn rỗi thành nguồn thu nhập thụ động an toàn.
-            </p>
-
-            <div className="flex flex-col gap-3 pt-2 sm:flex-row">
-              <LinkButton href="/gears" icon={<ArrowRight size={15} />}>
-                Khám phá Bộ Sưu Tập
-              </LinkButton>
-              <LinkButton href="/lender/gears" variant="outline" icon={<Award size={15} />}>
-                Đăng Ký Cho Thuê Gear
-              </LinkButton>
-            </div>
-          </div>
-
-          <div className="lg:col-span-5">
-            <div className="royal-glow relative mx-auto aspect-[4/3] w-full max-w-lg rounded-v-sm border border-vanguard-primary/30 bg-vanguard-light-surf p-2 shadow-2xl dark:bg-vanguard-dark-surf">
-              <div className="gold-shimmer relative h-full overflow-hidden rounded-v-sm border border-vanguard-light-border dark:border-vanguard-dark-border">
-                <Image
-                  src="https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=1200&q=80"
-                  alt="Mutux Gaming Gear Rental Marketplace"
-                  fill
-                  priority
-                  sizes="(min-width: 1024px) 40vw, 100vw"
-                  className="object-cover"
-                />
+    <GoldSpotlight className="w-full">
+      <div className="relative space-y-16 py-8 sm:space-y-24 sm:py-12">
+        <GoldDustParticles count={36} />
+        {/* Hero Banner Section */}
+        <section className="relative overflow-hidden px-4 sm:px-6">
+          <div className="mx-auto grid max-w-7xl items-center gap-12 lg:grid-cols-12">
+            <div className="space-y-6 lg:col-span-7">
+              <div className="inline-flex items-center gap-2 rounded-full border border-vanguard-primary/30 bg-vanguard-primary/5 px-4 py-1.5 font-display text-xs font-semibold uppercase tracking-widest text-vanguard-primary">
+                <span className="size-1.5 rounded-full bg-vanguard-primary" />
+                Heritage Gaming Gear Marketplace
               </div>
-              <div className="absolute bottom-5 right-5 border border-vanguard-primary/30 bg-vanguard-dark-bg/90 px-4 py-2 font-display text-[10px] font-semibold uppercase tracking-widest text-vanguard-primary backdrop-blur-md">
-                Vanguard Elite Standard
+
+              <h1 className="text-balance font-display text-3xl font-bold leading-[1.15] tracking-wide sm:text-5xl lg:text-6xl">
+                Nâng tầm trải nghiệm gaming,{" "}
+                <span className="text-gradient font-normal italic">
+                  tối ưu hóa giá trị tài sản gear
+                </span>
+              </h1>
+
+              <p className="max-w-2xl text-base leading-8 text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted sm:text-lg">
+                <strong>Mutux</strong> là marketplace chuyên biệt cho thuê thiết bị gaming hi-end và audio gear cao cấp. Chúng tôi kết nối cộng đồng yêu công nghệ, giúp người chơi dễ dàng trải nghiệm siêu phẩm flagship trước khi quyết định sở hữu, đồng thời hỗ trợ chủ gear biến thiết bị nhàn rỗi thành nguồn thu nhập thụ động an toàn.
+              </p>
+
+              <div className="flex flex-col gap-3 pt-2 sm:flex-row">
+                <LinkButton href="/gears" icon={<ArrowRight size={15} />}>
+                  Khám phá Bộ Sưu Tập
+                </LinkButton>
+                <LinkButton href="/lender/gears" variant="outline" icon={<Award size={15} />}>
+                  Đăng Ký Cho Thuê Gear
+                </LinkButton>
               </div>
             </div>
+
+            <div className="lg:col-span-5">
+              <div className="royal-glow relative mx-auto aspect-[4/3] w-full max-w-lg rounded-v-sm border border-vanguard-primary/30 bg-vanguard-light-surf p-2 shadow-2xl dark:bg-vanguard-dark-surf">
+                <div className="gold-shimmer relative h-full overflow-hidden rounded-v-sm border border-vanguard-light-border dark:border-vanguard-dark-border">
+                  <Image
+                    src="https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=1200&q=80"
+                    alt="Mutux Gaming Gear Rental Marketplace"
+                    fill
+                    priority
+                    sizes="(min-width: 1024px) 40vw, 100vw"
+                    className="object-cover"
+                  />
+                </div>
+                <div className="absolute bottom-5 right-5 border border-vanguard-primary/30 bg-vanguard-dark-bg/90 px-4 py-2 font-display text-[10px] font-semibold uppercase tracking-widest text-vanguard-primary backdrop-blur-md">
+                  Vanguard Elite Standard
+                </div>
+              </div>
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
 
       {/* Stats Counter Section */}
       <section className="border-y border-vanguard-light-border bg-vanguard-light-surfDim/50 py-10 dark:border-vanguard-dark-border dark:bg-vanguard-dark-surfDim/30">
@@ -315,5 +319,6 @@ export default function AboutPage() {
         </div>
       </section>
     </div>
+    </GoldSpotlight>
   );
 }

@@ -183,43 +183,43 @@ export function GoldSpotlight({
         } as React.CSSProperties
       }
     >
-      {/* Outer Soft Aura Spotlight */}
+      <div className="relative z-10">{children}</div>
+
+      {/* Outer Soft Aura Spotlight Overlay */}
       <div
-        className={`pointer-events-none absolute inset-0 z-0 transition-opacity duration-700 ease-out ${
+        className={`pointer-events-none absolute inset-0 z-30 transition-opacity duration-700 ease-out ${
           isHovered ? "opacity-100" : "opacity-0"
         }`}
         style={{
-          background: `radial-gradient(${radius}px circle at var(--spotlight-x) var(--spotlight-y), rgba(212, 175, 55, 0.07) 0%, rgba(212, 175, 55, 0.015) 60%, transparent 85%)`,
+          background: `radial-gradient(${radius}px circle at var(--spotlight-x) var(--spotlight-y), rgba(212, 175, 55, 0.1) 0%, rgba(212, 175, 55, 0.02) 60%, transparent 85%)`,
         }}
       />
 
-      {/* Inner Focused Soft Core Spotlight */}
+      {/* Inner Focused Soft Core Spotlight Overlay */}
       <div
-        className={`pointer-events-none absolute inset-0 z-0 transition-opacity duration-500 ease-out ${
+        className={`pointer-events-none absolute inset-0 z-30 transition-opacity duration-500 ease-out ${
           isHovered ? "opacity-100" : "opacity-0"
         }`}
         style={{
-          background: `radial-gradient(130px circle at var(--spotlight-x) var(--spotlight-y), rgba(245, 225, 140, 0.12) 0%, rgba(212, 175, 55, 0.02) 70%, transparent 100%)`,
+          background: `radial-gradient(130px circle at var(--spotlight-x) var(--spotlight-y), rgba(245, 225, 140, 0.16) 0%, rgba(212, 175, 55, 0.03) 70%, transparent 100%)`,
         }}
       />
 
-      {/* Micro Specular Point Highlight */}
+      {/* Micro Specular Point Highlight Overlay */}
       <div
-        className={`pointer-events-none absolute inset-0 z-0 transition-opacity duration-300 ease-out ${
+        className={`pointer-events-none absolute inset-0 z-30 transition-opacity duration-300 ease-out ${
           isHovered ? "opacity-100" : "opacity-0"
         }`}
         style={{
-          background: `radial-gradient(35px circle at var(--spotlight-x) var(--spotlight-y), rgba(255, 250, 220, 0.22) 0%, transparent 100%)`,
+          background: `radial-gradient(35px circle at var(--spotlight-x) var(--spotlight-y), rgba(255, 250, 220, 0.3) 0%, transparent 100%)`,
         }}
       />
 
-      {/* Ultra-Smooth 60FPS Canvas Stars Layer */}
+      {/* Ultra-Smooth 60FPS Canvas Stars Layer Overlay */}
       <canvas
         ref={canvasRef}
-        className="pointer-events-none absolute inset-0 z-10 block h-full w-full"
+        className="pointer-events-none absolute inset-0 z-40 block h-full w-full"
       />
-
-      <div className="relative z-10">{children}</div>
     </div>
   );
 }

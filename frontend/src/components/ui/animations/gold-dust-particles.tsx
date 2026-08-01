@@ -24,7 +24,7 @@ export function GoldDustParticles({
   }, [count]);
 
   return (
-    <div className={`pointer-events-none absolute inset-0 overflow-hidden ${className}`}>
+    <div className={`pointer-events-none absolute inset-0 z-30 overflow-hidden ${className}`}>
       {particles.map((p) => (
         <span
           key={p.id}

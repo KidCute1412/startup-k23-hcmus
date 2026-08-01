@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { WalletOverview } from "@/features/wallet/wallet-overview";
+import { GoldSpotlight } from "@/components/ui/animations/gold-spotlight";
+import { GoldDustParticles } from "@/components/ui/animations/gold-dust-particles";
 
 export const metadata: Metadata = {
   title: "Ví Mutux | Quản lý số dư theo vai trò",
@@ -9,7 +11,7 @@ export const metadata: Metadata = {
 
 export default function WalletPage() {
   return (
-    <section className="mx-auto max-w-6xl py-4 sm:py-8">
+    <section className="relative mx-auto max-w-6xl">
       <WalletOverview />
     </section>
   );
