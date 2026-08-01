@@ -1,6 +1,6 @@
 "use client";
 
-import { Menu, ShoppingBag, ShoppingCart, X, User, LogOut, KeyRound, Wallet, ShieldCheck, Package } from "lucide-react";
+import { Menu, ShoppingBag, ShoppingCart, X, User, LogOut, KeyRound, Wallet, ShieldCheck, Package, ChevronDown } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
@@ -28,6 +28,20 @@ export function Header() {
     setShowUserMenu(false);
     window.location.href = "/";
   };
+
+  const getRoleLabel = (role?: string) => {
+    switch (role) {
+      case "admin":
+        return { label: "Admin", badgeStyle: "bg-purple-500/20 text-purple-400 border-purple-500/30" };
+      case "lender":
+        return { label: "Lender", badgeStyle: "bg-amber-500/20 text-amber-400 border-amber-500/30" };
+      case "renter":
+      default:
+        return { label: "Renter", badgeStyle: "bg-emerald-500/20 text-emerald-400 border-emerald-500/30" };
+    }
+  };
+
+  const roleInfo = getRoleLabel(user?.role);
 
   return (
     <header className="sticky top-0 z-50 border-b border-vanguard-light-border bg-vanguard-light-bg/90 backdrop-blur-md transition-colors dark:border-vanguard-dark-border dark:bg-vanguard-dark-bg/95">
@@ -67,19 +81,21 @@ export function Header() {
 
         <div className="flex items-center gap-2">
           <ThemeToggle />
-          {user?.role === "renter" ? <Link
-            href="/cart"
-            className="relative inline-flex size-10 items-center justify-center rounded-full text-vanguard-light-text transition-colors hover:bg-vanguard-light-surfDim dark:text-vanguard-dark-text dark:hover:bg-vanguard-dark-surfBright"
-            aria-label="Giỏ hàng"
-            title="Giỏ hàng"
-          >
-            <ShoppingCart size={18} />
-            {totalItems > 0 && (
-              <span className="absolute -right-1 -top-1 flex size-5 items-center justify-center rounded-full border-2 border-vanguard-light-bg bg-vanguard-primary text-[10px] font-bold text-vanguard-dark-bg dark:border-vanguard-dark-bg">
-                {totalItems}
-              </span>
-            )}
-          </Link> : null}
+          {user?.role === "renter" ? (
+            <Link
+              href="/cart"
+              className="relative inline-flex size-10 items-center justify-center rounded-full text-vanguard-light-text transition-colors hover:bg-vanguard-light-surfDim dark:text-vanguard-dark-text dark:hover:bg-vanguard-dark-surfBright"
+              aria-label="Giỏ hàng"
+              title="Giỏ hàng"
+            >
+              <ShoppingCart size={18} />
+              {totalItems > 0 && (
+                <span className="absolute -right-1 -top-1 flex size-5 items-center justify-center rounded-full border-2 border-vanguard-light-bg bg-vanguard-primary text-[10px] font-bold text-vanguard-dark-bg dark:border-vanguard-dark-bg">
+                  {totalItems}
+                </span>
+              )}
+            </Link>
+          ) : null}
           {user?.role === "admin" && (
             <Link
               href="/admin/kyc"
@@ -97,16 +113,42 @@ export function Header() {
               <button
                 type="button"
                 onClick={() => setShowUserMenu(!showUserMenu)}
-                className="relative inline-flex size-10 items-center justify-center rounded-full border border-vanguard-primary/30 text-vanguard-light-text transition-colors hover:bg-vanguard-light-surfDim dark:text-vanguard-dark-text dark:hover:bg-vanguard-dark-surfBright"
+                className="flex items-center gap-2.5 rounded-full border border-vanguard-primary/30 bg-vanguard-light-surf/80 px-3 py-1.5 text-vanguard-light-text transition-all hover:border-vanguard-primary/60 hover:bg-vanguard-light-surfDim dark:bg-vanguard-dark-surf/80 dark:text-vanguard-dark-text dark:hover:bg-vanguard-dark-surfBright"
                 aria-label="Tài khoản"
-                title={user.email}
               >
-                <User size={18} />
+                <div className="flex size-7 items-center justify-center rounded-full bg-vanguard-primary/20 text-vanguard-primary font-bold text-xs">
+                  {(user.fullName || user.email)?.[0]?.toUpperCase() || "U"}
+                </div>
+                <div className="hidden flex-col text-left sm:flex">
+                  <span className="max-w-[110px] truncate text-xs font-semibold leading-none">
+                    {user.fullName || user.email.split("@")[0]}
+                  </span>
+                  <span className="mt-1 text-[10px] font-bold uppercase tracking-wider text-vanguard-primary">
+                    {roleInfo.label}
+                  </span>
+                </div>
+                <span
+                  className={cn(
+                    "rounded-v-sm px-1.5 py-0.5 text-[9px] font-extrabold uppercase tracking-widest sm:hidden border",
+                    roleInfo.badgeStyle
+                  )}
+                >
+                  {roleInfo.label}
+                </span>
+                <ChevronDown size={14} className="text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted" />
               </button>
               {showUserMenu && (
-                <div className="absolute right-0 mt-2 w-48 rounded-v-sm border border-vanguard-light-border bg-vanguard-light-surf p-1 shadow-lg dark:border-vanguard-dark-border dark:bg-vanguard-dark-surf">
-                  <div className="px-3 py-2 border-b border-vanguard-light-border dark:border-vanguard-dark-border text-xs font-semibold truncate text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted">
-                    {user.email}
+                <div className="absolute right-0 mt-2 w-56 rounded-v-sm border border-vanguard-light-border bg-vanguard-light-surf p-1.5 shadow-xl dark:border-vanguard-dark-border dark:bg-vanguard-dark-surf">
+                  <div className="border-b border-vanguard-light-border px-3 py-2.5 dark:border-vanguard-dark-border">
+                    <p className="text-xs font-bold text-vanguard-light-text dark:text-vanguard-dark-text truncate">
+                      {user.fullName || "Tài khoản Mutux"}
+                    </p>
+                    <p className="text-[11px] text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted truncate">
+                      {user.email}
+                    </p>
+                    <div className="mt-2 inline-flex items-center rounded bg-vanguard-primary/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-vanguard-primary">
+                      Vai trò: {roleInfo.label}
+                    </div>
                   </div>
                   <Link
                     href="/account"
@@ -132,7 +174,7 @@ export function Header() {
                     <Wallet size={14} />
                     Ví Mutux
                   </Link>
-                  {user.role === 'lender' && (
+                  {user.role === "lender" && (
                     <Link
                       href="/lender/gears"
                       onClick={() => setShowUserMenu(false)}
@@ -201,8 +243,11 @@ export function Header() {
             <div className="border-t border-vanguard-light-border dark:border-vanguard-dark-border mt-2 pt-2">
               {user ? (
                 <>
-                  <div className="px-3 py-2 text-xs font-semibold truncate text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted">
-                    {user.email}
+                  <div className="px-3 py-2 text-xs font-semibold truncate text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted flex items-center justify-between">
+                    <span>{user.email}</span>
+                    <span className={cn("px-1.5 py-0.5 text-[9px] font-extrabold uppercase rounded-v-sm border", roleInfo.badgeStyle)}>
+                      {roleInfo.label}
+                    </span>
                   </div>
                   <Link
                     href="/account"
@@ -225,7 +270,7 @@ export function Header() {
                   >
                     Ví Mutux
                   </Link>
-                  {user.role === 'lender' && (
+                  {user.role === "lender" && (
                     <Link
                       href="/lender/gears"
                       onClick={() => setOpen(false)}
@@ -267,4 +312,3 @@ export function Header() {
     </header>
   );
 }
-

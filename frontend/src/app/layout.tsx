@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Playfair_Display, Plus_Jakarta_Sans } from "next/font/google";
+import { Playfair_Display, Outfit } from "next/font/google";
 import { Footer } from "@/components/layout/footer";
 import { Header } from "@/components/layout/header";
 import "./globals.css";
@@ -9,8 +9,8 @@ const display = Playfair_Display({
   variable: "--font-display",
 });
 
-const body = Plus_Jakarta_Sans({
-  subsets: ["latin", "vietnamese"],
+const body = Outfit({
+  subsets: ["latin"],
   variable: "--font-body",
 });
 
