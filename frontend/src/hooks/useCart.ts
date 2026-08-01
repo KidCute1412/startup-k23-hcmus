@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { ApiError } from "@/lib/apiClient";
 export { ApiError };
 import { cartService } from "@/services/cartService";
@@ -47,6 +47,7 @@ export function useCartState() {
   const [mutating, setMutating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [role, setRole] = useState<User["role"] | null>(null);
+  const authIdentityRef = useRef<string | null | undefined>(undefined);
 
   const resetForAuth = useCallback(() => {
     localStorage.removeItem("mutux_cart");
@@ -73,11 +74,19 @@ export function useCartState() {
     try {
       const next = await cartService.get();
       setCart(next);
-      setSelectedItemIds((ids) =>
-        ids.filter((id) =>
-          next.items.some((item) => item.id === id && item.availability.eligible),
-        ),
-      );
+      const eligibleIds = next.items
+        .filter((item) => item.availability.eligible)
+        .map((item) => item.id);
+
+      setSelectedItemIds((prevIds) => {
+        // If state already had selection, filter out non-eligible items
+        if (prevIds.length > 0) {
+          const valid = prevIds.filter((id) => eligibleIds.includes(id));
+          return valid.length > 0 ? valid : eligibleIds;
+        }
+        // Default: auto select all eligible items
+        return eligibleIds;
+      });
     } catch (cause) {
       setError(errorText(cause));
     } finally {
@@ -87,6 +96,10 @@ export function useCartState() {
 
   useEffect(() => {
     const sync = () => {
+      const storedUser = currentUser();
+      const nextIdentity = storedUser ? `${storedUser.id}:${storedUser.role}` : null;
+      if (authIdentityRef.current === nextIdentity) return;
+      authIdentityRef.current = nextIdentity;
       const user = resetForAuth();
       if (user?.role === "renter") void refetch();
     };

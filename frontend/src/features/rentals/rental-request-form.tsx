@@ -48,12 +48,19 @@ export function RentalRequestForm({ items }: RentalRequestFormProps) {
   // Auto-fill delivery info from authenticated user profile if available
   useEffect(() => {
     if (user) {
-      setDraft((current) => ({
-        ...current,
-        shippingName: current.shippingName || user.fullName || "",
-        shippingPhone: current.shippingPhone || user.phone || "",
-        shippingAddress: current.shippingAddress || user.address || "",
-      }));
+      setDraft((current) => {
+        const shippingName = current.shippingName || user.fullName || "";
+        const shippingPhone = current.shippingPhone || user.phone || "";
+        const shippingAddress = current.shippingAddress || user.address || "";
+        if (
+          shippingName === current.shippingName &&
+          shippingPhone === current.shippingPhone &&
+          shippingAddress === current.shippingAddress
+        ) {
+          return current;
+        }
+        return { ...current, shippingName, shippingPhone, shippingAddress };
+      });
     }
   }, [user]);
 
