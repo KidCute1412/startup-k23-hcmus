@@ -2,18 +2,33 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { ApiError } from "@/lib/apiClient";
+export { ApiError };
 import { cartService } from "@/services/cartService";
 import type { BatchCheckoutRequest, Cart } from "@/types/cart";
 import type { User } from "@/types/auth";
 
-const messages: Record<string, string> = {
+export const messages: Record<string, string> = {
   INVALID_DATE_RANGE: "Khoảng ngày thuê không hợp lệ.",
   GEAR_NOT_AVAILABLE: "Gear hiện không thể cho thuê.",
   CANNOT_RENT_OWN_GEAR: "Bạn không thể thuê gear của chính mình.",
   GEAR_UNAVAILABLE_FOR_PERIOD: "Gear đã có lịch thuê trùng khoảng ngày này.",
   CART_ITEM_NOT_FOUND: "Sản phẩm không còn trong giỏ hàng.",
   RENTER_ONLY: "Chỉ tài khoản người thuê mới sử dụng được giỏ hàng.",
+  INSUFFICIENT_FUNDS: "Số dư ví không đủ để thực hiện giao dịch.",
+  INSUFFICIENT_CASH: "Ví tiền mặt không đủ số dư để thực hiện thanh toán.",
+  INSUFFICIENT_CREDIT: "Hạn mức Mutux Credit không đủ hoặc chưa được cấp.",
+  VALIDATION_ERROR: "Dữ liệu nhập vào không hợp lệ, vui lòng kiểm tra lại.",
 };
+
+export function errorText(error: unknown): string {
+  if (error instanceof ApiError && error.code) {
+    return messages[error.code] ?? error.message ?? "Không thể xử lý giỏ hàng.";
+  }
+  if (error instanceof Error) {
+    return error.message;
+  }
+  return "Không thể kết nối tới giỏ hàng.";
+}
 
 function currentUser(): User | null {
   if (typeof window === "undefined") return null;
@@ -23,12 +38,6 @@ function currentUser(): User | null {
   } catch {
     return null;
   }
-}
-
-function errorText(error: unknown) {
-  return error instanceof ApiError && error.code
-    ? (messages[error.code] ?? "Không thể xử lý giỏ hàng.")
-    : "Không thể kết nối tới giỏ hàng.";
 }
 
 export function useCartState() {

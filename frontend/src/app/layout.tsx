@@ -21,6 +21,7 @@ export const metadata: Metadata = {
 };
 
 import { CartProvider } from "@/features/cart/cart-context";
+import { ToastProvider } from "@/components/ui/toast";
 
 export default function RootLayout({
   children,
@@ -49,13 +50,15 @@ export default function RootLayout({
         />
       </head>
       <body className={`${display.variable} ${body.variable} font-body`}>
-        <CartProvider>
-          <div className="flex min-h-screen flex-col bg-vanguard-light-bg text-vanguard-light-text transition-colors duration-300 dark:bg-vanguard-dark-bg dark:text-vanguard-dark-text">
-            <Header />
-            <main className="flex-1">{children}</main>
-            <Footer />
-          </div>
-        </CartProvider>
+        <ToastProvider>
+          <CartProvider>
+            <div className="flex min-h-screen flex-col bg-vanguard-light-bg text-vanguard-light-text transition-colors duration-300 dark:bg-vanguard-dark-bg dark:text-vanguard-dark-text">
+              <Header />
+              <main className="flex-1">{children}</main>
+              <Footer />
+            </div>
+          </CartProvider>
+        </ToastProvider>
       </body>
     </html>
   );

@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { formatCurrency } from "@/lib/format";
 import { useWallet } from "@/hooks/useWallet";
+import { useToast } from "@/components/ui/toast";
 import { PayosModal } from "@/features/wallet/payos-modal";
 import type { TopupCheckout } from "@/types/wallet";
 
@@ -27,6 +28,7 @@ export function QuickTopupModal({
   onClose,
   onSuccess,
 }: QuickTopupModalProps) {
+  const toast = useToast();
   const { createTopupCheckout, simulateTopupSuccess } = useWallet();
   const deficit = Math.max(0, requiredAmount - currentBalance);
   
@@ -55,7 +57,7 @@ export function QuickTopupModal({
 
   const handleStartTopup = async () => {
     if (finalAmount <= 0) {
-      alert("Vui lòng chọn hoặc nhập số tiền nạp hợp lệ.");
+      toast.warning("Vui lòng chọn hoặc nhập số tiền nạp hợp lệ.");
       return;
     }
     setIsLoading(true);
@@ -63,7 +65,7 @@ export function QuickTopupModal({
       const topup = await createTopupCheckout({ amount: finalAmount, method: "payos" });
       setActiveTopup(topup);
     } catch (e: any) {
-      alert("Tạo yêu cầu nạp tiền thất bại: " + (e.message || "Unknown error"));
+      toast.error("Tạo yêu cầu nạp tiền thất bại: " + (e.message || "Unknown error"));
     } finally {
       setIsLoading(false);
     }

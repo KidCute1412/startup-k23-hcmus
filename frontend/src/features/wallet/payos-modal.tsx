@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { CheckCircle2, Copy, RefreshCw, X } from "lucide-react";
 import { formatCurrency } from "@/lib/format";
+import { useToast } from "@/components/ui/toast";
 import type { TopupCheckout, TopupCompletion } from "@/types/wallet";
 
 interface PayosModalProps {
@@ -14,6 +15,7 @@ interface PayosModalProps {
 }
 
 export function PayosModal({ topup, isOpen, onClose, onSimulateSuccess }: PayosModalProps) {
+  const toast = useToast();
   const [isVerifying, setIsVerifying] = useState(false);
   const [copied, setCopied] = useState<string | null>(null);
   const [completion, setCompletion] = useState<TopupCompletion | null>(null);
@@ -44,7 +46,7 @@ export function PayosModal({ topup, isOpen, onClose, onSimulateSuccess }: PayosM
     try {
       setCompletion(await onSimulateSuccess(topup.topupId));
     } catch (cause) {
-      alert(cause instanceof Error ? cause.message : "Không thể mô phỏng thanh toán.");
+      toast.error(cause instanceof Error ? cause.message : "Không thể mô phỏng thanh toán.");
     } finally {
       setIsVerifying(false);
     }

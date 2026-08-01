@@ -5,6 +5,7 @@ import { createPortal } from "react-dom";
 import { Loader2, QrCode, X } from "lucide-react";
 import { formatCurrency } from "@/lib/format";
 import { useWallet } from "@/hooks/useWallet";
+import { useToast } from "@/components/ui/toast";
 import type { TopupCheckout } from "@/types/wallet";
 
 interface TopupModalProps {
@@ -16,6 +17,7 @@ interface TopupModalProps {
 const PRESET_AMOUNTS = [200000, 500000, 1000000, 2000000, 5000000, 10000000];
 
 export function TopupModal({ isOpen, onClose, onSuccess }: TopupModalProps) {
+  const toast = useToast();
   const { createTopupCheckout } = useWallet();
   const [selectedPreset, setSelectedPreset] = useState<number>(500000);
   const [customAmount, setCustomAmount] = useState<string>("");
@@ -41,7 +43,10 @@ export function TopupModal({ isOpen, onClose, onSuccess }: TopupModalProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (finalAmount <= 0) return alert("Vui lòng chọn hoặc nhập số tiền nạp hợp lệ.");
+    if (finalAmount <= 0) {
+      toast.warning("Vui lòng chọn hoặc nhập số tiền nạp hợp lệ.");
+      return;
+    }
 
     setIsLoading(true);
     try {
@@ -49,7 +54,7 @@ export function TopupModal({ isOpen, onClose, onSuccess }: TopupModalProps) {
       onSuccess(topup);
       onClose();
     } catch (err: any) {
-      alert("Khởi tạo nạp tiền thất bại: " + (err.message || "Unknown error"));
+      toast.error("Khởi tạo nạp tiền thất bại: " + (err.message || "Unknown error"));
     } finally {
       setIsLoading(false);
     }
