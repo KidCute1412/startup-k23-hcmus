@@ -58,3 +58,7 @@ backend/docs/tasks
 .mcp.json
 .github/agents/
 .github/prompts/
+*.bcf
+*.nav
+*.run.xml
+*.snm
