@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { AccountView } from "@/features/account/account-view";
+import { GoldSpotlight } from "@/components/ui/animations/gold-spotlight";
+import { GoldDustParticles } from "@/components/ui/animations/gold-dust-particles";
 
 export const metadata: Metadata = {
   title: "Tài khoản cá nhân | Mutux Gaming Gear",
@@ -8,7 +10,7 @@ export const metadata: Metadata = {
 
 export default function AccountPage() {
   return (
-    <section className="mx-auto max-w-5xl px-4 py-8 sm:px-6 sm:py-10">
+    <section className="relative mx-auto max-w-5xl">
       <div className="mb-6 flex flex-col gap-1">
         <p className="font-display text-xs font-semibold uppercase tracking-widest text-vanguard-primary">
           Vanguard Account Dashboard

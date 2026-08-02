@@ -6,6 +6,8 @@ import { ProductDetail } from "@/features/catalog/product-detail";
 import { ProductGallery } from "@/features/catalog/product-gallery";
 import { ProductGrid } from "@/features/catalog/product-grid";
 import { SpecificationTable } from "@/features/catalog/specification-table";
+import { GoldSpotlight } from "@/components/ui/animations/gold-spotlight";
+import { GoldDustParticles } from "@/components/ui/animations/gold-dust-particles";
 import { ApiError } from "@/lib/apiClient";
 import { extractGearId } from "@/lib/slug";
 import { getGearById, getGears } from "@/services/gearService";
@@ -52,23 +54,26 @@ export default async function GearDetailPage({ params }: Props) {
     : [];
 
   return (
-    <section className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:py-10">
-      <nav className="mb-8 flex flex-wrap gap-2 text-xs uppercase tracking-widest">
-        <Link href="/">Trang chủ</Link><span>/</span><Link href="/gears">Catalog</Link><span>/</span><span className="text-vanguard-primary">{gear.name}</span>
-      </nav>
-      <div className="grid gap-12 lg:grid-cols-12">
-        <div className="min-w-0 lg:col-span-6"><ProductGallery media={gear.media} /></div>
-        <div className="min-w-0 lg:col-span-6"><ProductDetail gear={gear} /></div>
-      </div>
-      <section className="mt-16 border-t border-vanguard-light-border pt-12 dark:border-vanguard-dark-border">
-        <h2 className="mb-6 font-display text-2xl font-bold uppercase tracking-wider">Thông số kỹ thuật</h2>
-        <SpecificationTable specifications={gear.specifications} />
+    <GoldSpotlight className="w-full">
+      <section className="relative mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:py-10">
+        <GoldDustParticles count={30} />
+        <nav className="mb-8 flex flex-wrap gap-2 text-xs uppercase tracking-widest">
+          <Link href="/">Trang chủ</Link><span>/</span><Link href="/gears">Catalog</Link><span>/</span><span className="text-vanguard-primary">{gear.name}</span>
+        </nav>
+        <div className="grid gap-12 lg:grid-cols-12">
+          <div className="min-w-0 lg:col-span-6"><ProductGallery media={gear.media} /></div>
+          <div className="min-w-0 lg:col-span-6"><ProductDetail gear={gear} /></div>
+        </div>
+        <section className="mt-16 border-t border-vanguard-light-border pt-12 dark:border-vanguard-dark-border">
+          <h2 className="mb-6 font-display text-2xl font-bold uppercase tracking-wider">Thông số kỹ thuật</h2>
+          <SpecificationTable specifications={gear.specifications} />
+        </section>
+        <section className="mt-16">
+          <h2 className="mb-6 font-display text-2xl font-bold uppercase tracking-wider">Đánh giá từ người thuê</h2>
+          <GearReviews reviews={gear.reviews ?? []} />
+        </section>
+        {related.length ? <section className="mt-16"><h2 className="mb-6 font-display text-2xl font-bold uppercase tracking-wider">Cùng danh mục</h2><ProductGrid gears={related} /></section> : null}
       </section>
-      <section className="mt-16">
-        <h2 className="mb-6 font-display text-2xl font-bold uppercase tracking-wider">Đánh giá từ người thuê</h2>
-        <GearReviews reviews={gear.reviews ?? []} />
-      </section>
-      {related.length ? <section className="mt-16"><h2 className="mb-6 font-display text-2xl font-bold uppercase tracking-wider">Cùng danh mục</h2><ProductGrid gears={related} /></section> : null}
-    </section>
+    </GoldSpotlight>
   );
 }

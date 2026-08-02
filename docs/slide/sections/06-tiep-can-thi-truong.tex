@@ -1,0 +1,18 @@
+\section{Tiếp cận thị trường}
+
+\begin{frame}{Nhóm sẽ tiếp cận thị trường ra sao?}{Kiểm chứng thủ công trước, mở rộng sau}
+  \begin{columns}[T,onlytextwidth]
+    \column{.29\textwidth}\cookiekicker{Community}\par\vspace{.3em}CLB trường, Discord, Facebook group và buổi dùng thử.
+    \column{.29\textwidth}\cookiekicker{Content}\par\vspace{.3em}TikTok, video so sánh và đánh giá gear trong tình huống thật.
+    \column{.29\textwidth}\cookiekicker{Partnership}\par\vspace{.3em}Shop SME, phòng máy, gaming cafe và giải đấu sinh viên.
+  \end{columns}
+  \vfill
+  \begin{tikzpicture}[x=1cm]
+    \draw[cookieLine,line width=1pt] (0,0) -- (10.8,0);
+    \foreach \x/\label/\detail in {1.2/1--2/kiểm chứng,4.0/3--4/tối ưu,6.9/5--6/mở rộng,9.8/12 tháng/scale theo KPI} {
+      \fill[cookieAccent] (\x,0) circle[radius=2.2pt];
+      \node[above=3mm,font=\small\bfseries] at (\x,0) {\label};
+      \node[below=3mm,font=\scriptsize,text=cookieMuted] at (\x,0) {\detail};
+    }
+  \end{tikzpicture}
+\end{frame}

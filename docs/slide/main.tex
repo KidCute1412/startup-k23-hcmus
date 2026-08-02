@@ -1,0 +1,75 @@
+\documentclass[aspectratio=169]{beamer}
+
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,calc,positioning,shapes.geometric}
+\usepackage[main=vietnamese,english]{babel}
+\usepackage{graphicx}
+\usepackage{ragged2e}
+\usepackage{csquotes}
+\usepackage[backend=biber,style=authoryear,maxcitenames=2,doi=false,isbn=false,url=true]{biblatex}
+\addbibresource{refs.bib}
+
+\definecolor{mutuxBlue}{HTML}{356AE6}
+\definecolor{mutuxTeal}{HTML}{00A6A6}
+\definecolor{mutuxOrange}{HTML}{F08A4B}
+
+\usetheme[
+  accent=mutuxBlue,
+  progressbar=foot,
+  sectionpage=progressbar,
+  numbering=fraction,
+  numberrail=subsection,
+  block=fill,
+  notes=hide,
+  toc=aftertitle,
+  closing=contact
+]{cookie}
+\lstset{style=cookie}
+
+\title[Mutux]{Mutux}
+\subtitle{Thuê thử gaming gear trước khi mua}
+\author[Startup K23]{Nhóm Mutux}
+\cookieemail{mutux.startup@gmail.com}
+\institute{Đồ án Khởi nghiệp K23 -- Khoa Công nghệ Thông tin}
+\cookieuni{Trường Đại học Khoa học Tự nhiên -- ĐHQG-HCM}
+\cookielocation{Thành phố Hồ Chí Minh}
+\date{2026}
+\cookietagline{Gear Up. Play On.}
+\cookieclosingtitle{Cùng Mutux biến trải nghiệm thành quyết định đúng}
+\cookieclosingtext{Thuê thử gear chuẩn gu, mua khi đã chắc.}
+\cookieclosingqr{https://github.com/}
+\cookieclosingqrlabel{Prototype và mã nguồn dự án}
+
+\titlegraphic{%
+  \begin{tikzpicture}[scale=.72]
+    \fill[white,opacity=.94] (0,0) circle[radius=1.15];
+    \foreach \x/\y/\r in {-.43/.40/.12,.36/.50/.10,.52/-.22/.13,-.38/-.43/.09,.02/.02/.11}
+      \fill[mutuxBlue!82!black] (\x,\y) circle[radius=\r];
+  \end{tikzpicture}%
+}
+
+\newcommand{\metric}[2]{%
+  \begin{minipage}[t]{.22\textwidth}\centering
+    {\color{mutuxBlue}\fontsize{23}{25}\selectfont\bfseries #1}\par
+    \vspace{.15em}\scriptsize #2
+  \end{minipage}%
+}
+
+\begin{document}
+\maketitle
+
+\input{sections/01-van-de}
+\input{sections/02-co-hoi-khoi-nghiep}
+\input{sections/03-san-pham-dich-vu}
+\input{sections/04-khach-hang-muc-tieu}
+\input{sections/05-diem-khac-biet}
+\input{sections/06-tiep-can-thi-truong}
+\input{sections/07-mo-hinh-kiem-tien}
+\input{sections/08-goi-von-va-su-dung-von}
+\input{sections/09-doi-ngu}
+\input{sections/10-prototype-va-minh-chung}
+
+\end{document}

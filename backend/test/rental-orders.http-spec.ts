@@ -103,6 +103,23 @@ describe('RentalOrdersController (HTTP)', () => {
       rentalProof: {
         findFirst: jest.fn().mockResolvedValue({ id: 'proof-id' }),
       },
+      renterWallet: {
+        findUnique: jest.fn().mockResolvedValue({ id: 'cash-wallet-id' }),
+        findUniqueOrThrow: jest.fn().mockResolvedValue({
+          id: 'cash-wallet-id',
+          balance: new Prisma.Decimal(10_000_000),
+          locked_balance: new Prisma.Decimal(0),
+          status: 'active',
+        }),
+      },
+      mutuxWallet: {
+        findUnique: jest.fn().mockResolvedValue({ id: 'credit-wallet-id' }),
+        findUniqueOrThrow: jest.fn().mockResolvedValue({
+          id: 'credit-wallet-id',
+          display_balance: new Prisma.Decimal(10_000_000),
+          status: 'active',
+        }),
+      },
     };
     prismaService = {
       $transaction: jest

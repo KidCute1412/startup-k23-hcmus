@@ -19,6 +19,7 @@ interface WalletTransactionMock {
 interface WalletPrismaMock {
   $transaction: jest.Mock;
   renterWallet: { upsert: jest.Mock };
+  mutuxWallet: { findUnique: jest.Mock };
   walletTopup: { create: jest.Mock; findFirst: jest.Mock };
 }
 
@@ -61,6 +62,7 @@ describe('WalletsService', () => {
     prisma = {
       $transaction: jest.fn((callback) => callback(tx)),
       renterWallet: { upsert: jest.fn() },
+      mutuxWallet: { findUnique: jest.fn() },
       walletTopup: {
         create: jest.fn(),
         findFirst: jest.fn(),
@@ -86,6 +88,25 @@ describe('WalletsService', () => {
       userId,
       availableBalance: 2000000,
       lockedBalance: 3000000,
+    });
+  });
+
+  it('marks an expired Mutux credit wallet as not granted', async () => {
+    prisma.mutuxWallet.findUnique.mockResolvedValue({
+      id: '30000000-0000-0000-0000-000000000001',
+      user_id: userId,
+      total_limit: new Prisma.Decimal(5_000_000),
+      display_balance: new Prisma.Decimal(5_000_000),
+      locked_balance: new Prisma.Decimal(0),
+      outstanding_debt: new Prisma.Decimal(0),
+      status: 'active',
+      approved_at: new Date('2026-01-01T00:00:00.000Z'),
+      expired_at: new Date('2026-01-02T00:00:00.000Z'),
+    });
+
+    await expect(service.getMutux(userId)).resolves.toMatchObject({
+      granted: false,
+      status: 'expired',
     });
   });
 

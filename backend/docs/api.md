@@ -840,3 +840,16 @@ creates one `pending_confirm` order per selected item, and removes only those
 items atomically. Errors include `GEAR_NOT_FOUND`, `CART_ITEM_NOT_FOUND`,
 `INVALID_DATE_RANGE`, `GEAR_NOT_AVAILABLE`, `CANNOT_RENT_OWN_GEAR`, and
 `GEAR_UNAVAILABLE_FOR_PERIOD`.
+
+Before either single or batch order creation commits, the backend recalculates
+the current database prices and validates the renter's aggregate financial
+capacity. A `traditional` deposit requires available renter-wallet cash for the
+rental fee plus deposit. A `credit_line` deposit requires renter-wallet cash for
+the rental fee and Mutux available credit for the deposit. Failures return
+`400 INSUFFICIENT_CASH`, `400 INSUFFICIENT_CREDIT`, or
+`400 WALLET_INACTIVE`; the transaction creates no orders and removes no cart
+items. This is a checkout-time eligibility check only: no funds are held while
+the order is `pending_confirm`, and the lender-confirm transition checks and
+locks the wallets again atomically. A credit wallet with a non-null
+`expiredAt <= now` is not granted for new credit-line checkouts and is rejected
+with `INSUFFICIENT_CREDIT` at both checkout and lender confirmation.

@@ -137,9 +137,6 @@ export function GoldSpotlight({
       const x = e.clientX - rect.left;
       const y = e.clientY - rect.top;
 
-      el.style.setProperty("--spotlight-x", `${x}px`);
-      el.style.setProperty("--spotlight-y", `${y}px`);
-
       const dist = Math.hypot(x - lastSpawnPosRef.current.x, y - lastSpawnPosRef.current.y);
 
       // Spawn smooth star particle when cursor moves > 12px
@@ -176,50 +173,14 @@ export function GoldSpotlight({
       }}
       onMouseMove={handleMouseMove}
       className={`group relative ${className}`}
-      style={
-        {
-          "--spotlight-x": "50%",
-          "--spotlight-y": "50%",
-        } as React.CSSProperties
-      }
     >
-      {/* Outer Soft Aura Spotlight */}
-      <div
-        className={`pointer-events-none absolute inset-0 z-0 transition-opacity duration-700 ease-out ${
-          isHovered ? "opacity-100" : "opacity-0"
-        }`}
-        style={{
-          background: `radial-gradient(${radius}px circle at var(--spotlight-x) var(--spotlight-y), rgba(212, 175, 55, 0.07) 0%, rgba(212, 175, 55, 0.015) 60%, transparent 85%)`,
-        }}
-      />
+      <div className="relative z-10">{children}</div>
 
-      {/* Inner Focused Soft Core Spotlight */}
-      <div
-        className={`pointer-events-none absolute inset-0 z-0 transition-opacity duration-500 ease-out ${
-          isHovered ? "opacity-100" : "opacity-0"
-        }`}
-        style={{
-          background: `radial-gradient(130px circle at var(--spotlight-x) var(--spotlight-y), rgba(245, 225, 140, 0.12) 0%, rgba(212, 175, 55, 0.02) 70%, transparent 100%)`,
-        }}
-      />
-
-      {/* Micro Specular Point Highlight */}
-      <div
-        className={`pointer-events-none absolute inset-0 z-0 transition-opacity duration-300 ease-out ${
-          isHovered ? "opacity-100" : "opacity-0"
-        }`}
-        style={{
-          background: `radial-gradient(35px circle at var(--spotlight-x) var(--spotlight-y), rgba(255, 250, 220, 0.22) 0%, transparent 100%)`,
-        }}
-      />
-
-      {/* Ultra-Smooth 60FPS Canvas Stars Layer */}
+      {/* Ultra-Smooth 60FPS Canvas Stars Layer Overlay */}
       <canvas
         ref={canvasRef}
-        className="pointer-events-none absolute inset-0 z-10 block h-full w-full"
+        className="pointer-events-none absolute inset-0 z-40 block h-full w-full"
       />
-
-      <div className="relative z-10">{children}</div>
     </div>
   );
 }
