@@ -28,18 +28,40 @@ export interface RejectKycPayload {
 export interface AdminGearItem {
   id: string;
   name: string;
-  category_id: string;
-  owner_id: string;
-  price_per_day: number;
-  deposit_fee: number;
+  brand?: string | null;
+  model?: string | null;
+  serial_number?: string | null;
+  description?: string | null;
+  specifications?: any;
+  value?: number | string | null;
+  rent_price_per_day?: number | string | null;
+  price_per_day?: number | string | null;
+  deposit_fee?: number | string | null;
+  category_id?: string | null;
+  lender_id: string;
   approval_status: ApprovalStatus;
-  rejection_reason: string | null;
+  rejection_reason?: string | null;
   created_at: string;
+  updated_at: string;
+  lender?: {
+    id: string;
+    email: string;
+    full_name: string | null;
+  };
   owner?: {
     id: string;
     email: string;
     full_name: string | null;
   };
+  category?: {
+    id: string;
+    name: string;
+  };
+  media?: {
+    id: string;
+    url: string;
+    is_primary?: boolean;
+  }[];
 }
 
 export interface GetGearQueueParams {
