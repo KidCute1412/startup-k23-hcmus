@@ -45,13 +45,19 @@ if errorlevel 1 (
   goto :error
 )
 
-echo [4/6] Generating Prisma Client and applying migrations...
+echo [4/6] Generating Prisma Client, applying migrations, and seeding database...
 call npx.cmd prisma generate
 if errorlevel 1 (
   popd
   goto :error
 )
 call npx.cmd prisma migrate deploy
+if errorlevel 1 (
+  popd
+  goto :error
+)
+echo Seeding database...
+call npx.cmd prisma db seed
 if errorlevel 1 (
   popd
   goto :error

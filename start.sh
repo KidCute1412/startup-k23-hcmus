@@ -39,9 +39,11 @@ echo "[3/6] Synchronizing backend dependencies..."
 pushd backend >/dev/null
 npm install
 
-echo "[4/6] Generating Prisma Client and applying migrations..."
+echo "[4/6] Generating Prisma Client, applying migrations, and seeding database..."
 npx prisma generate
 npx prisma migrate deploy
+echo "Seeding database..."
+npx prisma db seed
 popd >/dev/null
 
 echo "[5/6] Synchronizing frontend dependencies..."
