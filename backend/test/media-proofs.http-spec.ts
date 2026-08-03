@@ -55,7 +55,7 @@ describe('Media and rental proofs (HTTP)', () => {
     originalUploadsDir = process.env.UPLOADS_DIR;
     uploadsRoot = mkdtempSync(join(tmpdir(), 'mutux-media-http-'));
     process.env.UPLOADS_DIR = uploadsRoot;
-    currentUser = { id: lenderId, role: UserRole.lender };
+    currentUser = { id: lenderId, role: UserRole.renter };
     repository = {
       findProofOrderById: jest.fn().mockResolvedValue({
         id: orderId,

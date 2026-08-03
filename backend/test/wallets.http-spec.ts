@@ -213,7 +213,7 @@ describe('WalletsController (HTTP)', () => {
   });
 
   it.each(['renter', 'admin'] as const)(
-    'returns 403 and never calls withdrawal service for %s',
+    'delegates lender withdrawal capability checks to service for %s',
     async (role) => {
       authenticatedRole = role;
 
@@ -225,13 +225,13 @@ describe('WalletsController (HTTP)', () => {
           accountNumber: '123456789',
           accountHolder: 'NGUYEN VAN A',
         })
-        .expect(403);
+        .expect(200);
 
-      expect(response.body).toMatchObject({
-        success: false,
-        error: { code: 'FORBIDDEN' },
-      });
-      expect(walletsService.withdraw).not.toHaveBeenCalled();
+      expect(response.body).toMatchObject({ success: true });
+      expect(walletsService.withdraw).toHaveBeenCalledWith(
+        `${role}-id`,
+        expect.objectContaining({ amount: 100000 }),
+      );
     },
   );
 

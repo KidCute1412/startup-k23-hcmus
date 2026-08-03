@@ -45,7 +45,8 @@ describeIntegration('Rental order transitions (PostgreSQL integration)', () => {
           id: lenderId,
           email: `lender-${lenderId}@integration.test`,
           password_hash: 'x',
-          role: 'lender',
+          role: 'renter',
+          lender_enabled: true,
           kyc_status: 'verified',
         },
         {
@@ -755,7 +756,8 @@ describeIntegration('Rental order transitions (PostgreSQL integration)', () => {
           id: isolatedLenderId,
           email: `settlement-lender-${isolatedLenderId}@integration.test`,
           password_hash: 'x',
-          role: 'lender',
+          role: 'renter',
+          lender_enabled: true,
           kyc_status: 'verified',
         },
         {

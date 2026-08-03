@@ -33,11 +33,14 @@ export function Header() {
     switch (role) {
       case "admin":
         return { label: "Admin", badgeStyle: "bg-purple-500/20 text-purple-400 border-purple-500/30" };
-      case "lender":
-        return { label: "Lender", badgeStyle: "bg-amber-500/20 text-amber-400 border-amber-500/30" };
       case "renter":
       default:
-        return { label: "Renter", badgeStyle: "bg-emerald-500/20 text-emerald-400 border-emerald-500/30" };
+        return {
+          label: user?.lenderEnabled ? "Lender" : "Renter",
+          badgeStyle: user?.lenderEnabled
+            ? "bg-amber-500/20 text-amber-400 border-amber-500/30"
+            : "bg-emerald-500/20 text-emerald-400 border-emerald-500/30",
+        };
     }
   };
 
@@ -174,7 +177,7 @@ export function Header() {
                     <Wallet size={14} />
                     Ví Mutux
                   </Link>
-                  {user.role === "lender" && (
+                  {user.lenderEnabled && (
                     <Link
                       href="/lender/gears"
                       onClick={() => setShowUserMenu(false)}
@@ -270,7 +273,7 @@ export function Header() {
                   >
                     Ví Mutux
                   </Link>
-                  {user.role === "lender" && (
+                  {user.lenderEnabled && (
                     <Link
                       href="/lender/gears"
                       onClick={() => setOpen(false)}

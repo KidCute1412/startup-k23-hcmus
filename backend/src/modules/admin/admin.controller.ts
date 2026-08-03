@@ -20,6 +20,8 @@ import type { AuthenticatedRequest } from '../../common/types/authentication';
 import { GetGearQueueQueryDto } from './dto/get-gear-queue-query.dto';
 import { GetKycQueueQueryDto } from './dto/get-kyc-queue-query.dto';
 import { GetDisputeQueueQueryDto } from './dto/get-dispute-queue-query.dto';
+import { GetLenderUpgradeRequestsQueryDto } from './dto/get-lender-upgrade-requests-query.dto';
+import { RejectLenderUpgradeRequestDto } from './dto/reject-lender-upgrade-request.dto';
 
 @Controller('admin')
 @UseGuards(JwtAuthGuard, AdminGuard)
@@ -39,6 +41,11 @@ export class AdminController {
   @Get('disputes')
   getDisputeQueue(@Query() query: GetDisputeQueueQueryDto) {
     return this.adminService.getDisputeQueue(query);
+  }
+
+  @Get('lender-upgrade-requests')
+  getLenderUpgradeRequests(@Query() query: GetLenderUpgradeRequestsQueryDto) {
+    return this.adminService.getLenderUpgradeRequests(query);
   }
 
   @Post('kyc/:id/approve')
@@ -73,6 +80,29 @@ export class AdminController {
     @Req() req: AuthenticatedRequest,
   ) {
     return this.adminService.rejectGear(id, req.user.id);
+  }
+
+  @Post('lender-upgrade-requests/:id/approve')
+  @HttpCode(HttpStatus.OK)
+  approveLenderUpgradeRequest(
+    @Param('id', new ParseUUIDPipe()) id: string,
+    @Req() req: AuthenticatedRequest,
+  ) {
+    return this.adminService.approveLenderUpgradeRequest(id, req.user.id);
+  }
+
+  @Post('lender-upgrade-requests/:id/reject')
+  @HttpCode(HttpStatus.OK)
+  rejectLenderUpgradeRequest(
+    @Param('id', new ParseUUIDPipe()) id: string,
+    @Body() dto: RejectLenderUpgradeRequestDto,
+    @Req() req: AuthenticatedRequest,
+  ) {
+    return this.adminService.rejectLenderUpgradeRequest(
+      id,
+      req.user.id,
+      dto.reviewNote,
+    );
   }
 
   @Post('disputes/:id/resolve')

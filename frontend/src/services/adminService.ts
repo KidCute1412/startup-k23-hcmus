@@ -1,4 +1,4 @@
-import { apiClient, apiClientPaginated, PaginationMeta } from '@/lib/apiClient';
+import { apiClient, apiClientPaginated } from '@/lib/apiClient';
 import type {
   AdminGearItem,
   AdminKycUser,
@@ -8,6 +8,32 @@ import type {
   ResolveDisputePayload,
 } from '@/types/admin';
 import type { DisputeItem, GetDisputeQueueParams } from '@/types/dispute';
+
+export interface LenderUpgradeQueueItem {
+  id: string;
+  userId: string;
+  status: 'pending' | 'approved' | 'rejected';
+  reason: string | null;
+  reviewNote: string | null;
+  reviewedBy: string | null;
+  reviewedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+  applicant?: {
+    id: string;
+    email: string;
+    fullName: string | null;
+    kycStatus?: string;
+    lenderEnabled?: boolean;
+    lenderEnabledAt?: string | null;
+  };
+}
+
+export interface GetLenderUpgradeQueueParams {
+  status?: 'pending' | 'approved' | 'rejected';
+  page?: number;
+  limit?: number;
+}
 
 export const adminService = {
   getKycQueue: (params: GetKycQueueParams = {}) => {
@@ -70,4 +96,32 @@ export const adminService = {
       method: 'POST',
       body: JSON.stringify(payload),
     }),
+
+  listLenderUpgradeRequests: (
+    params: GetLenderUpgradeQueueParams = {},
+  ) => {
+    const query = new URLSearchParams();
+    if (params.status) query.set('status', params.status);
+    if (params.page) query.set('page', String(params.page));
+    if (params.limit) query.set('limit', String(params.limit));
+
+    const queryString = query.toString();
+    const path = `/admin/lender-upgrade-requests${queryString ? `?${queryString}` : ''}`;
+    return apiClientPaginated<LenderUpgradeQueueItem[]>(path);
+  },
+
+  approveLenderUpgradeRequest: (id: string) =>
+    apiClient<LenderUpgradeQueueItem>(
+      `/admin/lender-upgrade-requests/${id}/approve`,
+      { method: 'POST' },
+    ),
+
+  rejectLenderUpgradeRequest: (id: string, reviewNote: string) =>
+    apiClient<LenderUpgradeQueueItem>(
+      `/admin/lender-upgrade-requests/${id}/reject`,
+      {
+        method: 'POST',
+        body: JSON.stringify({ reviewNote }),
+      },
+    ),
 };

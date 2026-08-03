@@ -41,7 +41,8 @@ describeIntegration('Public gear catalog (PostgreSQL integration)', () => {
           phone: '0900000000',
           cccd: '012345678901',
           address: 'secret address',
-          role: 'lender',
+          role: 'renter',
+          lender_enabled: true,
           kyc_status: 'verified',
         },
         {

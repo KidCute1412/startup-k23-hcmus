@@ -10,10 +10,12 @@ describe('GearsService', () => {
   const findAll = jest.fn();
   const findById = jest.fn();
   const findMine = jest.fn();
+  const findUserById = jest.fn();
   const repository = {
     findAll,
     findById,
     findMine,
+    findUserById,
   } as unknown as GearsRepository;
   const service = new GearsService(repository);
 
@@ -59,7 +61,14 @@ describe('GearsService', () => {
     },
   };
 
-  beforeEach(() => jest.clearAllMocks());
+  beforeEach(() => {
+    jest.clearAllMocks();
+    findUserById.mockResolvedValue({
+      id: 'lender-id',
+      lender_enabled: true,
+      kyc_status: 'verified',
+    });
+  });
 
   it('forwards catalog queries and maps a safe camelCase paginated response', async () => {
     findAll.mockResolvedValue({ data: [record], total: 13 });

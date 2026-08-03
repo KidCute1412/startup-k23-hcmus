@@ -1,7 +1,9 @@
 export interface User {
   id: string;
   email: string;
-  role: 'renter' | 'lender' | 'admin';
+  role: 'renter' | 'admin';
+  lenderEnabled: boolean;
+  lenderEnabledAt?: string | null;
   fullName?: string | null;
   phone?: string | null;
   cccd?: string | null;

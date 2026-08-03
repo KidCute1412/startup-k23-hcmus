@@ -80,6 +80,8 @@ export function OrderDetailView({ orderId }: OrderDetailViewProps) {
   const gearTitle = order.gear?.name || "Sản phẩm chưa rõ";
   const code = order.id.slice(0, 8).toUpperCase();
   const lenderName = order.lender?.full_name || order.lender?.fullName || "Chủ gear";
+  const renterId = order.renterId ?? order.renter_id;
+  const lenderId = order.lenderId ?? order.lender_id;
   const totalDays = calculateDays(order.start_date, order.end_date);
   const timeline = generateTimeline(order);
   const allowedProofStage = getAllowedProofStage(order, user?.id);
@@ -277,7 +279,7 @@ export function OrderDetailView({ orderId }: OrderDetailViewProps) {
           <Card className="p-6">
             <h3 className="font-display text-lg font-bold mb-4">Hành động khả thi</h3>
             <div className="space-y-3">
-              {user?.role === 'lender' && order.status === 'pending_confirm' && (
+              {user?.id === lenderId && order.status === 'pending_confirm' && (
                 <button
                   onClick={() => void runLifecycleAction(
                     () => confirmOrder(orderId),
@@ -289,7 +291,7 @@ export function OrderDetailView({ orderId }: OrderDetailViewProps) {
                 </button>
               )}
 
-              {user?.role === 'lender' && order.status === 'confirmed' && (
+              {user?.id === lenderId && order.status === 'confirmed' && (
                 <div className="space-y-1.5">
                   <button
                     onClick={() => void runLifecycleAction(
@@ -345,7 +347,7 @@ export function OrderDetailView({ orderId }: OrderDetailViewProps) {
                 </button>
               )}
 
-              {user?.role === 'lender' && order.status === 'returning' && (
+              {user?.id === lenderId && order.status === 'returning' && (
                 <div className="space-y-1.5">
                   <button
                     onClick={() => void runLifecycleAction(

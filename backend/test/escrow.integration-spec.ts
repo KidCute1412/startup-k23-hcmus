@@ -30,7 +30,8 @@ describeIntegration('EscrowService.lock (PostgreSQL integration)', () => {
         id: lenderId,
         email: `escrow-lender-${lenderId}@integration.test`,
         password_hash: 'x',
-        role: 'lender',
+        role: 'renter',
+        lender_enabled: true,
         kyc_status: 'verified',
       },
     });

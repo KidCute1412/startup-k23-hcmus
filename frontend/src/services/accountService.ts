@@ -13,7 +13,9 @@ export interface AccountUser {
   bio: string | null;
   rating: number;
   totalReviews: number;
-  role: "renter" | "lender" | "admin";
+  role: "renter" | "admin";
+  lenderEnabled: boolean;
+  lenderEnabledAt: string | null;
   kycStatus: KycStatus;
   kycRejectionReason: string | null;
   createdAt: string;
@@ -54,6 +56,18 @@ export type AddressRequest = Omit<
   "id" | "createdAt" | "updatedAt"
 >;
 
+export interface LenderUpgradeRequest {
+  id: string | null;
+  userId: string;
+  status: "pending" | "approved" | "rejected";
+  reason: string | null;
+  reviewNote: string | null;
+  reviewedBy: string | null;
+  reviewedAt: string | null;
+  createdAt: string | null;
+  updatedAt: string | null;
+}
+
 const apiUrl =
   process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080/api/v1";
 const backendOrigin = apiUrl.replace(/\/api\/v1\/?$/, "");
@@ -86,6 +100,15 @@ export const accountService = {
     apiClient<AccountUser>("/users/me/kyc", {
       method: "POST",
       body: JSON.stringify(request),
+    }),
+
+  getLenderUpgradeStatus: () =>
+    apiClient<LenderUpgradeRequest | null>("/users/me/lender-upgrade"),
+
+  requestLenderUpgrade: (reason?: string) =>
+    apiClient<LenderUpgradeRequest>("/users/me/lender-upgrade", {
+      method: "POST",
+      body: JSON.stringify({ reason }),
     }),
 
   closeAccount: (password: string) =>

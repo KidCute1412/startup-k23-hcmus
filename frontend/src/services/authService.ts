@@ -4,7 +4,9 @@ import type { AccountUser } from './accountService';
 export interface User {
   id: string;
   email: string;
-  role: 'renter' | 'lender' | 'admin';
+  role: 'renter' | 'admin';
+  lenderEnabled: boolean;
+  lenderEnabledAt?: string | null;
 }
 
 export interface RegisterRequest {

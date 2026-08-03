@@ -515,7 +515,7 @@ describe('RentalOrdersService', () => {
 
   it.each([
     { id: 'renter-id', role: UserRole.renter },
-    { id: 'lender-id', role: UserRole.lender },
+    { id: 'lender-id', role: UserRole.renter },
     { id: 'admin-id', role: UserRole.admin },
   ])('allows renter, lender, and admin detail access', async (user) => {
     const order = {

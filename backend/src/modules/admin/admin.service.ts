@@ -8,6 +8,7 @@ import {
 import {
   ApprovalStatusType,
   KycStatusType,
+  LenderUpgradeStatus,
   DisputeStatusType,
   OrderStatusType,
   Prisma,
@@ -16,6 +17,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { GetGearQueueQueryDto } from './dto/get-gear-queue-query.dto';
 import { GetKycQueueQueryDto } from './dto/get-kyc-queue-query.dto';
 import { GetDisputeQueueQueryDto } from './dto/get-dispute-queue-query.dto';
+import { GetLenderUpgradeRequestsQueryDto } from './dto/get-lender-upgrade-requests-query.dto';
 import { EscrowService } from '../escrow/escrow.service';
 import { ResolutionType } from './dto/resolve-dispute.dto';
 
@@ -35,6 +37,8 @@ const kycUserSelect = {
   created_at: true,
   updated_at: true,
   credit_consent_accepted_at: true,
+  lender_enabled: true,
+  lender_enabled_at: true,
 } satisfies Prisma.UserSelect;
 
 interface DisputeEvidencePayload {
@@ -221,6 +225,122 @@ export class AdminService {
         totalPages: Math.ceil(total / limit),
       },
     };
+  }
+
+  async getLenderUpgradeRequests(query: GetLenderUpgradeRequestsQueryDto) {
+    const { status, page = 1, limit = 10 } = query;
+    const where: Prisma.LenderUpgradeRequestWhereInput = status
+      ? { status }
+      : {};
+    const [requests, total] = await Promise.all([
+      this.prisma.lenderUpgradeRequest.findMany({
+        where,
+        include: {
+          applicant: {
+            select: {
+              id: true,
+              email: true,
+              full_name: true,
+              kyc_status: true,
+              lender_enabled: true,
+              lender_enabled_at: true,
+            },
+          },
+          reviewer: {
+            select: { id: true, email: true, full_name: true },
+          },
+        },
+        orderBy: [{ created_at: 'asc' }, { id: 'asc' }],
+        skip: (page - 1) * limit,
+        take: limit,
+      }),
+      this.prisma.lenderUpgradeRequest.count({ where }),
+    ]);
+    return {
+      data: requests.map((request) => this.toApiLenderUpgradeRequest(request)),
+      meta: { total, page, limit, totalPages: Math.ceil(total / limit) },
+    };
+  }
+
+  async approveLenderUpgradeRequest(requestId: string, adminId: string) {
+    return this.prisma.$transaction(async (tx) => {
+      await tx.$queryRaw`SELECT id FROM lender_upgrade_requests WHERE id = ${requestId}::uuid FOR UPDATE`;
+      const request = await tx.lenderUpgradeRequest.findUnique({
+        where: { id: requestId },
+        include: { applicant: true, reviewer: true },
+      });
+      if (!request)
+        throw new NotFoundException('Lender upgrade request not found');
+      if (request.status === LenderUpgradeStatus.approved) {
+        return this.toApiLenderUpgradeRequest(request);
+      }
+      if (request.status !== LenderUpgradeStatus.pending) {
+        throw new ConflictException({
+          error: 'INVALID_LENDER_UPGRADE_STATUS',
+          message: `Cannot approve lender upgrade request with status ${request.status}`,
+        });
+      }
+      await tx.$queryRaw`SELECT id FROM users WHERE id = ${request.user_id}::uuid FOR UPDATE`;
+      const now = new Date();
+      await tx.user.update({
+        where: { id: request.user_id },
+        data: {
+          lender_enabled: true,
+          lender_enabled_at: now,
+        },
+      });
+      await tx.lenderWallet.upsert({
+        where: { lender_id: request.user_id },
+        create: { lender_id: request.user_id },
+        update: {},
+      });
+      const updated = await tx.lenderUpgradeRequest.update({
+        where: { id: requestId },
+        data: {
+          status: LenderUpgradeStatus.approved,
+          reviewed_by: adminId,
+          reviewed_at: now,
+        },
+        include: { applicant: true, reviewer: true },
+      });
+      return this.toApiLenderUpgradeRequest(updated);
+    });
+  }
+
+  async rejectLenderUpgradeRequest(
+    requestId: string,
+    adminId: string,
+    reviewNote: string,
+  ) {
+    return this.prisma.$transaction(async (tx) => {
+      await tx.$queryRaw`SELECT id FROM lender_upgrade_requests WHERE id = ${requestId}::uuid FOR UPDATE`;
+      const request = await tx.lenderUpgradeRequest.findUnique({
+        where: { id: requestId },
+        include: { applicant: true, reviewer: true },
+      });
+      if (!request)
+        throw new NotFoundException('Lender upgrade request not found');
+      if (request.status === LenderUpgradeStatus.rejected) {
+        return this.toApiLenderUpgradeRequest(request);
+      }
+      if (request.status !== LenderUpgradeStatus.pending) {
+        throw new ConflictException({
+          error: 'INVALID_LENDER_UPGRADE_STATUS',
+          message: `Cannot reject lender upgrade request with status ${request.status}`,
+        });
+      }
+      const updated = await tx.lenderUpgradeRequest.update({
+        where: { id: requestId },
+        data: {
+          status: LenderUpgradeStatus.rejected,
+          review_note: reviewNote.trim(),
+          reviewed_by: adminId,
+          reviewed_at: new Date(),
+        },
+        include: { applicant: true, reviewer: true },
+      });
+      return this.toApiLenderUpgradeRequest(updated);
+    });
   }
 
   async approveKyc(userId: string, adminId: string) {
@@ -575,6 +695,60 @@ export class AdminService {
                     : [],
                 }
               : undefined,
+          }
+        : undefined,
+    };
+  }
+
+  private toApiLenderUpgradeRequest(request: {
+    id: string;
+    user_id: string;
+    status: LenderUpgradeStatus;
+    reason: string | null;
+    review_note: string | null;
+    reviewed_by: string | null;
+    reviewed_at: Date | null;
+    created_at: Date;
+    updated_at: Date;
+    applicant?: {
+      id: string;
+      email: string;
+      full_name: string | null;
+      kyc_status?: string;
+      lender_enabled?: boolean;
+      lender_enabled_at?: Date | null;
+    } | null;
+    reviewer?: {
+      id: string;
+      email: string;
+      full_name: string | null;
+    } | null;
+  }) {
+    return {
+      id: request.id,
+      userId: request.user_id,
+      status: request.status,
+      reason: request.reason,
+      reviewNote: request.review_note,
+      reviewedBy: request.reviewed_by,
+      reviewedAt: request.reviewed_at,
+      createdAt: request.created_at,
+      updatedAt: request.updated_at,
+      applicant: request.applicant
+        ? {
+            id: request.applicant.id,
+            email: request.applicant.email,
+            fullName: request.applicant.full_name,
+            kycStatus: request.applicant.kyc_status,
+            lenderEnabled: request.applicant.lender_enabled,
+            lenderEnabledAt: request.applicant.lender_enabled_at,
+          }
+        : undefined,
+      reviewer: request.reviewer
+        ? {
+            id: request.reviewer.id,
+            email: request.reviewer.email,
+            fullName: request.reviewer.full_name,
           }
         : undefined,
     };

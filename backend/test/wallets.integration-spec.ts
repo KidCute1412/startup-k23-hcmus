@@ -60,7 +60,8 @@ describeIntegration('Wallet topups (PostgreSQL integration)', () => {
           id: lenderId,
           email: `wallet-lender-${lenderId}@integration.test`,
           password_hash: 'x',
-          role: 'lender',
+          role: 'renter',
+          lender_enabled: true,
           kyc_status: 'verified',
         },
         {

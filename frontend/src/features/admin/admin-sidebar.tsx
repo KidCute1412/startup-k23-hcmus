@@ -10,6 +10,7 @@ import {
   Scale,
   ArrowLeft,
   BadgeDollarSign,
+  UserCheck,
 } from "lucide-react";
 import { cn } from "@/lib/cn";
 
@@ -36,6 +37,11 @@ const ADMIN_NAV_ITEMS: AdminNavItem[] = [
     label: "Duyệt Hàng chờ KYC",
     icon: ShieldCheck,
     badge: 3,
+  },
+  {
+    href: "/admin/lender-upgrades",
+    label: "Duyệt Nâng Cấp Lender",
+    icon: UserCheck,
   },
   {
     href: "/admin/gears",

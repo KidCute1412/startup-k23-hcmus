@@ -261,7 +261,7 @@ describe('RentalOrdersController (HTTP)', () => {
   });
 
   it('PATCH return returns 403 FORBIDDEN when called by the lender', async () => {
-    currentUser = { id: 'lender-id', role: UserRole.lender };
+    currentUser = { id: 'lender-id', role: UserRole.renter };
     repository.findById.mockResolvedValue({
       id: 'order-id',
       renter_id: 'renter-id',
@@ -280,7 +280,7 @@ describe('RentalOrdersController (HTTP)', () => {
   });
 
   it('PATCH confirm returns 400 INVALID_TRANSITION from delivering', async () => {
-    currentUser = { id: 'lender-id', role: UserRole.lender };
+    currentUser = { id: 'lender-id', role: UserRole.renter };
     prismaService.$transaction = jest
       .fn()
       .mockImplementation((fn: (tx: unknown) => unknown) =>
@@ -358,7 +358,7 @@ describe('RentalOrdersController (HTTP)', () => {
         }),
       );
 
-    currentUser = { id: 'lender-id', role: UserRole.lender };
+    currentUser = { id: 'lender-id', role: UserRole.renter };
     await request(app.getHttpServer())
       .patch('/api/v1/rental-orders/order-id/confirm')
       .expect(200);
@@ -374,7 +374,7 @@ describe('RentalOrdersController (HTTP)', () => {
       .patch('/api/v1/rental-orders/order-id/return')
       .expect(200);
 
-    currentUser = { id: 'lender-id', role: UserRole.lender };
+    currentUser = { id: 'lender-id', role: UserRole.renter };
     const response = await request(app.getHttpServer())
       .patch('/api/v1/rental-orders/order-id/confirm-return')
       .expect(200);

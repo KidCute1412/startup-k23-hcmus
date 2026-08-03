@@ -61,7 +61,8 @@ describeIntegration('Dispute workflow (PostgreSQL integration)', () => {
           id: lenderId,
           email: `dispute-lender-${lenderId}@integration.test`,
           password_hash: 'x',
-          role: 'lender',
+          role: 'renter',
+          lender_enabled: true,
           kyc_status: 'verified',
         },
         {

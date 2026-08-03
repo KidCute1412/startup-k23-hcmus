@@ -505,7 +505,7 @@ erDiagram
 
 | Prisma enum | DB enum name | Values |
 |---|---|---|
-| `UserRole` | `user_role` | `renter`, `lender`, `admin` |
+| `UserRole` | `user_role` | `renter`, `admin` |
 | `KycStatusType` | `kyc_status_type` | `pending`, `verified`, `rejected` |
 | `GearStatusType` | `gear_status_type` | `available`, `rented`, `maintenance`, `delisted` |
 | `ApprovalStatusType` | `approval_status_type` | `pending`, `approved`, `rejected` |

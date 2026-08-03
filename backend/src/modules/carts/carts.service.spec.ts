@@ -49,7 +49,7 @@ describe('CartsService', () => {
 
   it('rejects every cart operation for a non-renter', async () => {
     await expect(
-      service.get({ ...renter, role: UserRole.lender }),
+      service.get({ ...renter, role: UserRole.admin }),
     ).rejects.toMatchObject({
       status: 403,
       response: { error: 'RENTER_ONLY' },

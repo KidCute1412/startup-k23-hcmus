@@ -117,7 +117,13 @@ export class AuthService {
 
     return {
       ...tokens,
-      user: { id: user.id, email: user.email, role: user.role },
+      user: {
+        id: user.id,
+        email: user.email,
+        role: user.role,
+        lenderEnabled: user.lender_enabled,
+        lenderEnabledAt: user.lender_enabled_at,
+      },
     };
   }
 

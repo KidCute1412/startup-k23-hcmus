@@ -59,7 +59,8 @@ describeIntegration(
             id: lenderId,
             email: `lender-dispute-${lenderId}@integration.test`,
             password_hash: 'x',
-            role: 'lender',
+            role: 'renter',
+            lender_enabled: true,
             kyc_status: 'verified',
           },
           {

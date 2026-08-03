@@ -317,7 +317,7 @@ export class RentalOrdersService {
   }
 
   async findAll(user: CurrentUser, query: GetRentalOrdersQueryDto) {
-    const where = this.buildAccessScope(user);
+    const where = this.buildAccessScope(user, query.role);
     const page = query.page ?? 1;
     const limit = query.limit ?? 10;
     const result = await this.rentalOrdersRepository.findAll({
@@ -385,10 +385,13 @@ export class RentalOrdersService {
     return this.orchestration.confirmReturn(userId, id);
   }
 
-  private buildAccessScope(user: CurrentUser): Prisma.RentalOrderWhereInput {
+  private buildAccessScope(
+    user: CurrentUser,
+    role?: 'renter' | 'lender',
+  ): Prisma.RentalOrderWhereInput {
     if (user.role === UserRole.admin) return {};
 
-    if (user.role === UserRole.lender) return { lender_id: user.id };
+    if (role === 'lender') return { lender_id: user.id };
     return { renter_id: user.id };
   }
 

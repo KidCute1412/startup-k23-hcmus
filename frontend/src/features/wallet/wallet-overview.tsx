@@ -20,39 +20,33 @@ const toAmount = (value: number | string | undefined) => {
 export function WalletOverview() {
   const { user } = useAuth();
   const wallet = useWallet();
-  const {
-    fetchCreditLine,
-    fetchLenderWallet,
-    fetchRenterWallet,
-  } = wallet;
+  const { fetchCreditLine, fetchLenderWallet, fetchRenterWallet } = wallet;
   const [topupOpen, setTopupOpen] = useState(false);
   const [withdrawOpen, setWithdrawOpen] = useState(false);
   const [activeTopup, setActiveTopup] = useState<TopupCheckout | null>(null);
   const role = user?.role;
+  const lenderEnabled = Boolean(user?.lenderEnabled);
 
   const loadData = useCallback(async () => {
-    if (role === "renter") {
-      await Promise.allSettled([fetchRenterWallet(), fetchCreditLine()]);
-    } else if (role === "lender") {
-      await fetchLenderWallet();
-    }
-  }, [fetchCreditLine, fetchLenderWallet, fetchRenterWallet, role]);
+    if (role !== "renter") return;
+    const loaders: Promise<unknown>[] = [fetchRenterWallet(), fetchCreditLine()];
+    if (lenderEnabled) loaders.push(fetchLenderWallet());
+    await Promise.allSettled(loaders);
+  }, [fetchCreditLine, fetchLenderWallet, fetchRenterWallet, lenderEnabled, role]);
 
   useEffect(() => {
     void loadData();
   }, [loadData]);
 
   const transactions = useMemo<WalletTransaction[]>(
-    () =>
-      role === "lender"
-        ? (wallet.lenderWallet?.transactions?.data ?? [])
-        : (wallet.renterWallet?.transactions ?? []),
-    [role, wallet.lenderWallet?.transactions?.data, wallet.renterWallet?.transactions],
+    () => wallet.renterWallet?.transactions ?? [],
+    [wallet.renterWallet?.transactions],
   );
+  const lenderTransactions = wallet.lenderWallet?.transactions?.data ?? [];
 
   if (!user) return <WalletState message="Đang xác thực tài khoản..." loading />;
   if (role === "admin") {
-    return <WalletState title="Ví không áp dụng cho quản trị viên" message="Tài khoản admin không sử dụng ví tiêu dùng của renter hoặc ví doanh thu của lender." />;
+    return <WalletState title="Ví không áp dụng cho quản trị viên" message="Tài khoản quản trị viên (Admin) không sử dụng ví tiêu dùng hoặc ví doanh thu." />;
   }
 
   const renterBalance = toAmount(wallet.renterWallet?.availableBalance ?? wallet.renterWallet?.balance);
@@ -63,75 +57,92 @@ export function WalletOverview() {
   const availableCredit = toAmount(wallet.creditLine?.displayBalance);
 
   return (
-    <div className="space-y-6 px-4 sm:px-0">
+    <div className="space-y-8 px-4 sm:px-0">
       <header className="flex flex-col gap-5 rounded-v-lg border border-vanguard-light-border bg-vanguard-light-surf p-5 text-vanguard-light-text shadow-royal transition-colors dark:border-vanguard-primary/25 dark:bg-vanguard-dark-surf dark:text-vanguard-dark-text sm:flex-row sm:items-center sm:justify-between sm:p-7">
         <div>
           <div className="mb-2 flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-vanguard-primary">
-            <ShieldCheck size={16} /> {role === "renter" ? "Ví người thuê" : "Ví người cho thuê"}
+            <ShieldCheck size={16} /> Ví Mutux
           </div>
-          <h1 className="font-display text-2xl font-bold sm:text-3xl">
-            {role === "renter" ? "Ví tiêu dùng Mutux" : "Ví doanh thu Mutux"}
-          </h1>
+          <h1 className="font-display text-2xl font-bold sm:text-3xl">Ví tiêu dùng & Doanh thu</h1>
           <p className="mt-2 max-w-2xl text-sm text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted">
-            {role === "renter"
-              ? "Nạp số dư ảo để thanh toán phí thuê, giữ cọc và nhận hoàn tiền. Ví này không hỗ trợ rút tiền trong MVP."
-              : "Theo dõi doanh thu cho thuê và gửi yêu cầu rút tiền demo về tài khoản ngân hàng."}
+            Nạp số dư ảo để thanh toán phí thuê, giữ cọc và theo dõi doanh thu cho thuê sau khi kích hoạt tính năng Lender.
           </p>
         </div>
-        {role === "renter" ? (
+        <div className="flex flex-col gap-2 sm:flex-row">
           <button type="button" onClick={() => setTopupOpen(true)} className="flex w-full items-center justify-center gap-2 rounded-v-md bg-gold-metal px-5 py-3 text-sm font-bold text-vanguard-dark-bg sm:w-auto">
             <PlusCircle size={17} /> Nạp tiền
           </button>
-        ) : (
-          <button type="button" onClick={() => setWithdrawOpen(true)} disabled={lenderBalance <= 0} className="flex w-full items-center justify-center gap-2 rounded-v-md bg-gold-metal px-5 py-3 text-sm font-bold text-vanguard-dark-bg disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto">
-            <ArrowUpRight size={17} /> Rút doanh thu
-          </button>
-        )}
+          {lenderEnabled && (
+            <button type="button" onClick={() => setWithdrawOpen(true)} disabled={lenderBalance <= 0} className="flex w-full items-center justify-center gap-2 rounded-v-md bg-gold-metal px-5 py-3 text-sm font-bold text-vanguard-dark-bg disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto">
+              <ArrowUpRight size={17} /> Rút doanh thu
+            </button>
+          )}
+        </div>
       </header>
 
       {wallet.error && <p role="alert" className="rounded-v-md border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-400">{wallet.error}</p>}
 
-      <section className={`grid gap-4 ${role === "renter" ? "md:grid-cols-3" : "md:grid-cols-2"}`}>
-        {role === "renter" ? (
-          <>
+      {/* Visual separation of Renter (Ví tiêu dùng) & Lender (Ví doanh thu) */}
+      <div className={`grid gap-6 ${lenderEnabled ? "xl:grid-cols-5" : "grid-cols-1"}`}>
+        <div className={`space-y-3 ${lenderEnabled ? "xl:col-span-3" : "w-full"}`}>
+          <h2 className="font-display text-base font-bold text-vanguard-primary border-b border-vanguard-light-border dark:border-vanguard-dark-border pb-1.5">
+            Ví tiêu dùng (Renter)
+          </h2>
+          <div className="grid gap-4 sm:grid-cols-3">
             <MetricCard icon={<WalletCards />} label="Số dư tiêu dùng" value={renterBalance} />
-            <MetricCard icon={<CreditCard />} label="Hạn mức tín dụng khả dụng" value={availableCredit} detail={`Tổng hạn mức ${formatCurrency(creditLimit)}`} />
+            <MetricCard icon={<CreditCard />} label="Hạn mức khả dụng" value={availableCredit} detail={`Tổng hạn mức ${formatCurrency(creditLimit)}`} />
             <MetricCard icon={<Landmark />} label="Tiền cọc đang giữ" value={lockedBalance} />
-          </>
-        ) : (
-          <>
-            <MetricCard icon={<WalletCards />} label="Doanh thu khả dụng" value={lenderBalance} />
-            <MetricCard icon={<Landmark />} label="Tổng đã rút" value={totalWithdrawn} />
-          </>
-        )}
-      </section>
+          </div>
+        </div>
 
-      {role === "renter" && <CreditLimitPanel
+        {lenderEnabled && (
+          <div className="space-y-3 xl:col-span-2">
+            <h2 className="font-display text-base font-bold text-amber-400 border-b border-vanguard-light-border dark:border-vanguard-dark-border pb-1.5">
+              Ví doanh thu (Lender)
+            </h2>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <MetricCard icon={<WalletCards />} label="Doanh thu khả dụng" value={lenderBalance} />
+              <MetricCard icon={<Landmark />} label="Tổng đã rút" value={totalWithdrawn} />
+            </div>
+          </div>
+        )}
+      </div>
+
+      <CreditLimitPanel
         credit={wallet.creditLine}
         renterBalance={renterBalance}
         busy={wallet.isLoading}
         onRepay={async () => { await wallet.repayMutuxDebt(); await loadData(); }}
         onRefresh={loadData}
-      />}
+      />
 
-      <TransactionHistory transactions={transactions} loading={wallet.isLoading} lender={role === "lender"} />
+      <div className="grid gap-6 md:grid-cols-2">
+        <TransactionHistory transactions={transactions} loading={wallet.isLoading} lender={false} />
+        {lenderEnabled ? (
+          <TransactionHistory transactions={lenderTransactions} loading={wallet.isLoading} lender />
+        ) : (
+          <Card className="flex flex-col items-center justify-center p-6 text-center border border-dashed border-vanguard-light-border dark:border-vanguard-dark-border">
+            <ShieldCheck className="mb-2 text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted" size={32} />
+            <h3 className="font-display text-sm font-bold">Chưa kích hoạt tính năng cho thuê (Lender)</h3>
+            <p className="mt-1 text-xs text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted max-w-xs">
+              Nâng cấp tài khoản của bạn để bắt đầu đăng sản phẩm cho thuê và nhận nguồn thu nhập thụ động.
+            </p>
+          </Card>
+        )}
+      </div>
 
-      {role === "renter" && (
-        <>
-          <TopupModal isOpen={topupOpen} onClose={() => setTopupOpen(false)} onSuccess={setActiveTopup} />
-          <PayosModal
-            topup={activeTopup}
-            isOpen={Boolean(activeTopup)}
-            onClose={() => setActiveTopup(null)}
-            onSimulateSuccess={async (topupId) => {
-              const result = await wallet.simulateTopupSuccess(topupId);
-              await loadData();
-              return result;
-            }}
-          />
-        </>
-      )}
-      {role === "lender" && <WithdrawModal isOpen={withdrawOpen} onClose={() => setWithdrawOpen(false)} maxAmount={lenderBalance} onSuccess={loadData} />}
+      <TopupModal isOpen={topupOpen} onClose={() => setTopupOpen(false)} onSuccess={setActiveTopup} />
+      <PayosModal
+        topup={activeTopup}
+        isOpen={Boolean(activeTopup)}
+        onClose={() => setActiveTopup(null)}
+        onSimulateSuccess={async (topupId) => {
+          const result = await wallet.simulateTopupSuccess(topupId);
+          await loadData();
+          return result;
+        }}
+      />
+      {lenderEnabled && <WithdrawModal isOpen={withdrawOpen} onClose={() => setWithdrawOpen(false)} maxAmount={lenderBalance} onSuccess={loadData} />}
     </div>
   );
 }

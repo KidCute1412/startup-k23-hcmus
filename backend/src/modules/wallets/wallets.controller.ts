@@ -51,7 +51,6 @@ export class WalletsController {
     @Query('page', new DefaultValuePipe(1)) page: number,
     @Query('limit', new DefaultValuePipe(20)) limit: number,
   ) {
-    this.requireRole(req, 'lender');
     return this.service.getLender(req.user.id, page, limit);
   }
 
@@ -62,7 +61,6 @@ export class WalletsController {
     @Req() req: AuthenticatedRequest,
     @Body() body: CreateWithdrawalDto,
   ) {
-    this.requireRole(req, 'lender');
     return this.service.withdraw(req.user.id, body);
   }
 

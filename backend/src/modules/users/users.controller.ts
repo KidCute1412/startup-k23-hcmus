@@ -25,6 +25,7 @@ import type { AuthenticatedRequest } from '../../common/types/authentication';
 import { CloseAccountDto } from './dto/close-account.dto';
 import { CreateAddressDto } from './dto/create-address.dto';
 import { SubmitKycDto } from './dto/submit-kyc.dto';
+import { RequestLenderUpgradeDto } from './dto/request-lender-upgrade.dto';
 import { UpdateAddressDto } from './dto/update-address.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UsersService } from './users.service';
@@ -64,6 +65,20 @@ export class UsersController {
   @HttpCode(HttpStatus.OK)
   submitKyc(@Req() req: AuthenticatedRequest, @Body() body: SubmitKycDto) {
     return this.usersService.submitKyc(req.user.id, body);
+  }
+
+  @Get('me/lender-upgrade')
+  getLenderUpgradeStatus(@Req() req: AuthenticatedRequest) {
+    return this.usersService.getLenderUpgradeStatus(req.user.id);
+  }
+
+  @Post('me/lender-upgrade')
+  @HttpCode(HttpStatus.OK)
+  requestLenderUpgrade(
+    @Req() req: AuthenticatedRequest,
+    @Body() body: RequestLenderUpgradeDto,
+  ) {
+    return this.usersService.requestLenderUpgrade(req.user.id, body);
   }
 
   @Get('me/addresses')

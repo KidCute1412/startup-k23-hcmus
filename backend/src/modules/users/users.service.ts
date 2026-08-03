@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   ConflictException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
   UnauthorizedException,
@@ -13,7 +14,12 @@ import { CreateAddressDto } from './dto/create-address.dto';
 import { SubmitKycDto } from './dto/submit-kyc.dto';
 import { UpdateAddressDto } from './dto/update-address.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { toAddressResponse, toCurrentUserResponse } from './user-response';
+import { RequestLenderUpgradeDto } from './dto/request-lender-upgrade.dto';
+import {
+  toAddressResponse,
+  toCurrentUserResponse,
+  toLenderUpgradeRequestResponse,
+} from './user-response';
 import { UsersRepository } from './users.repository';
 
 @Injectable()
@@ -99,6 +105,65 @@ export class UsersService {
         current.role === 'renter' ? new Date() : undefined,
     });
     return toCurrentUserResponse(user);
+  }
+
+  async getLenderUpgradeStatus(userId: string) {
+    const user = await this.usersRepository.findProfileById(userId);
+    if (!user) throw new NotFoundException('User not found');
+    if (user.lender_enabled) {
+      return toLenderUpgradeRequestResponse({
+        id: null,
+        user_id: user.id,
+        status: 'approved',
+        reason: null,
+        review_note: null,
+        reviewed_by: null,
+        reviewed_at: user.lender_enabled_at,
+        created_at: user.lender_enabled_at,
+        updated_at: user.lender_enabled_at,
+      });
+    }
+    const request =
+      await this.usersRepository.findLatestLenderUpgradeRequest(userId);
+    return request ? toLenderUpgradeRequestResponse(request) : null;
+  }
+
+  async requestLenderUpgrade(userId: string, dto: RequestLenderUpgradeDto) {
+    const user = await this.usersRepository.findProfileById(userId);
+    if (!user) throw new NotFoundException('User not found');
+    if (user.role !== 'renter') {
+      throw new ForbiddenException({
+        error: 'RENTER_ONLY',
+        message: 'Only renter accounts can request lender enablement',
+      });
+    }
+    if (user.lender_enabled) {
+      return toLenderUpgradeRequestResponse({
+        id: null,
+        user_id: user.id,
+        status: 'approved',
+        reason: null,
+        review_note: null,
+        reviewed_by: null,
+        reviewed_at: user.lender_enabled_at,
+        created_at: user.lender_enabled_at,
+        updated_at: user.lender_enabled_at,
+      });
+    }
+    if (user.kyc_status !== KycStatusType.verified) {
+      throw new ForbiddenException({
+        error: 'KYC_NOT_VERIFIED',
+        message: 'Verified KYC is required to request lender enablement',
+      });
+    }
+    const pending =
+      await this.usersRepository.findPendingLenderUpgradeRequest(userId);
+    if (pending) return toLenderUpgradeRequestResponse(pending);
+    const request = await this.usersRepository.createLenderUpgradeRequest(
+      userId,
+      dto.reason,
+    );
+    return toLenderUpgradeRequestResponse(request);
   }
 
   async listAddresses(userId: string) {

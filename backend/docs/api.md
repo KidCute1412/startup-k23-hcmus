@@ -25,6 +25,11 @@ Hệ thống dùng cặp **Access Token + Refresh Token** hoàn toàn trong cook
 
 Mọi request được bảo vệ xác thực qua cookie `accessToken`. Với `POST`, `PUT`, `PATCH`, hoặc `DELETE` có access cookie, client phải gửi `Origin` khớp một giá trị trong `FRONTEND_URL` (mặc định `http://localhost:3000`), nếu không server trả `403`.
 
+
+### Role and lender capability
+- UserRole now contains only `renter` and `admin`. Regular users are renters by default.
+- Lending permission is controlled by `users.lender_enabled` and returned as `lenderEnabled` / `lenderEnabledAt` in auth and account responses.
+- Lender-sensitive APIs such as `POST /gears`, `GET /gears/mine`, and `GET/POST /wallets/lender` require `lenderEnabled = true`.
 ### Pagination (Phân trang)
 Các API danh sách sử dụng phương thức phân trang Offset:
 - **Query parameters**: `page` (mặc định: 1), `limit` (mặc định: 10)
@@ -117,6 +122,20 @@ HTTP Status: `400`, `401`, `403`, `404`, `422`, `500`.
 * **Success (200)**: Trả về DTO camelCase an toàn gồm `id`, `email`, `phone`, `fullName`, `dob`, `cccd`, `avatarUrl`, `bio`, `rating`, `totalReviews`, `role`, `kycStatus`, `kycRejectionReason`, `createdAt`, `updatedAt`.
 * **KYC status**: `unverified` khi user chưa gửi đủ hồ sơ; sau khi gửi dùng `pending`, `verified`, hoặc `rejected`.
 * **Data safety**: Không bao giờ trả `password_hash`, `hashedRefreshToken` hoặc metadata review nội bộ.
+
+#### [POST] `/users/me/lender-upgrade`
+* **Authentication**: `accessToken` cookie; user must be `role = renter` and KYC verified.
+* **Behavior**: returns existing approved/pending state idempotently; rejected users may submit a new request.
+* **Body**: `{ "reason": "Optional lender business context" }`
+
+#### [GET] `/users/me/lender-upgrade`
+* **Authentication**: `accessToken` cookie.
+* **Success (200)**: current lender upgrade request, approved enabled state, or `null` when no request exists.
+
+#### Admin lender upgrade review
+* `GET /admin/lender-upgrade-requests?status=pending&page=1&limit=10`
+* `POST /admin/lender-upgrade-requests/:id/approve` enables lender capability and creates a lender wallet idempotently.
+* `POST /admin/lender-upgrade-requests/:id/reject` requires `reviewNote` and does not enable lender capability.
 
 #### [PATCH] `/users/me` (Cập nhật hồ sơ)
 * **Authentication**: `accessToken` cookie và `Origin` hợp lệ.
@@ -327,7 +346,7 @@ HTTP Status: `400`, `401`, `403`, `404`, `422`, `500`.
   > `displayBalance` luôn được tính theo invariant: `displayBalance = totalLimit - lockedBalance - outstandingDebt`.
 
 #### [GET] `/wallets/lender` (Thông tin Ví thu nhập ảo & Yêu cầu rút tiền - Lender)
-* **Authentication**: `accessToken` cookie; chỉ role `lender`.
+* **Authentication**: `accessToken` cookie; yêu cầu tài khoản `renter` có `lenderEnabled = true`.
 * **Query Params**: `page` (default: 1), `limit` (default: 20)
 * **Mô tả**: Trả về số dư doanh thu ảo của lender kèm danh sách giao dịch phân trang. Với MVP demo, withdraw là thao tác rút doanh thu demo: chỉ ghi nhận request/trạng thái và ledger nội bộ, không chuyển khoản ngân hàng thật.
 * **Success (200)**:
@@ -361,7 +380,7 @@ HTTP Status: `400`, `401`, `403`, `404`, `422`, `500`.
   }
   ```
 * **Trường hợp Yêu cầu rút tiền (POST `/wallets/lender/withdraw`):**
-  - **Authentication**: `accessToken` cookie (and valid `Origin`); chỉ role `lender`.
+  - **Authentication**: `accessToken` cookie (and valid `Origin`); yêu cầu tài khoản `renter` có `lenderEnabled = true`.
   - **Body**:
     ```json
     {

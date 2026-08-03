@@ -37,10 +37,10 @@ export class GearsService {
 
   async create(lenderId: string, data: CreateGearDto): Promise<Gear> {
     const lender = await this.gearsRepository.findUserById(lenderId);
-    if (!lender || lender.role !== 'lender') {
+    if (!lender || !lender.lender_enabled) {
       throw new ForbiddenException({
-        error: 'LENDER_ONLY',
-        message: 'Only lenders can create gears',
+        error: 'LENDER_NOT_ENABLED',
+        message: 'Lender enablement is required to create gears',
       });
     }
     if (lender.kyc_status !== 'verified') {
@@ -90,6 +90,13 @@ export class GearsService {
     page: number,
     limit: number,
   ): Promise<PaginatedResult<Gear>> {
+    const lender = await this.gearsRepository.findUserById(lenderId);
+    if (!lender?.lender_enabled) {
+      throw new ForbiddenException({
+        error: 'LENDER_NOT_ENABLED',
+        message: 'Lender enablement is required to view lender gears',
+      });
+    }
     const result = await this.gearsRepository.findMine({
       lenderId,
       page,
@@ -111,6 +118,13 @@ export class GearsService {
     lenderId: string,
     data: UpdateGearDto,
   ): Promise<Gear> {
+    const lender = await this.gearsRepository.findUserById(lenderId);
+    if (!lender?.lender_enabled) {
+      throw new ForbiddenException({
+        error: 'LENDER_NOT_ENABLED',
+        message: 'Lender enablement is required to update gears',
+      });
+    }
     const gear = await this.gearsRepository.findByIdForLender(id, lenderId);
     if (!gear) throw new NotFoundException('Gear not found');
 

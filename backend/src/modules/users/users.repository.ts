@@ -19,6 +19,8 @@ export const safeUserSelect = {
   rating: true,
   total_reviews: true,
   role: true,
+  lender_enabled: true,
+  lender_enabled_at: true,
   kyc_status: true,
   kyc_rejection_reason: true,
   kyc_front_card_url: true,
@@ -231,6 +233,26 @@ export class UsersRepository {
         hashedRefreshToken: null,
       },
       select: { id: true, is_active: true },
+    });
+  }
+
+  findLatestLenderUpgradeRequest(userId: string) {
+    return this.prisma.lenderUpgradeRequest.findFirst({
+      where: { user_id: userId },
+      orderBy: [{ created_at: 'desc' }, { id: 'asc' }],
+    });
+  }
+
+  findPendingLenderUpgradeRequest(userId: string) {
+    return this.prisma.lenderUpgradeRequest.findFirst({
+      where: { user_id: userId, status: 'pending' },
+      orderBy: [{ created_at: 'asc' }, { id: 'asc' }],
+    });
+  }
+
+  createLenderUpgradeRequest(userId: string, reason?: string) {
+    return this.prisma.lenderUpgradeRequest.create({
+      data: { user_id: userId, reason: reason?.trim() || null },
     });
   }
 

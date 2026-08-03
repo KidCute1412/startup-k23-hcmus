@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   ConflictException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
   UnauthorizedException,
@@ -157,6 +158,7 @@ export class WalletsService {
   }
 
   async getLender(userId: string, page: number, limit: number) {
+    await this.assertLenderEnabled(userId);
     const wallet = await this.prisma.lenderWallet.findUnique({
       where: { lender_id: userId },
     });
@@ -208,6 +210,7 @@ export class WalletsService {
   }
 
   async withdraw(userId: string, input: CreateWithdrawalDto) {
+    await this.assertLenderEnabled(userId);
     return this.prisma.$transaction(async (tx) => {
       await tx.$queryRaw`SELECT id FROM lender_wallets WHERE lender_id = ${userId}::uuid FOR UPDATE`;
       const wallet = await tx.lenderWallet.findUnique({
@@ -497,6 +500,19 @@ export class WalletsService {
       approvedAt: wallet.approved_at,
       expiredAt: wallet.expired_at,
     };
+  }
+
+  private async assertLenderEnabled(userId: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { lender_enabled: true },
+    });
+    if (!user?.lender_enabled) {
+      throw new ForbiddenException({
+        error: 'LENDER_NOT_ENABLED',
+        message: 'Lender enablement is required',
+      });
+    }
   }
 }
 
