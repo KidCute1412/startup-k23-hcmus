@@ -11,6 +11,9 @@ export interface AdminKycUser {
   kyc_rejection_reason: string | null;
   kyc_reviewed_by: string | null;
   kyc_reviewed_at: string | null;
+  kyc_front_card_url: string | null;
+  kyc_back_card_url: string | null;
+  kyc_portrait_url: string | null;
   created_at: string;
   updated_at: string;
 }

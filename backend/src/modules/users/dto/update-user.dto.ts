@@ -21,7 +21,9 @@ export class UpdateUserDto {
 
   @IsOptional()
   @IsString()
-  @Matches(/^(https:\/\/(?:i\.)?ibb\.co\/[^?#\s]+|\/uploads\/[a-zA-Z0-9_-]+\/[^/?#]+)$/)
+  @Matches(
+    /^(https:\/\/(?:i\.)?ibb\.co\/[^?#\s]+|\/uploads\/[a-zA-Z0-9_-]+\/[^/?#]+)$/,
+  )
   avatarUrl?: string;
 
   @IsOptional()

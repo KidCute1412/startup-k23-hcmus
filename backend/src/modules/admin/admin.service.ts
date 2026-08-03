@@ -15,7 +15,10 @@ import {
 } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { GetGearQueueQueryDto } from './dto/get-gear-queue-query.dto';
-import { GetKycQueueQueryDto } from './dto/get-kyc-queue-query.dto';
+import {
+  GetKycQueueQueryDto,
+  KycQueueStatus,
+} from './dto/get-kyc-queue-query.dto';
 import { GetDisputeQueueQueryDto } from './dto/get-dispute-queue-query.dto';
 import { GetLenderUpgradeRequestsQueryDto } from './dto/get-lender-upgrade-requests-query.dto';
 import { EscrowService } from '../escrow/escrow.service';
@@ -107,17 +110,28 @@ export class AdminService {
 
   async getKycQueue(query: GetKycQueueQueryDto) {
     const { status, page, limit } = query;
-    const where: Prisma.UserWhereInput = {
-      kyc_status: status,
-      ...(status === KycStatusType.pending
+    const where: Prisma.UserWhereInput =
+      status === KycQueueStatus.none
         ? {
-            cccd: { not: null },
-            kyc_front_card_url: { not: null },
-            kyc_back_card_url: { not: null },
-            kyc_portrait_url: { not: null },
+            kyc_status: KycStatusType.pending,
+            OR: [
+              { cccd: null },
+              { kyc_front_card_url: null },
+              { kyc_back_card_url: null },
+              { kyc_portrait_url: null },
+            ],
           }
-        : {}),
-    };
+        : {
+            kyc_status: status,
+            ...(status === KycQueueStatus.pending
+              ? {
+                  cccd: { not: null },
+                  kyc_front_card_url: { not: null },
+                  kyc_back_card_url: { not: null },
+                  kyc_portrait_url: { not: null },
+                }
+              : {}),
+          };
     const [data, total] = await Promise.all([
       this.prisma.user.findMany({
         where,

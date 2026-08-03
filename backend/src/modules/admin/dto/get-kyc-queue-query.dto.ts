@@ -1,11 +1,17 @@
-import { KycStatusType } from '@prisma/client';
 import { Type } from 'class-transformer';
 import { IsEnum, IsInt, IsOptional, Max, Min } from 'class-validator';
 
+export enum KycQueueStatus {
+  pending = 'pending',
+  verified = 'verified',
+  rejected = 'rejected',
+  none = 'none',
+}
+
 export class GetKycQueueQueryDto {
   @IsOptional()
-  @IsEnum(KycStatusType)
-  status: KycStatusType = KycStatusType.pending;
+  @IsEnum(KycQueueStatus)
+  status: KycQueueStatus = KycQueueStatus.pending;
 
   @IsOptional()
   @Type(() => Number)

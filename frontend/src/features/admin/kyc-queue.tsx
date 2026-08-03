@@ -14,13 +14,12 @@ import {
   RefreshCw,
 } from "lucide-react";
 import { useAdminKyc } from "@/hooks/useAdminKyc";
-import type { KycStatus } from "@/types/admin";
+import type { KycStatus, AdminKycUser } from "@/types/admin";
 
 const STATUS_TABS: { label: string; value: KycStatus }[] = [
   { label: "Chờ duyệt", value: "pending" },
   { label: "Đã xác thực", value: "verified" },
   { label: "Bị từ chối", value: "rejected" },
-  { label: "Chưa đăng ký", value: "none" },
 ];
 
 export function KycQueueFeature() {
@@ -42,6 +41,7 @@ export function KycQueueFeature() {
 
   const [rejectingUserId, setRejectingUserId] = useState<string | null>(null);
   const [rejectReason, setRejectReason] = useState<string>("");
+  const [inspectingUser, setInspectingUser] = useState<AdminKycUser | null>(null);
 
   const handleConfirmReject = async () => {
     if (!rejectingUserId) return;
@@ -223,26 +223,35 @@ export function KycQueueFeature() {
                       </td>
 
                       <td className="px-6 py-4 text-right">
-                        {user.kyc_status === "pending" && (
-                          <div className="flex justify-end gap-2">
-                            <button
-                              type="button"
-                              disabled={actionLoadingId === user.id}
-                              onClick={() => void approveKyc(user.id)}
-                              className="inline-flex items-center gap-1 rounded-v-sm bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-emerald-500 disabled:opacity-50"
-                            >
-                              <CheckCircle2 size={14} /> Phê duyệt
-                            </button>
-                            <button
-                              type="button"
-                              disabled={actionLoadingId === user.id}
-                              onClick={() => setRejectingUserId(user.id)}
-                              className="inline-flex items-center gap-1 rounded-v-sm bg-red-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-red-500 disabled:opacity-50"
-                            >
-                              <XCircle size={14} /> Từ chối
-                            </button>
-                          </div>
-                        )}
+                        <div className="flex justify-end gap-2">
+                          <button
+                            type="button"
+                            onClick={() => setInspectingUser(user)}
+                            className="inline-flex items-center gap-1 rounded-v-sm border border-vanguard-light-border bg-vanguard-light-surf px-3 py-1.5 text-xs font-semibold text-vanguard-light-text transition hover:bg-vanguard-light-surfDim dark:border-vanguard-dark-border dark:bg-vanguard-dark-surf dark:text-vanguard-dark-text dark:hover:bg-vanguard-dark-surfBright"
+                          >
+                            <FileText size={14} /> Xem tài liệu
+                          </button>
+                          {user.kyc_status === "pending" && (
+                            <>
+                              <button
+                                type="button"
+                                disabled={actionLoadingId === user.id}
+                                onClick={() => void approveKyc(user.id)}
+                                className="inline-flex items-center gap-1 rounded-v-sm bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-emerald-500 disabled:opacity-50"
+                              >
+                                <CheckCircle2 size={14} /> Phê duyệt
+                              </button>
+                              <button
+                                type="button"
+                                disabled={actionLoadingId === user.id}
+                                onClick={() => setRejectingUserId(user.id)}
+                                className="inline-flex items-center gap-1 rounded-v-sm bg-red-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-red-500 disabled:opacity-50"
+                              >
+                                <XCircle size={14} /> Từ chối
+                              </button>
+                            </>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -318,6 +327,216 @@ export function KycQueueFeature() {
                 Xác nhận từ chối
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Document Inspection Modal */}
+      {inspectingUser && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-4xl rounded-v border border-vanguard-light-border bg-vanguard-light-surf p-6 shadow-2xl transition-colors dark:border-vanguard-dark-border dark:bg-vanguard-dark-surf max-h-[90vh] overflow-y-auto">
+            
+            {/* Modal Header */}
+            <div className="flex items-center justify-between border-b border-vanguard-light-border pb-4 dark:border-vanguard-dark-border">
+              <div>
+                <h3 className="font-display text-lg font-bold text-vanguard-light-text dark:text-vanguard-dark-text">
+                  Chi tiết Tài liệu Xác minh KYC
+                </h3>
+                <p className="mt-1 text-xs text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted">
+                  Người dùng: <strong className="text-vanguard-light-text dark:text-vanguard-dark-text">{inspectingUser.full_name ?? "Chưa cập nhật tên"}</strong> ({inspectingUser.email})
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setInspectingUser(null)}
+                className="rounded-full p-1.5 text-vanguard-light-textMuted hover:bg-vanguard-light-surfDim hover:text-vanguard-light-text dark:text-vanguard-dark-textMuted dark:hover:bg-vanguard-dark-surfBright dark:hover:text-vanguard-dark-text"
+              >
+                <XCircle size={20} />
+              </button>
+            </div>
+
+            {/* User Info Overview */}
+            <div className="my-4 grid grid-cols-1 sm:grid-cols-3 gap-4 rounded-v bg-vanguard-light-bg p-4 dark:bg-vanguard-dark-bg text-xs">
+              <div>
+                <span className="text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted">Số CCCD / CMND:</span>
+                <p className="mt-0.5 font-mono font-bold text-vanguard-light-text dark:text-vanguard-dark-text">
+                  {inspectingUser.cccd ?? "Chưa cung cấp"}
+                </p>
+              </div>
+              <div>
+                <span className="text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted">Vai trò:</span>
+                <p className="mt-0.5 font-semibold capitalize text-vanguard-light-text dark:text-vanguard-dark-text">
+                  {inspectingUser.role}
+                </p>
+              </div>
+              <div>
+                <span className="text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted">Trạng thái hiện tại:</span>
+                <div className="mt-0.5">
+                  {inspectingUser.kyc_status === "verified" && (
+                    <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 font-semibold text-emerald-500">
+                      <CheckCircle2 size={12} /> Đã duyệt
+                    </span>
+                  )}
+                  {inspectingUser.kyc_status === "pending" && (
+                    <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/10 px-2 py-0.5 font-semibold text-amber-500">
+                      <Clock size={12} /> Chờ duyệt
+                    </span>
+                  )}
+                  {inspectingUser.kyc_status === "rejected" && (
+                    <span className="inline-flex items-center gap-1 rounded-full bg-red-500/10 px-2 py-0.5 font-semibold text-red-500">
+                      <XCircle size={12} /> Bị từ chối
+                    </span>
+                  )}
+                  {inspectingUser.kyc_status === "none" && (
+                    <span className="inline-flex items-center gap-1 rounded-full bg-gray-500/10 px-2 py-0.5 font-semibold text-gray-400">
+                      Chưa KYC
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Document Images Grid */}
+            <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-6">
+              {/* Front Card */}
+              <div className="flex flex-col gap-2">
+                <span className="text-xs font-semibold text-vanguard-light-text dark:text-vanguard-dark-text">
+                  1. Ảnh mặt trước CCCD / CMND
+                </span>
+                {inspectingUser.kyc_front_card_url ? (
+                  <div className="relative group overflow-hidden rounded-v border border-vanguard-light-border dark:border-vanguard-dark-border bg-black">
+                    <img
+                      src={inspectingUser.kyc_front_card_url}
+                      alt="Mặt trước CCCD"
+                      className="h-56 w-full object-contain transition group-hover:scale-105"
+                    />
+                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition">
+                      <a
+                        href={inspectingUser.kyc_front_card_url}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="rounded bg-vanguard-primary px-3 py-1.5 text-xs font-bold text-white uppercase tracking-wider hover:bg-vanguard-primary/95"
+                      >
+                        Mở ảnh lớn
+                      </a>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex h-56 items-center justify-center rounded-v border border-dashed border-vanguard-light-border dark:border-vanguard-dark-border bg-vanguard-light-bg dark:bg-vanguard-dark-bg text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted text-xs">
+                    Không có ảnh mặt trước
+                  </div>
+                )}
+              </div>
+
+              {/* Back Card */}
+              <div className="flex flex-col gap-2">
+                <span className="text-xs font-semibold text-vanguard-light-text dark:text-vanguard-dark-text">
+                  2. Ảnh mặt sau CCCD / CMND
+                </span>
+                {inspectingUser.kyc_back_card_url ? (
+                  <div className="relative group overflow-hidden rounded-v border border-vanguard-light-border dark:border-vanguard-dark-border bg-black">
+                    <img
+                      src={inspectingUser.kyc_back_card_url}
+                      alt="Mặt sau CCCD"
+                      className="h-56 w-full object-contain transition group-hover:scale-105"
+                    />
+                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition">
+                      <a
+                        href={inspectingUser.kyc_back_card_url}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="rounded bg-vanguard-primary px-3 py-1.5 text-xs font-bold text-white uppercase tracking-wider hover:bg-vanguard-primary/95"
+                      >
+                        Mở ảnh lớn
+                      </a>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex h-56 items-center justify-center rounded-v border border-dashed border-vanguard-light-border dark:border-vanguard-dark-border bg-vanguard-light-bg dark:bg-vanguard-dark-bg text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted text-xs">
+                    Không có ảnh mặt sau
+                  </div>
+                )}
+              </div>
+
+              {/* Portrait */}
+              <div className="flex flex-col gap-2">
+                <span className="text-xs font-semibold text-vanguard-light-text dark:text-vanguard-dark-text">
+                  3. Ảnh chân dung (Selfie)
+                </span>
+                {inspectingUser.kyc_portrait_url ? (
+                  <div className="relative group overflow-hidden rounded-v border border-vanguard-light-border dark:border-vanguard-dark-border bg-black">
+                    <img
+                      src={inspectingUser.kyc_portrait_url}
+                      alt="Ảnh chân dung"
+                      className="h-56 w-full object-contain transition group-hover:scale-105"
+                    />
+                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition">
+                      <a
+                        href={inspectingUser.kyc_portrait_url}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="rounded bg-vanguard-primary px-3 py-1.5 text-xs font-bold text-white uppercase tracking-wider hover:bg-vanguard-primary/95"
+                      >
+                        Mở ảnh lớn
+                      </a>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex h-56 items-center justify-center rounded-v border border-dashed border-vanguard-light-border dark:border-vanguard-dark-border bg-vanguard-light-bg dark:bg-vanguard-dark-bg text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted text-xs">
+                    Không có ảnh chân dung
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Modal Actions Footer */}
+            <div className="mt-8 flex justify-between gap-3 border-t border-vanguard-light-border pt-4 dark:border-vanguard-dark-border">
+              <div>
+                {inspectingUser.kyc_rejection_reason && (
+                  <p className="text-xs text-red-500 italic">
+                    Lý do từ chối trước đó: {inspectingUser.kyc_rejection_reason}
+                  </p>
+                )}
+              </div>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setInspectingUser(null)}
+                  className="rounded-v-sm border border-vanguard-light-border bg-vanguard-light-surf px-4 py-2 text-xs font-semibold text-vanguard-light-text transition hover:bg-vanguard-light-surfDim dark:border-vanguard-dark-border dark:bg-vanguard-dark-surf dark:text-vanguard-dark-text dark:hover:bg-vanguard-dark-surfBright"
+                >
+                  Đóng
+                </button>
+                {inspectingUser.kyc_status === "pending" && (
+                  <>
+                    <button
+                      type="button"
+                      disabled={actionLoadingId === inspectingUser.id}
+                      onClick={async () => {
+                        try {
+                          await approveKyc(inspectingUser.id);
+                          setInspectingUser(null);
+                        } catch {}
+                      }}
+                      className="inline-flex items-center gap-1 rounded-v-sm bg-emerald-600 px-4 py-2 text-xs font-semibold text-white transition hover:bg-emerald-500 disabled:opacity-50"
+                    >
+                      <CheckCircle2 size={14} /> Phê duyệt
+                    </button>
+                    <button
+                      type="button"
+                      disabled={actionLoadingId === inspectingUser.id}
+                      onClick={() => {
+                        setRejectingUserId(inspectingUser.id);
+                        setInspectingUser(null);
+                      }}
+                      className="inline-flex items-center gap-1 rounded-v-sm bg-red-600 px-4 py-2 text-xs font-semibold text-white transition hover:bg-red-500 disabled:opacity-50"
+                    >
+                      <XCircle size={14} /> Từ chối
+                    </button>
+                  </>
+                )}
+              </div>
+            </div>
+
           </div>
         </div>
       )}

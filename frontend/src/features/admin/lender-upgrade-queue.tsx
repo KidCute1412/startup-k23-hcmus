@@ -12,6 +12,8 @@ import {
   ChevronRight,
   RefreshCw,
   MessageSquare,
+  Eye,
+  X,
 } from "lucide-react";
 import { useAdminLenderUpgrade, type LenderUpgradeRequestStatus } from "@/hooks/useAdminLenderUpgrade";
 
@@ -40,6 +42,7 @@ export function LenderUpgradeQueueFeature() {
 
   const [rejectingRequestId, setRejectingRequestId] = useState<string | null>(null);
   const [rejectReason, setRejectReason] = useState<string>("");
+  const [selectedRequest, setSelectedRequest] = useState<typeof requests[number] | null>(null);
 
   const handleConfirmReject = async () => {
     if (!rejectingRequestId) return;
@@ -158,7 +161,8 @@ export function LenderUpgradeQueueFeature() {
                   {requests.map((item) => (
                     <tr
                       key={item.id}
-                      className="transition-colors hover:bg-vanguard-light-surfDim/50 dark:hover:bg-vanguard-dark-surfBright/40"
+                      onClick={() => setSelectedRequest(item)}
+                      className="cursor-pointer transition-colors hover:bg-vanguard-light-surfDim/50 dark:hover:bg-vanguard-dark-surfBright/40"
                     >
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-3">
@@ -215,12 +219,27 @@ export function LenderUpgradeQueueFeature() {
                       </td>
 
                       <td className="px-6 py-4 text-right">
+                        <button
+                          type="button"
+                          aria-label="Xem chi tiết yêu cầu"
+                          title="Xem chi tiết"
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            setSelectedRequest(item);
+                          }}
+                          className="mr-2 inline-flex size-8 items-center justify-center rounded-v-sm border border-vanguard-light-border text-vanguard-light-textMuted transition hover:border-vanguard-primary hover:text-vanguard-primary dark:border-vanguard-dark-border dark:text-vanguard-dark-textMuted"
+                        >
+                          <Eye size={15} />
+                        </button>
                         {item.status === "pending" && (
                           <div className="flex justify-end gap-2">
                             <button
                               type="button"
                               disabled={actionLoadingId === item.id}
-                              onClick={() => void approveRequest(item.id)}
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                void approveRequest(item.id);
+                              }}
                               className="inline-flex items-center gap-1 rounded-v-sm bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-emerald-500 disabled:opacity-50"
                             >
                               <CheckCircle2 size={14} /> Phê duyệt
@@ -228,7 +247,10 @@ export function LenderUpgradeQueueFeature() {
                             <button
                               type="button"
                               disabled={actionLoadingId === item.id}
-                              onClick={() => setRejectingRequestId(item.id)}
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                setRejectingRequestId(item.id);
+                              }}
                               className="inline-flex items-center gap-1 rounded-v-sm bg-red-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-red-500 disabled:opacity-50"
                             >
                               <XCircle size={14} /> Từ chối
@@ -269,6 +291,128 @@ export function LenderUpgradeQueueFeature() {
               </div>
             </div>
           )}
+        </div>
+      )}
+
+      {/* Request Details Modal */}
+      {selectedRequest && (
+        <div
+          className="fixed inset-0 z-40 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm"
+          role="presentation"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) setSelectedRequest(null);
+          }}
+        >
+          <div
+            className="max-h-[calc(100vh-2rem)] w-full max-w-2xl overflow-y-auto rounded-v border border-vanguard-light-border bg-vanguard-light-surf shadow-2xl dark:border-vanguard-dark-border dark:bg-vanguard-dark-surf"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="lender-upgrade-detail-title"
+          >
+            <div className="flex items-start justify-between gap-4 border-b border-vanguard-light-border px-6 py-5 dark:border-vanguard-dark-border">
+              <div>
+                <p className="field-label">Chi tiết hồ sơ</p>
+                <h2 id="lender-upgrade-detail-title" className="mt-1 font-display text-xl font-bold text-vanguard-light-text dark:text-vanguard-dark-text">
+                  Yêu cầu nâng cấp Lender
+                </h2>
+              </div>
+              <button
+                type="button"
+                aria-label="Đóng chi tiết"
+                title="Đóng"
+                onClick={() => setSelectedRequest(null)}
+                className="inline-flex size-8 items-center justify-center rounded-v-sm text-vanguard-light-textMuted transition hover:bg-vanguard-light-surfDim hover:text-vanguard-light-text dark:text-vanguard-dark-textMuted dark:hover:bg-vanguard-dark-surfBright dark:hover:text-vanguard-dark-text"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="space-y-6 px-6 py-6">
+              <div className="flex items-center gap-3">
+                <div className="flex size-12 items-center justify-center rounded-full bg-vanguard-primary/10 text-vanguard-primary">
+                  <User size={20} />
+                </div>
+                <div>
+                  <p className="font-semibold text-vanguard-light-text dark:text-vanguard-dark-text">
+                    {selectedRequest.applicant?.fullName ?? "Chưa cập nhật tên"}
+                  </p>
+                  <p className="text-xs text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted">
+                    {selectedRequest.applicant?.email ?? "Chưa cập nhật email"}
+                  </p>
+                </div>
+              </div>
+
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="rounded-v-sm border border-vanguard-light-border bg-vanguard-light-surfDim/50 p-4 dark:border-vanguard-dark-border dark:bg-vanguard-dark-surfBright/40">
+                  <p className="field-label">Trạng thái</p>
+                  <div className="mt-2">
+                    {selectedRequest.status === "approved" && <span className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-500"><CheckCircle2 size={14} /> Đã phê duyệt</span>}
+                    {selectedRequest.status === "pending" && <span className="inline-flex items-center gap-1 text-xs font-semibold text-amber-500"><Clock size={14} /> Chờ phê duyệt</span>}
+                    {selectedRequest.status === "rejected" && <span className="inline-flex items-center gap-1 text-xs font-semibold text-red-500"><XCircle size={14} /> Đã từ chối</span>}
+                  </div>
+                </div>
+                <div className="rounded-v-sm border border-vanguard-light-border bg-vanguard-light-surfDim/50 p-4 dark:border-vanguard-dark-border dark:bg-vanguard-dark-surfBright/40">
+                  <p className="field-label">Thời gian gửi</p>
+                  <p className="mt-2 text-sm text-vanguard-light-text dark:text-vanguard-dark-text">
+                    {new Date(selectedRequest.createdAt).toLocaleString("vi-VN")}
+                  </p>
+                </div>
+              </div>
+
+              <div>
+                <p className="field-label">Lý do nâng cấp</p>
+                <div className="mt-2 flex items-start gap-3 rounded-v-sm border border-vanguard-light-border p-4 dark:border-vanguard-dark-border">
+                  <MessageSquare className="mt-0.5 size-4 shrink-0 text-vanguard-primary" />
+                  <p className="whitespace-pre-wrap text-sm leading-6 text-vanguard-light-text dark:text-vanguard-dark-text">
+                    {selectedRequest.reason || "Không cung cấp lý do đăng ký"}
+                  </p>
+                </div>
+              </div>
+
+              {selectedRequest.reviewNote && (
+                <div>
+                  <p className="field-label">Ghi chú xử lý</p>
+                  <p className="mt-2 whitespace-pre-wrap rounded-v-sm border border-red-500/20 bg-red-500/5 p-4 text-sm leading-6 text-vanguard-light-text dark:text-vanguard-dark-text">
+                    {selectedRequest.reviewNote}
+                  </p>
+                </div>
+              )}
+
+              <div className="grid gap-4 text-xs text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted sm:grid-cols-2">
+                <p>KYC: <span className="font-semibold text-vanguard-light-text dark:text-vanguard-dark-text">{selectedRequest.applicant?.kycStatus ?? "Chưa cập nhật"}</span></p>
+                <p>Đã bật quyền lender: <span className="font-semibold text-vanguard-light-text dark:text-vanguard-dark-text">{selectedRequest.applicant?.lenderEnabled ? "Có" : "Chưa"}</span></p>
+                {selectedRequest.reviewedAt && <p>Thời gian xử lý: <span className="font-semibold text-vanguard-light-text dark:text-vanguard-dark-text">{new Date(selectedRequest.reviewedAt).toLocaleString("vi-VN")}</span></p>}
+                {selectedRequest.reviewedBy && <p>Người xử lý: <span className="font-semibold text-vanguard-light-text dark:text-vanguard-dark-text">{selectedRequest.reviewedBy}</span></p>}
+              </div>
+            </div>
+
+            {selectedRequest.status === "pending" && (
+              <div className="flex flex-col-reverse gap-3 border-t border-vanguard-light-border px-6 py-5 sm:flex-row sm:justify-end dark:border-vanguard-dark-border">
+                <button
+                  type="button"
+                  disabled={actionLoadingId === selectedRequest.id}
+                  onClick={() => {
+                    setSelectedRequest(null);
+                    setRejectingRequestId(selectedRequest.id);
+                  }}
+                  className="inline-flex items-center justify-center gap-2 rounded-v-sm bg-red-600 px-4 py-2 text-xs font-semibold text-white transition hover:bg-red-500 disabled:opacity-50"
+                >
+                  <XCircle size={14} /> Từ chối
+                </button>
+                <button
+                  type="button"
+                  disabled={actionLoadingId === selectedRequest.id}
+                  onClick={() => {
+                    setSelectedRequest(null);
+                    void approveRequest(selectedRequest.id);
+                  }}
+                  className="inline-flex items-center justify-center gap-2 rounded-v-sm bg-emerald-600 px-4 py-2 text-xs font-semibold text-white transition hover:bg-emerald-500 disabled:opacity-50"
+                >
+                  <CheckCircle2 size={14} /> Phê duyệt
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       )}
 
