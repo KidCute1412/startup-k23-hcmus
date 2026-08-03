@@ -144,6 +144,28 @@ export class AdminService {
     const [data, total] = await Promise.all([
       this.prisma.gear.findMany({
         where,
+        include: {
+          lender: {
+            select: {
+              id: true,
+              email: true,
+              full_name: true,
+            },
+          },
+          category: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
+          media: {
+            select: {
+              id: true,
+              url: true,
+              is_primary: true,
+            },
+          },
+        },
         orderBy: [{ updated_at: 'asc' }, { id: 'asc' }],
         skip: (page - 1) * limit,
         take: limit,

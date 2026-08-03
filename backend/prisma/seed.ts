@@ -1112,7 +1112,7 @@ async function main() {
       const productName = `${catalog.brand} ${modelName}${editionSuffix}`
       const gearUuid = `30000000-0000-0000-0000-${currentGearIdx.toString().padStart(12, '0')}`
       const lenderId = lenderIds[currentGearIdx % lenderIds.length]
-      
+
       const priceVariation = 1 + ((currentGearIdx % 7) - 3) * 0.05
       const gearValue = Math.round((catalog.baseVal * priceVariation) / 50000) * 50000
       const rentFee = Math.round((catalog.baseRent * priceVariation) / 5000) * 5000
@@ -1285,10 +1285,10 @@ async function main() {
   await prisma.lenderWallet.createMany({
     data: [
       { id: '60000000-0000-0000-0000-000000000001', lender_id: '00000000-0000-0000-0000-000000000002', balance: 1500000, total_withdrawn: 5000000, status: 'active' },
-      { id: '60000000-0000-0000-0000-000000000002', lender_id: '00000000-0000-0000-0000-000000000003', balance: 800000,  total_withdrawn: 2000000, status: 'active' },
+      { id: '60000000-0000-0000-0000-000000000002', lender_id: '00000000-0000-0000-0000-000000000003', balance: 800000, total_withdrawn: 2000000, status: 'active' },
       { id: '60000000-0000-0000-0000-000000000003', lender_id: '00000000-0000-0000-0000-000000000004', balance: 2200000, total_withdrawn: 3500000, status: 'active' },
-      { id: '60000000-0000-0000-0000-000000000004', lender_id: '00000000-0000-0000-0000-000000000005', balance: 0,       total_withdrawn: 0,       status: 'active' },
-      { id: '60000000-0000-0000-0000-000000000005', lender_id: '00000000-0000-0000-0000-000000000013', balance: 0,       total_withdrawn: 0,       status: 'active' },
+      { id: '60000000-0000-0000-0000-000000000004', lender_id: '00000000-0000-0000-0000-000000000005', balance: 0, total_withdrawn: 0, status: 'active' },
+      { id: '60000000-0000-0000-0000-000000000005', lender_id: '00000000-0000-0000-0000-000000000013', balance: 0, total_withdrawn: 0, status: 'active' },
     ],
     skipDuplicates: true,
   })
@@ -1299,10 +1299,10 @@ async function main() {
   // =============================================================
   await prisma.bankAccount.createMany({
     data: [
-      { id: '70000000-0000-0000-0000-000000000001', user_id: '00000000-0000-0000-0000-000000000002', bank_name: 'Vietcombank', bank_code: 'VCB', account_number: '0071000123456', account_holder: 'NGUYEN VAN AN',  is_default: true,  is_verified: true  },
-      { id: '70000000-0000-0000-0000-000000000002', user_id: '00000000-0000-0000-0000-000000000003', bank_name: 'Techcombank',  bank_code: 'TCB', account_number: '9021000234567', account_holder: 'TRAN THI BINH',  is_default: true,  is_verified: true  },
-      { id: '70000000-0000-0000-0000-000000000003', user_id: '00000000-0000-0000-0000-000000000004', bank_name: 'MB Bank',      bank_code: 'MB',  account_number: '0391000345678', account_holder: 'LE MINH CUONG',  is_default: true,  is_verified: true  },
-      { id: '70000000-0000-0000-0000-000000000004', user_id: '00000000-0000-0000-0000-000000000006', bank_name: 'VPBank',       bank_code: 'VPB', account_number: '2691000456789', account_holder: 'HOANG DUC EM',   is_default: true,  is_verified: false },
+      { id: '70000000-0000-0000-0000-000000000001', user_id: '00000000-0000-0000-0000-000000000002', bank_name: 'Vietcombank', bank_code: 'VCB', account_number: '0071000123456', account_holder: 'NGUYEN VAN AN', is_default: true, is_verified: true },
+      { id: '70000000-0000-0000-0000-000000000002', user_id: '00000000-0000-0000-0000-000000000003', bank_name: 'Techcombank', bank_code: 'TCB', account_number: '9021000234567', account_holder: 'TRAN THI BINH', is_default: true, is_verified: true },
+      { id: '70000000-0000-0000-0000-000000000003', user_id: '00000000-0000-0000-0000-000000000004', bank_name: 'MB Bank', bank_code: 'MB', account_number: '0391000345678', account_holder: 'LE MINH CUONG', is_default: true, is_verified: true },
+      { id: '70000000-0000-0000-0000-000000000004', user_id: '00000000-0000-0000-0000-000000000006', bank_name: 'VPBank', bank_code: 'VPB', account_number: '2691000456789', account_holder: 'HOANG DUC EM', is_default: true, is_verified: false },
     ],
     skipDuplicates: true,
   })
@@ -1615,19 +1615,19 @@ async function main() {
   // =============================================================
   await prisma.escrowWallet.createMany({
     data: [
-      { id: '90000000-0000-0000-0000-000000000001', rental_order_id: '80000000-0000-0000-0000-000000000001', amount: 500000,  source: 'renter_cash', status: 'released',    locked_at: daysAgo(19), released_at: daysAgo(14) },
-      { id: '90000000-0000-0000-0000-000000000002', rental_order_id: '80000000-0000-0000-0000-000000000002', amount: 300000,  source: 'credit_line', status: 'locked',      locked_at: daysAgo(2),  released_at: null },
-      { id: '90000000-0000-0000-0000-000000000003', rental_order_id: '80000000-0000-0000-0000-000000000003', amount: 500000,  source: 'renter_cash', status: 'locked',      locked_at: hoursAgo(3), released_at: null },
+      { id: '90000000-0000-0000-0000-000000000001', rental_order_id: '80000000-0000-0000-0000-000000000001', amount: 500000, source: 'renter_cash', status: 'released', locked_at: daysAgo(19), released_at: daysAgo(14) },
+      { id: '90000000-0000-0000-0000-000000000002', rental_order_id: '80000000-0000-0000-0000-000000000002', amount: 300000, source: 'credit_line', status: 'locked', locked_at: daysAgo(2), released_at: null },
+      { id: '90000000-0000-0000-0000-000000000003', rental_order_id: '80000000-0000-0000-0000-000000000003', amount: 500000, source: 'renter_cash', status: 'locked', locked_at: hoursAgo(3), released_at: null },
       { id: '90000000-0000-0000-0000-000000000005', rental_order_id: '80000000-0000-0000-0000-000000000005', amount: 1000000, source: 'renter_cash', status: 'compensated', locked_at: daysAgo(14), released_at: daysAgo(5) },
-      { id: '90000000-0000-0000-0000-000000000006', rental_order_id: '80000000-0000-0000-0000-000000000006', amount: 1500000, source: 'credit_line', status: 'released',    locked_at: daysAgo(1),  released_at: daysAgo(1) },
+      { id: '90000000-0000-0000-0000-000000000006', rental_order_id: '80000000-0000-0000-0000-000000000006', amount: 1500000, source: 'credit_line', status: 'released', locked_at: daysAgo(1), released_at: daysAgo(1) },
       // W2 test escrows
       // No escrow for order 007 - INSUFFICIENT_CREDIT test should fail before creating escrow
       { id: '90000000-0000-0000-0000-000000000008', rental_order_id: '80000000-0000-0000-0000-000000000008', amount: 3000000, source: 'renter_cash', status: 'pending_return', released_at: null },
-      { id: '90000000-0000-0000-0000-000000000009', rental_order_id: '80000000-0000-0000-0000-000000000009', amount: 3000000, source: 'renter_cash', status: 'locked',      locked_at: daysAgo(3),  released_at: null },
-      { id: '90000000-0000-0000-0000-000000000010', rental_order_id: '80000000-0000-0000-0000-000000000010', amount: 2000000, source: 'credit_line', status: 'locked',      locked_at: daysAgo(3),  released_at: null },
-      { id: '90000000-0000-0000-0000-000000000011', rental_order_id: '80000000-0000-0000-0000-000000000011', amount: 1500000, source: 'renter_cash', status: 'locked',      locked_at: daysAgo(8),  released_at: null },
-      { id: '90000000-0000-0000-0000-000000000012', rental_order_id: '80000000-0000-0000-0000-000000000012', amount: 2000000, source: 'credit_line', status: 'locked',      locked_at: daysAgo(8),  released_at: null },
-      { id: '90000000-0000-0000-0000-000000000013', rental_order_id: '80000000-0000-0000-0000-000000000013', amount: 1000000, source: 'renter_cash', status: 'released',    locked_at: daysAgo(8),  released_at: daysAgo(4) },
+      { id: '90000000-0000-0000-0000-000000000009', rental_order_id: '80000000-0000-0000-0000-000000000009', amount: 3000000, source: 'renter_cash', status: 'locked', locked_at: daysAgo(3), released_at: null },
+      { id: '90000000-0000-0000-0000-000000000010', rental_order_id: '80000000-0000-0000-0000-000000000010', amount: 2000000, source: 'credit_line', status: 'locked', locked_at: daysAgo(3), released_at: null },
+      { id: '90000000-0000-0000-0000-000000000011', rental_order_id: '80000000-0000-0000-0000-000000000011', amount: 1500000, source: 'renter_cash', status: 'locked', locked_at: daysAgo(8), released_at: null },
+      { id: '90000000-0000-0000-0000-000000000012', rental_order_id: '80000000-0000-0000-0000-000000000012', amount: 2000000, source: 'credit_line', status: 'locked', locked_at: daysAgo(8), released_at: null },
+      { id: '90000000-0000-0000-0000-000000000013', rental_order_id: '80000000-0000-0000-0000-000000000013', amount: 1000000, source: 'renter_cash', status: 'released', locked_at: daysAgo(8), released_at: daysAgo(4) },
     ],
     skipDuplicates: true,
   })
@@ -1638,14 +1638,14 @@ async function main() {
   // =============================================================
   await prisma.payment.createMany({
     data: [
-      { id: 'A0000000-0000-0000-0000-000000000001', rental_order_id: '80000000-0000-0000-0000-000000000001', user_id: '00000000-0000-0000-0000-000000000006', type: 'deposit',    amount: 500000,  method: 'momo',          status: 'success', transaction_ref: 'MOMO-D001-001', paid_at: daysAgo(19) },
-      { id: 'A0000000-0000-0000-0000-000000000002', rental_order_id: '80000000-0000-0000-0000-000000000001', user_id: '00000000-0000-0000-0000-000000000006', type: 'rental_fee', amount: 330000,  method: 'momo',          status: 'success', transaction_ref: 'MOMO-F001-001', paid_at: daysAgo(19) },
-      { id: 'A0000000-0000-0000-0000-000000000003', rental_order_id: '80000000-0000-0000-0000-000000000002', user_id: '00000000-0000-0000-0000-000000000007', type: 'deposit',    amount: 300000,  method: 'credit_line',   status: 'success', transaction_ref: 'CL-D001-002',   paid_at: daysAgo(2)  },
-      { id: 'A0000000-0000-0000-0000-000000000004', rental_order_id: '80000000-0000-0000-0000-000000000002', user_id: '00000000-0000-0000-0000-000000000007', type: 'rental_fee', amount: 245000,  method: 'credit_line',   status: 'success', transaction_ref: 'CL-F001-002',   paid_at: daysAgo(2)  },
-      { id: 'A0000000-0000-0000-0000-000000000005', rental_order_id: '80000000-0000-0000-0000-000000000003', user_id: '00000000-0000-0000-0000-000000000008', type: 'deposit',    amount: 500000,  method: 'bank_transfer', status: 'success', transaction_ref: 'BT-D001-003',   paid_at: hoursAgo(4) },
-      { id: 'A0000000-0000-0000-0000-000000000006', rental_order_id: '80000000-0000-0000-0000-000000000003', user_id: '00000000-0000-0000-0000-000000000008', type: 'rental_fee', amount: 240000,  method: 'bank_transfer', status: 'success', transaction_ref: 'BT-F001-003',   paid_at: hoursAgo(4) },
-      { id: 'A0000000-0000-0000-0000-000000000007', rental_order_id: '80000000-0000-0000-0000-000000000005', user_id: '00000000-0000-0000-0000-000000000006', type: 'deposit',    amount: 1000000, method: 'vnpay',         status: 'success', transaction_ref: 'VP-D001-005',   paid_at: daysAgo(14) },
-      { id: 'A0000000-0000-0000-0000-000000000008', rental_order_id: '80000000-0000-0000-0000-000000000005', user_id: '00000000-0000-0000-0000-000000000006', type: 'rental_fee', amount: 560000,  method: 'vnpay',         status: 'success', transaction_ref: 'VP-F001-005',   paid_at: daysAgo(14) },
+      { id: 'A0000000-0000-0000-0000-000000000001', rental_order_id: '80000000-0000-0000-0000-000000000001', user_id: '00000000-0000-0000-0000-000000000006', type: 'deposit', amount: 500000, method: 'momo', status: 'success', transaction_ref: 'MOMO-D001-001', paid_at: daysAgo(19) },
+      { id: 'A0000000-0000-0000-0000-000000000002', rental_order_id: '80000000-0000-0000-0000-000000000001', user_id: '00000000-0000-0000-0000-000000000006', type: 'rental_fee', amount: 330000, method: 'momo', status: 'success', transaction_ref: 'MOMO-F001-001', paid_at: daysAgo(19) },
+      { id: 'A0000000-0000-0000-0000-000000000003', rental_order_id: '80000000-0000-0000-0000-000000000002', user_id: '00000000-0000-0000-0000-000000000007', type: 'deposit', amount: 300000, method: 'credit_line', status: 'success', transaction_ref: 'CL-D001-002', paid_at: daysAgo(2) },
+      { id: 'A0000000-0000-0000-0000-000000000004', rental_order_id: '80000000-0000-0000-0000-000000000002', user_id: '00000000-0000-0000-0000-000000000007', type: 'rental_fee', amount: 245000, method: 'credit_line', status: 'success', transaction_ref: 'CL-F001-002', paid_at: daysAgo(2) },
+      { id: 'A0000000-0000-0000-0000-000000000005', rental_order_id: '80000000-0000-0000-0000-000000000003', user_id: '00000000-0000-0000-0000-000000000008', type: 'deposit', amount: 500000, method: 'bank_transfer', status: 'success', transaction_ref: 'BT-D001-003', paid_at: hoursAgo(4) },
+      { id: 'A0000000-0000-0000-0000-000000000006', rental_order_id: '80000000-0000-0000-0000-000000000003', user_id: '00000000-0000-0000-0000-000000000008', type: 'rental_fee', amount: 240000, method: 'bank_transfer', status: 'success', transaction_ref: 'BT-F001-003', paid_at: hoursAgo(4) },
+      { id: 'A0000000-0000-0000-0000-000000000007', rental_order_id: '80000000-0000-0000-0000-000000000005', user_id: '00000000-0000-0000-0000-000000000006', type: 'deposit', amount: 1000000, method: 'vnpay', status: 'success', transaction_ref: 'VP-D001-005', paid_at: daysAgo(14) },
+      { id: 'A0000000-0000-0000-0000-000000000008', rental_order_id: '80000000-0000-0000-0000-000000000005', user_id: '00000000-0000-0000-0000-000000000006', type: 'rental_fee', amount: 560000, method: 'vnpay', status: 'success', transaction_ref: 'VP-F001-005', paid_at: daysAgo(14) },
     ],
     skipDuplicates: true,
   })
@@ -1657,18 +1657,18 @@ async function main() {
   await prisma.rentalProof.createMany({
     data: [
       // Order 1 – 4 stages
-      { id: 'B0000000-0000-0000-0000-000000000001', rental_order_id: '80000000-0000-0000-0000-000000000001', uploaded_by: '00000000-0000-0000-0000-000000000003', stage: 'pre_shipment',  proof_type: 'image', file_url: 'https://cdn.mutux.vn/proof/o1-pre-ship.jpg',  note: 'Máy đầy đủ phụ kiện, không trầy xước' },
-      { id: 'B0000000-0000-0000-0000-000000000002', rental_order_id: '80000000-0000-0000-0000-000000000001', uploaded_by: '00000000-0000-0000-0000-000000000006', stage: 'post_received', proof_type: 'image', file_url: 'https://cdn.mutux.vn/proof/o1-post-recv.jpg', note: 'Nhận hàng ok, hộp nguyên seal' },
-      { id: 'B0000000-0000-0000-0000-000000000003', rental_order_id: '80000000-0000-0000-0000-000000000001', uploaded_by: '00000000-0000-0000-0000-000000000006', stage: 'pre_return',    proof_type: 'video', file_url: 'https://cdn.mutux.vn/proof/o1-pre-ret.mp4',   note: 'Trả hàng nguyên vẹn' },
-      { id: 'B0000000-0000-0000-0000-000000000004', rental_order_id: '80000000-0000-0000-0000-000000000001', uploaded_by: '00000000-0000-0000-0000-000000000003', stage: 'post_returned', proof_type: 'image', file_url: 'https://cdn.mutux.vn/proof/o1-post-ret.jpg',  note: 'Nhận lại ok' },
+      { id: 'B0000000-0000-0000-0000-000000000001', rental_order_id: '80000000-0000-0000-0000-000000000001', uploaded_by: '00000000-0000-0000-0000-000000000003', stage: 'pre_shipment', proof_type: 'image', file_url: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=800&auto=format&fit=crop&q=80', note: 'Máy đầy đủ phụ kiện, không trầy xước' },
+      { id: 'B0000000-0000-0000-0000-000000000002', rental_order_id: '80000000-0000-0000-0000-000000000001', uploaded_by: '00000000-0000-0000-0000-000000000006', stage: 'post_received', proof_type: 'image', file_url: 'https://images.unsplash.com/photo-1546435770-a3e426bf472b?w=800&auto=format&fit=crop&q=80', note: 'Nhận hàng ok, hộp nguyên seal' },
+      { id: 'B0000000-0000-0000-0000-000000000003', rental_order_id: '80000000-0000-0000-0000-000000000001', uploaded_by: '00000000-0000-0000-0000-000000000006', stage: 'pre_return', proof_type: 'image', file_url: 'https://images.unsplash.com/photo-1583394838336-acd977736f90?w=800&auto=format&fit=crop&q=80', note: 'Trả hàng nguyên vẹn' },
+      { id: 'B0000000-0000-0000-0000-000000000004', rental_order_id: '80000000-0000-0000-0000-000000000001', uploaded_by: '00000000-0000-0000-0000-000000000003', stage: 'post_returned', proof_type: 'image', file_url: 'https://images.unsplash.com/photo-1484704849700-f032a568e944?w=800&auto=format&fit=crop&q=80', note: 'Nhận lại ok' },
       // Order 2 – active
-      { id: 'B0000000-0000-0000-0000-000000000005', rental_order_id: '80000000-0000-0000-0000-000000000002', uploaded_by: '00000000-0000-0000-0000-000000000004', stage: 'pre_shipment',  proof_type: 'image', file_url: 'https://cdn.mutux.vn/proof/o2-pre-ship.jpg',  note: 'Bàn phím sạch sẽ' },
-      { id: 'B0000000-0000-0000-0000-000000000006', rental_order_id: '80000000-0000-0000-0000-000000000002', uploaded_by: '00000000-0000-0000-0000-000000000007', stage: 'post_received', proof_type: 'image', file_url: 'https://cdn.mutux.vn/proof/o2-post-recv.jpg', note: 'Nhận đúng hàng' },
+      { id: 'B0000000-0000-0000-0000-000000000005', rental_order_id: '80000000-0000-0000-0000-000000000002', uploaded_by: '00000000-0000-0000-0000-000000000004', stage: 'pre_shipment', proof_type: 'image', file_url: 'https://images.unsplash.com/photo-1587829741301-dc798b83add3?w=800&auto=format&fit=crop&q=80', note: 'Bàn phím sạch sẽ' },
+      { id: 'B0000000-0000-0000-0000-000000000006', rental_order_id: '80000000-0000-0000-0000-000000000002', uploaded_by: '00000000-0000-0000-0000-000000000007', stage: 'post_received', proof_type: 'image', file_url: 'https://images.unsplash.com/photo-1618384887929-16ec33fab9ef?w=800&auto=format&fit=crop&q=80', note: 'Nhận đúng hàng' },
       // Order 5 – 4 stages
-      { id: 'B0000000-0000-0000-0000-000000000007', rental_order_id: '80000000-0000-0000-0000-000000000005', uploaded_by: '00000000-0000-0000-0000-000000000002', stage: 'pre_shipment',  proof_type: 'image', file_url: 'https://cdn.mutux.vn/proof/o5-pre-ship.jpg',  note: null },
-      { id: 'B0000000-0000-0000-0000-000000000008', rental_order_id: '80000000-0000-0000-0000-000000000005', uploaded_by: '00000000-0000-0000-0000-000000000006', stage: 'post_received', proof_type: 'image', file_url: 'https://cdn.mutux.vn/proof/o5-post-recv.jpg', note: null },
-      { id: 'B0000000-0000-0000-0000-000000000009', rental_order_id: '80000000-0000-0000-0000-000000000005', uploaded_by: '00000000-0000-0000-0000-000000000006', stage: 'pre_return',    proof_type: 'video', file_url: 'https://cdn.mutux.vn/proof/o5-pre-ret.mp4',   note: 'Phím space bar bị vỡ clip mount' },
-      { id: 'B0000000-0000-0000-0000-000000000010', rental_order_id: '80000000-0000-0000-0000-000000000005', uploaded_by: '00000000-0000-0000-0000-000000000002', stage: 'post_returned', proof_type: 'image', file_url: 'https://cdn.mutux.vn/proof/o5-post-ret.jpg',  note: 'Xác nhận hư hỏng' },
+      { id: 'B0000000-0000-0000-0000-000000000007', rental_order_id: '80000000-0000-0000-0000-000000000005', uploaded_by: '00000000-0000-0000-0000-000000000002', stage: 'pre_shipment', proof_type: 'image', file_url: 'https://images.unsplash.com/photo-1615663245857-ac93bb7c39e7?w=800&auto=format&fit=crop&q=80', note: null },
+      { id: 'B0000000-0000-0000-0000-000000000008', rental_order_id: '80000000-0000-0000-0000-000000000005', uploaded_by: '00000000-0000-0000-0000-000000000006', stage: 'post_received', proof_type: 'image', file_url: 'https://images.unsplash.com/photo-1527864550417-7fd91fc51a46?w=800&auto=format&fit=crop&q=80', note: null },
+      { id: 'B0000000-0000-0000-0000-000000000009', rental_order_id: '80000000-0000-0000-0000-000000000005', uploaded_by: '00000000-0000-0000-0000-000000000006', stage: 'pre_return', proof_type: 'image', file_url: 'https://images.unsplash.com/photo-1629429408209-1f912961dbd8?w=800&auto=format&fit=crop&q=80', note: 'Phím space bar bị vỡ clip mount' },
+      { id: 'B0000000-0000-0000-0000-000000000010', rental_order_id: '80000000-0000-0000-0000-000000000005', uploaded_by: '00000000-0000-0000-0000-000000000002', stage: 'post_returned', proof_type: 'image', file_url: 'https://images.unsplash.com/photo-1613141411244-0e4ac259d217?w=800&auto=format&fit=crop&q=80', note: 'Xác nhận hư hỏng' },
     ],
     skipDuplicates: true,
   })
@@ -1680,8 +1680,8 @@ async function main() {
   await prisma.conversation.createMany({
     data: [
       { id: 'C0000000-0000-0000-0000-000000000001', rental_order_id: '80000000-0000-0000-0000-000000000001', renter_id: '00000000-0000-0000-0000-000000000006', lender_id: '00000000-0000-0000-0000-000000000003', last_message_at: daysAgo(14) },
-      { id: 'C0000000-0000-0000-0000-000000000002', rental_order_id: '80000000-0000-0000-0000-000000000002', renter_id: '00000000-0000-0000-0000-000000000007', lender_id: '00000000-0000-0000-0000-000000000004', last_message_at: daysAgo(1)  },
-      { id: 'C0000000-0000-0000-0000-000000000003', rental_order_id: '80000000-0000-0000-0000-000000000005', renter_id: '00000000-0000-0000-0000-000000000006', lender_id: '00000000-0000-0000-0000-000000000002', last_message_at: daysAgo(8)  },
+      { id: 'C0000000-0000-0000-0000-000000000002', rental_order_id: '80000000-0000-0000-0000-000000000002', renter_id: '00000000-0000-0000-0000-000000000007', lender_id: '00000000-0000-0000-0000-000000000004', last_message_at: daysAgo(1) },
+      { id: 'C0000000-0000-0000-0000-000000000003', rental_order_id: '80000000-0000-0000-0000-000000000005', renter_id: '00000000-0000-0000-0000-000000000006', lender_id: '00000000-0000-0000-0000-000000000002', last_message_at: daysAgo(8) },
     ],
     skipDuplicates: true,
   })
@@ -1746,11 +1746,11 @@ async function main() {
 
   await prisma.disputeEvidence.createMany({
     data: [
-      { id: 'F0000000-0000-0000-0000-000000000001', dispute_id: 'E0000000-0000-0000-0000-000000000001', uploaded_by: '00000000-0000-0000-0000-000000000002', media_type: 'image', url: 'https://cdn.mutux.vn/dispute/d1-evidence-1.jpg' },
-      { id: 'F0000000-0000-0000-0000-000000000002', dispute_id: 'E0000000-0000-0000-0000-000000000001', uploaded_by: '00000000-0000-0000-0000-000000000002', media_type: 'video', url: 'https://cdn.mutux.vn/dispute/d1-evidence-2.mp4' },
-      { id: 'F0000000-0000-0000-0000-000000000003', dispute_id: 'E0000000-0000-0000-0000-000000000001', uploaded_by: '00000000-0000-0000-0000-000000000006', media_type: 'image', url: 'https://cdn.mutux.vn/dispute/d1-counter-1.jpg'  },
-      { id: 'F0000000-0000-0000-0000-000000000004', dispute_id: 'E0000000-0000-0000-0000-000000000002', uploaded_by: '00000000-0000-0000-0000-000000000013', media_type: 'image', url: 'https://cdn.mutux.vn/dispute/d2-evidence-1.jpg' },
-      { id: 'F0000000-0000-0000-0000-000000000005', dispute_id: 'E0000000-0000-0000-0000-000000000003', uploaded_by: '00000000-0000-0000-0000-000000000013', media_type: 'image', url: 'https://cdn.mutux.vn/dispute/d3-evidence-1.jpg' },
+      { id: 'F0000000-0000-0000-0000-000000000001', dispute_id: 'E0000000-0000-0000-0000-000000000001', uploaded_by: '00000000-0000-0000-0000-000000000002', media_type: 'image', url: 'https://images.unsplash.com/photo-1618384887929-16ec33fab9ef?w=800&auto=format&fit=crop&q=80' },
+      { id: 'F0000000-0000-0000-0000-000000000002', dispute_id: 'E0000000-0000-0000-0000-000000000001', uploaded_by: '00000000-0000-0000-0000-000000000002', media_type: 'image', url: 'https://images.unsplash.com/photo-1595225476474-87563907a212?w=800&auto=format&fit=crop&q=80' },
+      { id: 'F0000000-0000-0000-0000-000000000003', dispute_id: 'E0000000-0000-0000-0000-000000000001', uploaded_by: '00000000-0000-0000-0000-000000000006', media_type: 'image', url: 'https://images.unsplash.com/photo-1603481588273-2f908a9a7a1b?w=800&auto=format&fit=crop&q=80' },
+      { id: 'F0000000-0000-0000-0000-000000000004', dispute_id: 'E0000000-0000-0000-0000-000000000002', uploaded_by: '00000000-0000-0000-0000-000000000013', media_type: 'image', url: 'https://images.unsplash.com/photo-1629429408209-1f912961dbd8?w=800&auto=format&fit=crop&q=80' },
+      { id: 'F0000000-0000-0000-0000-000000000005', dispute_id: 'E0000000-0000-0000-0000-000000000003', uploaded_by: '00000000-0000-0000-0000-000000000013', media_type: 'image', url: 'https://images.unsplash.com/photo-1613141411244-0e4ac259d217?w=800&auto=format&fit=crop&q=80' },
     ],
     skipDuplicates: true,
   })
@@ -1774,14 +1774,14 @@ async function main() {
   // =============================================================
   await prisma.creditTransaction.createMany({
     data: [
-      { id: 'a2000000-0000-0000-0000-000000000001', mutux_wallet_id: '50000000-0000-0000-0000-000000000001', type: 'limit_granted', amount: 5000000, display_balance_before: 0,       display_balance_after: 5000000, direction: 'in',  ref_type: null,           ref_id: null,                                   note: 'Cấp hạn mức lần đầu',        status: 'success' },
-      { id: 'a2000000-0000-0000-0000-000000000002', mutux_wallet_id: '50000000-0000-0000-0000-000000000002', type: 'deposit_lock',   amount: 300000,  display_balance_before: 3000000, display_balance_after: 2700000, direction: 'out', ref_type: 'rental_order', ref_id: '80000000-0000-0000-0000-000000000002', note: 'Khoá cọc đơn MX-2024-0002',   status: 'success' },
-      { id: 'a2000000-0000-0000-0000-000000000003', mutux_wallet_id: '50000000-0000-0000-0000-000000000002', type: 'limit_granted', amount: 3000000, display_balance_before: 0,       display_balance_after: 3000000, direction: 'in',  ref_type: null,           ref_id: null,                                   note: 'Cấp hạn mức lần đầu',        status: 'success' },
-      { id: 'a2000000-0000-0000-0000-000000000004', mutux_wallet_id: '50000000-0000-0000-0000-000000000003', type: 'limit_granted', amount: 10000000, display_balance_before: 0,       display_balance_after: 10000000, direction: 'in',  ref_type: null,           ref_id: null,                                   note: 'Cấp hạn mức lần đầu',        status: 'success' },
-      { id: 'a2000000-0000-0000-0000-000000000005', mutux_wallet_id: '50000000-0000-0000-0000-000000000003', type: 'deposit_lock',   amount: 1000000, display_balance_before: 10000000, display_balance_after: 9000000, direction: 'out', ref_type: 'rental_order', ref_id: '80000000-0000-0000-0000-000000000003', note: 'Khoá cọc đơn MX-2024-0003',   status: 'success' },
-      { id: 'a2000000-0000-0000-0000-000000000006', mutux_wallet_id: '50000000-0000-0000-0000-000000000005', type: 'limit_granted', amount: 10000000, display_balance_before: 0,       display_balance_after: 10000000, direction: 'in',  ref_type: null,           ref_id: null,                                   note: 'W2 credit fixture limit granted', status: 'success' },
-      { id: 'a2000000-0000-0000-0000-000000000007', mutux_wallet_id: '50000000-0000-0000-0000-000000000005', type: 'deposit_lock',   amount: 2000000, display_balance_before: 10000000, display_balance_after: 8000000, direction: 'out', ref_type: 'rental_order', ref_id: '80000000-0000-0000-0000-000000000010', note: 'Khoá cọc đơn W2-0010-RC',       status: 'success' },
-      { id: 'a2000000-0000-0000-0000-000000000008', mutux_wallet_id: '50000000-0000-0000-0000-000000000005', type: 'deposit_lock',   amount: 2000000, display_balance_before: 8000000,  display_balance_after: 6000000, direction: 'out', ref_type: 'rental_order', ref_id: '80000000-0000-0000-0000-000000000012', note: 'Khoá cọc đơn W2-0012-CC',       status: 'success' },
+      { id: 'a2000000-0000-0000-0000-000000000001', mutux_wallet_id: '50000000-0000-0000-0000-000000000001', type: 'limit_granted', amount: 5000000, display_balance_before: 0, display_balance_after: 5000000, direction: 'in', ref_type: null, ref_id: null, note: 'Cấp hạn mức lần đầu', status: 'success' },
+      { id: 'a2000000-0000-0000-0000-000000000002', mutux_wallet_id: '50000000-0000-0000-0000-000000000002', type: 'deposit_lock', amount: 300000, display_balance_before: 3000000, display_balance_after: 2700000, direction: 'out', ref_type: 'rental_order', ref_id: '80000000-0000-0000-0000-000000000002', note: 'Khoá cọc đơn MX-2024-0002', status: 'success' },
+      { id: 'a2000000-0000-0000-0000-000000000003', mutux_wallet_id: '50000000-0000-0000-0000-000000000002', type: 'limit_granted', amount: 3000000, display_balance_before: 0, display_balance_after: 3000000, direction: 'in', ref_type: null, ref_id: null, note: 'Cấp hạn mức lần đầu', status: 'success' },
+      { id: 'a2000000-0000-0000-0000-000000000004', mutux_wallet_id: '50000000-0000-0000-0000-000000000003', type: 'limit_granted', amount: 10000000, display_balance_before: 0, display_balance_after: 10000000, direction: 'in', ref_type: null, ref_id: null, note: 'Cấp hạn mức lần đầu', status: 'success' },
+      { id: 'a2000000-0000-0000-0000-000000000005', mutux_wallet_id: '50000000-0000-0000-0000-000000000003', type: 'deposit_lock', amount: 1000000, display_balance_before: 10000000, display_balance_after: 9000000, direction: 'out', ref_type: 'rental_order', ref_id: '80000000-0000-0000-0000-000000000003', note: 'Khoá cọc đơn MX-2024-0003', status: 'success' },
+      { id: 'a2000000-0000-0000-0000-000000000006', mutux_wallet_id: '50000000-0000-0000-0000-000000000005', type: 'limit_granted', amount: 10000000, display_balance_before: 0, display_balance_after: 10000000, direction: 'in', ref_type: null, ref_id: null, note: 'W2 credit fixture limit granted', status: 'success' },
+      { id: 'a2000000-0000-0000-0000-000000000007', mutux_wallet_id: '50000000-0000-0000-0000-000000000005', type: 'deposit_lock', amount: 2000000, display_balance_before: 10000000, display_balance_after: 8000000, direction: 'out', ref_type: 'rental_order', ref_id: '80000000-0000-0000-0000-000000000010', note: 'Khoá cọc đơn W2-0010-RC', status: 'success' },
+      { id: 'a2000000-0000-0000-0000-000000000008', mutux_wallet_id: '50000000-0000-0000-0000-000000000005', type: 'deposit_lock', amount: 2000000, display_balance_before: 8000000, display_balance_after: 6000000, direction: 'out', ref_type: 'rental_order', ref_id: '80000000-0000-0000-0000-000000000012', note: 'Khoá cọc đơn W2-0012-CC', status: 'success' },
     ],
     skipDuplicates: true,
   })
@@ -1792,11 +1792,11 @@ async function main() {
   // =============================================================
   await prisma.lenderWalletTransaction.createMany({
     data: [
-      { id: 'a3000000-0000-0000-0000-000000000001', lender_wallet_id: '60000000-0000-0000-0000-000000000002', rental_order_id: '80000000-0000-0000-0000-000000000001', type: 'income',       amount: 280500, balance_before: 0,       balance_after: 280500,  note: 'Thu nhập đơn MX-2024-0001 (sau phí 15%)' },
-      { id: 'a3000000-0000-0000-0000-000000000002', lender_wallet_id: '60000000-0000-0000-0000-000000000002', rental_order_id: null,                                   type: 'withdrawal',   amount: 280500, balance_before: 280500,  balance_after: 0,       note: 'Rút về tài khoản Techcombank' },
-      { id: 'a3000000-0000-0000-0000-000000000003', lender_wallet_id: '60000000-0000-0000-0000-000000000001', rental_order_id: '80000000-0000-0000-0000-000000000005', type: 'income',       amount: 476000, balance_before: 1023500, balance_after: 1499500, note: 'Thu nhập đơn MX-2024-0005 (sau phí 15%)' },
+      { id: 'a3000000-0000-0000-0000-000000000001', lender_wallet_id: '60000000-0000-0000-0000-000000000002', rental_order_id: '80000000-0000-0000-0000-000000000001', type: 'income', amount: 280500, balance_before: 0, balance_after: 280500, note: 'Thu nhập đơn MX-2024-0001 (sau phí 15%)' },
+      { id: 'a3000000-0000-0000-0000-000000000002', lender_wallet_id: '60000000-0000-0000-0000-000000000002', rental_order_id: null, type: 'withdrawal', amount: 280500, balance_before: 280500, balance_after: 0, note: 'Rút về tài khoản Techcombank' },
+      { id: 'a3000000-0000-0000-0000-000000000003', lender_wallet_id: '60000000-0000-0000-0000-000000000001', rental_order_id: '80000000-0000-0000-0000-000000000005', type: 'income', amount: 476000, balance_before: 1023500, balance_after: 1499500, note: 'Thu nhập đơn MX-2024-0005 (sau phí 15%)' },
       { id: 'a3000000-0000-0000-0000-000000000004', lender_wallet_id: '60000000-0000-0000-0000-000000000001', rental_order_id: '80000000-0000-0000-0000-000000000005', type: 'compensation', amount: 200000, balance_before: 1499500, balance_after: 1699500, note: 'Bồi thường dispute D001 – trừ cọc renter' },
-      { id: 'a3000000-0000-0000-0000-000000000005', lender_wallet_id: '60000000-0000-0000-0000-000000000001', rental_order_id: null,                                   type: 'withdrawal',   amount: 199500, balance_before: 1699500, balance_after: 1500000, note: 'Rút một phần về Vietcombank' },
+      { id: 'a3000000-0000-0000-0000-000000000005', lender_wallet_id: '60000000-0000-0000-0000-000000000001', rental_order_id: null, type: 'withdrawal', amount: 199500, balance_before: 1699500, balance_after: 1500000, note: 'Rút một phần về Vietcombank' },
     ],
     skipDuplicates: true,
   })
@@ -1807,13 +1807,13 @@ async function main() {
   // =============================================================
   await prisma.notification.createMany({
     data: [
-      { id: 'a4000000-0000-0000-0000-000000000001', user_id: '00000000-0000-0000-0000-000000000006', title: 'Đơn thuê đã hoàn thành',       body: 'Đơn MX-2024-0001 đã hoàn thành. Cảm ơn bạn!',           type: 'order',   ref_type: 'rental_order', ref_id: '80000000-0000-0000-0000-000000000001', is_read: true  },
-      { id: 'a4000000-0000-0000-0000-000000000002', user_id: '00000000-0000-0000-0000-000000000003', title: 'Lender nhận lại hàng',          body: 'Bạn đã xác nhận nhận lại tai nghe từ đơn MX-2024-0001.', type: 'order',   ref_type: 'rental_order', ref_id: '80000000-0000-0000-0000-000000000001', is_read: true  },
-      { id: 'a4000000-0000-0000-0000-000000000003', user_id: '00000000-0000-0000-0000-000000000007', title: 'Đơn hàng đang giao',            body: 'Bàn phím đang được giao cho bạn – MX-2024-0002.',          type: 'order',   ref_type: 'rental_order', ref_id: '80000000-0000-0000-0000-000000000002', is_read: false },
-      { id: 'a4000000-0000-0000-0000-000000000004', user_id: '00000000-0000-0000-0000-000000000010', title: 'Đơn chờ xác nhận',              body: 'Lender đang xem xét đơn MX-2024-0004 của bạn.',            type: 'order',   ref_type: 'rental_order', ref_id: '80000000-0000-0000-0000-000000000004', is_read: false },
-      { id: 'a4000000-0000-0000-0000-000000000005', user_id: '00000000-0000-0000-0000-000000000006', title: 'Tranh chấp đã được giải quyết', body: 'Dispute đơn MX-2024-0005 đã xử lý. Trừ cọc 200,000đ.',    type: 'dispute', ref_type: 'rental_order', ref_id: '80000000-0000-0000-0000-000000000005', is_read: false },
-      { id: 'a4000000-0000-0000-0000-000000000006', user_id: '00000000-0000-0000-0000-000000000002', title: 'Bồi thường đã được cộng',       body: 'Bạn nhận được 200,000đ bồi thường vào ví lender.',         type: 'dispute', ref_type: 'rental_order', ref_id: '80000000-0000-0000-0000-000000000005', is_read: true  },
-      { id: 'a4000000-0000-0000-0000-000000000007', user_id: '00000000-0000-0000-0000-000000000008', title: 'Đơn đang vận chuyển',           body: 'Lender đã giao hàng. Vui lòng theo dõi MX-2024-0003.',     type: 'order',   ref_type: 'rental_order', ref_id: '80000000-0000-0000-0000-000000000003', is_read: false },
+      { id: 'a4000000-0000-0000-0000-000000000001', user_id: '00000000-0000-0000-0000-000000000006', title: 'Đơn thuê đã hoàn thành', body: 'Đơn MX-2024-0001 đã hoàn thành. Cảm ơn bạn!', type: 'order', ref_type: 'rental_order', ref_id: '80000000-0000-0000-0000-000000000001', is_read: true },
+      { id: 'a4000000-0000-0000-0000-000000000002', user_id: '00000000-0000-0000-0000-000000000003', title: 'Lender nhận lại hàng', body: 'Bạn đã xác nhận nhận lại tai nghe từ đơn MX-2024-0001.', type: 'order', ref_type: 'rental_order', ref_id: '80000000-0000-0000-0000-000000000001', is_read: true },
+      { id: 'a4000000-0000-0000-0000-000000000003', user_id: '00000000-0000-0000-0000-000000000007', title: 'Đơn hàng đang giao', body: 'Bàn phím đang được giao cho bạn – MX-2024-0002.', type: 'order', ref_type: 'rental_order', ref_id: '80000000-0000-0000-0000-000000000002', is_read: false },
+      { id: 'a4000000-0000-0000-0000-000000000004', user_id: '00000000-0000-0000-0000-000000000010', title: 'Đơn chờ xác nhận', body: 'Lender đang xem xét đơn MX-2024-0004 của bạn.', type: 'order', ref_type: 'rental_order', ref_id: '80000000-0000-0000-0000-000000000004', is_read: false },
+      { id: 'a4000000-0000-0000-0000-000000000005', user_id: '00000000-0000-0000-0000-000000000006', title: 'Tranh chấp đã được giải quyết', body: 'Dispute đơn MX-2024-0005 đã xử lý. Trừ cọc 200,000đ.', type: 'dispute', ref_type: 'rental_order', ref_id: '80000000-0000-0000-0000-000000000005', is_read: false },
+      { id: 'a4000000-0000-0000-0000-000000000006', user_id: '00000000-0000-0000-0000-000000000002', title: 'Bồi thường đã được cộng', body: 'Bạn nhận được 200,000đ bồi thường vào ví lender.', type: 'dispute', ref_type: 'rental_order', ref_id: '80000000-0000-0000-0000-000000000005', is_read: true },
+      { id: 'a4000000-0000-0000-0000-000000000007', user_id: '00000000-0000-0000-0000-000000000008', title: 'Đơn đang vận chuyển', body: 'Lender đã giao hàng. Vui lòng theo dõi MX-2024-0003.', type: 'order', ref_type: 'rental_order', ref_id: '80000000-0000-0000-0000-000000000003', is_read: false },
     ],
     skipDuplicates: true,
   })
@@ -1824,9 +1824,9 @@ async function main() {
   // =============================================================
   await prisma.membershipPlan.createMany({
     data: [
-      { id: 'a5000000-0000-0000-0000-000000000001', name: 'Basic',   price: 99000,  duration_days: 30,  rental_discount_rate: 0.05, credit_fee_discount_rate: 0.00, priority_access: false },
-      { id: 'a5000000-0000-0000-0000-000000000002', name: 'Pro',    price: 299000, duration_days: 30,  rental_discount_rate: 0.10, credit_fee_discount_rate: 0.05, priority_access: true  },
-      { id: 'a5000000-0000-0000-0000-000000000003', name: 'Annual', price: 999000, duration_days: 365, rental_discount_rate: 0.15, credit_fee_discount_rate: 0.10, priority_access: true  },
+      { id: 'a5000000-0000-0000-0000-000000000001', name: 'Basic', price: 99000, duration_days: 30, rental_discount_rate: 0.05, credit_fee_discount_rate: 0.00, priority_access: false },
+      { id: 'a5000000-0000-0000-0000-000000000002', name: 'Pro', price: 299000, duration_days: 30, rental_discount_rate: 0.10, credit_fee_discount_rate: 0.05, priority_access: true },
+      { id: 'a5000000-0000-0000-0000-000000000003', name: 'Annual', price: 999000, duration_days: 365, rental_discount_rate: 0.15, credit_fee_discount_rate: 0.10, priority_access: true },
     ],
     skipDuplicates: true,
   })
@@ -1837,7 +1837,7 @@ async function main() {
   // =============================================================
   await prisma.gearPriceHistory.createMany({
     data: [
-      { id: 'a6000000-0000-0000-0000-000000000001', gear_id: '30000000-0000-0000-0000-000000000001', changed_by: '00000000-0000-0000-0000-000000000002', old_rent_price_per_day: 70000,  new_rent_price_per_day: 60000,  reason: 'Giảm giá khuyến mãi ra mắt'  },
+      { id: 'a6000000-0000-0000-0000-000000000001', gear_id: '30000000-0000-0000-0000-000000000001', changed_by: '00000000-0000-0000-0000-000000000002', old_rent_price_per_day: 70000, new_rent_price_per_day: 60000, reason: 'Giảm giá khuyến mãi ra mắt' },
       { id: 'a6000000-0000-0000-0000-000000000002', gear_id: '30000000-0000-0000-0000-000000000004', changed_by: '00000000-0000-0000-0000-000000000003', old_rent_price_per_day: 180000, new_rent_price_per_day: 200000, reason: 'Tăng giá theo thị trường' },
     ],
     skipDuplicates: true,
