@@ -279,3 +279,11 @@ export async function deleteGear(id: string): Promise<Gear> {
     })
   );
 }
+
+export async function getMyGearById(id: string): Promise<Gear> {
+  return mapGear(
+    await apiClient<WireGear>(`/gears/mine/${encodeURIComponent(id)}`, {
+      cache: "no-store",
+    })
+  );
+}

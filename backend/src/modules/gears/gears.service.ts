@@ -132,6 +132,15 @@ export class GearsService {
     return this.mapDetail(gear);
   }
 
+  async findOneMine(id: string, lenderId: string) {
+    const gear = await this.gearsRepository.findByIdForLenderDetail(
+      id,
+      lenderId,
+    );
+    if (!gear) throw new NotFoundException('Gear not found');
+    return this.mapDetail(gear);
+  }
+
   async findMine(
     lenderId: string,
     query: GetMyGearsQueryDto,
@@ -184,31 +193,52 @@ export class GearsService {
         )
       : undefined;
 
-    return this.gearsRepository.updateWithMedia(id, {
-      ...(data.categoryId !== undefined
-        ? { category_id: data.categoryId }
-        : {}),
-      ...(data.name !== undefined ? { name: data.name } : {}),
-      ...(data.brand !== undefined ? { brand: data.brand } : {}),
-      ...(data.model !== undefined ? { model: data.model } : {}),
-      ...(data.serialNumber !== undefined
-        ? { serial_number: data.serialNumber }
-        : {}),
-      ...(data.description !== undefined
-        ? { description: data.description }
-        : {}),
-      ...(data.specifications !== undefined
-        ? { specifications: data.specifications }
-        : {}),
-      ...(data.value !== undefined ? { value: data.value } : {}),
-      ...(data.rentPricePerDay !== undefined
-        ? { rent_price_per_day: data.rentPricePerDay }
-        : {}),
-      ...(data.status !== undefined ? { status: data.status } : {}),
-      ...(gear.approval_status === 'approved'
-        ? { approval_status: 'pending', approved_by: null, approved_at: null }
-        : {}),
-    }, imageUrls);
+    // Determine if lender is changing content fields (name, price, description,
+    // media, specs…). A pure status toggle (delist / relist / maintenance) must
+    // NOT reset approval_status, so that the gear keeps its approval context and
+    // can be recovered to the correct listingStatus without re-review.
+    const isContentChange =
+      data.categoryId !== undefined ||
+      data.name !== undefined ||
+      data.brand !== undefined ||
+      data.model !== undefined ||
+      data.serialNumber !== undefined ||
+      data.description !== undefined ||
+      data.specifications !== undefined ||
+      data.value !== undefined ||
+      data.rentPricePerDay !== undefined ||
+      (data.imageUrls !== undefined && data.imageUrls.length > 0);
+
+    return this.gearsRepository.updateWithMedia(
+      id,
+      {
+        ...(data.categoryId !== undefined
+          ? { category_id: data.categoryId }
+          : {}),
+        ...(data.name !== undefined ? { name: data.name } : {}),
+        ...(data.brand !== undefined ? { brand: data.brand } : {}),
+        ...(data.model !== undefined ? { model: data.model } : {}),
+        ...(data.serialNumber !== undefined
+          ? { serial_number: data.serialNumber }
+          : {}),
+        ...(data.description !== undefined
+          ? { description: data.description }
+          : {}),
+        ...(data.specifications !== undefined
+          ? { specifications: data.specifications }
+          : {}),
+        ...(data.value !== undefined ? { value: data.value } : {}),
+        ...(data.rentPricePerDay !== undefined
+          ? { rent_price_per_day: data.rentPricePerDay }
+          : {}),
+        ...(data.status !== undefined ? { status: data.status } : {}),
+        // Only reset approval when content actually changed on an approved gear.
+        ...(isContentChange && gear.approval_status === 'approved'
+          ? { approval_status: 'pending', approved_by: null, approved_at: null }
+          : {}),
+      },
+      imageUrls,
+    );
   }
 
   async remove(id: string): Promise<Gear> {

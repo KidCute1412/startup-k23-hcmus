@@ -3,7 +3,7 @@ import {
   createGear as createGearService,
   updateGear as updateGearService,
   deleteGear as deleteGearService,
-  getGearById as getGearByIdService,
+  getMyGearById as getGearByIdService,
 } from "@/services/gearService";
 import type { Gear } from "@/types/catalog";
 
@@ -72,6 +72,11 @@ export function useGears() {
     return updateGear(id, { status: "delisted" });
   };
 
+  /** Recover a delisted gear back to available */
+  const relist = async (id: string): Promise<Gear> => {
+    return updateGear(id, { status: "available" });
+  };
+
   const togglePause = async (id: string, currentStatus: string): Promise<Gear> => {
     const targetStatus =
       currentStatus === "paused" || currentStatus === "maintenance"
@@ -99,6 +104,7 @@ export function useGears() {
     createGear,
     updateGear,
     softDelete,
+    relist,
     togglePause,
     getGearById,
     loading,

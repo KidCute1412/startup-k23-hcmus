@@ -257,6 +257,27 @@ export class GearsRepository {
     };
   }
 
+  async findByIdForLenderDetail(
+    id: string,
+    lenderId: string,
+  ): Promise<PublicGearDetailRecord | null> {
+    const gear = await this.prisma.gear.findFirst({
+      where: { id, lender_id: lenderId },
+      select: detailGearSelect,
+    });
+    if (!gear) return null;
+    const aggregate = await this.prisma.review.aggregate({
+      where: { target_gear_id: id, target_type: 'gear' },
+      _avg: { rating: true },
+      _count: { id: true },
+    });
+    return {
+      ...gear,
+      rating: aggregate._avg.rating ?? 0,
+      reviewCount: aggregate._count.id,
+    };
+  }
+
   async findMine(
     options: FindMineOptions,
   ): Promise<{ data: PublicGearRecord[]; total: number }> {

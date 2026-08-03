@@ -16,7 +16,7 @@ const statusConfig: Record<
       "bg-amber-500/10 text-amber-500 border border-amber-500/20",
   },
   draft: {
-    label: "Bản nháp",
+    label: "Đã gỡ",
     className:
       "bg-vanguard-light-surfBright/80 text-vanguard-light-textMuted border border-vanguard-light-border dark:bg-vanguard-dark-surfBright/80 dark:text-vanguard-dark-textMuted dark:border-vanguard-dark-border",
   },

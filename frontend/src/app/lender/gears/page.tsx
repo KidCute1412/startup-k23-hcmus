@@ -28,10 +28,8 @@ export default function LenderGearsPage() {
             listingStatus = "pending_approval";
           } else if (gear.approvalStatus === "rejected") {
             listingStatus = "rejected";
-          } else if (gear.status === "delisted") {
+          } else if (gear.status === "delisted" || gear.status === "maintenance") {
             listingStatus = "draft";
-          } else if (gear.status === "maintenance") {
-            listingStatus = "paused";
           } else if (gear.status === "available" || gear.status === "rented") {
             listingStatus = "active";
           }
@@ -48,6 +46,7 @@ export default function LenderGearsPage() {
             condition: gear.condition || "Like new",
             availability: gear.availability || "available",
             listingStatus,
+            approvalStatus: (gear.approvalStatus as "pending" | "approved" | "rejected") || "pending",
             dailyPrice: gear.pricing.dailyPrice,
             depositCash: gear.pricing.depositCash || 0,
             creditLineRequired: gear.pricing.creditLineRequired || 0,

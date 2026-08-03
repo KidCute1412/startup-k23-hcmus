@@ -4,6 +4,8 @@ import { PackagePlus, Search } from "lucide-react";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { useToast } from "@/components/ui/toast";
 import { MyGearCard } from "./my-gear-card";
 import type { LenderGear, ListingStatus } from "./types";
 import { useGears } from "@/hooks/useGears";
@@ -15,16 +17,18 @@ type Props = {
 const STATUS_TABS: { value: "all" | ListingStatus; label: string }[] = [
   { value: "all", label: "Tất cả" },
   { value: "active", label: "Đang cho thuê" },
-  { value: "paused", label: "Tạm dừng" },
   { value: "pending_approval", label: "Chờ duyệt" },
-  { value: "draft", label: "Bản nháp" },
+  { value: "draft", label: "Đã gỡ" },
 ];
 
 export function MyGearsList({ gears: initialGears }: Props) {
   const [gears, setGears] = useState(initialGears);
   const [tab, setTab] = useState<"all" | ListingStatus>("all");
   const [query, setQuery] = useState("");
-  const { togglePause, softDelete } = useGears();
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const { softDelete, relist } = useGears();
+  const { error: showError, success: showSuccess } = useToast();
 
   const filtered = useMemo(() => {
     let list = gears;
@@ -42,36 +46,92 @@ export function MyGearsList({ gears: initialGears }: Props) {
     return list;
   }, [gears, tab, query]);
 
-  async function handleTogglePause(id: string) {
-    const targetGear = gears.find((g) => g.id === id);
-    if (!targetGear) return;
+  // Opens the custom confirm dialog
+  function handleDelete(id: string) {
+    setPendingDeleteId(id);
+  }
+
+  // Called when user confirms deletion in the dialog.
+  // We update listingStatus -> "draft" in local state (not remove) so the gear
+  // immediately moves to the "Da go" tab and the Recover button is accessible.
+  async function handleConfirmDelete() {
+    if (!pendingDeleteId) return;
+    setDeleting(true);
     try {
-      await togglePause(id, targetGear.listingStatus);
+      await softDelete(pendingDeleteId);
       setGears((prev) =>
-        prev.map((g) => {
-          if (g.id !== id) return g;
-          return {
-            ...g,
-            listingStatus: g.listingStatus === "paused" ? "active" : "paused",
-          };
-        }),
+        prev.map((g) =>
+          g.id === pendingDeleteId ? { ...g, listingStatus: "draft" as const } : g,
+        ),
+      );
+      showSuccess(
+        "Thiết bị đã được gỡ khỏi marketplace. Xem trong tab \"Đã gỡ\".",
+        "Đã gỡ gear",
       );
     } catch (err: any) {
-      alert(err?.message || "Không thể cập nhật trạng thái thiết bị.");
+      showError(err?.message || "Không thể xóa thiết bị. Vui lòng thử lại.", "Lỗi");
+    } finally {
+      setDeleting(false);
+      setPendingDeleteId(null);
     }
   }
 
-  async function handleDelete(id: string) {
-    if (!confirm("Bạn có chắc chắn muốn xóa thiết bị này không?")) return;
+  function handleCancelDelete() {
+    if (!deleting) setPendingDeleteId(null);
+  }
+
+  // Gear name for the confirm dialog description
+  const pendingGearName = pendingDeleteId
+    ? (gears.find((g) => g.id === pendingDeleteId)?.name ?? "thiết bị này")
+    : null;
+
+  // Re-derive listingStatus from backend approvalStatus + the new operational status
+  function deriveListingStatus(
+    approvalStatus: "pending" | "approved" | "rejected",
+    status: "available" | "delisted" | "maintenance" | "rented",
+  ): import("./types").ListingStatus {
+    if (approvalStatus === "pending") return "pending_approval";
+    if (approvalStatus === "rejected") return "rejected";
+    if (status === "delisted" || status === "maintenance") return "draft";
+    return "active";
+  }
+
+  async function handleRecover(id: string) {
     try {
-      await softDelete(id);
-      setGears((prev) => prev.filter((g) => g.id !== id));
+      const updated = await relist(id);
+      setGears((prev) =>
+        prev.map((g) =>
+          g.id === id
+            ? {
+                ...g,
+                listingStatus: deriveListingStatus(
+                  updated.approvalStatus as "pending" | "approved" | "rejected",
+                  "available",
+                ),
+              }
+            : g,
+        ),
+      );
+      showSuccess("Thiết bị đã được khôi phục về marketplace.", "Đã khôi phục");
     } catch (err: any) {
-      alert(err?.message || "Không thể xóa thiết bị.");
+      showError(err?.message || "Không thể khôi phục thiết bị. Vui lòng thử lại.", "Lỗi");
     }
   }
 
   return (
+    <>
+      {/* Custom delete confirmation dialog */}
+      <ConfirmDialog
+        open={pendingDeleteId !== null}
+        variant="danger"
+        title="Gỡ thiết bị"
+        description={`Bạn có chắc muốn gỡ "${pendingGearName}" khỏi marketplace? Thiết bị sẽ không còn hiển thị với người thuê, nhưng bạn có thể khôi phục lại bất cứ lúc nào.`}
+        confirmLabel={deleting ? "Đang xóa…" : "Xác nhận gỡ"}
+        cancelLabel="Hủy"
+        onConfirm={handleConfirmDelete}
+        onCancel={handleCancelDelete}
+      />
+      {/* Main list */}
     <div className="space-y-6">
       {/* Toolbar */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -135,8 +195,8 @@ export function MyGearsList({ gears: initialGears }: Props) {
             <MyGearCard
               key={gear.id}
               gear={gear}
-              onTogglePause={handleTogglePause}
               onDelete={handleDelete}
+              onRecover={handleRecover}
             />
           ))}
         </div>
@@ -163,5 +223,6 @@ export function MyGearsList({ gears: initialGears }: Props) {
         </div>
       )}
     </div>
+    </>
   );
 }

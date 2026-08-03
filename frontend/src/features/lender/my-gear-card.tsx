@@ -5,6 +5,7 @@ import {
   Eye,
   EyeOff,
   MoreVertical,
+  RotateCcw,
   Star,
   Trash2,
   TrendingUp,
@@ -20,11 +21,11 @@ import { resolveMediaUrl } from "@/lib/media";
 
 type Props = {
   gear: LenderGear;
-  onTogglePause?: (id: string) => void;
   onDelete?: (id: string) => void;
+  onRecover?: (id: string) => void;
 };
 
-export function MyGearCard({ gear, onTogglePause, onDelete }: Props) {
+export function MyGearCard({ gear, onDelete, onRecover }: Props) {
   const [menuOpen, setMenuOpen] = useState(false);
 
   return (
@@ -82,6 +83,20 @@ export function MyGearCard({ gear, onTogglePause, onDelete }: Props) {
             >
               <Edit size={14} />
             </Link>
+
+            {/* Recover button — only shown for delisted gears */}
+            {gear.listingStatus === "draft" && (
+              <button
+                type="button"
+                onClick={() => onRecover?.(gear.id)}
+                title="Khôi phục về marketplace"
+                className="inline-flex size-8 items-center justify-center rounded-v-sm bg-emerald-100 text-emerald-600 hover:bg-emerald-500 hover:text-white transition-colors dark:bg-emerald-950/30 dark:text-emerald-400 dark:hover:bg-emerald-500 dark:hover:text-white"
+                aria-label="Khôi phục"
+              >
+                <RotateCcw size={14} />
+              </button>
+            )}
+
             <button
               type="button"
               onClick={() => onDelete?.(gear.id)}
@@ -89,14 +104,6 @@ export function MyGearCard({ gear, onTogglePause, onDelete }: Props) {
               aria-label="Xóa"
             >
               <Trash2 size={14} />
-            </button>
-            <button
-              type="button"
-              onClick={() => onTogglePause?.(gear.id)}
-              className="inline-flex size-8 items-center justify-center rounded-v-sm bg-vanguard-light-surfDim text-vanguard-light-textMuted hover:bg-vanguard-light-text transition-colors dark:bg-vanguard-dark-surfBright dark:text-vanguard-dark-textMuted dark:hover:text-vanguard-dark-text"
-              aria-label={gear.listingStatus === "paused" ? "Kích hoạt" : "Tạm dừng"}
-            >
-              {gear.listingStatus === "paused" ? <Eye size={14} /> : <EyeOff size={14} />}
             </button>
           </div>
         </div>

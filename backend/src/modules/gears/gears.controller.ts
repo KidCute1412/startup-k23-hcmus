@@ -55,6 +55,15 @@ export class GearsController {
     return this.gearsService.findMine(req.user.id, query);
   }
 
+  @Get('mine/:id')
+  @UseGuards(JwtAuthGuard)
+  async findOneMine(
+    @Param('id', new ParseUUIDPipe()) id: string,
+    @Req() req: AuthenticatedRequest,
+  ) {
+    return this.gearsService.findOneMine(id, req.user.id);
+  }
+
   @Get(':id')
   async findOne(@Param('id', new ParseUUIDPipe()) id: string) {
     return this.gearsService.findOne(id);

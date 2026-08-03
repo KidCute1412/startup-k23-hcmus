@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   PackageCheck,
   CheckCircle2,
@@ -46,9 +46,15 @@ export function GearQueueFeature() {
   } = useAdminGears("pending", 1, 10);
 
   const [selectedGear, setSelectedGear] = useState<AdminGearItem | null>(null);
+  const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [rejectingGearId, setRejectingGearId] = useState<string | null>(null);
   const [rejectReason, setRejectReason] = useState<string>("");
   const [searchQuery, setSearchQuery] = useState<string>("");
+
+  // Reset image index whenever a new gear is opened
+  useEffect(() => {
+    setActiveImageIndex(0);
+  }, [selectedGear?.id]);
 
   const filteredGears = gears.filter((g) => {
     const ownerName = g.lender?.full_name || g.owner?.full_name || g.lender?.email || g.owner?.email || "";
@@ -329,98 +335,222 @@ export function GearQueueFeature() {
       )}
 
       {/* Inspect Modal */}
-      {selectedGear && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-2xl overflow-hidden rounded-v border border-vanguard-light-border bg-vanguard-light-surf shadow-2xl dark:border-vanguard-dark-border dark:bg-vanguard-dark-surf">
-            <div className="relative h-64 w-full bg-black">
-              <Image
-                src={resolveMediaUrl(selectedGear.media?.[0]?.url)}
-                alt={selectedGear.name}
-                fill
-                className="object-contain"
-              />
-              <button
-                type="button"
-                onClick={() => setSelectedGear(null)}
-                className="absolute right-3 top-3 flex size-8 items-center justify-center rounded-full bg-black/60 text-white backdrop-blur-md"
-              >
-                <X size={18} />
-              </button>
-            </div>
+      {selectedGear && (() => {
+        const modalRentPrice = Number(selectedGear.rent_price_per_day || selectedGear.price_per_day || 0);
+        const modalDeposit = Number(selectedGear.value || selectedGear.deposit_fee || 0);
+        const modalImages = selectedGear.media ?? [];
+        const activeImg = modalImages[activeImageIndex];
+        const specs = selectedGear.specifications
+          ? (typeof selectedGear.specifications === "object" && !Array.isArray(selectedGear.specifications)
+              ? Object.entries(selectedGear.specifications as Record<string, string>)
+              : [])
+          : [];
+        const approvalBadge: Record<string, { label: string; cls: string; dot: string }> = {
+          pending:  { label: "Chờ kiểm định", cls: "bg-amber-500/15 text-amber-400 border-amber-500/30",   dot: "bg-amber-400" },
+          approved: { label: "Đã duyệt",      cls: "bg-emerald-500/15 text-emerald-400 border-emerald-500/30", dot: "bg-emerald-400" },
+          rejected: { label: "Bị từ chối",    cls: "bg-red-500/15 text-red-400 border-red-500/30",       dot: "bg-red-400" },
+        };
+        const badgeMeta = approvalBadge[selectedGear.approval_status] ?? approvalBadge.pending;
 
-            <div className="p-6">
-              <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-vanguard-primary">
-                <Tag size={14} /> {selectedGear.category?.name || "Gaming Gear"}
-              </div>
-              <h2 className="mt-1 font-display text-xl font-bold text-vanguard-light-text dark:text-vanguard-dark-text">
-                {selectedGear.name}
-              </h2>
+        const goPrev = () => setActiveImageIndex((i) => (i - 1 + modalImages.length) % modalImages.length);
+        const goNext = () => setActiveImageIndex((i) => (i + 1) % modalImages.length);
 
-              <div className="mt-4 grid grid-cols-2 gap-4 text-xs">
-                <div>
-                  <span className="text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted">Thương hiệu / Model:</span>
-                  <p className="font-semibold text-vanguard-light-text dark:text-vanguard-dark-text">
-                    {selectedGear.brand || "—"} {selectedGear.model ? `/ ${selectedGear.model}` : ""}
-                  </p>
-                </div>
-                <div>
-                  <span className="text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted">Mã Serial/IMEI:</span>
-                  <p className="font-mono font-semibold text-vanguard-light-text dark:text-vanguard-dark-text">
-                    {selectedGear.serial_number || "Chưa cập nhật"}
-                  </p>
-                </div>
-                <div>
-                  <span className="text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted">Chủ sở hữu (Lender):</span>
-                  <p className="font-semibold text-vanguard-light-text dark:text-vanguard-dark-text">
-                    {selectedGear.lender?.full_name || selectedGear.owner?.full_name || "Chưa rõ"} ({selectedGear.lender?.email || selectedGear.owner?.email || ""})
-                  </p>
-                </div>
-                <div>
-                  <span className="text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted">Thời gian tạo:</span>
-                  <p className="font-semibold text-vanguard-light-text dark:text-vanguard-dark-text">
-                    {new Date(selectedGear.created_at).toLocaleString("vi-VN")}
-                  </p>
-                </div>
-              </div>
+        return (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-3 backdrop-blur-md"
+            onClick={() => setSelectedGear(null)}
+          >
+            {/* Wide modal — stop propagation so clicking inside doesn't close */}
+            <div
+              className="relative flex w-full max-w-5xl overflow-hidden rounded-2xl border border-white/10 bg-vanguard-light-surf shadow-2xl dark:bg-vanguard-dark-surf"
+              style={{ maxHeight: "92vh" }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* ── LEFT: Image gallery panel ── */}
+              <div className="flex w-[52%] shrink-0 flex-col bg-black">
+                {/* Main viewer */}
+                <div className="relative flex-1" style={{ minHeight: 0 }}>
+                  {activeImg ? (
+                    <Image
+                      key={activeImg.id}
+                      src={resolveMediaUrl(activeImg.url)}
+                      alt={`${selectedGear.name} — ảnh ${activeImageIndex + 1}`}
+                      fill
+                      className="object-contain transition-opacity duration-200"
+                      sizes="52vw"
+                      priority
+                    />
+                  ) : (
+                    <div className="flex h-full items-center justify-center text-white/30 text-sm">Chưa có ảnh</div>
+                  )}
 
-              {selectedGear.description && (
-                <div className="mt-4 rounded-v-sm bg-vanguard-light-surfDim p-3 text-xs dark:bg-vanguard-dark-surfBright">
-                  <span className="font-semibold text-vanguard-light-text dark:text-vanguard-dark-text">Mô tả sản phẩm:</span>
-                  <p className="mt-1 text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted">{selectedGear.description}</p>
-                </div>
-              )}
+                  {/* Prev / Next arrows */}
+                  {modalImages.length > 1 && (
+                    <>
+                      <button
+                        type="button"
+                        onClick={goPrev}
+                        className="absolute left-3 top-1/2 -translate-y-1/2 flex size-9 items-center justify-center rounded-full bg-black/50 text-white backdrop-blur-sm transition hover:bg-black/80"
+                      >
+                        <ChevronLeft size={20} />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={goNext}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 flex size-9 items-center justify-center rounded-full bg-black/50 text-white backdrop-blur-sm transition hover:bg-black/80"
+                      >
+                        <ChevronRight size={20} />
+                      </button>
+                      {/* Counter */}
+                      <span className="absolute bottom-3 right-3 rounded-full bg-black/60 px-2.5 py-1 text-[10px] font-bold text-white/80 backdrop-blur-sm">
+                        {activeImageIndex + 1} / {modalImages.length}
+                      </span>
+                    </>
+                  )}
 
-              <div className="mt-6 flex justify-end gap-3 border-t border-vanguard-light-border pt-4 dark:border-vanguard-dark-border">
-                <button
-                  type="button"
-                  onClick={() => setSelectedGear(null)}
-                  className="rounded-v-sm px-4 py-2 text-xs font-semibold text-vanguard-light-textMuted hover:text-vanguard-light-text dark:text-vanguard-dark-textMuted dark:hover:text-vanguard-dark-text"
-                >
-                  Đóng
-                </button>
-                {selectedGear.approval_status === "pending" && (
-                  <>
-                    <button
-                      type="button"
-                      onClick={() => setRejectingGearId(selectedGear.id)}
-                      className="rounded-v-sm bg-red-600 px-4 py-2 text-xs font-semibold text-white hover:bg-red-500"
-                    >
-                      Từ chối
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => void handleApprove(selectedGear.id)}
-                      className="rounded-v-sm bg-emerald-600 px-4 py-2 text-xs font-semibold text-white hover:bg-emerald-500"
-                    >
-                      Phê duyệt thiết bị
-                    </button>
-                  </>
+                  {/* Close btn */}
+                  <button
+                    type="button"
+                    onClick={() => setSelectedGear(null)}
+                    className="absolute right-3 top-3 flex size-8 items-center justify-center rounded-full bg-black/60 text-white backdrop-blur-md transition hover:bg-red-600"
+                  >
+                    <X size={16} />
+                  </button>
+                </div>
+
+                {/* Thumbnail rail */}
+                {modalImages.length > 1 && (
+                  <div className="flex shrink-0 gap-2 overflow-x-auto border-t border-white/10 bg-black/60 px-3 py-2.5" style={{ scrollbarWidth: "thin" }}>
+                    {modalImages.map((img, i) => (
+                      <button
+                        key={img.id}
+                        type="button"
+                        onClick={() => setActiveImageIndex(i)}
+                        className={`relative size-16 shrink-0 overflow-hidden rounded-lg border-2 transition-all duration-150 ${
+                          i === activeImageIndex
+                            ? "border-vanguard-primary scale-105 shadow-lg shadow-vanguard-primary/30"
+                            : "border-white/10 opacity-60 hover:opacity-100 hover:border-white/40"
+                        }`}
+                      >
+                        <Image src={resolveMediaUrl(img.url)} alt={`Ảnh ${i + 1}`} fill className="object-cover" sizes="64px" />
+                      </button>
+                    ))}
+                  </div>
                 )}
+              </div>
+
+              {/* ── RIGHT: Info panel ── */}
+              <div className="flex flex-1 flex-col overflow-hidden">
+                {/* Header strip */}
+                <div className="shrink-0 border-b border-vanguard-light-border bg-vanguard-light-surfDim px-6 py-4 dark:border-vanguard-dark-border dark:bg-vanguard-dark-surfBright">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-wider text-vanguard-primary">
+                        <Tag size={12} />
+                        {selectedGear.category?.name || "Gaming Gear"}
+                      </div>
+                      <h2 className="mt-1 truncate font-display text-lg font-bold text-vanguard-light-text dark:text-vanguard-dark-text">
+                        {selectedGear.name}
+                      </h2>
+                    </div>
+                    <span className={`mt-0.5 shrink-0 inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider ${badgeMeta.cls}`}>
+                      <span className={`size-1.5 rounded-full ${badgeMeta.dot}`} />
+                      {badgeMeta.label}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Scrollable content */}
+                <div className="flex-1 space-y-5 overflow-y-auto px-6 py-5">
+                  {/* Pricing */}
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="rounded-xl bg-vanguard-primary/10 p-3.5 ring-1 ring-vanguard-primary/20">
+                      <p className="text-[10px] uppercase tracking-widest text-vanguard-primary/70">Giá thuê / ngày</p>
+                      <p className="mt-1 font-display text-xl font-bold text-vanguard-primary">
+                        {modalRentPrice.toLocaleString("vi-VN")} ₫
+                      </p>
+                    </div>
+                    <div className="rounded-xl bg-vanguard-light-surfDim p-3.5 ring-1 ring-vanguard-light-border dark:bg-vanguard-dark-surfBright dark:ring-vanguard-dark-border">
+                      <p className="text-[10px] uppercase tracking-widest text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted">Giá trị định cọc</p>
+                      <p className="mt-1 font-display text-xl font-bold text-vanguard-light-text dark:text-vanguard-dark-text">
+                        {modalDeposit > 0 ? `${modalDeposit.toLocaleString("vi-VN")} ₫` : "—"}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Info table */}
+                  <div className="space-y-2.5 text-xs">
+                    {([
+                      ["Thương hiệu / Model", `${selectedGear.brand || "—"}${selectedGear.model ? " / " + selectedGear.model : ""}`],
+                      ["Mã Serial / IMEI", selectedGear.serial_number || "Chưa cập nhật"],
+                      ["Chủ sở hữu", `${selectedGear.lender?.full_name || selectedGear.owner?.full_name || "Chưa rõ"} · ${selectedGear.lender?.email || selectedGear.owner?.email || ""}`],
+                      ["Thời gian đăng", new Date(selectedGear.created_at).toLocaleString("vi-VN")],
+                    ] as [string, string][]).map(([label, val]) => (
+                      <div key={label} className="flex items-start gap-2">
+                        <span className="w-36 shrink-0 text-[10px] font-semibold uppercase tracking-wider text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted">{label}</span>
+                        <span className="flex-1 font-medium text-vanguard-light-text dark:text-vanguard-dark-text">{val}</span>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Description */}
+                  {selectedGear.description && (
+                    <div className="rounded-xl bg-vanguard-light-surfDim p-3.5 dark:bg-vanguard-dark-surfBright">
+                      <p className="text-[10px] font-bold uppercase tracking-widest text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted">Mô tả sản phẩm</p>
+                      <p className="mt-1.5 text-xs leading-relaxed text-vanguard-light-text dark:text-vanguard-dark-text">{selectedGear.description}</p>
+                    </div>
+                  )}
+
+                  {/* Specifications */}
+                  {specs.length > 0 && (
+                    <div>
+                      <p className="mb-2 text-[10px] font-bold uppercase tracking-widest text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted">Thông số kỹ thuật</p>
+                      <div className="overflow-hidden rounded-xl border border-vanguard-light-border dark:border-vanguard-dark-border">
+                        {specs.map(([label, val], i) => (
+                          <div key={label} className={`flex text-xs ${i % 2 === 0 ? "bg-vanguard-light-surf dark:bg-vanguard-dark-surf" : "bg-vanguard-light-surfDim dark:bg-vanguard-dark-surfBright"}`}>
+                            <span className="w-36 shrink-0 border-r border-vanguard-light-border px-3 py-2 font-semibold text-vanguard-light-text dark:border-vanguard-dark-border dark:text-vanguard-dark-text">{label}</span>
+                            <span className="flex-1 px-3 py-2 text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted">{val}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Footer actions */}
+                <div className="shrink-0 flex items-center justify-between gap-3 border-t border-vanguard-light-border bg-vanguard-light-surfDim px-6 py-4 dark:border-vanguard-dark-border dark:bg-vanguard-dark-surfBright">
+                  <button
+                    type="button"
+                    onClick={() => setSelectedGear(null)}
+                    className="rounded-lg px-4 py-2 text-xs font-semibold text-vanguard-light-textMuted transition hover:text-vanguard-light-text dark:text-vanguard-dark-textMuted dark:hover:text-vanguard-dark-text"
+                  >
+                    Đóng
+                  </button>
+                  {selectedGear.approval_status === "pending" && (
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setRejectingGearId(selectedGear.id)}
+                        className="inline-flex items-center gap-1.5 rounded-lg bg-red-600 px-4 py-2 text-xs font-bold text-white transition hover:bg-red-500"
+                      >
+                        <X size={13} /> Từ chối
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => void handleApprove(selectedGear.id)}
+                        className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-4 py-2 text-xs font-bold text-white transition hover:bg-emerald-500"
+                      >
+                        <Check size={13} /> Phê duyệt
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
+
 
       {/* Reject Modal */}
       {rejectingGearId && (

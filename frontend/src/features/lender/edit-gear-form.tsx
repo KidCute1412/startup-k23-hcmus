@@ -19,7 +19,7 @@ import {
 
 import { getCategories } from "@/features/catalog/mock-data";
 import { useGears } from "@/hooks/useGears";
-import type { Gear } from "@/types/catalog";
+import { getMyGearById } from "@/services/gearService";
 
 const CATEGORIES = getCategories();
 
@@ -49,7 +49,7 @@ interface Props {
 export function EditGearForm({ gearId }: Props) {
   const router = useRouter();
   const { uploadImage } = useMedia();
-  const { updateGear, getGearById, loading: isSubmitting, error: submitError } = useGears();
+  const { updateGear, loading: isSubmitting, error: submitError } = useGears();
 
   const [loadingGear, setLoadingGear] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -78,7 +78,9 @@ export function EditGearForm({ gearId }: Props) {
     async function loadGear() {
       try {
         setLoadingGear(true);
-        const data = await getGearById(gearId);
+        // Call service directly to avoid infinite re-render caused by unstable
+        // getGearById reference from useGears (no useCallback wrapping).
+        const data = await getMyGearById(gearId);
         setName(data.name);
         
         // Reverse category map
@@ -110,13 +112,12 @@ export function EditGearForm({ gearId }: Props) {
         setDailyPrice(String(data.pricing.dailyPrice));
         setDepositCash(String(data.pricing.retailPrice || 0));
 
-        // Specs
-        if (data.specifications && typeof data.specifications === "object") {
-          const specRows = Object.entries(data.specifications).map(([label, value]) => ({
-            label,
-            value: String(value),
-          }));
-          setSpecs(specRows.length > 0 ? specRows : [{ ...defaultSpec }]);
+        // Specs: backend returns Record<string, string>, convert to SpecRow[]
+        if (data.specifications && typeof data.specifications === "object" && !Array.isArray(data.specifications)) {
+          const rows = Object.entries(data.specifications as Record<string, string>).map(
+            ([label, value]) => ({ label, value })
+          );
+          setSpecs(rows.length > 0 ? rows : [{ ...defaultSpec }]);
         }
       } catch (err: any) {
         setLoadError(err?.message || "Không thể tải dữ liệu thiết bị.");
@@ -125,7 +126,8 @@ export function EditGearForm({ gearId }: Props) {
       }
     }
     void loadGear();
-  }, [gearId, getGearById]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [gearId]);
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];

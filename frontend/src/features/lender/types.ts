@@ -19,6 +19,8 @@ export type LenderGear = {
   condition: string;
   availability: AvailabilityStatus;
   listingStatus: ListingStatus;
+  /** Raw backend approval_status — needed to re-derive listingStatus after relist */
+  approvalStatus: "pending" | "approved" | "rejected";
   dailyPrice: number;
   depositCash: number;
   creditLineRequired: number;
