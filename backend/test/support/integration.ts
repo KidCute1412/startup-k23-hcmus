@@ -24,8 +24,11 @@ export async function createIntegrationApp(): Promise<{
   if (!imgbbMockInstalled) {
     global.fetch = jest.fn().mockResolvedValue({
       ok: true,
-      json: async () => ({ data: { url: 'https://i.ibb.co/integration/proof.jpg' } }),
-    } as Response);
+      json: () =>
+        Promise.resolve({
+          data: { url: 'https://i.ibb.co/integration/proof.jpg' },
+        }),
+    });
     imgbbMockInstalled = true;
   }
   const moduleFixture = await Test.createTestingModule({
