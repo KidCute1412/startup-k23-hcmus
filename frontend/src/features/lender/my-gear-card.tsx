@@ -16,6 +16,7 @@ import { Badge } from "@/components/ui/badge";
 import { formatCurrency } from "@/lib/format";
 import { GearStatusBadge } from "./gear-status-badge";
 import type { LenderGear } from "./types";
+import { resolveMediaUrl } from "@/lib/media";
 
 type Props = {
   gear: LenderGear;
@@ -49,7 +50,7 @@ export function MyGearCard({ gear, onTogglePause, onDelete }: Props) {
         />
 
         <Image
-          src={gear.imageUrl}
+          src={resolveMediaUrl(gear.imageUrl)}
           alt={gear.name}
           fill
           sizes="(min-width: 1024px) 30vw, (min-width: 640px) 50vw, 100vw"

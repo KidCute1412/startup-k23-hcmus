@@ -9,6 +9,8 @@ import { CreateGearDto } from './dto/create-gear.dto';
 import { UpdateGearDto } from './dto/update-gear.dto';
 import { GearCatalogSort } from './dto/get-gears-query.dto';
 import { PublicGearDetailRecord, PublicGearRecord } from './gears.repository';
+import { GetMyGearsQueryDto } from './dto/get-my-gears-query.dto';
+import { MediaService } from '../media/media.service';
 
 interface FindAllOptions {
   page: number;
@@ -33,9 +35,21 @@ interface PaginatedResult<T> {
 
 @Injectable()
 export class GearsService {
-  constructor(private readonly gearsRepository: GearsRepository) {}
+  private readonly idempotencyKeys = new Map<string, Gear>();
+
+  constructor(
+    private readonly gearsRepository: GearsRepository,
+    private readonly mediaService: MediaService = new MediaService(),
+  ) {}
 
   async create(lenderId: string, data: CreateGearDto): Promise<Gear> {
+    if (data.idempotencyKey) {
+      const existing = this.idempotencyKeys.get(data.idempotencyKey);
+      if (existing) {
+        return existing;
+      }
+    }
+
     const lender = await this.gearsRepository.findUserById(lenderId);
     if (!lender || !lender.lender_enabled) {
       throw new ForbiddenException({
@@ -50,7 +64,26 @@ export class GearsService {
       });
     }
 
-    return this.gearsRepository.create({
+    const imageUrls = data.imageUrls
+      ? await Promise.all(
+          data.imageUrls.map((url) =>
+            this.mediaService.assertOwnedImageFile(lenderId, url),
+          ),
+        )
+      : undefined;
+    const mediaCreate =
+      imageUrls && imageUrls.length > 0
+        ? {
+            create: imageUrls.map((url, index) => ({
+              url,
+              type: 'image',
+              is_primary: index === 0,
+              sort_order: index,
+            })),
+          }
+        : undefined;
+
+    const gear = await this.gearsRepository.create({
       lender_id: lenderId,
       category_id: data.categoryId,
       name: data.name,
@@ -62,7 +95,21 @@ export class GearsService {
       value: data.value,
       rent_price_per_day: data.rentPricePerDay,
       approval_status: 'pending',
+      media: mediaCreate,
     });
+
+    if (data.idempotencyKey) {
+      const key = data.idempotencyKey;
+      this.idempotencyKeys.set(key, gear);
+      setTimeout(
+        () => {
+          this.idempotencyKeys.delete(key);
+        },
+        10 * 60 * 1000,
+      ); // 10 minutes cache
+    }
+
+    return gear;
   }
 
   async findAll(options: FindAllOptions) {
@@ -87,9 +134,8 @@ export class GearsService {
 
   async findMine(
     lenderId: string,
-    page: number,
-    limit: number,
-  ): Promise<PaginatedResult<Gear>> {
+    query: GetMyGearsQueryDto,
+  ): Promise<PaginatedResult<ReturnType<GearsService['mapSummary']>>> {
     const lender = await this.gearsRepository.findUserById(lenderId);
     if (!lender?.lender_enabled) {
       throw new ForbiddenException({
@@ -99,16 +145,18 @@ export class GearsService {
     }
     const result = await this.gearsRepository.findMine({
       lenderId,
-      page,
-      limit,
+      page: query.page,
+      limit: query.limit,
+      search: query.search,
+      status: query.status,
     });
     return {
-      data: result.data,
+      data: result.data.map((gear) => this.mapSummary(gear)),
       meta: {
         total: result.total,
-        page,
-        limit,
-        totalPages: Math.ceil(result.total / limit),
+        page: query.page,
+        limit: query.limit,
+        totalPages: Math.ceil(result.total / query.limit),
       },
     };
   }
@@ -128,7 +176,15 @@ export class GearsService {
     const gear = await this.gearsRepository.findByIdForLender(id, lenderId);
     if (!gear) throw new NotFoundException('Gear not found');
 
-    return this.gearsRepository.update(id, {
+    const imageUrls = data.imageUrls
+      ? await Promise.all(
+          data.imageUrls.map((url) =>
+            this.mediaService.assertOwnedImageFile(lenderId, url),
+          ),
+        )
+      : undefined;
+
+    return this.gearsRepository.updateWithMedia(id, {
       ...(data.categoryId !== undefined
         ? { category_id: data.categoryId }
         : {}),
@@ -152,7 +208,7 @@ export class GearsService {
       ...(gear.approval_status === 'approved'
         ? { approval_status: 'pending', approved_by: null, approved_at: null }
         : {}),
-    });
+    }, imageUrls);
   }
 
   async remove(id: string): Promise<Gear> {

@@ -1,11 +1,13 @@
 import { Type } from 'class-transformer';
 import {
+  IsArray,
   IsEnum,
   IsNumber,
   IsObject,
   IsOptional,
   IsString,
   IsUUID,
+  Matches,
   MaxLength,
   Min,
 } from 'class-validator';
@@ -27,4 +29,9 @@ export class UpdateGearDto {
   @Min(0)
   rentPricePerDay?: number;
   @IsOptional() @IsEnum(GearStatusType) status?: GearStatusType;
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  @Matches(/^(https:\/\/(?:i\.)?ibb\.co\/[^?#\s]+|\/uploads\/[a-zA-Z0-9_-]+\/[^/?#]+)$/, { each: true })
+  imageUrls?: string[];
 }

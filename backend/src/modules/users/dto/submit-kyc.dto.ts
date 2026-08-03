@@ -13,15 +13,15 @@ export class SubmitKycDto {
   cccd: string;
 
   @IsString()
-  @Matches(/^\/uploads\/[a-zA-Z0-9_-]+\/[^/?#]+$/)
+  @Matches(/^(https:\/\/(?:i\.)?ibb\.co\/[^?#\s]+|\/uploads\/[a-zA-Z0-9_-]+\/[^/?#]+)$/)
   frontCardUrl: string;
 
   @IsString()
-  @Matches(/^\/uploads\/[a-zA-Z0-9_-]+\/[^/?#]+$/)
+  @Matches(/^(https:\/\/(?:i\.)?ibb\.co\/[^?#\s]+|\/uploads\/[a-zA-Z0-9_-]+\/[^/?#]+)$/)
   backCardUrl: string;
 
   @IsString()
-  @Matches(/^\/uploads\/[a-zA-Z0-9_-]+\/[^/?#]+$/)
+  @Matches(/^(https:\/\/(?:i\.)?ibb\.co\/[^?#\s]+|\/uploads\/[a-zA-Z0-9_-]+\/[^/?#]+)$/)
   portraitUrl: string;
 
   @IsOptional()

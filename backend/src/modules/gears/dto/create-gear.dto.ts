@@ -1,12 +1,14 @@
 import { Type } from 'class-transformer';
 import type { Prisma } from '@prisma/client';
 import {
+  IsArray,
   IsNotEmpty,
   IsNumber,
   IsObject,
   IsOptional,
   IsString,
   IsUUID,
+  Matches,
   MaxLength,
   Min,
 } from 'class-validator';
@@ -54,4 +56,14 @@ export class CreateGearDto {
   @IsNumber()
   @Min(0)
   rentPricePerDay: number;
+
+  @IsOptional()
+  @IsString()
+  idempotencyKey?: string;
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  @Matches(/^(https:\/\/(?:i\.)?ibb\.co\/[^?#\s]+|\/uploads\/[a-zA-Z0-9_-]+\/[^/?#]+)$/, { each: true })
+  imageUrls?: string[];
 }

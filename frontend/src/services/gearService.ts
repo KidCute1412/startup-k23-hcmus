@@ -62,6 +62,10 @@ type WireGear = {
     createdAt: string;
     reviewer: { id: string; fullName: string | null; avatarUrl: string | null };
   }>;
+  status?: string;
+  approvalStatus?: string;
+  createdAt?: string;
+  updatedAt?: string;
 };
 
 function readable(value: unknown): string {
@@ -94,7 +98,7 @@ function mapGear(gear: WireGear): Gear {
     condition: "",
     rating: gear.rating,
     reviewCount: gear.reviewCount,
-    media: [...gear.media]
+    media: [...(gear.media || [])]
       .sort(
         (a, b) =>
           Number(b.isPrimary) - Number(a.isPrimary) || a.sortOrder - b.sortOrder,
@@ -116,18 +120,22 @@ function mapGear(gear: WireGear): Gear {
     },
     availability: "available",
     lender: {
-      id: gear.lender.id,
-      name: gear.lender.fullName ?? "Chủ gear",
-      avatarUrl: gear.lender.avatarUrl,
-      rating: gear.lender.rating,
-      totalReviews: gear.lender.totalReviews,
+      id: gear.lender?.id || "",
+      name: gear.lender?.fullName ?? "Chủ gear",
+      avatarUrl: gear.lender?.avatarUrl,
+      rating: gear.lender?.rating || 0,
+      totalReviews: gear.lender?.totalReviews || 0,
       tier: "",
       responseRate: 0,
       completedRentals: 0,
       location: "",
     },
     serialNumber: gear.serialNumber,
-    reviews: gear.reviews,
+    reviews: gear.reviews || [],
+    status: gear.status,
+    approvalStatus: gear.approvalStatus,
+    createdAt: gear.createdAt,
+    updatedAt: gear.updatedAt,
   };
 }
 
@@ -190,4 +198,84 @@ export async function getGearById(id: string): Promise<Gear> {
 
 export async function getCategories(): Promise<GearCategory[]> {
   return apiClient<WireCategory[]>("/categories", { cache: "no-store" });
+}
+
+export async function getMyGears(params: {
+  page?: number;
+  limit?: number;
+  search?: string;
+  status?: string;
+} = {}): Promise<{ data: Gear[]; meta: PaginationMeta }> {
+  const query = new URLSearchParams();
+  if (params.page && params.page > 0) {
+    query.set("page", String(params.page));
+  }
+  if (params.limit && params.limit > 0) {
+    query.set("limit", String(params.limit));
+  }
+  if (params.search && params.search.trim()) {
+    query.set("search", params.search.trim());
+  }
+  if (params.status && params.status !== "all") {
+    query.set("status", params.status);
+  }
+
+  const result = await apiClientPaginated<WireGear[]>(
+    `/gears/mine${query.size ? `?${query.toString()}` : ""}`,
+    { cache: "no-store" }
+  );
+  return { data: result.data.map(mapGear), meta: result.meta };
+}
+
+export async function createGear(data: {
+  categoryId?: string;
+  name: string;
+  brand?: string;
+  model?: string;
+  serialNumber?: string;
+  description?: string;
+  specifications?: Record<string, string>;
+  value?: number;
+  rentPricePerDay: number;
+  idempotencyKey?: string;
+  imageUrls?: string[];
+}): Promise<Gear> {
+  return mapGear(
+    await apiClient<WireGear>("/gears", {
+      method: "POST",
+      body: JSON.stringify(data),
+    })
+  );
+}
+
+export async function updateGear(
+  id: string,
+  data: {
+    categoryId?: string;
+    name?: string;
+    brand?: string;
+    model?: string;
+    serialNumber?: string;
+    description?: string;
+    specifications?: Record<string, string>;
+    value?: number;
+    rentPricePerDay?: number;
+    status?: "available" | "maintenance" | "delisted" | "rented";
+    imageUrls?: string[];
+  }
+): Promise<Gear> {
+  return mapGear(
+    await apiClient<WireGear>(`/gears/${encodeURIComponent(id)}`, {
+      method: "PATCH",
+      body: JSON.stringify(data),
+    })
+  );
+}
+
+export async function deleteGear(id: string): Promise<Gear> {
+  return mapGear(
+    await apiClient<WireGear>(`/gears/${encodeURIComponent(id)}`, {
+      method: "DELETE",
+    })
+  );
 }

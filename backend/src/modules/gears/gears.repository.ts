@@ -18,6 +18,8 @@ interface FindMineOptions {
   lenderId: string;
   page: number;
   limit: number;
+  search?: string;
+  status?: string;
 }
 
 const categorySelect = {
@@ -257,18 +259,67 @@ export class GearsRepository {
 
   async findMine(
     options: FindMineOptions,
-  ): Promise<{ data: Gear[]; total: number }> {
-    const { lenderId, page, limit } = options;
+  ): Promise<{ data: PublicGearRecord[]; total: number }> {
+    const { lenderId, page, limit, search, status } = options;
     const where: Prisma.GearWhereInput = { lender_id: lenderId };
-    const [data, total] = await Promise.all([
+
+    if (search) {
+      where.OR = [
+        { name: { contains: search, mode: 'insensitive' } },
+        { brand: { contains: search, mode: 'insensitive' } },
+        { model: { contains: search, mode: 'insensitive' } },
+      ];
+    }
+
+    if (status && status !== 'all') {
+      if (status === 'active') {
+        where.approval_status = 'approved';
+        where.status = 'available';
+      } else if (status === 'paused') {
+        where.status = 'maintenance';
+      } else if (status === 'pending_approval') {
+        where.approval_status = 'pending';
+      } else if (status === 'rejected') {
+        where.approval_status = 'rejected';
+      } else if (status === 'draft') {
+        where.status = 'delisted';
+      }
+    }
+
+    const [gears, total] = await Promise.all([
       this.prisma.gear.findMany({
         where,
         orderBy: [{ created_at: 'desc' }, { id: 'desc' }],
         skip: (page - 1) * limit,
         take: limit,
+        select: {
+          ...publicGearSelect,
+          reviews: {
+            where: { target_type: 'gear' as const },
+            select: {
+              rating: true,
+            },
+          },
+        },
       }),
       this.prisma.gear.count({ where }),
     ]);
+
+    const data = gears.map((g) => {
+      const rating =
+        g.reviews.length > 0
+          ? g.reviews.reduce((sum, r) => sum + r.rating, 0) / g.reviews.length
+          : 0;
+      const reviewCount = g.reviews.length;
+      const rest = { ...g } as Record<string, unknown>;
+      delete rest.reviews;
+      return {
+        ...rest,
+        rating,
+        reviewCount,
+      } as unknown as PublicGearRecord;
+    });
+
     return { data, total };
   }
 
@@ -285,6 +336,30 @@ export class GearsRepository {
     data: Prisma.GearUncheckedUpdateInput,
   ): Promise<Gear> {
     return this.prisma.gear.update({ where: { id }, data });
+  }
+
+  async updateWithMedia(
+    id: string,
+    data: Prisma.GearUncheckedUpdateInput,
+    imageUrls?: string[],
+  ): Promise<Gear> {
+    return this.prisma.$transaction(async (tx) => {
+      if (imageUrls !== undefined) {
+        await tx.gearMedia.deleteMany({ where: { gear_id: id } });
+        if (imageUrls.length > 0) {
+          await tx.gearMedia.createMany({
+            data: imageUrls.map((url, index) => ({
+              gear_id: id,
+              type: 'image',
+              url,
+              is_primary: index === 0,
+              sort_order: index,
+            })),
+          });
+        }
+      }
+      return tx.gear.update({ where: { id }, data });
+    });
   }
 
   async delete(id: string): Promise<Gear> {

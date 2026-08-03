@@ -35,6 +35,12 @@ describe('MediaService', () => {
     ).resolves.toBe(`/uploads/${ownerId}/${fileName}`);
   });
 
+  it('accepts ImgBB URLs returned by the upload endpoint', async () => {
+    const url = 'https://i.ibb.co/abc123/avatar.jpg';
+
+    await expect(service.assertOwnedImageFile(ownerId, url)).resolves.toBe(url);
+  });
+
   it('rejects a file uploaded by another user', async () => {
     await expect(
       service.assertOwnedImageFile(
@@ -49,6 +55,7 @@ describe('MediaService', () => {
 
   it.each([
     'https://example.com/proof.jpg',
+    'https://evil-ibb.co/abc/proof.jpg',
     `/uploads/${ownerId}/../proof.jpg`,
     `/uploads/${ownerId}/missing.jpg`,
   ])('rejects an external, traversing, or missing URL: %s', async (fileUrl) => {

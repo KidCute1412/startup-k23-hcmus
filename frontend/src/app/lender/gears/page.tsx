@@ -1,22 +1,107 @@
-import type { Metadata } from "next";
-import { PackagePlus, Star, TrendingUp, Zap } from "lucide-react";
+"use client";
+
+import { useEffect, useState } from "react";
+import { PackagePlus, Star, TrendingUp, Zap, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
-import { StatRow } from "@/components/ui/stat-row";
 import { formatCurrency } from "@/lib/format";
-import { getLenderStats, getMyGears } from "@/features/lender/mock-data";
+import { getMyGears } from "@/services/gearService";
+import { resolveMediaUrl } from "@/lib/media";
 import { MyGearsList } from "@/features/lender/my-gears-list";
-
-export const metadata: Metadata = {
-  title: "Quản lý gear cho thuê | Mutux Gear",
-  description:
-    "Quản lý danh sách gear cho thuê của bạn trên Mutux – theo dõi đơn, doanh thu và thêm sản phẩm mới.",
-};
+import type { Gear } from "@/types/catalog";
+import type { LenderGear, ListingStatus } from "@/features/lender/types";
 
 export default function LenderGearsPage() {
-  const gears = getMyGears();
-  const stats = getLenderStats();
+  const [gears, setGears] = useState<LenderGear[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function loadData() {
+      try {
+        setLoading(true);
+        const res = await getMyGears({ limit: 100 });
+        const mapped: LenderGear[] = res.data.map((gear: Gear) => {
+          let listingStatus: ListingStatus = "draft";
+          if (gear.approvalStatus === "pending") {
+            listingStatus = "pending_approval";
+          } else if (gear.approvalStatus === "rejected") {
+            listingStatus = "rejected";
+          } else if (gear.status === "delisted") {
+            listingStatus = "draft";
+          } else if (gear.status === "maintenance") {
+            listingStatus = "paused";
+          } else if (gear.status === "available" || gear.status === "rented") {
+            listingStatus = "active";
+          }
+
+          return {
+            id: gear.id,
+            name: gear.name,
+            slug: gear.slug || gear.id,
+            categoryId: gear.categoryId,
+            categoryName: gear.categoryName || "Thiết bị",
+            shortDescription: gear.shortDescription || gear.description || "",
+            imageUrl: resolveMediaUrl(gear.media[0]?.imageUrl),
+            badge: gear.badge,
+            condition: gear.condition || "Like new",
+            availability: gear.availability || "available",
+            listingStatus,
+            dailyPrice: gear.pricing.dailyPrice,
+            depositCash: gear.pricing.depositCash || 0,
+            creditLineRequired: gear.pricing.creditLineRequired || 0,
+            totalRentals: 0,
+            totalRevenue: 0,
+            rating: gear.rating || 0,
+            reviewCount: gear.reviewCount || 0,
+            createdAt: gear.createdAt || new Date().toISOString(),
+            updatedAt: gear.updatedAt || new Date().toISOString(),
+          };
+        });
+        setGears(mapped);
+      } catch (err: any) {
+        setError(err?.message || "Không thể tải danh sách gear. Vui lòng đăng nhập.");
+      } finally {
+        setLoading(false);
+      }
+    }
+    void loadData();
+  }, []);
+
+  // Compute stats on the fly from the loaded gears
+  const stats = {
+    active: gears.filter((g) => g.listingStatus === "active").length,
+    totalRentals: gears.reduce((sum, g) => sum + g.totalRentals, 0),
+    totalRevenue: gears.reduce((sum, g) => sum + g.totalRevenue, 0),
+    avgRating:
+      gears.filter((g) => g.reviewCount > 0).reduce((sum, g) => sum + g.rating, 0) /
+      (gears.filter((g) => g.reviewCount > 0).length || 1),
+  };
+
+  if (loading) {
+    return (
+      <div className="flex min-h-[400px] items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-vanguard-primary" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="mx-auto max-w-7xl px-4 py-20 text-center sm:px-6">
+        <div className="rounded-v-sm border border-red-500/30 bg-red-500/10 p-6 text-red-500">
+          <p className="font-semibold">{error}</p>
+          <Link
+            href="/login"
+            className="mt-4 inline-flex items-center justify-center rounded-v-sm bg-vanguard-primary px-4 py-2 text-xs font-bold uppercase text-vanguard-dark-bg transition hover:bg-vanguard-primary/80"
+          >
+            Đăng nhập ngay
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <>

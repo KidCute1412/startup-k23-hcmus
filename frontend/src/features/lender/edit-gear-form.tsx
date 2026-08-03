@@ -2,9 +2,8 @@
 
 import { CheckCircle, ChevronRight, ImageIcon, Plus, Trash2, X, Upload, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useMedia } from "@/hooks/useMedia";
-import { useGears } from "@/hooks/useGears";
 import { resolveMediaUrl } from "@/lib/media";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -19,6 +18,8 @@ import {
 } from "@/components/ui/select";
 
 import { getCategories } from "@/features/catalog/mock-data";
+import { useGears } from "@/hooks/useGears";
+import type { Gear } from "@/types/catalog";
 
 const CATEGORIES = getCategories();
 
@@ -31,7 +32,6 @@ const CONDITION_PRESETS = [
 ];
 
 type SpecRow = { label: string; value: string };
-
 const defaultSpec: SpecRow = { label: "", value: "" };
 
 type Step = "info" | "pricing" | "specs" | "preview";
@@ -42,16 +42,22 @@ const STEPS: { key: Step; label: string }[] = [
   { key: "preview", label: "Xem trước" },
 ];
 
-export function AddGearForm() {
+interface Props {
+  gearId: string;
+}
+
+export function EditGearForm({ gearId }: Props) {
   const router = useRouter();
   const { uploadImage } = useMedia();
-  const { createGear, loading: isSubmitting, error: submitError } = useGears();
+  const { updateGear, getGearById, loading: isSubmitting, error: submitError } = useGears();
 
-  // Multi-step state
+  const [loadingGear, setLoadingGear] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+
+  // Form fields
   const [step, setStep] = useState<Step>("info");
   const stepIndex = STEPS.findIndex((s) => s.key === step);
 
-  // Form fields
   const [name, setName] = useState("");
   const [categoryId, setCategoryId] = useState("keyboards");
   const [shortDesc, setShortDesc] = useState("");
@@ -65,11 +71,61 @@ export function AddGearForm() {
   const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [dailyPrice, setDailyPrice] = useState("");
   const [depositCash, setDepositCash] = useState("");
-  const [idempotencyKey, setIdempotencyKey] = useState(() => {
-    return typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
-      ? crypto.randomUUID()
-      : Math.random().toString(36).substring(2) + Date.now().toString(36);
-  });
+  const [specs, setSpecs] = useState<SpecRow[]>([{ ...defaultSpec }]);
+  const [submitted, setSubmitted] = useState(false);
+
+  useEffect(() => {
+    async function loadGear() {
+      try {
+        setLoadingGear(true);
+        const data = await getGearById(gearId);
+        setName(data.name);
+        
+        // Reverse category map
+        const categoryMapInverse: Record<string, string> = {
+          "20000000-0000-0000-0000-000000000003": "keyboards",
+          "20000000-0000-0000-0000-000000000002": "mice",
+          "20000000-0000-0000-0000-000000000004": "audio",
+          "20000000-0000-0000-0000-000000000006": "setups",
+        };
+        setCategoryId(categoryMapInverse[data.categoryId] || data.categoryId || "keyboards");
+        setShortDesc(data.shortDescription);
+        setDescription(data.description);
+        
+        // Preset check
+        const isPreset = CONDITION_PRESETS.some((p) => p.value === data.condition);
+        if (data.condition) {
+          if (isPreset) {
+            setCondition(data.condition);
+            setIsCustomCondition(false);
+          } else {
+            setCondition(data.condition);
+            setIsCustomCondition(true);
+            setCustomConditionText(data.condition);
+          }
+        }
+        
+        setBadge(data.badge || "");
+        setImageUrls(data.media.map((m) => m.imageUrl));
+        setDailyPrice(String(data.pricing.dailyPrice));
+        setDepositCash(String(data.pricing.retailPrice || 0));
+
+        // Specs
+        if (data.specifications && typeof data.specifications === "object") {
+          const specRows = Object.entries(data.specifications).map(([label, value]) => ({
+            label,
+            value: String(value),
+          }));
+          setSpecs(specRows.length > 0 ? specRows : [{ ...defaultSpec }]);
+        }
+      } catch (err: any) {
+        setLoadError(err?.message || "Không thể tải dữ liệu thiết bị.");
+      } finally {
+        setLoadingGear(false);
+      }
+    }
+    void loadGear();
+  }, [gearId, getGearById]);
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -79,22 +135,17 @@ export function AddGearForm() {
       const url = await uploadImage(file);
       setImageUrls((prev) => [...prev, url]);
     } catch (err) {
-      console.error('Upload gear image failed:', err);
+      console.error("Upload gear image failed:", err);
     } finally {
       setIsUploadingImage(false);
     }
   };
 
-  const [specs, setSpecs] = useState<SpecRow[]>([{ ...defaultSpec }]);
-  const [submitted, setSubmitted] = useState(false);
+  const categoryName = CATEGORIES.find((c) => c.id === categoryId)?.name ?? "";
 
-  const categoryName =
-    CATEGORIES.find((c) => c.id === categoryId)?.name ?? "";
-
-  // Spec helpers
   function updateSpec(i: number, field: keyof SpecRow, value: string) {
     setSpecs((prev) =>
-      prev.map((row, idx) => (idx === i ? { ...row, [field]: value } : row)),
+      prev.map((row, idx) => (idx === i ? { ...row, [field]: value } : row))
     );
   }
   function addSpec() {
@@ -122,21 +173,39 @@ export function AddGearForm() {
 
       const realCategoryId = categoryMap[categoryId] || categoryId;
 
-      await createGear({
+      await updateGear(gearId, {
         categoryId: realCategoryId,
         name,
         description: description || shortDesc,
         specifications: specObj,
         rentPricePerDay: Number(dailyPrice),
         value: Number(depositCash),
-        idempotencyKey,
         imageUrls,
       });
 
       setSubmitted(true);
     } catch {
-      // Handled by useGears hook error state
+      // Handled by hook error state
     }
+  }
+
+  if (loadingGear) {
+    return (
+      <div className="flex min-h-[300px] items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-vanguard-primary" />
+      </div>
+    );
+  }
+
+  if (loadError) {
+    return (
+      <Card className="p-8 text-center border-red-500/20 bg-red-500/5 text-red-500 max-w-lg mx-auto">
+        <p className="font-semibold">{loadError}</p>
+        <Button onClick={() => router.push("/lender/gears")} className="mt-4">
+          Quay lại danh sách
+        </Button>
+      </Card>
+    );
   }
 
   if (submitted) {
@@ -145,35 +214,13 @@ export function AddGearForm() {
         <div className="mx-auto flex size-20 items-center justify-center rounded-full bg-vanguard-primary/10">
           <CheckCircle size={40} className="text-vanguard-primary" />
         </div>
-        <h2 className="mt-6 font-display text-2xl font-bold">Đã gửi duyệt!</h2>
+        <h2 className="mt-6 font-display text-2xl font-bold">Đã lưu thay đổi!</h2>
         <p className="mt-3 text-sm text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted">
-          Gear <span className="font-semibold text-vanguard-primary">{name}</span> đã được gửi
-          cho đội kiểm duyệt Mutux. Bạn sẽ nhận thông báo trong vòng 24h.
+          Thông tin của gear <span className="font-semibold text-vanguard-primary">{name}</span> đã được cập nhật thành công.
         </p>
-        <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center">
+        <div className="mt-8 flex justify-center">
           <Button onClick={() => router.push("/lender/gears")}>
-            Về trang quản lý
-          </Button>
-          <Button
-            variant="outline"
-            onClick={() => {
-              setSubmitted(false);
-              setStep("info");
-              setName(""); setCategoryId("keyboards"); setShortDesc("");
-              setDescription(""); setCondition(CONDITION_PRESETS[0].value);
-              setIsCustomCondition(false);
-              setCustomConditionText("");
-              setBadge(""); setImageUrls([]); setImageUrlInput(""); setDailyPrice("");
-              setDepositCash("");
-              setIdempotencyKey(
-                typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
-                  ? crypto.randomUUID()
-                  : Math.random().toString(36).substring(2) + Date.now().toString(36)
-              );
-              setSpecs([{ ...defaultSpec }]);
-            }}
-          >
-            Thêm gear khác
+            Quay lại danh sách
           </Button>
         </div>
       </Card>
@@ -182,7 +229,6 @@ export function AddGearForm() {
 
   return (
     <div className="grid gap-8 lg:grid-cols-[1fr_360px]">
-      {/* Main form */}
       <Card className="overflow-hidden">
         {/* Step header */}
         <div className="border-b border-vanguard-light-border bg-vanguard-light-surfDim px-6 py-4 dark:border-vanguard-dark-border dark:bg-vanguard-dark-surfDim">
@@ -233,9 +279,7 @@ export function AddGearForm() {
           {/* STEP 1: Info */}
           {step === "info" && (
             <div className="space-y-6">
-              <h2 className="font-display text-lg font-bold">
-                Thông tin cơ bản
-              </h2>
+              <h2 className="font-display text-lg font-bold">Thông tin cơ bản</h2>
 
               <div className="space-y-1.5">
                 <label htmlFor="gear-name" className="field-label">
@@ -393,19 +437,9 @@ export function AddGearForm() {
                       onChange={(e) => setImageUrlInput(e.target.value)}
                       onBlur={() => {
                         const val = imageUrlInput.trim();
-                        if (val && val.startsWith('http') && !imageUrls.includes(val)) {
+                        if (val && val.startsWith("http") && !imageUrls.includes(val)) {
                           setImageUrls([...imageUrls, val]);
                           setImageUrlInput("");
-                        }
-                      }}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                          e.preventDefault();
-                          const val = imageUrlInput.trim();
-                          if (val && !imageUrls.includes(val)) {
-                            setImageUrls([...imageUrls, val]);
-                            setImageUrlInput("");
-                          }
                         }
                       }}
                     />
@@ -422,7 +456,6 @@ export function AddGearForm() {
                   <div className="mt-2 grid grid-cols-3 gap-2">
                     {imageUrls.map((url, i) => (
                       <div key={i} className="relative aspect-video w-full overflow-hidden rounded-v-sm border border-vanguard-light-border dark:border-vanguard-dark-border group">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img src={resolveMediaUrl(url) ?? url} alt={`Preview ${i}`} className="h-full w-full object-cover" />
                         <button type="button" onClick={() => setImageUrls(imageUrls.filter((_, idx) => idx !== i))} className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity">
                           <X size={12} />
@@ -434,11 +467,7 @@ export function AddGearForm() {
               </div>
 
               <div className="flex justify-end">
-                <Button
-                  id="step-info-next"
-                  onClick={() => setStep("pricing")}
-                  disabled={!name || !shortDesc}
-                >
+                <Button id="step-info-next" onClick={() => setStep("pricing")} disabled={!name || !shortDesc}>
                   Tiếp theo
                 </Button>
               </div>
@@ -449,13 +478,6 @@ export function AddGearForm() {
           {step === "pricing" && (
             <div className="space-y-6">
               <h2 className="font-display text-lg font-bold">Giá & Cọc</h2>
-
-              <div className="rounded-v-sm border border-vanguard-primary/20 bg-vanguard-primary/5 p-4 text-sm text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted">
-                <p>
-                  💡 Giá thuê và mức cọc cần phù hợp với giá trị thực tế của
-                  gear. Đội Mutux sẽ kiểm tra trong bước duyệt.
-                </p>
-              </div>
 
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-1.5">
@@ -468,10 +490,7 @@ export function AddGearForm() {
                     inputMode="numeric"
                     placeholder="65.000"
                     value={dailyPrice ? new Intl.NumberFormat("vi-VN").format(Number(dailyPrice)) : ""}
-                    onChange={(e) => {
-                      const rawVal = e.target.value.replace(/\D/g, "");
-                      setDailyPrice(rawVal);
-                    }}
+                    onChange={(e) => setDailyPrice(e.target.value.replace(/\D/g, ""))}
                   />
                 </div>
                 <div className="space-y-1.5">
@@ -484,57 +503,16 @@ export function AddGearForm() {
                     inputMode="numeric"
                     placeholder="1.800.000"
                     value={depositCash ? new Intl.NumberFormat("vi-VN").format(Number(depositCash)) : ""}
-                    onChange={(e) => {
-                      const rawVal = e.target.value.replace(/\D/g, "");
-                      setDepositCash(rawVal);
-                    }}
+                    onChange={(e) => setDepositCash(e.target.value.replace(/\D/g, ""))}
                   />
                 </div>
-
               </div>
-
-              {dailyPrice && depositCash && (
-                <div className="rounded-v-sm border border-vanguard-light-border bg-vanguard-light-surfDim p-4 dark:border-vanguard-dark-border dark:bg-vanguard-dark-surfDim">
-                  <p className="font-display text-xs font-bold uppercase tracking-widest text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted">
-                    Ước tính doanh thu
-                  </p>
-                  <div className="mt-3 grid grid-cols-1 sm:grid-cols-3 gap-4 text-center">
-                    {[
-                      { days: 3, label: "3 ngày" },
-                      { days: 7, label: "1 tuần" },
-                      { days: 30, label: "1 tháng" },
-                    ].map(({ days, label }) => {
-                      const gross = Number(dailyPrice) * days;
-                      const fee = gross * 0.1;
-                      const net = gross - fee;
-                      return (
-                        <div key={days} className="border border-vanguard-light-border dark:border-vanguard-dark-border p-2 rounded-v-sm">
-                          <p className="text-[10px] uppercase tracking-widest text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted">
-                            {label}
-                          </p>
-                          <div className="mt-1 flex flex-col gap-1">
-                            <p className="text-xs">Tổng: {new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND", maximumFractionDigits: 0 }).format(gross)}</p>
-                            <p className="text-xs text-red-500">Phí sàn (10%): -{new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND", maximumFractionDigits: 0 }).format(fee)}</p>
-                            <p className="font-display text-sm font-bold text-vanguard-primary border-t border-vanguard-light-border dark:border-vanguard-dark-border pt-1 mt-1">
-                              Thực nhận: {new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND", maximumFractionDigits: 0 }).format(net)}
-                            </p>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
 
               <div className="flex justify-between">
                 <Button variant="outline" onClick={() => setStep("info")}>
                   Quay lại
                 </Button>
-                <Button
-                  id="step-pricing-next"
-                  onClick={() => setStep("specs")}
-                  disabled={!dailyPrice || !depositCash}
-                >
+                <Button id="step-pricing-next" onClick={() => setStep("specs")} disabled={!dailyPrice || !depositCash}>
                   Tiếp theo
                 </Button>
               </div>
@@ -544,10 +522,7 @@ export function AddGearForm() {
           {/* STEP 3: Specs */}
           {step === "specs" && (
             <div className="space-y-6">
-              <h2 className="font-display text-lg font-bold">
-                Thông số kỹ thuật
-              </h2>
-
+              <h2 className="font-display text-lg font-bold">Thông số kỹ thuật</h2>
               <div className="space-y-3">
                 {specs.map((row, i) => (
                   <div key={i} className="flex items-start gap-3">
@@ -558,7 +533,7 @@ export function AddGearForm() {
                       className="flex-1"
                     />
                     <Input
-                      placeholder="Giá trị (VD: 30K DPI 8K polling)"
+                      placeholder="Giá trị (VD: 30K DPI)"
                       value={row.value}
                       onChange={(e) => updateSpec(i, "value", e.target.value)}
                       className="flex-[2]"
@@ -567,20 +542,13 @@ export function AddGearForm() {
                       type="button"
                       onClick={() => removeSpec(i)}
                       className="mt-0.5 inline-flex size-10 shrink-0 items-center justify-center rounded-v-sm border border-vanguard-light-border text-vanguard-light-textMuted transition hover:border-red-500/40 hover:bg-red-500/5 hover:text-red-500 dark:border-vanguard-dark-border dark:text-vanguard-dark-textMuted"
-                      aria-label="Xóa dòng"
                     >
                       <Trash2 size={13} />
                     </button>
                   </div>
                 ))}
               </div>
-
-              <button
-                type="button"
-                id="add-spec-row"
-                onClick={addSpec}
-                className="inline-flex items-center gap-2 text-sm text-vanguard-primary hover:underline"
-              >
+              <button type="button" onClick={addSpec} className="inline-flex items-center gap-2 text-sm text-vanguard-primary hover:underline">
                 <Plus size={14} />
                 Thêm thông số
               </button>
@@ -600,8 +568,6 @@ export function AddGearForm() {
           {step === "preview" && (
             <div className="space-y-6">
               <h2 className="font-display text-lg font-bold">Xem trước</h2>
-
-              {/* Preview card */}
               <div className="overflow-hidden rounded-v-sm border border-vanguard-light-border dark:border-vanguard-dark-border">
                 <div className="relative aspect-video bg-vanguard-light-surfDim dark:bg-vanguard-dark-surfBright">
                   {badge && (
@@ -610,12 +576,7 @@ export function AddGearForm() {
                     </span>
                   )}
                   {imageUrls.length > 0 ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={resolveMediaUrl(imageUrls[0]) ?? imageUrls[0]}
-                      alt={name}
-                      className="h-full w-full object-cover"
-                    />
+                    <img src={resolveMediaUrl(imageUrls[0]) ?? imageUrls[0]} alt={name} className="h-full w-full object-cover" />
                   ) : (
                     <div className="flex h-full flex-col items-center justify-center gap-2 text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted">
                       <ImageIcon size={32} />
@@ -628,65 +589,24 @@ export function AddGearForm() {
                     <p className="text-[10px] uppercase tracking-widest text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted">
                       {categoryName}
                     </p>
-                    <h3 className="mt-1 font-display text-xl font-bold">
-                      {name || "Tên gear"}
-                    </h3>
-                    <p className="mt-1 text-sm text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted">
-                      {shortDesc || "Mô tả ngắn"}
-                    </p>
+                    <h3 className="mt-1 font-display text-xl font-bold">{name || "Tên gear"}</h3>
+                    <p className="mt-1 text-sm text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted">{shortDesc || "Mô tả ngắn"}</p>
                   </div>
-
                   <div className="grid grid-cols-2 gap-3 border-t border-vanguard-light-border pt-4 text-xs dark:border-vanguard-dark-border">
                     <div>
-                      <p className="uppercase tracking-widest text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted">
-                        Giá thuê
-                      </p>
+                      <p className="uppercase tracking-widest text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted">Giá thuê</p>
                       <p className="mt-1 font-display text-lg font-bold text-vanguard-primary">
-                        {dailyPrice
-                          ? new Intl.NumberFormat("vi-VN", {
-                              style: "currency",
-                              currency: "VND",
-                              maximumFractionDigits: 0,
-                            }).format(Number(dailyPrice))
-                          : "—"}
+                        {dailyPrice ? new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND", maximumFractionDigits: 0 }).format(Number(dailyPrice)) : "—"}
                         <span className="text-xs font-normal">/ngày</span>
                       </p>
                     </div>
                     <div>
-                      <p className="uppercase tracking-widest text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted">
-                        Tiền cọc
-                      </p>
+                      <p className="uppercase tracking-widest text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted">Tiền cọc</p>
                       <p className="mt-1 font-display text-lg font-bold">
-                        {depositCash
-                          ? new Intl.NumberFormat("vi-VN", {
-                              style: "currency",
-                              currency: "VND",
-                              maximumFractionDigits: 0,
-                            }).format(Number(depositCash))
-                          : "—"}
+                        {depositCash ? new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND", maximumFractionDigits: 0 }).format(Number(depositCash)) : "—"}
                       </p>
                     </div>
                   </div>
-
-                  {specs.some((s) => s.label || s.value) && (
-                    <table className="w-full border-collapse border-t border-vanguard-light-border text-xs dark:border-vanguard-dark-border">
-                      <tbody>
-                        {specs
-                          .filter((s) => s.label || s.value)
-                          .map((s, i) => (
-                            <tr
-                              key={i}
-                              className="border-b border-vanguard-light-border last:border-0 dark:border-vanguard-dark-border"
-                            >
-                              <td className="py-2 pr-4 font-semibold uppercase tracking-wide text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted">
-                                {s.label}
-                              </td>
-                              <td className="py-2">{s.value}</td>
-                            </tr>
-                          ))}
-                      </tbody>
-                    </table>
-                  )}
                 </div>
               </div>
 
@@ -700,18 +620,14 @@ export function AddGearForm() {
                 <Button variant="outline" onClick={() => setStep("specs")} disabled={isSubmitting}>
                   Quay lại
                 </Button>
-                <Button
-                  id="submit-gear-btn"
-                  onClick={handleSubmit}
-                  disabled={isSubmitting}
-                >
+                <Button id="submit-gear-btn" onClick={handleSubmit} disabled={isSubmitting}>
                   {isSubmitting ? (
                     <>
                       <Loader2 size={14} className="mr-2 animate-spin" />
-                      Đang đăng...
+                      Đang lưu...
                     </>
                   ) : (
-                    "Gửi duyệt & Đăng"
+                    "Lưu thay đổi"
                   )}
                 </Button>
               </div>
@@ -720,49 +636,15 @@ export function AddGearForm() {
         </div>
       </Card>
 
-      {/* Sidebar tips */}
       <div className="space-y-4">
         <Card className="p-5">
-          <h3 className="font-display text-sm font-bold uppercase tracking-widest">
-            Tips cho listing tốt
-          </h3>
+          <h3 className="font-display text-sm font-bold uppercase tracking-widest">Tips chỉnh sửa</h3>
           <ul className="mt-4 space-y-3 text-sm text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted">
-            {[
-              "Ảnh chụp rõ ràng, nền trắng hoặc bàn gỗ tối sẽ được duyệt nhanh hơn.",
-              "Mô tả tình trạng thực tế, bao gồm vết xước (nếu có) để tránh tranh chấp.",
-              "Giá thuê hợp lý bằng 1–2% giá bán lẻ mỗi ngày giúp tăng booking.",
-              "Phản hồi nhanh trong 2h đầu sẽ cải thiện thứ hạng hiển thị.",
-            ].map((tip, i) => (
-              <li key={i} className="flex gap-2">
-                <span className="mt-0.5 shrink-0 text-vanguard-primary">✦</span>
-                {tip}
-              </li>
-            ))}
+            <li className="flex gap-2">
+              <span className="mt-0.5 shrink-0 text-vanguard-primary">✦</span>
+              Cập nhật thông tin thực tế giúp khách thuê nắm rõ tình trạng hiện tại của gear.
+            </li>
           </ul>
-        </Card>
-
-        <Card className="p-5">
-          <h3 className="font-display text-sm font-bold uppercase tracking-widest">
-            Quy trình duyệt
-          </h3>
-          <ol className="mt-4 space-y-3">
-            {[
-              "Gửi listing",
-              "Mutux kiểm tra trong 24h",
-              "Listing được kích hoạt",
-              "Nhận đơn & xác nhận thuê",
-            ].map((step, i) => (
-              <li
-                key={i}
-                className="flex items-center gap-3 text-sm text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted"
-              >
-                <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-vanguard-primary/10 font-display text-[10px] font-bold text-vanguard-primary">
-                  {i + 1}
-                </span>
-                {step}
-              </li>
-            ))}
-          </ol>
         </Card>
       </div>
     </div>

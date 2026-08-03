@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { realpath, stat } from 'fs/promises';
+import { readFile, realpath, stat, unlink } from 'fs/promises';
 import { basename, extname, relative, resolve, sep } from 'path';
 import { assertSafeUploadUserId, getUploadsRoot } from './media-storage';
 
@@ -13,7 +13,70 @@ export class MediaService {
     return `/uploads/${safeUserId}/${fileName}`;
   }
 
+  async uploadToImgBB(file: Express.Multer.File): Promise<string> {
+    const apiKey =
+      process.env.IMGBB_API_KEY || '1247eb3808ba7657106ecd9d71b8a0cb';
+    const uploadUrl =
+      process.env.IMGBB_UPLOAD_URL || 'https://api.imgbb.com/1/upload';
+
+    try {
+      const fileBuffer = await readFile(file.path);
+      const base64Image = fileBuffer.toString('base64');
+
+      const formData = new FormData();
+      formData.append('image', base64Image);
+
+      const response = await fetch(`${uploadUrl}?key=${apiKey}`, {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(errorText);
+      }
+
+      const result = (await response.json()) as { data?: { url?: string } };
+      const url = result.data?.url;
+      if (!url || !this.isImgBbUrl(url)) {
+        throw new Error('ImgBB returned an invalid image URL');
+      }
+      return url;
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      throw new BadRequestException({
+        error: 'IMGBB_UPLOAD_FAILED',
+        message: `Tải ảnh lên ImgBB thất bại: ${message}`,
+      });
+    } finally {
+      try {
+        await unlink(file.path);
+      } catch {
+        // The temporary file may already have been removed.
+      }
+    }
+  }
+
+  isImgBbUrl(fileUrl: string): boolean {
+    try {
+      const url = new URL(fileUrl);
+      return (
+        url.protocol === 'https:' &&
+        (url.hostname === 'i.ibb.co' || url.hostname === 'ibb.co') &&
+        url.pathname.length > 1 &&
+        !url.username &&
+        !url.password
+      );
+    } catch {
+      return false;
+    }
+  }
+
   async assertOwnedImageFile(userId: string, fileUrl: string): Promise<string> {
+    if (this.isImgBbUrl(fileUrl)) {
+      return fileUrl;
+    }
+
     const safeUserId = assertSafeUploadUserId(userId);
     const expectedPrefix = `/uploads/${safeUserId}/`;
 

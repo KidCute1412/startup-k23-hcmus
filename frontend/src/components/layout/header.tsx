@@ -9,6 +9,8 @@ import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { useCart } from "@/features/cart/cart-context";
 import { useAuth } from "@/hooks/useAuth";
 
+import { resolveMediaUrl } from "@/lib/media";
+
 const navItems = [
   { href: "/", label: "Trang chủ" },
   { href: "/gears", label: "Sản phẩm" },
@@ -119,9 +121,17 @@ export function Header() {
                 className="flex items-center gap-2.5 rounded-full border border-vanguard-primary/30 bg-vanguard-light-surf/80 px-3 py-1.5 text-vanguard-light-text transition-all hover:border-vanguard-primary/60 hover:bg-vanguard-light-surfDim dark:bg-vanguard-dark-surf/80 dark:text-vanguard-dark-text dark:hover:bg-vanguard-dark-surfBright"
                 aria-label="Tài khoản"
               >
-                <div className="flex size-7 items-center justify-center rounded-full bg-vanguard-primary/20 text-vanguard-primary font-bold text-xs">
-                  {(user.fullName || user.email)?.[0]?.toUpperCase() || "U"}
-                </div>
+                {user.avatarUrl ? (
+                  <img
+                    src={resolveMediaUrl(user.avatarUrl)}
+                    alt={user.fullName || "Avatar"}
+                    className="size-7 rounded-full object-cover border border-vanguard-primary/20"
+                  />
+                ) : (
+                  <div className="flex size-7 items-center justify-center rounded-full bg-vanguard-primary/20 text-vanguard-primary font-bold text-xs">
+                    {(user.fullName || user.email)?.[0]?.toUpperCase() || "U"}
+                  </div>
+                )}
                 <div className="hidden flex-col text-left sm:flex">
                   <span className="max-w-[110px] truncate text-xs font-semibold leading-none">
                     {user.fullName || user.email.split("@")[0]}

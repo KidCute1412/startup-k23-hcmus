@@ -26,7 +26,7 @@ export class MediaController {
   @HttpCode(HttpStatus.CREATED)
   @UseFilters(MediaUploadLimitFilter)
   @UseInterceptors(FileInterceptor('file', MEDIA_MULTER_OPTIONS))
-  upload(
+  async upload(
     @Req() request: AuthenticatedRequest,
     @UploadedFile() file?: Express.Multer.File,
   ) {
@@ -37,8 +37,7 @@ export class MediaController {
       });
     }
 
-    return {
-      url: this.mediaService.getUploadedFileUrl(request.user.id, file.filename),
-    };
+    const url = await this.mediaService.uploadToImgBB(file);
+    return { url };
   }
 }

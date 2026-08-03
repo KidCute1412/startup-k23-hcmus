@@ -1,5 +1,5 @@
 import { Type } from 'class-transformer';
-import { IsInt, IsOptional, Max, Min } from 'class-validator';
+import { IsInt, IsOptional, Max, Min, IsString } from 'class-validator';
 
 export class GetMyGearsQueryDto {
   @IsOptional()
@@ -14,4 +14,12 @@ export class GetMyGearsQueryDto {
   @Min(1)
   @Max(100)
   limit = 10;
+
+  @IsOptional()
+  @IsString()
+  search?: string;
+
+  @IsOptional()
+  @IsString()
+  status?: string;
 }

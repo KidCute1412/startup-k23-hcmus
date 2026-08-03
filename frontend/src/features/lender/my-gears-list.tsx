@@ -6,6 +6,7 @@ import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { MyGearCard } from "./my-gear-card";
 import type { LenderGear, ListingStatus } from "./types";
+import { useGears } from "@/hooks/useGears";
 
 type Props = {
   gears: LenderGear[];
@@ -23,6 +24,7 @@ export function MyGearsList({ gears: initialGears }: Props) {
   const [gears, setGears] = useState(initialGears);
   const [tab, setTab] = useState<"all" | ListingStatus>("all");
   const [query, setQuery] = useState("");
+  const { togglePause, softDelete } = useGears();
 
   const filtered = useMemo(() => {
     let list = gears;
@@ -40,21 +42,33 @@ export function MyGearsList({ gears: initialGears }: Props) {
     return list;
   }, [gears, tab, query]);
 
-  function handleTogglePause(id: string) {
-    setGears((prev) =>
-      prev.map((g) => {
-        if (g.id !== id) return g;
-        return {
-          ...g,
-          listingStatus:
-            g.listingStatus === "paused" ? "active" : "paused",
-        };
-      }),
-    );
+  async function handleTogglePause(id: string) {
+    const targetGear = gears.find((g) => g.id === id);
+    if (!targetGear) return;
+    try {
+      await togglePause(id, targetGear.listingStatus);
+      setGears((prev) =>
+        prev.map((g) => {
+          if (g.id !== id) return g;
+          return {
+            ...g,
+            listingStatus: g.listingStatus === "paused" ? "active" : "paused",
+          };
+        }),
+      );
+    } catch (err: any) {
+      alert(err?.message || "Không thể cập nhật trạng thái thiết bị.");
+    }
   }
 
-  function handleDelete(id: string) {
-    setGears((prev) => prev.filter((g) => g.id !== id));
+  async function handleDelete(id: string) {
+    if (!confirm("Bạn có chắc chắn muốn xóa thiết bị này không?")) return;
+    try {
+      await softDelete(id);
+      setGears((prev) => prev.filter((g) => g.id !== id));
+    } catch (err: any) {
+      alert(err?.message || "Không thể xóa thiết bị.");
+    }
   }
 
   return (

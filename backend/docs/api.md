@@ -170,7 +170,7 @@ HTTP Status: `400`, `401`, `403`, `404`, `422`, `500`.
     "creditConsentAccepted": true
   }
   ```
-* **File ownership**: Cả ba URL phải là ảnh tồn tại do chính user upload qua `/media/upload`.
+* **File ownership**: Cả ba URL phải là URL ImgBB do chính user nhận được từ `/media/upload`.
 * **Credit consent**: Renter phải gửi `creditConsentAccepted: true`; lender có thể bỏ qua trường này.
 * **Transitions**: Cho phép user chưa submit hoặc đã bị reject gửi hồ sơ. Hồ sơ `pending` hoặc `verified` không thể gửi đè.
 * **Success (200)**: Trạng thái KYC cập nhật về `pending`, xóa audit/rejection cũ và chờ Admin duyệt thủ công.
@@ -538,7 +538,7 @@ Ngoài retry ở đúng target, status sai trả `400 INVALID_TRANSITION` (hoặ
   | `pre_return` | renter của order | `returning` |
   | `post_returned` | lender của order | `returning` |
 
-* **File ownership**: `fileUrl` phải đúng dạng `/uploads/{currentUserId}/{fileName}` do chính caller nhận từ `POST /media/upload`, phải là file ảnh còn tồn tại trong thư mục upload của caller. URL ngoài, path traversal, file không tồn tại hoặc file của participant khác đều trả `400 INVALID_FILE_URL`.
+* **File ownership**: `fileUrl` phải là URL ImgBB do chính caller nhận từ `POST /media/upload`. URL ngoài hệ thống hoặc URL không hợp lệ trả `400 INVALID_FILE_URL`.
 * **Authorization**: chỉ renter/lender của order được tạo proof; user khác trả `403 FORBIDDEN`.
 * **Errors**:
   - `400 INVALID_PROOF_STAGE`: sai actor hoặc trạng thái order cho stage.
@@ -654,18 +654,18 @@ Ngoài retry ở đúng target, status sai trả `400 INVALID_TRANSITION` (hoặ
 * **Authentication**: `accessToken` cookie.
 * **Success (200)**: Trả về danh sách thông báo mới nhất.
 
-#### [POST] `/media/upload` (Upload hình ảnh local)
+#### [POST] `/media/upload` (Upload hình ảnh lên ImgBB)
 * **Authentication**: `accessToken` cookie; `Content-Type: multipart/form-data`; valid `Origin` required.
 * **Body (Form-data)**: `file` (Binary)
 * **MIME types**: `image/jpeg`, `image/png`, `image/webp`.
 * **Kích thước tối đa**: 5MB.
-* **Lưu trữ MVP**: `uploads/{userId}/{timestamp}-{sanitizedFileName}`; static file được serve công khai từ `/uploads/`.
+* **Lưu trữ**: Backend nhận file tạm, upload lên ImgBB, xóa file tạm và trả về URL ImgBB. URL này được dùng để lưu vào các bảng nghiệp vụ.
 * **Success (201)**:
   ```json
   {
     "success": true,
     "data": {
-      "url": "/uploads/user-uuid/1753500000000-gear-front.jpg"
+      "url": "https://i.ibb.co/example/gear-front.jpg"
     }
   }
   ```

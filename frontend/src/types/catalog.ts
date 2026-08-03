@@ -68,4 +68,8 @@ export type Gear = {
   limited?: string;
   serialNumber?: string | null;
   reviews?: GearReview[];
+  status?: string;
+  approvalStatus?: string;
+  createdAt?: string;
+  updatedAt?: string;
 };
