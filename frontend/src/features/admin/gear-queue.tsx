@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import { useAdminGears } from "@/hooks/useAdminGears";
+import { AdminPagination } from "@/components/ui/admin-pagination";
 import { resolveMediaUrl } from "@/lib/media";
 import type { AdminGearItem, ApprovalStatus } from "@/types/admin";
 
@@ -307,28 +308,13 @@ export function GearQueueFeature() {
 
           {/* Pagination Footer */}
           {meta && meta.totalPages > 1 && (
-            <div className="mt-8 flex items-center justify-between border-t border-vanguard-light-border pt-4 dark:border-vanguard-dark-border">
-              <span className="text-xs text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted">
-                Hiển thị Trang {meta.page} / {meta.totalPages} (Tổng cộng {meta.total} bản ghi)
-              </span>
-              <div className="flex gap-2">
-                <button
-                  type="button"
-                  disabled={page <= 1}
-                  onClick={() => setPage(page - 1)}
-                  className="inline-flex size-8 items-center justify-center rounded-v-sm border border-vanguard-light-border bg-vanguard-light-surf text-vanguard-light-text transition hover:bg-vanguard-light-surfDim disabled:opacity-40 dark:border-vanguard-dark-border dark:bg-vanguard-dark-surf dark:text-vanguard-dark-text dark:hover:bg-vanguard-dark-surfBright"
-                >
-                  <ChevronLeft size={16} />
-                </button>
-                <button
-                  type="button"
-                  disabled={page >= meta.totalPages}
-                  onClick={() => setPage(page + 1)}
-                  className="inline-flex size-8 items-center justify-center rounded-v-sm border border-vanguard-light-border bg-vanguard-light-surf text-vanguard-light-text transition hover:bg-vanguard-light-surfDim disabled:opacity-40 dark:border-vanguard-dark-border dark:bg-vanguard-dark-surf dark:text-vanguard-dark-text dark:hover:bg-vanguard-dark-surfBright"
-                >
-                  <ChevronRight size={16} />
-                </button>
-              </div>
+            <div className="mt-8">
+              <AdminPagination
+                page={page}
+                totalPages={meta.totalPages}
+                total={meta.total}
+                onPageChange={setPage}
+              />
             </div>
           )}
         </>

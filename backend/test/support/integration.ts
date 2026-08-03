@@ -13,10 +13,21 @@ import { configureStaticUploads } from '../../src/modules/media/media-storage';
 
 export const INTEGRATION_FRONTEND_ORIGIN = 'http://localhost:3000';
 
+// Integration tests must not depend on the external ImgBB service. Keep the
+// production upload path intact and mock only ImgBB's HTTP response here.
+let imgbbMockInstalled = false;
+
 export async function createIntegrationApp(): Promise<{
   app: INestApplication<App>;
   prisma: PrismaService;
 }> {
+  if (!imgbbMockInstalled) {
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ data: { url: 'https://i.ibb.co/integration/proof.jpg' } }),
+    } as Response);
+    imgbbMockInstalled = true;
+  }
   const moduleFixture = await Test.createTestingModule({
     imports: [AppModule],
   }).compile();

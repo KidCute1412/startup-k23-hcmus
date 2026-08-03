@@ -14,6 +14,7 @@ import {
   ShieldAlert,
 } from "lucide-react";
 import Image from "next/image";
+import { AdminPagination } from "@/components/ui/admin-pagination";
 
 import { useAdminDisputes } from "@/hooks/useAdminDisputes";
 import { resolveMediaUrl } from "@/lib/media";
@@ -358,24 +359,13 @@ export function DisputeResolutionFeature() {
 
                 {/* Pagination Controls */}
                 {meta && meta.totalPages > 1 && (
-                  <div className="flex items-center justify-between pt-4 border-t border-vanguard-light-border dark:border-vanguard-dark-border">
-                    <button
-                      disabled={page <= 1}
-                      onClick={() => setPage(page - 1)}
-                      className="rounded border border-gray-700 px-3 py-1.5 text-xs font-bold text-gray-300 hover:bg-gray-800 disabled:opacity-40 transition"
-                    >
-                      ← Trang trước
-                    </button>
-                    <span className="text-xs text-gray-400">
-                      {page} / {meta.totalPages}
-                    </span>
-                    <button
-                      disabled={page >= meta.totalPages}
-                      onClick={() => setPage(page + 1)}
-                      className="rounded border border-gray-700 px-3 py-1.5 text-xs font-bold text-gray-300 hover:bg-gray-800 disabled:opacity-40 transition"
-                    >
-                      Trang sau →
-                    </button>
+                  <div className="pt-4">
+                    <AdminPagination
+                      page={page}
+                      totalPages={meta.totalPages}
+                      total={meta.total}
+                      onPageChange={setPage}
+                    />
                   </div>
                 )}
               </div>

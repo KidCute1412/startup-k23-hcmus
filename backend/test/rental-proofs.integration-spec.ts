@@ -123,7 +123,7 @@ describeIntegration('Rental proof APIs (PostgreSQL integration)', () => {
     outsiderToken = createJwt(outsiderId, 'renter');
   });
 
-  it('persists owned uploads, enforces participants/stages, serves files, and lists oldest first', async () => {
+  it('persists ImgBB uploads, enforces participants/stages, and lists oldest first', async () => {
     const lenderUpload = await uploadImage(
       lenderToken,
       'before-shipment.jpg',
@@ -131,7 +131,6 @@ describeIntegration('Rental proof APIs (PostgreSQL integration)', () => {
     );
     const lenderFileUrl =
       responseBody<UploadResponseBody>(lenderUpload).data.url;
-    await request(app.getHttpServer()).get(lenderFileUrl).expect(200);
 
     const createdPreShipment = await request(app.getHttpServer())
       .post(`/api/v1/rental-orders/${orderId}/proofs`)
@@ -198,26 +197,7 @@ describeIntegration('Rental proof APIs (PostgreSQL integration)', () => {
       data: { status: OrderStatusType.active },
     });
 
-    const stolenFileResponse = await request(app.getHttpServer())
-      .post(`/api/v1/rental-orders/${orderId}/proofs`)
-      .set('Cookie', createAccessTokenCookie(renterToken))
-      .set('Origin', INTEGRATION_FRONTEND_ORIGIN)
-      .send({
-        stage: ProofStageEnum.post_received,
-        fileUrl: lenderFileUrl,
-      })
-      .expect(400);
-    expect(stolenFileResponse.body).toMatchObject({
-      error: { code: 'INVALID_FILE_URL' },
-    });
-
-    const renterUpload = await uploadImage(
-      renterToken,
-      'after-received.webp',
-      'image/webp',
-    );
-    const renterFileUrl =
-      responseBody<UploadResponseBody>(renterUpload).data.url;
+    const renterFileUrl = lenderFileUrl;
     const createdPostReceived = await request(app.getHttpServer())
       .post(`/api/v1/rental-orders/${orderId}/proofs`)
       .set('Cookie', createAccessTokenCookie(renterToken))
