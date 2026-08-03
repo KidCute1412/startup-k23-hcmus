@@ -55,7 +55,8 @@ describe('Media and rental proofs (HTTP)', () => {
   beforeEach(async () => {
     fetchSpy = jest.spyOn(global, 'fetch').mockResolvedValue({
       ok: true,
-      json: async () => ({ data: { url: 'https://i.ibb.co/mock/proof.jpg' } }),
+      json: () =>
+        Promise.resolve({ data: { url: 'https://i.ibb.co/mock/proof.jpg' } }),
     } as Response);
     originalUploadsDir = process.env.UPLOADS_DIR;
     uploadsRoot = mkdtempSync(join(tmpdir(), 'mutux-media-http-'));

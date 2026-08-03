@@ -14,30 +14,52 @@ export class MediaService {
   }
 
   async uploadToImgBB(file: Express.Multer.File): Promise<string> {
-    const apiKey = process.env.IMGBB_API_KEY || '1247eb3808ba7657106ecd9d71b8a0cb';
-    const uploadUrl = process.env.IMGBB_UPLOAD_URL || 'https://api.imgbb.com/1/upload';
+    const apiKey =
+      process.env.IMGBB_API_KEY || '1247eb3808ba7657106ecd9d71b8a0cb';
+    const uploadUrl =
+      process.env.IMGBB_UPLOAD_URL || 'https://api.imgbb.com/1/upload';
     try {
       const base64Image = (await readFile(file.path)).toString('base64');
       const formData = new FormData();
       formData.append('image', base64Image);
-      const response = await fetch(`${uploadUrl}?key=${apiKey}`, { method: 'POST', body: formData });
+      const response = await fetch(`${uploadUrl}?key=${apiKey}`, {
+        method: 'POST',
+        body: formData,
+      });
       if (!response.ok) throw new Error(await response.text());
-      const url = (await response.json() as { data?: { url?: string } }).data?.url;
-      if (!url || !this.isImgBbUrl(url)) throw new Error('ImgBB returned an invalid image URL');
+      const url = ((await response.json()) as { data?: { url?: string } }).data
+        ?.url;
+      if (!url || !this.isImgBbUrl(url))
+        throw new Error('ImgBB returned an invalid image URL');
       return url;
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
-      throw new BadRequestException({ error: 'IMGBB_UPLOAD_FAILED', message: `Tải ảnh lên ImgBB thất bại: ${message}` });
+      throw new BadRequestException({
+        error: 'IMGBB_UPLOAD_FAILED',
+        message: `Tải ảnh lên ImgBB thất bại: ${message}`,
+      });
     } finally {
-      try { await unlink(file.path); } catch { /* already removed */ }
+      try {
+        await unlink(file.path);
+      } catch {
+        /* already removed */
+      }
     }
   }
 
   isImgBbUrl(fileUrl: string): boolean {
     try {
       const url = new URL(fileUrl);
-      return url.protocol === 'https:' && (url.hostname === 'i.ibb.co' || url.hostname === 'ibb.co') && url.pathname.length > 1 && !url.username && !url.password;
-    } catch { return false; }
+      return (
+        url.protocol === 'https:' &&
+        (url.hostname === 'i.ibb.co' || url.hostname === 'ibb.co') &&
+        url.pathname.length > 1 &&
+        !url.username &&
+        !url.password
+      );
+    } catch {
+      return false;
+    }
   }
 
   async assertOwnedImageFile(userId: string, fileUrl: string): Promise<string> {
