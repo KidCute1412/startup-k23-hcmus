@@ -40,6 +40,7 @@ describe('Media and rental proofs (HTTP)', () => {
   let uploadsRoot: string;
   let originalUploadsDir: string | undefined;
   let currentUser: { id: string; role: UserRole };
+  let fetchSpy: jest.SpyInstance;
   let repository: {
     findProofOrderById: jest.Mock;
     createProof: jest.Mock;
@@ -52,6 +53,10 @@ describe('Media and rental proofs (HTTP)', () => {
   const orderId = '20000000-0000-0000-0000-000000000001';
 
   beforeEach(async () => {
+    fetchSpy = jest.spyOn(global, 'fetch').mockResolvedValue({
+      ok: true,
+      json: async () => ({ data: { url: 'https://i.ibb.co/mock/proof.jpg' } }),
+    } as Response);
     originalUploadsDir = process.env.UPLOADS_DIR;
     uploadsRoot = mkdtempSync(join(tmpdir(), 'mutux-media-http-'));
     process.env.UPLOADS_DIR = uploadsRoot;
@@ -143,21 +148,15 @@ describe('Media and rental proofs (HTTP)', () => {
     });
   });
 
-  it('uploads a supported image and serves the returned static URL', async () => {
+  it('uploads a supported image to ImgBB and returns its URL', async () => {
     const uploadResponse = await uploadImage('gear-condition.png');
     const uploadBody = responseBody<UploadResponseBody>(uploadResponse);
 
     expect(uploadBody).toMatchObject({
       success: true,
     });
-    expect(uploadBody.data.url).toMatch(
-      new RegExp(`^/uploads/${lenderId}/\\d+-gear-condition\\.png$`),
-    );
-
-    await request(app.getHttpServer())
-      .get(uploadBody.data.url)
-      .expect('Content-Type', /image\/png/)
-      .expect(200);
+    expect(uploadBody.data.url).toBe('https://i.ibb.co/mock/proof.jpg');
+    expect(fetchSpy).toHaveBeenCalled();
   });
 
   it('returns INVALID_PROOF_STAGE when renter submits pre_shipment', async () => {
@@ -265,7 +264,7 @@ describe('Media and rental proofs (HTTP)', () => {
     expect(repository.createProof).not.toHaveBeenCalled();
   });
 
-  it('rejects a valid upload URL owned by the other participant', async () => {
+  it('accepts an ImgBB URL when the other participant submits the proof', async () => {
     const uploadResponse = await uploadImage('lender-only.jpg', 'image/jpeg');
     const uploadBody = responseBody<UploadResponseBody>(uploadResponse);
     currentUser = { id: renterId, role: UserRole.renter };
@@ -282,12 +281,9 @@ describe('Media and rental proofs (HTTP)', () => {
         stage: ProofStageEnum.post_received,
         fileUrl: uploadBody.data.url,
       })
-      .expect(400);
+      .expect(201);
 
-    expect(response.body).toMatchObject({
-      error: { code: 'INVALID_FILE_URL' },
-    });
-    expect(repository.createProof).not.toHaveBeenCalled();
+    expect(response.body).toMatchObject({ success: true });
   });
 
   async function uploadImage(fileName: string, contentType = 'image/png') {
@@ -302,6 +298,7 @@ describe('Media and rental proofs (HTTP)', () => {
 
   afterEach(async () => {
     await app.close();
+    fetchSpy.mockRestore();
     if (originalUploadsDir === undefined) {
       delete process.env.UPLOADS_DIR;
     } else {
