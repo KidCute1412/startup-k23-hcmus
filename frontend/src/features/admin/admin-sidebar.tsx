@@ -8,9 +8,9 @@ import {
   ShieldCheck,
   PackageCheck,
   Scale,
-  ArrowLeft,
   BadgeDollarSign,
   UserCheck,
+  User,
 } from "lucide-react";
 import { cn } from "@/lib/cn";
 
@@ -22,6 +22,11 @@ export interface AdminNavItem {
 }
 
 const ADMIN_NAV_ITEMS: AdminNavItem[] = [
+  {
+    href: "/admin/profile",
+    label: "Hồ sơ Admin",
+    icon: User,
+  },
   {
     href: "/admin",
     label: "Tổng quan Dashboard",
@@ -137,14 +142,14 @@ export function AdminSidebar({ className }: { className?: string }) {
         </nav>
       </div>
 
-      {/* Footer Navigation Back to Site */}
+      {/* Admin account navigation */}
       <div className="border-t border-vanguard-light-border p-4 dark:border-vanguard-dark-border">
         <Link
-          href="/"
+          href="/admin/profile"
           className="flex w-full items-center justify-center gap-2 rounded-v-sm border border-vanguard-light-border bg-vanguard-light-bg px-4 py-2.5 font-display text-xs font-semibold text-vanguard-light-text transition hover:border-vanguard-primary dark:border-vanguard-dark-border dark:bg-vanguard-dark-bg dark:text-vanguard-dark-text dark:hover:border-vanguard-primary"
         >
-          <ArrowLeft size={14} />
-          <span>Về trang Marketplace</span>
+          <User size={14} />
+          <span>Hồ sơ & tài khoản</span>
         </Link>
       </div>
     </aside>

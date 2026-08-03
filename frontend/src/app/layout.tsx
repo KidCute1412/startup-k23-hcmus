@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { Playfair_Display, Outfit } from "next/font/google";
-import { Footer } from "@/components/layout/footer";
-import { Header } from "@/components/layout/header";
+import { AppShell } from "@/components/layout/app-shell";
 import "./globals.css";
 
 const display = Playfair_Display({
@@ -52,11 +51,7 @@ export default function RootLayout({
       <body className={`${display.variable} ${body.variable} font-body`}>
         <ToastProvider>
           <CartProvider>
-            <div className="flex min-h-screen flex-col bg-vanguard-light-bg text-vanguard-light-text transition-colors duration-300 dark:bg-vanguard-dark-bg dark:text-vanguard-dark-text">
-              <Header />
-              <main className="flex-1">{children}</main>
-              <Footer />
-            </div>
+            <AppShell>{children}</AppShell>
           </CartProvider>
         </ToastProvider>
       </body>

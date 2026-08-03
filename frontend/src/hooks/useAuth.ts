@@ -29,6 +29,7 @@ function storeUser(profile: User): boolean {
 export function useAuth() {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isReady, setIsReady] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const syncSession = useCallback(() => setUser(readStoredUser()), []);
@@ -49,6 +50,9 @@ export function useAuth() {
       })
       .catch(() => {
         if (active) clearSession();
+      })
+      .finally(() => {
+        if (active) setIsReady(true);
       });
     return () => {
       active = false;
@@ -87,5 +91,5 @@ export function useAuth() {
     try { await authService.logout(); } finally { clearSession(); setUser(null); }
   }, []);
 
-  return { user, isAuthenticated: !!user, isLoading, error, login, register, changePassword, logout };
+  return { user, isAuthenticated: !!user, isReady, isLoading, error, login, register, changePassword, logout };
 }

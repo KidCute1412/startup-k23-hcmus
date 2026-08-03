@@ -1,10 +1,12 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { AdminSidebar } from "@/features/admin/admin-sidebar";
 import { Menu, X, ShieldCheck, User } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
+import { resolveMediaUrl } from "@/hooks/useAccount";
 
 export default function AdminLayout({
   children,
@@ -12,7 +14,21 @@ export default function AdminLayout({
   children: React.ReactNode;
 }) {
   const [mobileOpen, setMobileOpen] = useState(false);
-  const { user } = useAuth();
+  const router = useRouter();
+  const { user, isReady, logout } = useAuth();
+
+  useEffect(() => {
+    if (isReady && user?.role !== "admin") router.replace("/login?returnTo=/admin");
+  }, [isReady, router, user?.role]);
+
+  if (!isReady || user?.role !== "admin") {
+    return <div className="flex min-h-screen items-center justify-center bg-vanguard-dark-bg text-sm text-vanguard-dark-textMuted">Đang xác thực quyền quản trị...</div>;
+  }
+
+  const handleLogout = async () => {
+    await logout();
+    router.replace("/login");
+  };
 
   return (
     <div className="flex min-h-screen bg-vanguard-light-bg text-vanguard-light-text transition-colors duration-300 dark:bg-vanguard-dark-bg dark:text-vanguard-dark-text">
@@ -60,11 +76,20 @@ export default function AdminLayout({
             </div>
           </div>
 
-          <div className="flex items-center gap-4">
+              <div className="flex items-center gap-4">
             {/* Admin User Chip */}
             <div className="flex items-center gap-3 rounded-full border border-vanguard-primary/30 bg-vanguard-primary/5 px-3.5 py-1.5">
-              <div className="flex size-7 items-center justify-center rounded-full bg-vanguard-primary text-vanguard-dark-bg font-bold text-xs">
-                <User size={14} />
+              <div className="flex size-7 items-center justify-center overflow-hidden rounded-full bg-vanguard-primary text-vanguard-dark-bg font-bold text-xs">
+                {resolveMediaUrl(user.avatarUrl ?? null) ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={resolveMediaUrl(user.avatarUrl ?? null) ?? ""}
+                    alt="Ảnh đại diện admin"
+                    className="size-full object-cover"
+                  />
+                ) : (
+                  <User size={14} />
+                )}
               </div>
               <div className="text-left text-xs">
                 <p className="font-bold text-vanguard-light-text dark:text-vanguard-dark-text truncate max-w-[140px]">
@@ -74,7 +99,15 @@ export default function AdminLayout({
                   Administrator
                 </p>
               </div>
-            </div>
+          </div>
+          <ThemeToggle />
+          <button
+              type="button"
+              onClick={() => void handleLogout()}
+              className="rounded-v-sm border border-red-500/30 px-3 py-2 text-xs font-bold text-red-500 transition hover:bg-red-500/10"
+            >
+              Đăng xuất
+            </button>
           </div>
         </header>
 

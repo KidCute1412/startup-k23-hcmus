@@ -55,8 +55,14 @@ export function LoginForm() {
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     try {
-      await login({ email, password });
-      window.location.href = '/';
+      const result = await login({ email, password });
+      const returnTo = new URLSearchParams(window.location.search).get("returnTo");
+      const destination = result.user.role === "admin"
+        ? "/admin"
+        : returnTo?.startsWith("/") && !returnTo.startsWith("/admin")
+          ? returnTo
+          : "/";
+      window.location.href = destination;
     } catch (error) {
       const errMsg = error instanceof Error 
         ? error.message 
