@@ -32,7 +32,7 @@ export function useAdminOverview() {
         adminService.getKycQueue({ status: 'pending', limit: 1 }),
         adminService.getGearQueue({ approvalStatus: 'pending', limit: 1 }),
         adminService.getDisputeQueue({ status: 'open', limit: 1 }),
-        creditLimitService.getAdminRequests({ status: 'pending', limit: 1 }),
+        creditLimitService.listAdmin('pending', 1, 1),
       ]);
 
       let isForbidden = false;
