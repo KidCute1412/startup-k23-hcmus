@@ -23,11 +23,6 @@ export interface AdminNavItem {
 
 const ADMIN_NAV_ITEMS: AdminNavItem[] = [
   {
-    href: "/admin/credit-limits",
-    label: "Duyệt Hạn mức Tín dụng",
-    icon: BadgeDollarSign,
-  },
-  {
     href: "/admin",
     label: "Tổng quan Dashboard",
     icon: LayoutDashboard,
@@ -36,7 +31,6 @@ const ADMIN_NAV_ITEMS: AdminNavItem[] = [
     href: "/admin/kyc",
     label: "Duyệt Hàng chờ KYC",
     icon: ShieldCheck,
-    badge: 3,
   },
   {
     href: "/admin/lender-upgrades",
@@ -47,13 +41,16 @@ const ADMIN_NAV_ITEMS: AdminNavItem[] = [
     href: "/admin/gears",
     label: "Duyệt Thiết bị Cho thuê",
     icon: PackageCheck,
-    badge: 5,
   },
   {
     href: "/admin/disputes",
     label: "Xử lý Tranh chấp",
     icon: Scale,
-    badge: 2,
+  },
+  {
+    href: "/admin/credit-limits",
+    label: "Duyệt Hạn mức Tín dụng",
+    icon: BadgeDollarSign,
   },
 ];
 

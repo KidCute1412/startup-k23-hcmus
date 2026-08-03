@@ -20,6 +20,14 @@ const nextConfig = {
         hostname: "127.0.0.1",
         port: "8080",
       },
+      {
+        protocol: "https",
+        hostname: "**",
+      },
+      {
+        protocol: "http",
+        hostname: "**",
+      },
     ],
   },
   webpack: (config) => {
