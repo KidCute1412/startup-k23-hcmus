@@ -19,7 +19,6 @@ import {
 
 import { getCategories } from "@/features/catalog/mock-data";
 import { useGears } from "@/hooks/useGears";
-import { getMyGearById } from "@/services/gearService";
 
 const CATEGORIES = getCategories();
 
@@ -49,7 +48,12 @@ interface Props {
 export function EditGearForm({ gearId }: Props) {
   const router = useRouter();
   const { uploadImage } = useMedia();
-  const { updateGear, loading: isSubmitting, error: submitError } = useGears();
+  const {
+    getGearById,
+    updateGear,
+    loading: isSubmitting,
+    error: submitError,
+  } = useGears();
 
   const [loadingGear, setLoadingGear] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -78,9 +82,7 @@ export function EditGearForm({ gearId }: Props) {
     async function loadGear() {
       try {
         setLoadingGear(true);
-        // Call service directly to avoid infinite re-render caused by unstable
-        // getGearById reference from useGears (no useCallback wrapping).
-        const data = await getMyGearById(gearId);
+        const data = await getGearById(gearId);
         setName(data.name);
         
         // Reverse category map

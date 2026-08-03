@@ -143,8 +143,12 @@ export class GearsService {
 
   async findMine(
     lenderId: string,
-    query: GetMyGearsQueryDto,
-  ): Promise<PaginatedResult<ReturnType<GearsService['mapSummary']>>> {
+    query: GetMyGearsQueryDto | number,
+    legacyLimit?: number,
+  ): Promise<
+    | PaginatedResult<ReturnType<GearsService['mapSummary']>>
+    | PaginatedResult<Gear>
+  > {
     const lender = await this.gearsRepository.findUserById(lenderId);
     if (!lender?.lender_enabled) {
       throw new ForbiddenException({
@@ -152,20 +156,34 @@ export class GearsService {
         message: 'Lender enablement is required to view lender gears',
       });
     }
+    const isLegacyCall = typeof query === 'number';
+    const page = isLegacyCall ? query : query.page;
+    const limit = isLegacyCall ? (legacyLimit ?? 10) : query.limit;
     const result = await this.gearsRepository.findMine({
       lenderId,
-      page: query.page,
-      limit: query.limit,
-      search: query.search,
-      status: query.status,
+      page,
+      limit,
+      search: isLegacyCall ? undefined : query.search,
+      status: isLegacyCall ? undefined : query.status,
     });
+    if (isLegacyCall) {
+      return {
+        data: result.data as unknown as Gear[],
+        meta: {
+          total: result.total,
+          page,
+          limit,
+          totalPages: Math.ceil(result.total / limit),
+        },
+      };
+    }
     return {
       data: result.data.map((gear) => this.mapSummary(gear)),
       meta: {
         total: result.total,
-        page: query.page,
-        limit: query.limit,
-        totalPages: Math.ceil(result.total / query.limit),
+        page,
+        limit,
+        totalPages: Math.ceil(result.total / limit),
       },
     };
   }
