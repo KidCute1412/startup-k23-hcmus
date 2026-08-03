@@ -110,7 +110,7 @@ const teamMembers = [
     role: "Project Owner & Core System Architect",
     businessRole: "Project Owner",
     techRole: "Backend System Engineer",
-    avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80",
+    avatar: "/avatars/Quang.jpg",
     bio: "Định hướng chiến lược phát triển sản phẩm, đảm bảo kiến trúc hệ thống và quy trình trải nghiệm tối ưu cho người dùng.",
   },
   {
@@ -119,7 +119,7 @@ const teamMembers = [
     role: "Project Manager & Frontend Head",
     businessRole: "Project Manager & Business Analyst",
     techRole: "Frontend Lead & Quality Assurance",
-    avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=400&q=80",
+    avatar: "/avatars/Vân.jpeg",
     bio: "Quản trị tiến độ dự án, định hướng giao diện UI/UX chuẩn mực và phụ trách kiểm định chất lượng toàn hệ thống.",
   },
   {
@@ -128,7 +128,7 @@ const teamMembers = [
     role: "Head of Growth & Backend Lead",
     businessRole: "Marketing Director",
     techRole: "Backend Head Engineer",
-    avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=400&q=80",
+    avatar: "/avatars/Lộc.jpg",
     bio: "Hoạch định chiến lược phát triển đối tác, tiếp thị và phụ trách trực tiếp kiến trúc API & Cơ sở dữ liệu trung tâm.",
   },
   {
@@ -206,328 +206,328 @@ export default function AboutPage() {
           </div>
         </section>
 
-      {/* Trust Stats Counter Section */}
-      <section className="border-y border-vanguard-light-border bg-vanguard-light-surfDim/50 py-10 dark:border-vanguard-dark-border dark:bg-vanguard-dark-surfDim/30">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6">
-          <div className="grid grid-cols-2 gap-8 md:grid-cols-4">
-            {stats.map((stat, idx) => (
-              <div
-                key={idx}
-                className="space-y-1 text-center md:text-left"
-              >
-                <p className="font-display text-3xl font-extrabold text-vanguard-primary sm:text-4xl">
-                  {stat.value}
-                </p>
-                <p className="text-xs uppercase tracking-wider text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted font-medium">
-                  {stat.label}
-                </p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Core Pillars / Mission Section */}
-      <section className="mx-auto max-w-7xl px-4 sm:px-6">
-        <SectionHeading
-          eyebrow="Triết Lý Sản Phẩm"
-          title="Vì Sao Hàng Ngàn Game Thủ Tin Chọn Mutux?"
-          description="Chúng tôi mang đến giải pháp thuê thiết bị cao cấp vừa tiết kiệm chi phí vừa xóa bỏ hoàn toàn nỗi lo giam cọc hay tráo đồ."
-        />
-
-        <div className="mt-10 grid gap-6 md:grid-cols-3">
-          {pillars.map((pillar, idx) => {
-            const Icon = pillar.icon;
-            return (
-              <div
-                key={idx}
-                className="group relative flex flex-col justify-between rounded-v-sm border border-vanguard-light-border bg-vanguard-light-surf p-7 transition-all duration-300 hover:-translate-y-1 hover:border-vanguard-primary/50 hover:shadow-royal dark:border-vanguard-dark-border dark:bg-vanguard-dark-surf"
-              >
-                <div className="space-y-4">
-                  <div className="inline-flex size-12 items-center justify-center rounded-v-sm border border-vanguard-primary/30 bg-vanguard-primary/10 text-vanguard-primary transition-colors group-hover:bg-gold-metal group-hover:text-vanguard-dark-bg">
-                    <Icon size={22} />
-                  </div>
-                  <h3 className="font-display text-xl font-bold">
-                    {pillar.title}
-                  </h3>
-                  <p className="text-sm leading-7 text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted">
-                    {pillar.description}
+        {/* Trust Stats Counter Section */}
+        <section className="border-y border-vanguard-light-border bg-vanguard-light-surfDim/50 py-10 dark:border-vanguard-dark-border dark:bg-vanguard-dark-surfDim/30">
+          <div className="mx-auto max-w-7xl px-4 sm:px-6">
+            <div className="grid grid-cols-2 gap-8 md:grid-cols-4">
+              {stats.map((stat, idx) => (
+                <div
+                  key={idx}
+                  className="space-y-1 text-center md:text-left"
+                >
+                  <p className="font-display text-3xl font-extrabold text-vanguard-primary sm:text-4xl">
+                    {stat.value}
+                  </p>
+                  <p className="text-xs uppercase tracking-wider text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted font-medium">
+                    {stat.label}
                   </p>
                 </div>
-              </div>
-            );
-          })}
-        </div>
-      </section>
-
-      {/* How Deposit & Escrow Works - Simplified Trust Section */}
-      <section className="mx-auto max-w-7xl px-4 sm:px-6">
-        <div className="rounded-v-sm border border-vanguard-primary/30 bg-vanguard-primary/5 p-8 sm:p-10 dark:bg-vanguard-dark-surf">
-          <div className="grid gap-8 lg:grid-cols-12 items-center">
-            <div className="space-y-4 lg:col-span-7">
-              <span className="inline-flex items-center gap-2 font-display text-xs font-bold uppercase tracking-widest text-vanguard-primary">
-                <Lock size={16} /> Cơ chế Giữ Cọc An Toàn 100%
-              </span>
-              <h3 className="font-display text-2xl font-bold sm:text-3xl">
-                Tiền cọc của bạn được bảo vệ như thế nào?
-              </h3>
-              <p className="text-sm leading-7 text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted">
-                Trên Mutux, <strong>tiền cọc KHÔNG chuyển trực tiếp cho người chủ máy</strong>. Khoản cọc được giữ an toàn trên hệ thống trung gian (Escrow) của Mutux. Khi bạn hoàn trả thiết bị đúng hạn và nguyên vẹn, <strong>tiền cọc lập tức hoàn 100% về Ví Mutux</strong> và bạn có thể rút về tài khoản ngân hàng bất kỳ lúc nào.
-              </p>
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 pt-2">
-                <div className="flex items-center gap-2.5 text-xs font-medium">
-                  <CheckCircle2 size={16} className="text-vanguard-primary shrink-0" />
-                  <span>Hoàn cọc tự động chỉ trong vài phút</span>
-                </div>
-                <div className="flex items-center gap-2.5 text-xs font-medium">
-                  <CheckCircle2 size={16} className="text-vanguard-primary shrink-0" />
-                  <span>Rút tiền 24/7 về ngân hàng Việt Nam</span>
-                </div>
-                <div className="flex items-center gap-2.5 text-xs font-medium">
-                  <CheckCircle2 size={16} className="text-vanguard-primary shrink-0" />
-                  <span>Hạn mức cọc ưu đãi cho tài khoản uy tín</span>
-                </div>
-                <div className="flex items-center gap-2.5 text-xs font-medium">
-                  <CheckCircle2 size={16} className="text-vanguard-primary shrink-0" />
-                  <span>Không phát sinh phụ phí ẩn</span>
-                </div>
-              </div>
-            </div>
-
-            <div className="lg:col-span-5 rounded-v-sm border border-vanguard-primary/20 bg-vanguard-light-surf p-6 dark:bg-vanguard-dark-bg">
-              <h4 className="font-display text-base font-bold text-vanguard-primary mb-3">
-                Lợi ích khi mở Ví & Nạp tiền Mutux:
-              </h4>
-              <ul className="space-y-3 text-xs leading-6 text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted">
-                <li className="flex items-start gap-2">
-                  <span className="font-bold text-vanguard-primary">1.</span>
-                  <span><strong>Đặt thuê tức thì:</strong> Giữ máy nhanh chóng không lo gián đoạn giao dịch.</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="font-bold text-vanguard-primary">2.</span>
-                  <span><strong>Ưu đãi Hạn Mức Tín Dụng:</strong> Được giảm hoặc miễn tiền cọc theo điểm uy tín tài khoản.</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="font-bold text-vanguard-primary">3.</span>
-                  <span><strong>Nạp rút linh hoạt qua PayOS:</strong> An toàn tuyệt đối với mã QR Napas247 chính chủ.</span>
-                </li>
-              </ul>
+              ))}
             </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* How Mutux Works / Operating Workflow */}
-      <section className="border-t border-vanguard-light-border bg-vanguard-light-surfDim/30 py-16 dark:border-vanguard-dark-border dark:bg-vanguard-dark-surf/40">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6">
+        {/* Core Pillars / Mission Section */}
+        <section className="mx-auto max-w-7xl px-4 sm:px-6">
           <SectionHeading
-            eyebrow="Quy Trình"
-            title="4 Bước Thuê Gear Đơn Giản & Dễ Dàng"
-            description="Quy trình chuẩn hóa bảo vệ trọn vẹn trải nghiệm của bạn từ khi đặt hàng đến lúc trả máy."
+            eyebrow="Triết Lý Sản Phẩm"
+            title="Vì Sao Hàng Ngàn Game Thủ Tin Chọn Mutux?"
+            description="Chúng tôi mang đến giải pháp thuê thiết bị cao cấp vừa tiết kiệm chi phí vừa xóa bỏ hoàn toàn nỗi lo giam cọc hay tráo đồ."
           />
 
-          <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-            {workflowSteps.map((item, idx) => (
-              <div
-                key={idx}
-                className="relative flex flex-col justify-between rounded-v-sm border border-vanguard-light-border bg-vanguard-light-surf p-6 dark:border-vanguard-dark-border dark:bg-vanguard-dark-bg"
-              >
-                <div>
-                  <span className="font-display text-3xl font-black text-vanguard-primary/40">
-                    {item.step}
-                  </span>
-                  <h4 className="mt-3 font-display text-lg font-semibold">
-                    {item.title}
-                  </h4>
-                  <p className="mt-2 text-xs leading-6 text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted">
-                    {item.description}
-                  </p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Security & Protection Features */}
-      <section className="mx-auto max-w-7xl px-4 sm:px-6">
-        <div className="grid gap-12 lg:grid-cols-12 items-center">
-          <div className="space-y-6 lg:col-span-5">
-            <SectionHeading
-              eyebrow="An Toàn & Bảo Vệ"
-              title="Quyền Lợi Của Bạn Luôn Được Đặt Lên Hàng Đầu"
-              description="Mutux xây dựng hệ thống bảo vệ toàn diện để bạn hoàn toàn yên tâm trải nghiệm các thiết bị đắt tiền."
-            />
-            <ul className="space-y-3 pt-2">
-              {[
-                "100% Tiền cọc được khóa an toàn, tự động hoàn trả đầy đủ khi xong hợp đồng.",
-                "Hạn mức cọc giảm đến 100% dựa trên mức độ uy tín tài khoản của bạn.",
-                "Đồng kiểm tra & chụp ảnh xác minh tình trạng trước khi nhận thiết bị.",
-                "Đội ngũ hỗ trợ Resolver can thiệp xử lý công bằng nếu phát sinh sự cố.",
-              ].map((text, i) => (
-                <li key={i} className="flex items-start gap-3 text-xs sm:text-sm">
-                  <CheckCircle2 size={17} className="mt-0.5 shrink-0 text-vanguard-primary" />
-                  <span>{text}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          <div className="grid gap-4 sm:grid-cols-2 lg:col-span-7">
-            {securityFeatures.map((feat, idx) => {
-              const Icon = feat.icon;
+          <div className="mt-10 grid gap-6 md:grid-cols-3">
+            {pillars.map((pillar, idx) => {
+              const Icon = pillar.icon;
               return (
                 <div
                   key={idx}
-                  className="rounded-v-sm border border-vanguard-light-border bg-vanguard-light-surf p-5 dark:border-vanguard-dark-border dark:bg-vanguard-dark-surf"
+                  className="group relative flex flex-col justify-between rounded-v-sm border border-vanguard-light-border bg-vanguard-light-surf p-7 transition-all duration-300 hover:-translate-y-1 hover:border-vanguard-primary/50 hover:shadow-royal dark:border-vanguard-dark-border dark:bg-vanguard-dark-surf"
                 >
-                  <Icon size={20} className="text-vanguard-primary" />
-                  <h4 className="mt-3 font-display text-base font-semibold">
-                    {feat.title}
-                  </h4>
-                  <p className="mt-1 text-xs leading-5 text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted">
-                    {feat.desc}
-                  </p>
+                  <div className="space-y-4">
+                    <div className="inline-flex size-12 items-center justify-center rounded-v-sm border border-vanguard-primary/30 bg-vanguard-primary/10 text-vanguard-primary transition-colors group-hover:bg-gold-metal group-hover:text-vanguard-dark-bg">
+                      <Icon size={22} />
+                    </div>
+                    <h3 className="font-display text-xl font-bold">
+                      {pillar.title}
+                    </h3>
+                    <p className="text-sm leading-7 text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted">
+                      {pillar.description}
+                    </p>
+                  </div>
                 </div>
               );
             })}
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* Founding Team & Key Roles Section */}
-      <section className="mx-auto max-w-7xl px-4 sm:px-6">
-        <SectionHeading
-          eyebrow="Đội Ngũ Phát Triển"
-          title="Đội Ngũ Sáng Lập & Chuyên Gia Vận Hành"
-          description="Những con người đứng sau hệ thống Mutux — kết hợp giữa chuyên môn quản trị kinh doanh, tài chính, tiếp thị và kỹ thuật phần mềm."
-        />
-
-        <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {teamMembers.map((member, idx) => (
-            <div
-              key={idx}
-              className="group relative flex flex-col justify-between rounded-v-sm border border-vanguard-light-border bg-vanguard-light-surf p-6 transition-all duration-300 hover:-translate-y-1 hover:border-vanguard-primary/50 hover:shadow-royal dark:border-vanguard-dark-border dark:bg-vanguard-dark-surf"
-            >
-              <div className="space-y-4">
-                <div className="flex items-center gap-4">
-                  <div className="relative size-14 shrink-0 overflow-hidden rounded-full border border-vanguard-primary/40">
-                    <Image
-                      src={member.avatar}
-                      alt={member.name}
-                      fill
-                      className="object-cover transition-transform duration-500 group-hover:scale-110"
-                    />
-                  </div>
-                  <div>
-                    <h3 className="font-display text-lg font-bold text-vanguard-light-text dark:text-vanguard-dark-text">
-                      {member.name}
-                    </h3>
-                    <p className="font-display text-xs font-semibold uppercase tracking-wider text-vanguard-primary">
-                      {member.role}
-                    </p>
-                    <span className="text-[10px] font-mono text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted">
-                      MSSV: {member.studentId}
-                    </span>
-                  </div>
-                </div>
-
-                <p className="text-xs leading-6 text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted">
-                  {member.bio}
+        {/* How Deposit & Escrow Works - Simplified Trust Section */}
+        <section className="mx-auto max-w-7xl px-4 sm:px-6">
+          <div className="rounded-v-sm border border-vanguard-primary/30 bg-vanguard-primary/5 p-8 sm:p-10 dark:bg-vanguard-dark-surf">
+            <div className="grid gap-8 lg:grid-cols-12 items-center">
+              <div className="space-y-4 lg:col-span-7">
+                <span className="inline-flex items-center gap-2 font-display text-xs font-bold uppercase tracking-widest text-vanguard-primary">
+                  <Lock size={16} /> Cơ chế Giữ Cọc An Toàn 100%
+                </span>
+                <h3 className="font-display text-2xl font-bold sm:text-3xl">
+                  Tiền cọc của bạn được bảo vệ như thế nào?
+                </h3>
+                <p className="text-sm leading-7 text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted">
+                  Trên Mutux, <strong>tiền cọc KHÔNG chuyển trực tiếp cho người chủ máy</strong>. Khoản cọc được giữ an toàn trên hệ thống trung gian (Escrow) của Mutux. Khi bạn hoàn trả thiết bị đúng hạn và nguyên vẹn, <strong>tiền cọc lập tức hoàn 100% về Ví Mutux</strong> và bạn có thể rút về tài khoản ngân hàng bất kỳ lúc nào.
                 </p>
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 pt-2">
+                  <div className="flex items-center gap-2.5 text-xs font-medium">
+                    <CheckCircle2 size={16} className="text-vanguard-primary shrink-0" />
+                    <span>Hoàn cọc tự động chỉ trong vài phút</span>
+                  </div>
+                  <div className="flex items-center gap-2.5 text-xs font-medium">
+                    <CheckCircle2 size={16} className="text-vanguard-primary shrink-0" />
+                    <span>Rút tiền 24/7 về ngân hàng Việt Nam</span>
+                  </div>
+                  <div className="flex items-center gap-2.5 text-xs font-medium">
+                    <CheckCircle2 size={16} className="text-vanguard-primary shrink-0" />
+                    <span>Hạn mức cọc ưu đãi cho tài khoản uy tín</span>
+                  </div>
+                  <div className="flex items-center gap-2.5 text-xs font-medium">
+                    <CheckCircle2 size={16} className="text-vanguard-primary shrink-0" />
+                    <span>Không phát sinh phụ phí ẩn</span>
+                  </div>
+                </div>
               </div>
 
-              <div className="mt-6 border-t border-vanguard-light-border/60 pt-4 dark:border-vanguard-dark-border/60 space-y-1.5">
-                <div className="flex items-center justify-between text-[11px]">
-                  <span className="text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted font-medium">Business:</span>
-                  <span className="font-semibold text-vanguard-primary">{member.businessRole}</span>
-                </div>
-                <div className="flex items-center justify-between text-[11px]">
-                  <span className="text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted font-medium">R&D / Tech:</span>
-                  <span className="font-semibold text-vanguard-light-text dark:text-vanguard-dark-text">{member.techRole}</span>
-                </div>
+              <div className="lg:col-span-5 rounded-v-sm border border-vanguard-primary/20 bg-vanguard-light-surf p-6 dark:bg-vanguard-dark-bg">
+                <h4 className="font-display text-base font-bold text-vanguard-primary mb-3">
+                  Lợi ích khi mở Ví & Nạp tiền Mutux:
+                </h4>
+                <ul className="space-y-3 text-xs leading-6 text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted">
+                  <li className="flex items-start gap-2">
+                    <span className="font-bold text-vanguard-primary">1.</span>
+                    <span><strong>Đặt thuê tức thì:</strong> Giữ máy nhanh chóng không lo gián đoạn giao dịch.</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="font-bold text-vanguard-primary">2.</span>
+                    <span><strong>Ưu đãi Hạn Mức Tín Dụng:</strong> Được giảm hoặc miễn tiền cọc theo điểm uy tín tài khoản.</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="font-bold text-vanguard-primary">3.</span>
+                    <span><strong>Nạp rút linh hoạt qua PayOS:</strong> An toàn tuyệt đối với mã QR Napas247 chính chủ.</span>
+                  </li>
+                </ul>
               </div>
             </div>
-          ))}
-        </div>
-      </section>
-
-      {/* FAQ Section for Deposit & Wallet Trust */}
-      <section className="mx-auto max-w-7xl px-4 sm:px-6">
-        <SectionHeading
-          eyebrow="Giải Đáp Thắc Mắc"
-          title="Câu Hỏi Thường Gặp Về Đặt Cọc & Ví Mutux"
-          description="Giải đáp các băn khoăn phổ biến để bạn tự tin mở ví và trải nghiệm ngay."
-        />
-
-        <div className="mt-10 grid gap-6 md:grid-cols-2">
-          <div className="rounded-v-sm border border-vanguard-light-border bg-vanguard-light-surf p-6 dark:border-vanguard-dark-border dark:bg-vanguard-dark-surf space-y-2">
-            <h4 className="font-display text-base font-bold text-vanguard-primary">
-              1. Tiền cọc của tôi có an toàn không và khi nào tôi nhận lại được?
-            </h4>
-            <p className="text-xs sm:text-sm leading-6 text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted">
-              Rất an toàn! Tiền cọc của bạn được hệ thống giữ tạm thời (Escrow) chứ không chuyển cho bên cho thuê. Ngay khi bạn trả thiết bị và xác nhận tình trạng thành công, tiền cọc sẽ được hệ thống hoàn lại 100% vào Ví Mutux ngay lập tức.
-            </p>
           </div>
+        </section>
 
-          <div className="rounded-v-sm border border-vanguard-light-border bg-vanguard-light-surf p-6 dark:border-vanguard-dark-border dark:bg-vanguard-dark-surf space-y-2">
-            <h4 className="font-display text-base font-bold text-vanguard-primary">
-              2. Tôi có thể rút tiền từ Ví Mutux về ngân hàng được không?
-            </h4>
-            <p className="text-xs sm:text-sm leading-6 text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted">
-              Hoàn toàn được! Bạn có thể thực hiện lệnh rút tiền từ Ví Mutux về tài khoản ngân hàng cá nhân bất kỳ lúc nào 24/7 qua cổng PayOS an toàn và miễn phí.
-            </p>
-          </div>
+        {/* How Mutux Works / Operating Workflow */}
+        <section className="border-t border-vanguard-light-border bg-vanguard-light-surfDim/30 py-16 dark:border-vanguard-dark-border dark:bg-vanguard-dark-surf/40">
+          <div className="mx-auto max-w-7xl px-4 sm:px-6">
+            <SectionHeading
+              eyebrow="Quy Trình"
+              title="4 Bước Thuê Gear Đơn Giản & Dễ Dàng"
+              description="Quy trình chuẩn hóa bảo vệ trọn vẹn trải nghiệm của bạn từ khi đặt hàng đến lúc trả máy."
+            />
 
-          <div className="rounded-v-sm border border-vanguard-light-border bg-vanguard-light-surf p-6 dark:border-vanguard-dark-border dark:bg-vanguard-dark-surf space-y-2">
-            <h4 className="font-display text-base font-bold text-vanguard-primary">
-              3. Làm sao để tôi được giảm tiền cọc khi thuê thiết bị?
-            </h4>
-            <p className="text-xs sm:text-sm leading-6 text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted">
-              Chỉ cần bạn hoàn tất xác minh tài khoản (KYC) và duy trì lịch sử thuê máy đúng hạn, điểm uy tín của bạn sẽ tăng lên và Mutux sẽ cấp cho bạn Hạn Mức Tín Dụng giúp miễn giảm tiền cọc lên tới 100%.
-            </p>
-          </div>
-
-          <div className="rounded-v-sm border border-vanguard-light-border bg-vanguard-light-surf p-6 dark:border-vanguard-dark-border dark:bg-vanguard-dark-surf space-y-2">
-            <h4 className="font-display text-base font-bold text-vanguard-primary">
-              4. Nếu thiết bị nhận được không đúng như mô tả thì xử lý thế nào?
-            </h4>
-            <p className="text-xs sm:text-sm leading-6 text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted">
-              Bạn có thể từ chối nhận máy ở bước bàn giao và gửi khiếu nại. Đội ngũ trọng tài (Resolver) của Mutux sẽ kiểm tra bằng chứng hình ảnh và hoàn tiền 100% cho bạn mà không mất phí.
-            </p>
-          </div>
-        </div>
-      </section>
-
-      {/* CTA Section */}
-      <section className="mx-auto max-w-7xl px-4 sm:px-6">
-        <div className="relative overflow-hidden rounded-v-sm border border-vanguard-primary/40 bg-vanguard-dark-surf p-8 sm:p-12 text-vanguard-dark-text shadow-2xl">
-          <div className="relative z-10 max-w-3xl space-y-6">
-            <span className="inline-flex items-center gap-2 rounded-v-sm bg-vanguard-primary px-3 py-1 font-display text-[10px] font-bold uppercase tracking-widest text-vanguard-dark-bg">
-              <Layers size={13} />
-              Sẵn Sàng Trải Nghiệm
-            </span>
-
-            <h2 className="font-display text-3xl font-bold leading-tight sm:text-4xl">
-              Mở Ví Mutux & Trải Nghiệm Gear Ngay Hôm Nay
-            </h2>
-
-            <p className="text-sm leading-7 text-vanguard-dark-textMuted">
-              Khám phá ngay bộ sưu tập bàn phím custom, tai nghe hi-end và gear thi đấu đỉnh cao với quy trình nạp/cọc minh bạch, an toàn tuyệt đối.
-            </p>
-
-            <div className="flex flex-col gap-4 pt-2 sm:flex-row">
-              <LinkButton href="/gears" icon={<ArrowRight size={15} />}>
-                Xem Danh Sách Thiết Bị
-              </LinkButton>
-              <LinkButton href="/wallet" variant="outline" icon={<RefreshCw size={15} />}>
-                Nạp Ví & Kiểm Tra Tín Dụng
-              </LinkButton>
+            <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+              {workflowSteps.map((item, idx) => (
+                <div
+                  key={idx}
+                  className="relative flex flex-col justify-between rounded-v-sm border border-vanguard-light-border bg-vanguard-light-surf p-6 dark:border-vanguard-dark-border dark:bg-vanguard-dark-bg"
+                >
+                  <div>
+                    <span className="font-display text-3xl font-black text-vanguard-primary/40">
+                      {item.step}
+                    </span>
+                    <h4 className="mt-3 font-display text-lg font-semibold">
+                      {item.title}
+                    </h4>
+                    <p className="mt-2 text-xs leading-6 text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted">
+                      {item.description}
+                    </p>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
-        </div>
-      </section>
-    </div>
+        </section>
+
+        {/* Security & Protection Features */}
+        <section className="mx-auto max-w-7xl px-4 sm:px-6">
+          <div className="grid gap-12 lg:grid-cols-12 items-center">
+            <div className="space-y-6 lg:col-span-5">
+              <SectionHeading
+                eyebrow="An Toàn & Bảo Vệ"
+                title="Quyền Lợi Của Bạn Luôn Được Đặt Lên Hàng Đầu"
+                description="Mutux xây dựng hệ thống bảo vệ toàn diện để bạn hoàn toàn yên tâm trải nghiệm các thiết bị đắt tiền."
+              />
+              <ul className="space-y-3 pt-2">
+                {[
+                  "100% Tiền cọc được khóa an toàn, tự động hoàn trả đầy đủ khi xong hợp đồng.",
+                  "Hạn mức cọc giảm đến 100% dựa trên mức độ uy tín tài khoản của bạn.",
+                  "Đồng kiểm tra & chụp ảnh xác minh tình trạng trước khi nhận thiết bị.",
+                  "Đội ngũ hỗ trợ Resolver can thiệp xử lý công bằng nếu phát sinh sự cố.",
+                ].map((text, i) => (
+                  <li key={i} className="flex items-start gap-3 text-xs sm:text-sm">
+                    <CheckCircle2 size={17} className="mt-0.5 shrink-0 text-vanguard-primary" />
+                    <span>{text}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-2 lg:col-span-7">
+              {securityFeatures.map((feat, idx) => {
+                const Icon = feat.icon;
+                return (
+                  <div
+                    key={idx}
+                    className="rounded-v-sm border border-vanguard-light-border bg-vanguard-light-surf p-5 dark:border-vanguard-dark-border dark:bg-vanguard-dark-surf"
+                  >
+                    <Icon size={20} className="text-vanguard-primary" />
+                    <h4 className="mt-3 font-display text-base font-semibold">
+                      {feat.title}
+                    </h4>
+                    <p className="mt-1 text-xs leading-5 text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted">
+                      {feat.desc}
+                    </p>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </section>
+
+        {/* Founding Team & Key Roles Section */}
+        <section className="mx-auto max-w-7xl px-4 sm:px-6">
+          <SectionHeading
+            eyebrow="Đội Ngũ Phát Triển"
+            title="Đội Ngũ Sáng Lập & Chuyên Gia Vận Hành"
+            description="Những con người đứng sau hệ thống Mutux — kết hợp giữa chuyên môn quản trị kinh doanh, tài chính, tiếp thị và kỹ thuật phần mềm."
+          />
+
+          <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {teamMembers.map((member, idx) => (
+              <div
+                key={idx}
+                className="group relative flex flex-col justify-between rounded-v-sm border border-vanguard-light-border bg-vanguard-light-surf p-6 transition-all duration-300 hover:-translate-y-1 hover:border-vanguard-primary/50 hover:shadow-royal dark:border-vanguard-dark-border dark:bg-vanguard-dark-surf"
+              >
+                <div className="space-y-4">
+                  <div className="flex items-center gap-4">
+                    <div className="relative size-14 shrink-0 overflow-hidden rounded-full border border-vanguard-primary/40">
+                      <Image
+                        src={member.avatar}
+                        alt={member.name}
+                        fill
+                        className="object-cover transition-transform duration-500 group-hover:scale-110"
+                      />
+                    </div>
+                    <div>
+                      <h3 className="font-display text-lg font-bold text-vanguard-light-text dark:text-vanguard-dark-text">
+                        {member.name}
+                      </h3>
+                      <p className="font-display text-xs font-semibold uppercase tracking-wider text-vanguard-primary">
+                        {member.role}
+                      </p>
+                      <span className="text-[10px] font-mono text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted">
+                        MSSV: {member.studentId}
+                      </span>
+                    </div>
+                  </div>
+
+                  <p className="text-xs leading-6 text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted">
+                    {member.bio}
+                  </p>
+                </div>
+
+                <div className="mt-6 border-t border-vanguard-light-border/60 pt-4 dark:border-vanguard-dark-border/60 space-y-1.5">
+                  <div className="flex items-center justify-between text-[11px]">
+                    <span className="text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted font-medium">Business:</span>
+                    <span className="font-semibold text-vanguard-primary">{member.businessRole}</span>
+                  </div>
+                  <div className="flex items-center justify-between text-[11px]">
+                    <span className="text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted font-medium">R&D / Tech:</span>
+                    <span className="font-semibold text-vanguard-light-text dark:text-vanguard-dark-text">{member.techRole}</span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* FAQ Section for Deposit & Wallet Trust */}
+        <section className="mx-auto max-w-7xl px-4 sm:px-6">
+          <SectionHeading
+            eyebrow="Giải Đáp Thắc Mắc"
+            title="Câu Hỏi Thường Gặp Về Đặt Cọc & Ví Mutux"
+            description="Giải đáp các băn khoăn phổ biến để bạn tự tin mở ví và trải nghiệm ngay."
+          />
+
+          <div className="mt-10 grid gap-6 md:grid-cols-2">
+            <div className="rounded-v-sm border border-vanguard-light-border bg-vanguard-light-surf p-6 dark:border-vanguard-dark-border dark:bg-vanguard-dark-surf space-y-2">
+              <h4 className="font-display text-base font-bold text-vanguard-primary">
+                1. Tiền cọc của tôi có an toàn không và khi nào tôi nhận lại được?
+              </h4>
+              <p className="text-xs sm:text-sm leading-6 text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted">
+                Rất an toàn! Tiền cọc của bạn được hệ thống giữ tạm thời (Escrow) chứ không chuyển cho bên cho thuê. Ngay khi bạn trả thiết bị và xác nhận tình trạng thành công, tiền cọc sẽ được hệ thống hoàn lại 100% vào Ví Mutux ngay lập tức.
+              </p>
+            </div>
+
+            <div className="rounded-v-sm border border-vanguard-light-border bg-vanguard-light-surf p-6 dark:border-vanguard-dark-border dark:bg-vanguard-dark-surf space-y-2">
+              <h4 className="font-display text-base font-bold text-vanguard-primary">
+                2. Tôi có thể rút tiền từ Ví Mutux về ngân hàng được không?
+              </h4>
+              <p className="text-xs sm:text-sm leading-6 text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted">
+                Hoàn toàn được! Bạn có thể thực hiện lệnh rút tiền từ Ví Mutux về tài khoản ngân hàng cá nhân bất kỳ lúc nào 24/7 qua cổng PayOS an toàn và miễn phí.
+              </p>
+            </div>
+
+            <div className="rounded-v-sm border border-vanguard-light-border bg-vanguard-light-surf p-6 dark:border-vanguard-dark-border dark:bg-vanguard-dark-surf space-y-2">
+              <h4 className="font-display text-base font-bold text-vanguard-primary">
+                3. Làm sao để tôi được giảm tiền cọc khi thuê thiết bị?
+              </h4>
+              <p className="text-xs sm:text-sm leading-6 text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted">
+                Chỉ cần bạn hoàn tất xác minh tài khoản (KYC) và duy trì lịch sử thuê máy đúng hạn, điểm uy tín của bạn sẽ tăng lên và Mutux sẽ cấp cho bạn Hạn Mức Tín Dụng giúp miễn giảm tiền cọc lên tới 100%.
+              </p>
+            </div>
+
+            <div className="rounded-v-sm border border-vanguard-light-border bg-vanguard-light-surf p-6 dark:border-vanguard-dark-border dark:bg-vanguard-dark-surf space-y-2">
+              <h4 className="font-display text-base font-bold text-vanguard-primary">
+                4. Nếu thiết bị nhận được không đúng như mô tả thì xử lý thế nào?
+              </h4>
+              <p className="text-xs sm:text-sm leading-6 text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted">
+                Bạn có thể từ chối nhận máy ở bước bàn giao và gửi khiếu nại. Đội ngũ trọng tài (Resolver) của Mutux sẽ kiểm tra bằng chứng hình ảnh và hoàn tiền 100% cho bạn mà không mất phí.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        {/* CTA Section */}
+        <section className="mx-auto max-w-7xl px-4 sm:px-6">
+          <div className="relative overflow-hidden rounded-v-sm border border-vanguard-primary/40 bg-vanguard-dark-surf p-8 sm:p-12 text-vanguard-dark-text shadow-2xl">
+            <div className="relative z-10 max-w-3xl space-y-6">
+              <span className="inline-flex items-center gap-2 rounded-v-sm bg-vanguard-primary px-3 py-1 font-display text-[10px] font-bold uppercase tracking-widest text-vanguard-dark-bg">
+                <Layers size={13} />
+                Sẵn Sàng Trải Nghiệm
+              </span>
+
+              <h2 className="font-display text-3xl font-bold leading-tight sm:text-4xl">
+                Mở Ví Mutux & Trải Nghiệm Gear Ngay Hôm Nay
+              </h2>
+
+              <p className="text-sm leading-7 text-vanguard-dark-textMuted">
+                Khám phá ngay bộ sưu tập bàn phím custom, tai nghe hi-end và gear thi đấu đỉnh cao với quy trình nạp/cọc minh bạch, an toàn tuyệt đối.
+              </p>
+
+              <div className="flex flex-col gap-4 pt-2 sm:flex-row">
+                <LinkButton href="/gears" icon={<ArrowRight size={15} />}>
+                  Xem Danh Sách Thiết Bị
+                </LinkButton>
+                <LinkButton href="/wallet" variant="outline" icon={<RefreshCw size={15} />}>
+                  Nạp Ví & Kiểm Tra Tín Dụng
+                </LinkButton>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
     </GoldSpotlight>
   );
 }
