@@ -32,9 +32,6 @@ export class UpdateGearDto {
   @IsOptional()
   @IsArray()
   @IsString({ each: true })
-  @Matches(
-    /^(https:\/\/(?:i\.)?ibb\.co\/[^?#\s]+|\/uploads\/[a-zA-Z0-9_-]+\/[^/?#]+)$/,
-    { each: true },
-  )
+  @Matches(/^(https?:\/\/[^\s]+|\/[^\s]+)$/, { each: true })
   imageUrls?: string[];
 }
