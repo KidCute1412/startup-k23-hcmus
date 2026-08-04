@@ -21,6 +21,9 @@ export async function createIntegrationApp(): Promise<{
   app: INestApplication<App>;
   prisma: PrismaService;
 }> {
+  // Integration tests mock ImgBB's HTTP response, but the production service
+  // still requires an API key before it attempts the request.
+  process.env.IMGBB_API_KEY ??= 'integration-test-imgbb-key';
   if (!imgbbMockInstalled) {
     global.fetch = jest.fn().mockResolvedValue({
       ok: true,

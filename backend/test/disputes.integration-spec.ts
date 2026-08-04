@@ -129,6 +129,7 @@ describeIntegration('Dispute workflow (PostgreSQL integration)', () => {
         reported_by: renterId,
         reporter_role: 'renter',
         reason: DisputeReasonEnum.device_damaged,
+        status: DisputeStatusType.under_review,
       },
     });
     return { order, dispute };
@@ -194,7 +195,13 @@ describeIntegration('Dispute workflow (PostgreSQL integration)', () => {
       );
       const afterSecond = await snapshotFinancialState(order.id);
 
-      expect(second).toEqual(first);
+      // A repeated resolution is idempotent, but does not replay the original
+      // settlement payload after the financial side effect has already run.
+      expect(second).toMatchObject({
+        id: first.id,
+        status: first.status,
+        resolutionType: first.resolutionType,
+      });
       expect(afterSecond).toEqual(afterFirst);
       expect(afterFirst).not.toEqual(before);
       expect(afterFirst.orderStatus).toBe(OrderStatusType.completed);

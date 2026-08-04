@@ -153,7 +153,7 @@ describeIntegration(
           reporter_role: ReporterRoleEnum.renter,
           reason: DisputeReasonEnum.device_damaged,
           description: 'Scratched surface',
-          status: 'open',
+          status: 'under_review',
         },
       });
 
@@ -215,7 +215,7 @@ describeIntegration(
           reporter_role: ReporterRoleEnum.renter,
           reason: DisputeReasonEnum.device_damaged,
           description: 'Faulty port',
-          status: 'open',
+          status: 'under_review',
         },
       });
 
@@ -404,7 +404,7 @@ describeIntegration(
       const unupdatedDispute = await prisma.dispute.findUniqueOrThrow({
         where: { id: dispute.id },
       });
-      expect(unupdatedDispute.status).toBe('open');
+      expect(unupdatedDispute.status).toBe('under_review');
 
       // Rental order MUST NOT be updated
       const unupdatedOrder = await prisma.rentalOrder.findUniqueOrThrow({
