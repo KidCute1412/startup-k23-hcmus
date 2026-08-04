@@ -50,6 +50,7 @@ export default function LenderGearsPage() {
             depositCash: gear.pricing.depositCash || 0,
             creditLineRequired: gear.pricing.creditLineRequired || 0,
             totalRentals: 0,
+            totalRevenue: 0,
             rating: gear.rating || 0,
             reviewCount: gear.reviewCount || 0,
             createdAt: gear.createdAt || new Date().toISOString(),
