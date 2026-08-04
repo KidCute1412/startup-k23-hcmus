@@ -249,7 +249,7 @@ export function OrderDetailView({ orderId, backPath = '/orders', backLabel = 'Qu
                   ⚠️ Đơn thuê đang ở trạng thái Khiếu nại
                 </span>
               </div>
-              <p className="text-xs text-gray-300 leading-relaxed">
+              <p className="text-xs text-black-800 leading-relaxed">
                 Tranh chấp đã được ghi nhận. Tiền cọc và khoản thanh toán đang được phong tỏa an toàn bởi hệ thống Mutux. Admin sẽ xem xét bằng chứng của hai bên và đưa ra quyết định sớm nhất.
               </p>
             </Card>

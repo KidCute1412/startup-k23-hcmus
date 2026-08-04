@@ -113,9 +113,7 @@ Body mẫu của `POST /rental-orders`:
   "startDate": "2026-06-15",
   "endDate": "2026-06-20",
   "depositType": "credit_line",
-  "shippingAddress": "123 Đường ABC, Quận 1, TP. HCM",
-  "shippingName": "Nguyễn Văn A",
-  "shippingPhone": "0987654321"
+  "addressId": "40000000-0000-0000-0000-000000000001"
 }
 ```
 
@@ -180,9 +178,7 @@ User hiện tại lấy từ `req.user.id`, theo pattern đang dùng trong:
   "startDate": "2026-06-27",
   "endDate": "2026-06-30",
   "depositType": "traditional",
-  "shippingAddress": "123 Đường ABC, Quận 1, TP. HCM",
-  "shippingName": "Nguyễn Văn A",
-  "shippingPhone": "0987654321"
+  "addressId": "40000000-0000-0000-0000-000000000001"
 }
 ```
 
@@ -196,9 +192,7 @@ DTO cần validate:
 | `startDate` | date string, required |
 | `endDate` | date string, required |
 | `depositType` | enum `traditional` hoặc `credit_line`, required |
-| `shippingAddress` | string non-empty, required |
-| `shippingName` | string non-empty, required |
-| `shippingPhone` | string non-empty, required |
+| `addressId` | UUID belonging to the authenticated renter, required |
 
 ### Validation nghiệp vụ
 
@@ -218,9 +212,7 @@ Ví dụ invalid:
   "startDate": "2026-06-26",
   "endDate": "2026-06-25",
   "depositType": "traditional",
-  "shippingAddress": "123 Đường ABC",
-  "shippingName": "Nguyễn Văn A",
-  "shippingPhone": "0987654321"
+  "addressId": "40000000-0000-0000-0000-000000000001"
 }
 ```
 
@@ -242,9 +234,9 @@ Khi tạo order, backend tự suy ra các field DB:
 | `deposit_amount` | `gear.value` |
 | `deposit_type` | `body.depositType` |
 | `status` | `pending_confirm` |
-| `shipping_address` | `body.shippingAddress` |
-| `shipping_name` | `body.shippingName` |
-| `shipping_phone` | `body.shippingPhone` |
+| `shipping_address` | formatted snapshot from `addressId` |
+| `shipping_name` | receiver name snapshot from `addressId` |
+| `shipping_phone` | receiver phone snapshot from `addressId` |
 
 ### Success response
 
@@ -601,9 +593,7 @@ Body:
   "startDate": "2026-06-27",
   "endDate": "2026-06-30",
   "depositType": "traditional",
-  "shippingAddress": "123 Đường ABC, Quận 1, TP. HCM",
-  "shippingName": "Nguyễn Văn A",
-  "shippingPhone": "0987654321"
+  "addressId": "40000000-0000-0000-0000-000000000001"
 }
 ```
 

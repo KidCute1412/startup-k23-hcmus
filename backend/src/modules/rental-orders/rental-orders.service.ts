@@ -40,6 +40,11 @@ export class RentalOrdersService {
   ) {}
 
   async create(renterId: string, dto: CreateRentalOrderDto) {
+    const shipping = await this.resolveShippingAddress(
+      this.prisma,
+      renterId,
+      dto.addressId,
+    );
     const startDate = this.parseDateOnly(dto.startDate);
     const endDate = this.parseDateOnly(dto.endDate);
 
@@ -109,9 +114,9 @@ export class RentalOrdersService {
       deposit_amount: depositAmount,
       deposit_type: dto.depositType,
       status: OrderStatusType.pending_confirm,
-      shipping_address: dto.shippingAddress,
-      shipping_name: dto.shippingName,
-      shipping_phone: dto.shippingPhone,
+      shipping_address: shipping.address,
+      shipping_name: shipping.name,
+      shipping_phone: shipping.phone,
     };
 
     return this.rentalOrdersRepository.create(data);
@@ -127,6 +132,11 @@ export class RentalOrdersService {
       });
     }
     return this.prisma.$transaction(async (tx) => {
+      const shipping = await this.resolveShippingAddress(
+        tx,
+        renterId,
+        dto.addressId,
+      );
       await tx.$queryRaw`SELECT id FROM gears WHERE id = ${dto.gearId}::uuid FOR UPDATE`;
       const gear = await tx.gear.findUnique({ where: { id: dto.gearId } });
       if (
@@ -189,9 +199,9 @@ export class RentalOrdersService {
           deposit_amount: depositAmount.toNumber(),
           deposit_type: dto.depositType,
           status: OrderStatusType.pending_confirm,
-          shipping_address: dto.shippingAddress,
-          shipping_name: dto.shippingName,
-          shipping_phone: dto.shippingPhone,
+          shipping_address: shipping.address,
+          shipping_name: shipping.name,
+          shipping_phone: shipping.phone,
         },
       });
     });
@@ -200,6 +210,11 @@ export class RentalOrdersService {
   async createBatch(renterId: string, dto: CreateBatchRentalOrdersDto) {
     const itemIds = [...dto.cartItemIds].sort();
     return this.prisma.$transaction(async (tx) => {
+      const shipping = await this.resolveShippingAddress(
+        tx,
+        renterId,
+        dto.addressId,
+      );
       await tx.$queryRaw(
         Prisma.sql`SELECT ci.id
           FROM cart_items ci
@@ -293,9 +308,9 @@ export class RentalOrdersService {
           deposit_amount: depositAmount.toNumber(),
           deposit_type: dto.depositType,
           status: OrderStatusType.pending_confirm,
-          shipping_address: dto.shippingAddress,
-          shipping_name: dto.shippingName,
-          shipping_phone: dto.shippingPhone,
+          shipping_address: shipping.address,
+          shipping_name: shipping.name,
+          shipping_phone: shipping.phone,
         });
       }
 
@@ -314,6 +329,32 @@ export class RentalOrdersService {
       await tx.cartItem.deleteMany({ where: { id: { in: itemIds } } });
       return { orders, removedCartItemIds: itemIds };
     });
+  }
+
+  private async resolveShippingAddress(
+    client: PrismaService | Prisma.TransactionClient,
+    renterId: string,
+    addressId: string,
+  ) {
+    const address = await client.userAddress.findFirst({
+      where: { id: addressId, user_id: renterId },
+    });
+    if (!address) {
+      throw new NotFoundException({
+        error: 'ADDRESS_NOT_FOUND',
+        message: 'Delivery address was not found for this renter',
+      });
+    }
+    return {
+      name: address.receiver_name,
+      phone: address.phone,
+      address: [
+        address.detail_address,
+        address.ward,
+        address.district,
+        address.province,
+      ].join(', '),
+    };
   }
 
   async findAll(user: CurrentUser, query: GetRentalOrdersQueryDto) {

@@ -39,9 +39,7 @@ describe('RentalOrdersService', () => {
     startDate: '2026-08-01',
     endDate: '2026-08-06',
     depositType: DepositTypeEnum.traditional,
-    shippingAddress: '123 Nguyen Hue, District 1, HCMC',
-    shippingName: 'Nguyen Van A',
-    shippingPhone: '0987654321',
+    addressId: '40000000-0000-0000-0000-000000000001',
   };
 
   const approvedGear = {
@@ -79,6 +77,16 @@ describe('RentalOrdersService', () => {
             return Promise.resolve(state ? { ...state } : null);
           },
         ),
+      },
+      userAddress: {
+        findFirst: jest.fn().mockResolvedValue({
+          receiver_name: 'Nguyen Van A',
+          phone: '0987654321',
+          detail_address: '123 Nguyen Hue',
+          ward: 'Ben Nghe',
+          district: 'District 1',
+          province: 'HCMC',
+        }),
       },
       rentalProof: {
         findFirst: jest.fn(
@@ -129,6 +137,16 @@ describe('RentalOrdersService', () => {
       compensate: jest.fn().mockResolvedValue({ escrowId: 'escrow-id' }),
     };
     const prisma = {
+      userAddress: {
+        findFirst: jest.fn().mockResolvedValue({
+          receiver_name: 'Nguyen Van A',
+          phone: '0987654321',
+          detail_address: '123 Nguyen Hue',
+          ward: 'Ben Nghe',
+          district: 'District 1',
+          province: 'HCMC',
+        }),
+      },
       $transaction: jest.fn((cb: (tx: object) => unknown) =>
         cb(createTxMock()),
       ),
@@ -310,6 +328,16 @@ describe('RentalOrdersService', () => {
         findFirst: jest.fn().mockResolvedValue(null),
         create: createOrder,
       },
+      userAddress: {
+        findFirst: jest.fn().mockResolvedValue({
+          receiver_name: 'Nguyen Van A',
+          phone: '0987654321',
+          detail_address: '123 Nguyen Hue',
+          ward: 'Ben Nghe',
+          district: 'District 1',
+          province: 'HCMC',
+        }),
+      },
       renterWallet: {
         findUnique: jest.fn().mockResolvedValue({ id: 'cash-wallet-id' }),
         findUniqueOrThrow: jest.fn().mockResolvedValue({
@@ -343,9 +371,7 @@ describe('RentalOrdersService', () => {
       batchService.createBatch('renter-id', {
         cartItemIds: ['40000000-0000-0000-0000-000000000001'],
         depositType: DepositTypeEnum.traditional,
-        shippingAddress: '123 Nguyen Hue, District 1, HCMC',
-        shippingName: 'Nguyen Van A',
-        shippingPhone: '0987654321',
+        addressId: dto.addressId,
       }),
     ).rejects.toMatchObject({
       status: 400,

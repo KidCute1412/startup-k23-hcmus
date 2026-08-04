@@ -425,9 +425,7 @@ HTTP Status: `400`, `401`, `403`, `404`, `422`, `500`.
     "startDate": "2026-06-15",
     "endDate": "2026-06-20",
     "depositType": "credit_line", // "credit_line" (hạn mức Ví Mutux) hoặc "traditional" (lock từ ví ảo renter)
-    "shippingAddress": "123 Đường ABC, Quận 1, TP. HCM",
-    "shippingName": "Nguyễn Văn A",
-    "shippingPhone": "0987654321"
+    "addressId": "40000000-0000-0000-0000-000000000001"
   }
   ```
 * **Success (201)**: Tạo order ở trạng thái `pending_confirm` chờ Lender xác nhận.
@@ -857,15 +855,20 @@ All routes require authentication and renter role (`403 RENTER_ONLY`).
   the unique gear item.
 - `DELETE /cart/items/:itemId` removes an owned item.
 - `DELETE /cart` clears items while retaining the cart.
-- `POST /rental-orders/batch` accepts `cartItemIds`, `depositType`,
-  `shippingName`, `shippingPhone`, and `shippingAddress`; it returns
+- `POST /rental-orders/batch` accepts `cartItemIds`, `depositType`, and
+  `addressId`; it returns
   `{ orders, removedCartItemIds }` with status 201.
 
 Cart quotes and availability use database values. Batch checkout locks rows,
 creates one `pending_confirm` order per selected item, and removes only those
 items atomically. Errors include `GEAR_NOT_FOUND`, `CART_ITEM_NOT_FOUND`,
 `INVALID_DATE_RANGE`, `GEAR_NOT_AVAILABLE`, `CANNOT_RENT_OWN_GEAR`, and
-`GEAR_UNAVAILABLE_FOR_PERIOD`.
+  `GEAR_UNAVAILABLE_FOR_PERIOD`.
+
+The selected address must belong to the authenticated renter. The backend
+copies the receiver and formatted address into the order snapshot, so later
+address-book edits do not change existing orders. An unknown or foreign
+`addressId` returns `404 ADDRESS_NOT_FOUND`.
 
 Before either single or batch order creation commits, the backend recalculates
 the current database prices and validates the renter's aggregate financial

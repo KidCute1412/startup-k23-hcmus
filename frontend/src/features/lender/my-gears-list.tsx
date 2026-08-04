@@ -167,14 +167,14 @@ export function MyGearsList({ gears: initialGears }: Props) {
                 type="button"
                 id={`tab-${t.value}`}
                 onClick={() => setTab(t.value)}
-                className={`inline-flex items-center gap-1.5 rounded-v-sm px-3 py-1.5 font-display text-[15px] font-bold uppercase tracking-widest transition-all ${tab === t.value
+                className={`inline-flex items-center gap-1.5 rounded-v-sm px-3 py-1.5 font-display text-[10px] font-bold uppercase tracking-widest transition-all ${tab === t.value
                   ? "bg-vanguard-primary text-vanguard-dark-bg"
                   : "border border-vanguard-light-border text-vanguard-light-textMuted hover:border-vanguard-primary/40 hover:text-vanguard-primary dark:border-vanguard-dark-border dark:text-vanguard-dark-textMuted"
                   }`}
               >
                 {t.label}
                 <span
-                  className={`rounded-full px-1.5 py-0.5 text-[12px] ${tab === t.value
+                  className={`rounded-full px-1.5 py-0.5 text-[10px] ${tab === t.value
                     ? "bg-vanguard-dark-bg/20 text-vanguard-dark-bg"
                     : "bg-vanguard-light-surfDim dark:bg-vanguard-dark-surfBright"
                     }`}

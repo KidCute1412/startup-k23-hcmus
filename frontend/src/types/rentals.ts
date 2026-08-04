@@ -70,9 +70,7 @@ export interface CreateRentalOrderRequest {
   startDate: string;
   endDate: string;
   depositType: 'traditional' | 'credit_line';
-  shippingAddress: string;
-  shippingName: string;
-  shippingPhone: string;
+  addressId: string;
 }
 
 export interface GetRentalOrdersParams {

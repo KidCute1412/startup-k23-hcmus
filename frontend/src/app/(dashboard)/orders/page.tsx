@@ -13,7 +13,7 @@ export default function OrdersPage() {
     <section className="relative mx-auto max-w-5xl">
       <div className="mb-6">
         <p className="font-display text-xs font-semibold uppercase tracking-widest text-vanguard-primary">
-          Quản lý đơn thuê
+          Lịch sử thuê gear
         </p>
         <h1 className="mt-2 font-display text-4xl font-bold">Đơn thuê của tôi</h1>
       </div>

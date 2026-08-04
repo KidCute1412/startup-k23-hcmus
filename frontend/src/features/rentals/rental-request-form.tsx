@@ -5,12 +5,11 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Input, Textarea } from "@/components/ui/field";
 import { PricingSummary } from "./pricing-summary";
 import type { RentalRequestDraft } from "./types";
 import { useCart, type CartItem } from "@/features/cart/cart-context";
 import { useWallet } from "@/hooks/useWallet";
-import { useAuth } from "@/hooks/useAuth";
+import { useAddresses } from "@/hooks/useAddresses";
 import { useRouter } from "next/navigation";
 import { QuickTopupModal } from "@/features/wallet/quick-topup-modal";
 import { formatCurrency } from "@/lib/format";
@@ -27,7 +26,7 @@ export function RentalRequestForm({ items }: RentalRequestFormProps) {
   const toast = useToast();
   const { checkout, mutating: isCreating } = useCart();
   const { renterWallet, creditLine, fetchRenterWallet, fetchCreditLine } = useWallet();
-  const { user } = useAuth();
+  const { addresses, isLoading: areAddressesLoading, error: addressesError } = useAddresses();
   const router = useRouter();
 
   const [draft, setDraft] = useState<Omit<RentalRequestDraft, "gearId" | "startDate" | "endDate">>({
@@ -38,10 +37,9 @@ export function RentalRequestForm({ items }: RentalRequestFormProps) {
   });
 
   const [touched, setTouched] = useState<{
-    shippingName?: boolean;
-    shippingPhone?: boolean;
-    shippingAddress?: boolean;
+    address?: boolean;
   }>({});
+  const [selectedAddressId, setSelectedAddressId] = useState("");
 
   const [submitted, setSubmitted] = useState(false);
   const [isQuickTopupOpen, setIsQuickTopupOpen] = useState(false);
@@ -50,24 +48,27 @@ export function RentalRequestForm({ items }: RentalRequestFormProps) {
   const [cashWalletStatus, setCashWalletStatus] = useState<WalletLoadStatus>("loading");
   const [creditWalletStatus, setCreditWalletStatus] = useState<WalletLoadStatus>("loading");
 
-  // Auto-fill delivery info from authenticated user profile if available
   useEffect(() => {
-    if (user) {
-      setDraft((current) => {
-        const shippingName = current.shippingName || user.fullName || "";
-        const shippingPhone = current.shippingPhone || user.phone || "";
-        const shippingAddress = current.shippingAddress || user.address || "";
-        if (
-          shippingName === current.shippingName &&
-          shippingPhone === current.shippingPhone &&
-          shippingAddress === current.shippingAddress
-        ) {
-          return current;
-        }
-        return { ...current, shippingName, shippingPhone, shippingAddress };
-      });
+    if (!selectedAddressId && addresses.length > 0) {
+      setSelectedAddressId(addresses.find((address) => address.isDefault)?.id ?? addresses[0].id);
     }
-  }, [user]);
+  }, [addresses, selectedAddressId]);
+
+  useEffect(() => {
+    const selected = addresses.find((address) => address.id === selectedAddressId);
+    if (!selected) return;
+    setDraft((current) => ({
+      ...current,
+      shippingName: selected.receiverName,
+      shippingPhone: selected.phone,
+      shippingAddress: [
+        selected.detailAddress,
+        selected.ward,
+        selected.district,
+        selected.province,
+      ].join(", "),
+    }));
+  }, [addresses, selectedAddressId]);
 
   const refreshWallets = useCallback(async () => {
     setCashWalletStatus("loading");
@@ -86,16 +87,11 @@ export function RentalRequestForm({ items }: RentalRequestFormProps) {
   }, [refreshWallets]);
 
   // Real-time Form Validation
-  const trimmedName = draft.shippingName.trim();
-  const trimmedPhone = draft.shippingPhone.trim();
   const trimmedAddress = draft.shippingAddress.trim();
 
-  const isNameValid = trimmedName.length > 0;
-  const phoneRegex = /^(0[35789])[0-9]{8}$/;
-  const isPhoneValid = phoneRegex.test(trimmedPhone);
-  const isAddressValid = trimmedAddress.length >= 5;
+  const isAddressValid = Boolean(selectedAddressId) && trimmedAddress.length >= 5;
 
-  const isFormValid = isNameValid && isPhoneValid && isAddressValid;
+  const isFormValid = isAddressValid;
 
   // Compute total required amount (rental total + traditional deposit)
   const { totalRentalAmount, totalDepositAmount } = useMemo(() => {
@@ -265,7 +261,7 @@ export function RentalRequestForm({ items }: RentalRequestFormProps) {
                 setCheckoutErrorCode(null);
 
                 // Mark all touched
-                setTouched({ shippingName: true, shippingPhone: true, shippingAddress: true });
+                 setTouched({ address: true });
 
                 if (!isFormValid) {
                   toast.warning("Vui lòng điền đầy đủ và chính xác thông tin giao nhận.");
@@ -286,9 +282,7 @@ export function RentalRequestForm({ items }: RentalRequestFormProps) {
                   await checkout({
                     cartItemIds: items.map((item) => item.id),
                     depositType: draft.depositType as "traditional" | "credit_line",
-                    shippingName: trimmedName,
-                    shippingPhone: trimmedPhone,
-                    shippingAddress: trimmedAddress,
+                     addressId: selectedAddressId,
                   });
                   toast.success("Tạo yêu cầu thuê thành công!");
                   setSubmitted(true);
@@ -314,7 +308,7 @@ export function RentalRequestForm({ items }: RentalRequestFormProps) {
               }}
             >
               <fieldset className="grid gap-3">
-                <legend className="font-display text-xs font-semibold uppercase tracking-wider">
+                <legend className="font-display text-xs font-semibold uppercase tracking-wider mb-5">
                   Hình thức cọc
                 </legend>
                 <div className="grid gap-3 sm:grid-cols-2">
@@ -369,76 +363,54 @@ export function RentalRequestForm({ items }: RentalRequestFormProps) {
                 </div>
               </fieldset>
 
-              <div className="grid gap-4 sm:grid-cols-2">
-                <label className="grid gap-2 text-sm">
-                  <span className="font-display text-xs font-semibold uppercase tracking-wider">
-                    Người nhận *
-                  </span>
-                  <Input
-                    value={draft.shippingName}
-                    onChange={(event) => {
-                      setDraft((value) => ({
-                        ...value,
-                        shippingName: event.target.value,
-                      }));
-                      setTouched((t) => ({ ...t, shippingName: true }));
-                    }}
-                    onBlur={() => setTouched((t) => ({ ...t, shippingName: true }))}
-                    placeholder="Nguyễn Văn A"
-                  />
-                  {touched.shippingName && !isNameValid ? (
-                    <span className="text-xs text-rose-500 font-medium">Vui lòng nhập tên người nhận</span>
-                  ) : (
-                    <span className="text-xs text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted">Tên đầy đủ người nhận hàng</span>
-                  )}
-                </label>
-
-                <label className="grid gap-2 text-sm">
-                  <span className="font-display text-xs font-semibold uppercase tracking-wider">
-                    Số điện thoại *
-                  </span>
-                  <Input
-                    value={draft.shippingPhone}
-                    onChange={(event) => {
-                      setDraft((value) => ({
-                        ...value,
-                        shippingPhone: event.target.value,
-                      }));
-                      setTouched((t) => ({ ...t, shippingPhone: true }));
-                    }}
-                    onBlur={() => setTouched((t) => ({ ...t, shippingPhone: true }))}
-                    placeholder="09xx xxx xxx"
-                  />
-                  {touched.shippingPhone && !isPhoneValid ? (
-                    <span className="text-xs text-rose-500 font-medium">Số điện thoại phải gồm 10 chữ số (bắt đầu bằng 03, 05, 07, 08, 09)</span>
-                  ) : (
-                    <span className="text-xs text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted">10 chữ số bắt đầu bằng 03, 05, 07, 08, 09</span>
-                  )}
-                </label>
-              </div>
-
-              <label className="grid gap-2 text-sm">
-                <span className="font-display text-xs font-semibold uppercase tracking-wider">
-                  Địa chỉ nhận gear *
-                </span>
-                <Textarea
-                  value={draft.shippingAddress}
-                  onChange={(event) => {
-                    setDraft((value) => ({
-                      ...value,
-                      shippingAddress: event.target.value,
-                    }));
-                    setTouched((t) => ({ ...t, shippingAddress: true }));
-                  }}
-                  onBlur={() => setTouched((t) => ({ ...t, shippingAddress: true }))}
-                  placeholder="Số nhà, đường, phường/xã, quận/huyện, tỉnh/thành"
-                />
-                {touched.shippingAddress && !isAddressValid ? (
-                  <span className="text-xs text-rose-500 font-medium">Địa chỉ giao nhận phải có ít nhất 5 ký tự</span>
-                ) : (
-                  <span className="text-xs text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted">Địa chỉ giao nhận chi tiết (tối thiểu 5 ký tự)</span>
+              <fieldset className="grid gap-3">
+                <legend className="font-display text-xs font-semibold uppercase tracking-wider mb-5">
+                  Chọn địa chỉ nhận gear *
+                </legend>
+                {areAddressesLoading && (
+                  <p className="text-sm text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted">Đang tải sổ địa chỉ...</p>
                 )}
-              </label>
+                {addressesError && <p className="text-sm text-rose-500">{addressesError}</p>}
+                {!areAddressesLoading && addresses.length === 0 && (
+                  <div className="rounded-v-sm border border-amber-500/40 bg-amber-500/10 p-4 text-sm">
+                    <p className="font-semibold">Bạn chưa có địa chỉ giao nhận.</p>
+                    <button type="button" onClick={() => router.push("/account?tab=addresses")} className="mt-2 font-bold text-vanguard-secondary underline dark:text-vanguard-primary">
+                      Thêm địa chỉ trong sổ địa chỉ
+                    </button>
+                  </div>
+                )}
+                <div className="grid gap-3">
+                  {addresses.map((address) => {
+                    const fullAddress = [address.detailAddress, address.ward, address.district, address.province].join(", ");
+                    return (
+                      <label key={address.id} className={`flex cursor-pointer gap-3 rounded-v-sm border p-4 text-sm transition ${selectedAddressId === address.id ? "border-vanguard-primary bg-vanguard-primary/10" : "border-vanguard-light-border dark:border-vanguard-dark-border"}`}>
+                        <input
+                          type="radio"
+                          name="addressId"
+                          value={address.id}
+                          checked={selectedAddressId === address.id}
+                          onChange={() => {
+                            setSelectedAddressId(address.id);
+                            setTouched({ address: true });
+                          }}
+                          className="mt-1 accent-vanguard-primary"
+                        />
+                        <span className="grid gap-1">
+                          <span className="font-semibold">{address.receiverName} · {address.phone}</span>
+                          <span className="text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted">{fullAddress}</span>
+                          {address.isDefault && <span className="text-xs font-bold uppercase tracking-wider text-vanguard-secondary dark:text-vanguard-primary">Mặc định</span>}
+                        </span>
+                      </label>
+                    );
+                  })}
+                </div>
+                {touched.address && !isAddressValid && addresses.length > 0 && (
+                  <span className="text-xs font-medium text-rose-500">Vui lòng chọn một địa chỉ giao nhận</span>
+                )}
+                <button type="button" onClick={() => router.push("/account?tab=addresses")} className="justify-self-start text-sm font-bold text-vanguard-secondary underline dark:text-vanguard-primary">
+                  Quản lý sổ địa chỉ
+                </button>
+              </fieldset>
 
               <Button
                 type="submit"

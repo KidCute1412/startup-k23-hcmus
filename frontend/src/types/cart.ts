@@ -36,9 +36,7 @@ export interface Cart {
 export interface BatchCheckoutRequest {
   cartItemIds: string[];
   depositType: "traditional" | "credit_line";
-  shippingName: string;
-  shippingPhone: string;
-  shippingAddress: string;
+  addressId: string;
 }
 
 export interface BatchCheckoutResponse {

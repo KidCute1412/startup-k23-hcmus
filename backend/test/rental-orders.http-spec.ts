@@ -37,6 +37,7 @@ describe('RentalOrdersController (HTTP)', () => {
   };
   let escrowService: { lock: jest.Mock; release: jest.Mock };
   let prismaService: { $transaction: jest.Mock };
+  let addressLookup: jest.Mock;
 
   beforeEach(async () => {
     currentUser = { id: 'renter-id', role: UserRole.renter };
@@ -85,6 +86,25 @@ describe('RentalOrdersController (HTTP)', () => {
           value: 4_500_000,
         }),
       },
+      cartItem: {
+        findMany: jest.fn().mockResolvedValue([
+          {
+            id: '40000000-0000-0000-0000-000000000001',
+            gear_id: '30000000-0000-0000-0000-000000000001',
+            start_date: new Date('2099-08-01T00:00:00.000Z'),
+            end_date: new Date('2099-08-06T00:00:00.000Z'),
+            gear: {
+              id: '30000000-0000-0000-0000-000000000001',
+              lender_id: 'lender-id',
+              approval_status: ApprovalStatusType.approved,
+              status: GearStatusType.available,
+              rent_price_per_day: new Prisma.Decimal(80_000),
+              value: new Prisma.Decimal(4_500_000),
+            },
+          },
+        ]),
+        deleteMany: jest.fn().mockResolvedValue({ count: 1 }),
+      },
       rentalOrder: {
         findFirst: jest.fn().mockResolvedValue(null),
         create: jest
@@ -99,6 +119,16 @@ describe('RentalOrdersController (HTTP)', () => {
           Object.assign(txOrder, data);
           return Promise.resolve({ ...txOrder });
         }),
+      },
+      userAddress: {
+        findFirst: (addressLookup = jest.fn().mockResolvedValue({
+          receiver_name: 'Nguyen Van A',
+          phone: '0987654321',
+          detail_address: '123 Nguyen Hue',
+          ward: 'Ben Nghe',
+          district: 'District 1',
+          province: 'HCMC',
+        })),
       },
       rentalProof: {
         findFirst: jest.fn().mockResolvedValue({ id: 'proof-id' }),
@@ -180,9 +210,7 @@ describe('RentalOrdersController (HTTP)', () => {
         startDate: '2099-08-01',
         endDate: '2099-08-06',
         depositType: 'credit_line',
-        shippingAddress: '123 Nguyen Hue, District 1, HCMC',
-        shippingName: 'Nguyen Van A',
-        shippingPhone: '0987654321',
+        addressId: '40000000-0000-0000-0000-000000000001',
       })
       .expect(201);
 
@@ -195,6 +223,56 @@ describe('RentalOrdersController (HTTP)', () => {
         status: OrderStatusType.pending_confirm,
         snapped_rent_price_per_day: 80_000,
       },
+    });
+  });
+
+  it('POST /api/v1/rental-orders rejects an address not owned by the renter', async () => {
+    addressLookup.mockResolvedValueOnce(null);
+
+    await request(app.getHttpServer())
+      .post('/api/v1/rental-orders')
+      .send({
+        gearId: '30000000-0000-0000-0000-000000000001',
+        startDate: '2099-08-01',
+        endDate: '2099-08-06',
+        depositType: 'credit_line',
+        addressId: '40000000-0000-0000-0000-000000000099',
+      })
+      .expect(404)
+      .expect((response) => {
+        const body = response.body as { error: { code: string } };
+        expect(body.error.code).toBe('ADDRESS_NOT_FOUND');
+      });
+  });
+
+  it('POST /api/v1/rental-orders/batch creates orders from the selected address', async () => {
+    const response = await request(app.getHttpServer())
+      .post('/api/v1/rental-orders/batch')
+      .send({
+        cartItemIds: ['40000000-0000-0000-0000-000000000001'],
+        depositType: 'traditional',
+        addressId: '40000000-0000-0000-0000-000000000001',
+      })
+      .expect(201);
+
+    const body = response.body as {
+      data: {
+        removedCartItemIds: string[];
+        orders: Array<{
+          shipping_name: string;
+          shipping_phone: string;
+          shipping_address: string;
+        }>;
+      };
+    };
+
+    expect(body.data).toMatchObject({
+      removedCartItemIds: ['40000000-0000-0000-0000-000000000001'],
+    });
+    expect(body.data.orders[0]).toMatchObject({
+      shipping_name: 'Nguyen Van A',
+      shipping_phone: '0987654321',
+      shipping_address: '123 Nguyen Hue, Ben Nghe, District 1, HCMC',
     });
   });
 

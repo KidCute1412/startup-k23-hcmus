@@ -126,31 +126,31 @@ export default function LenderGearsPage() {
         </div>
 
         {/* Stats row */}
-        <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3">
+        <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-4">
           <Card className="p-4">
             <Zap size={18} className="text-vanguard-primary" />
-            <p className="mt-3 text-[20px] uppercase tracking-widest text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted">
+            <p className="mt-3 text-sm uppercase tracking-widest text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted">
               Đang hoạt động
             </p>
             <p className="mt-1 font-display text-2xl font-bold">{stats.active}</p>
           </Card>
           <Card className="p-4">
             <TrendingUp size={18} className="text-vanguard-primary" />
-            <p className="mt-3 text-[20px] uppercase tracking-widest text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted">
+            <p className="mt-3 text-sm uppercase tracking-widest text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted">
               Tổng đơn
             </p>
             <p className="mt-1 font-display text-2xl font-bold">{stats.totalRentals}</p>
           </Card>
           <Card className="p-4">
             <Star size={18} className="text-vanguard-primary" fill="currentColor" />
-            <p className="mt-3 text-[20px] uppercase tracking-widest text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted">
+            <p className="mt-3 text-sm uppercase tracking-widest text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted">
               Đánh giá TB
             </p>
             <p className="mt-1 font-display text-2xl font-bold">{stats.avgRating.toFixed(1)}</p>
           </Card>
           <Card className="p-4">
             <span className="text-lg">💰</span>
-            <p className="mt-3 text-[20px] uppercase tracking-widest text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted">
+            <p className="mt-3 text-sm uppercase tracking-widest text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted">
               Tổng doanh thu
             </p>
             <p className="mt-1 font-display text-xl font-bold text-vanguard-primary">
