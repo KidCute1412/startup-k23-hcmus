@@ -21,7 +21,10 @@ import { CartsModule } from './modules/carts/carts.module';
     ConfigModule.forRoot({
       isGlobal: true,
       // Resolve the backend .env even when the app is started from the repo root.
-      envFilePath: [resolve(__dirname, '../.env'), resolve(process.cwd(), '.env')],
+      envFilePath: [
+        resolve(__dirname, '../.env'),
+        resolve(process.cwd(), '.env'),
+      ],
     }),
     PrismaModule,
     AuthModule,
