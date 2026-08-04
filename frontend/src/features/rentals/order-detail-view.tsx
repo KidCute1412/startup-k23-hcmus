@@ -429,7 +429,7 @@ export function OrderDetailView({ orderId, backPath = '/orders', backLabel = 'Qu
                   onClick={() => setActiveModal('receipt')}
                   className="w-full rounded-v-sm bg-vanguard-primary py-2.5 text-xs font-bold uppercase tracking-wider text-vanguard-dark-bg hover:opacity-90 transition"
                 >
-                  ✓ Xác nhận đã nhận hàng
+                  Xác nhận đã nhận hàng
                 </button>
               )}
 
@@ -438,7 +438,7 @@ export function OrderDetailView({ orderId, backPath = '/orders', backLabel = 'Qu
                   onClick={() => setActiveModal('return')}
                   className="w-full rounded-v-sm border border-vanguard-primary text-vanguard-primary py-2.5 text-xs font-bold uppercase tracking-wider hover:bg-vanguard-primary hover:text-vanguard-dark-bg transition"
                 >
-                  🔄 Yêu cầu gửi trả gear
+                  Yêu cầu gửi trả gear
                 </button>
               )}
 
@@ -447,7 +447,7 @@ export function OrderDetailView({ orderId, backPath = '/orders', backLabel = 'Qu
                   onClick={() => setActiveModal('cancel')}
                   className="w-full rounded-v-sm border border-red-500 text-red-500 py-2.5 text-xs font-bold uppercase tracking-wider hover:bg-red-500 hover:text-white transition"
                 >
-                  ✕ Hủy đơn thuê này
+                  Hủy đơn thuê này
                 </button>
               )}
 
@@ -457,7 +457,7 @@ export function OrderDetailView({ orderId, backPath = '/orders', backLabel = 'Qu
                   onClick={() => setActiveModal('dispute')}
                   className="w-full rounded-v-sm border border-red-500/50 bg-red-500/10 text-red-400 py-2.5 text-xs font-bold uppercase tracking-wider hover:bg-red-500 hover:text-white transition"
                 >
-                  ⚠️ Báo cáo khiếu nại / Sự cố
+                  Báo cáo khiếu nại / Sự cố
                 </button>
               )}
 
@@ -466,7 +466,7 @@ export function OrderDetailView({ orderId, backPath = '/orders', backLabel = 'Qu
                   onClick={() => setActiveModal('proof')}
                   className="w-full rounded-v-sm border border-vanguard-primary/50 bg-vanguard-primary/10 text-vanguard-primary py-2.5 text-xs font-bold uppercase tracking-wider hover:bg-vanguard-primary hover:text-vanguard-dark-bg transition"
                 >
-                  📷 Tải lên ảnh bàn giao thiết bị
+                  Tải lên ảnh bàn giao thiết bị
                 </button>
               )}
 
