@@ -23,6 +23,7 @@ import { GetDisputeQueueQueryDto } from './dto/get-dispute-queue-query.dto';
 import { GetLenderUpgradeRequestsQueryDto } from './dto/get-lender-upgrade-requests-query.dto';
 import { RejectLenderUpgradeRequestDto } from './dto/reject-lender-upgrade-request.dto';
 import { CloseDisputeDto } from './dto/close-dispute.dto';
+import { GetDashboardAnalyticsQueryDto } from './dto/get-dashboard-analytics-query.dto';
 
 @Controller('admin')
 @UseGuards(JwtAuthGuard, AdminGuard)
@@ -42,6 +43,11 @@ export class AdminController {
   @Get('disputes')
   getDisputeQueue(@Query() query: GetDisputeQueueQueryDto) {
     return this.adminService.getDisputeQueue(query);
+  }
+
+  @Get('dashboard/analytics')
+  getDashboardAnalytics(@Query() query: GetDashboardAnalyticsQueryDto) {
+    return this.adminService.getDashboardAnalytics(query);
   }
 
   @Get('lender-upgrade-requests')

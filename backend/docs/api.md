@@ -679,6 +679,13 @@ Ngoài retry ở đúng target, status sai trả `400 INVALID_TRANSITION` (hoặ
 ### 3.9 Admin Operations
 *Tất cả endpoint admin yêu cầu access cookie có `role = admin`; thiếu hoặc hết hạn cookie trả `401`, role khác trả `403 ADMIN_ONLY`.*
 
+#### [GET] `/admin/dashboard/analytics`
+
+Returns database-backed admin dashboard analytics. Requires an admin session.
+Optional query parameters: `from`, `to` (ISO date strings) and `granularity=day|week`.
+The default range is the previous 30 days through now. The response contains
+timeline activity, rental orders by status, and admin queue distributions.
+
 #### [GET] `/admin/kyc`
 * **Authentication**: `accessToken` cookie, admin role.
 * **Query Params**:

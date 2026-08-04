@@ -285,7 +285,11 @@ describe('AdminService — resolveDispute', () => {
       OrderStatusType.disputed,
       'INVALID_DISPUTE_STATUS',
     ],
-    [DisputeStatusType.under_review, OrderStatusType.active, 'INVALID_ORDER_STATUS'],
+    [
+      DisputeStatusType.under_review,
+      OrderStatusType.active,
+      'INVALID_ORDER_STATUS',
+    ],
   ])(
     'rejects invalid dispute/order state: status=%s orderStatus=%s',
     async (status, orderStatus, code) => {

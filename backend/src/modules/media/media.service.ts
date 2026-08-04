@@ -1,7 +1,15 @@
-import { BadRequestException, Injectable, ServiceUnavailableException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  ServiceUnavailableException,
+} from '@nestjs/common';
 import { readFile, realpath, stat, unlink } from 'fs/promises';
 import { basename, extname, relative, resolve, sep } from 'path';
-import { ACCEPTED_IMAGE_MIME_TYPES, assertSafeUploadUserId, getUploadsRoot } from './media-storage';
+import {
+  ACCEPTED_IMAGE_MIME_TYPES,
+  assertSafeUploadUserId,
+  getUploadsRoot,
+} from './media-storage';
 
 @Injectable()
 export class MediaService {
@@ -19,11 +27,17 @@ export class MediaService {
       process.env.IMGBB_UPLOAD_URL || 'https://api.imgbb.com/1/upload';
     if (!apiKey) {
       await this.removeTempFile(file.path);
-      throw new ServiceUnavailableException({ error: 'IMGBB_NOT_CONFIGURED', message: 'ImgBB chưa được cấu hình. Vui lòng thiết lập IMGBB_API_KEY.' });
+      throw new ServiceUnavailableException({
+        error: 'IMGBB_NOT_CONFIGURED',
+        message: 'ImgBB chưa được cấu hình. Vui lòng thiết lập IMGBB_API_KEY.',
+      });
     }
     if (!ACCEPTED_IMAGE_MIME_TYPES.has(file.mimetype)) {
       await this.removeTempFile(file.path);
-      throw new BadRequestException({ error: 'UNSUPPORTED_FILE_TYPE', message: 'Chỉ hỗ trợ ảnh JPEG, PNG hoặc WEBP.' });
+      throw new BadRequestException({
+        error: 'UNSUPPORTED_FILE_TYPE',
+        message: 'Chỉ hỗ trợ ảnh JPEG, PNG hoặc WEBP.',
+      });
     }
     try {
       const base64Image = (await readFile(file.path)).toString('base64');
@@ -33,15 +47,23 @@ export class MediaService {
         method: 'POST',
         body: formData,
       });
-      if (!response.ok) throw new Error(response.status === 401 || response.status === 403 ? 'ImgBB từ chối xác thực API key.' : `ImgBB trả về HTTP ${response.status}.`);
+      if (!response.ok)
+        throw new Error(
+          response.status === 401 || response.status === 403
+            ? 'ImgBB từ chối xác thực API key.'
+            : `ImgBB trả về HTTP ${response.status}.`,
+        );
       const url = ((await response.json()) as { data?: { url?: string } }).data
         ?.url;
-      if (!url || !this.isImgBbUrl(url)) throw new Error('ImgBB trả về URL ảnh không hợp lệ.');
+      if (!url || !this.isImgBbUrl(url))
+        throw new Error('ImgBB trả về URL ảnh không hợp lệ.');
       return url;
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       throw new BadRequestException({
-        error: message.includes('fetch') ? 'IMGBB_NETWORK_ERROR' : 'IMGBB_UPLOAD_FAILED',
+        error: message.includes('fetch')
+          ? 'IMGBB_NETWORK_ERROR'
+          : 'IMGBB_UPLOAD_FAILED',
         message: `Tải ảnh lên ImgBB thất bại: ${message}`,
       });
     } finally {
@@ -50,7 +72,11 @@ export class MediaService {
   }
 
   private async removeTempFile(filePath: string): Promise<void> {
-    try { await unlink(filePath); } catch { /* already removed */ }
+    try {
+      await unlink(filePath);
+    } catch {
+      /* already removed */
+    }
   }
 
   isImgBbUrl(fileUrl: string): boolean {

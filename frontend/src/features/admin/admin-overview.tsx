@@ -15,6 +15,7 @@ import {
   ShieldAlert,
 } from "lucide-react";
 import { useAdminOverview } from "@/hooks/useAdminOverview";
+import { AdminAnalytics } from "@/features/admin/admin-analytics";
 
 export function AdminOverviewFeature() {
   const { statsData, loading, error, isNonAdmin, refetch } = useAdminOverview();
@@ -142,6 +143,10 @@ export function AdminOverviewFeature() {
                 </Link>
               );
             })}
+          </div>
+
+          <div className="mb-8">
+            <AdminAnalytics />
           </div>
 
           {/* Grid Section: Action Banner & Modules */}

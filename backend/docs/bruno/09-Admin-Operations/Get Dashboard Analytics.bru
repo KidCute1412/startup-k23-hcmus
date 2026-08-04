@@ -1,0 +1,19 @@
+meta {
+  name: Get Dashboard Analytics
+  type: http
+  seq: 24
+}
+
+get {
+  url: {{baseUrl}}/admin/dashboard/analytics?from=2026-07-01&to=2026-08-04&granularity=day
+  body: none
+  auth: inherit
+}
+
+tests {
+  test("returns real dashboard analytics", function() {
+    expect(res.status).to.equal(200);
+    expect(res.body.data).to.include.keys("range", "timeline", "ordersByStatus", "adminQueues");
+    expect(res.body.data.timeline).to.be.an("array");
+  });
+}

@@ -26,7 +26,12 @@ import {
 } from './dto/get-dispute-queue-query.dto';
 import { GetLenderUpgradeRequestsQueryDto } from './dto/get-lender-upgrade-requests-query.dto';
 import { EscrowService } from '../escrow/escrow.service';
+import type { EscrowResult } from '../escrow/escrow.service.interface';
 import { ResolutionType } from './dto/resolve-dispute.dto';
+import {
+  DashboardAnalyticsGranularity,
+  GetDashboardAnalyticsQueryDto,
+} from './dto/get-dashboard-analytics-query.dto';
 
 const kycUserSelect = {
   id: true,
@@ -230,7 +235,11 @@ export class AdminService {
     const where: Prisma.DisputeWhereInput = status ? { status } : {};
     const orderBy =
       sortBy === DisputeQueueSortBy.status
-        ? [{ status: sortOrder }, { created_at: 'desc' as const }, { id: 'asc' as const }]
+        ? [
+            { status: sortOrder },
+            { created_at: 'desc' as const },
+            { id: 'asc' as const },
+          ]
         : [{ created_at: sortOrder }, { id: 'asc' as const }];
 
     const [disputes, total] = await Promise.all([
@@ -648,7 +657,7 @@ export class AdminService {
         });
       }
 
-      let settlement;
+      let settlement: EscrowResult;
       if (resolutionType === ResolutionType.deposit_deduct) {
         if (deductAmount === undefined) {
           throw new BadRequestException({
@@ -657,7 +666,11 @@ export class AdminService {
               'deductAmount must be a positive integer for deposit_deduct',
           });
         }
-        settlement = await this.escrowService.compensate(orderId, deductAmount, tx);
+        settlement = await this.escrowService.compensate(
+          orderId,
+          deductAmount,
+          tx,
+        );
       } else {
         settlement = await this.escrowService.release(orderId, tx);
       }
@@ -696,10 +709,22 @@ export class AdminService {
       return {
         ...this.toApiDispute(resolved),
         settlement: {
-          escrowAction: resolutionType === ResolutionType.deposit_deduct ? 'compensated' : 'released',
-          depositReturned: resolutionType === ResolutionType.deposit_deduct ? settlement.amount - (deductAmount ?? 0) : settlement.amount,
-          depositDeducted: resolutionType === ResolutionType.deposit_deduct ? deductAmount ?? 0 : 0,
-          lenderCompensation: resolutionType === ResolutionType.deposit_deduct ? deductAmount ?? 0 : 0,
+          escrowAction:
+            resolutionType === ResolutionType.deposit_deduct
+              ? 'compensated'
+              : 'released',
+          depositReturned:
+            resolutionType === ResolutionType.deposit_deduct
+              ? settlement.amount - (deductAmount ?? 0)
+              : settlement.amount,
+          depositDeducted:
+            resolutionType === ResolutionType.deposit_deduct
+              ? (deductAmount ?? 0)
+              : 0,
+          lenderCompensation:
+            resolutionType === ResolutionType.deposit_deduct
+              ? (deductAmount ?? 0)
+              : 0,
           lenderRentalIncome: dispute.rental_order.lender_income
             ? typeof dispute.rental_order.lender_income === 'number'
               ? dispute.rental_order.lender_income
@@ -712,12 +737,113 @@ export class AdminService {
     });
   }
 
+  async getDashboardAnalytics(query: GetDashboardAnalyticsQueryDto) {
+    const to = query.to ? new Date(query.to) : new Date();
+    // Date-only filters are inclusive in the UI. Move the upper bound to the
+    // next day so records created during the selected `to` date are included.
+    if (query.to && /^\d{4}-\d{2}-\d{2}$/.test(query.to)) {
+      to.setUTCDate(to.getUTCDate() + 1);
+    }
+    const from = query.from
+      ? new Date(query.from)
+      : new Date(to.getTime() - 30 * 24 * 60 * 60 * 1000);
+    if (from >= to) {
+      throw new BadRequestException({
+        error: 'INVALID_DATE_RANGE',
+        message: '`from` must be earlier than `to`',
+      });
+    }
+
+    const bucket =
+      query.granularity === DashboardAnalyticsGranularity.week ? 'week' : 'day';
+    const [timeline, ordersByStatus, kyc, gears, disputes, creditLimits] =
+      await Promise.all([
+        this.prisma.$queryRaw<
+          Array<{
+            bucket: Date;
+            orders: bigint;
+            users: bigint;
+            gears: bigint;
+            revenue: Prisma.Decimal;
+          }>
+        >`
+        SELECT
+          periods.bucket,
+          (SELECT COUNT(*) FROM rental_orders o WHERE date_trunc(${bucket}::text, o.created_at) = periods.bucket AND o.created_at >= ${from}::timestamptz AND o.created_at < ${to}::timestamptz) AS orders,
+          (SELECT COUNT(*) FROM users u WHERE date_trunc(${bucket}::text, u.created_at) = periods.bucket AND u.created_at >= ${from}::timestamptz AND u.created_at < ${to}::timestamptz) AS users,
+          (SELECT COUNT(*) FROM gears g WHERE date_trunc(${bucket}::text, g.created_at) = periods.bucket AND g.created_at >= ${from}::timestamptz AND g.created_at < ${to}::timestamptz) AS gears,
+          (SELECT COALESCE(SUM(p.amount), 0) FROM payments p WHERE p.status = 'success' AND date_trunc(${bucket}::text, p.created_at) = periods.bucket AND p.created_at >= ${from}::timestamptz AND p.created_at < ${to}::timestamptz) AS revenue
+        FROM (SELECT generate_series(date_trunc(${bucket}::text, ${from}::timestamptz), date_trunc(${bucket}::text, ${to}::timestamptz), ('1 ' || ${bucket}::text)::interval) AS bucket) periods
+        ORDER BY periods.bucket
+      `,
+        this.prisma.rentalOrder.groupBy({
+          by: ['status'],
+          where: { created_at: { gte: from, lt: to } },
+          _count: { _all: true },
+        }),
+        this.prisma.user.groupBy({
+          by: ['kyc_status'],
+          where: { created_at: { gte: from, lt: to } },
+          _count: { _all: true },
+        }),
+        this.prisma.gear.groupBy({
+          by: ['approval_status'],
+          where: { created_at: { gte: from, lt: to } },
+          _count: { _all: true },
+        }),
+        this.prisma.dispute.groupBy({
+          by: ['status'],
+          where: { created_at: { gte: from, lt: to } },
+          _count: { _all: true },
+        }),
+        this.prisma.creditLimitRequest.groupBy({
+          by: ['status'],
+          where: { created_at: { gte: from, lt: to } },
+          _count: { _all: true },
+        }),
+      ]);
+
+    const countRows = <T extends string>(
+      rows: Array<{ [key: string]: T | { _all: number } }>,
+      key: string,
+    ) =>
+      rows.map((row) => ({
+        status: row[key],
+        count: Number((row._count as { _all: number })._all),
+      }));
+    return {
+      range: { from, to, granularity: bucket },
+      timeline: timeline.map((row) => ({
+        date: row.bucket,
+        orders: Number(row.orders),
+        users: Number(row.users),
+        gears: Number(row.gears),
+        revenue: Number(row.revenue),
+      })),
+      ordersByStatus: ordersByStatus.map((row) => ({
+        status: row.status,
+        count: row._count._all,
+      })),
+      adminQueues: {
+        kyc: countRows(kyc as never[], 'kyc_status'),
+        gears: countRows(gears as never[], 'approval_status'),
+        disputes: countRows(disputes as never[], 'status'),
+        creditLimits: countRows(creditLimits as never[], 'status'),
+      },
+    };
+  }
+
   async startDisputeReview(disputeId: string, adminId: string) {
     return this.prisma.$transaction(async (tx) => {
       await tx.$queryRaw`SELECT id FROM disputes WHERE id = ${disputeId}::uuid FOR UPDATE`;
       const dispute = await tx.dispute.findUnique({ where: { id: disputeId } });
-      if (!dispute) throw new NotFoundException({ error: 'NOT_FOUND', message: 'Dispute not found' });
-      if (dispute.status === DisputeStatusType.under_review) return this.toApiDispute(dispute);
+      if (!dispute)
+        throw new NotFoundException({
+          error: 'NOT_FOUND',
+          message: 'Dispute not found',
+        });
+      if (dispute.status === DisputeStatusType.under_review)
+        return this.toApiDispute(dispute);
       if (dispute.status !== DisputeStatusType.open) {
         throw new BadRequestException({
           error: 'INVALID_DISPUTE_STATUS',
@@ -726,10 +852,19 @@ export class AdminService {
       }
       const reviewed = await tx.dispute.update({
         where: { id: disputeId },
-        data: { status: DisputeStatusType.under_review, reviewed_by: adminId, reviewed_at: new Date() },
+        data: {
+          status: DisputeStatusType.under_review,
+          reviewed_by: adminId,
+          reviewed_at: new Date(),
+        },
       });
       await tx.disputeTransition.create({
-        data: { dispute_id: disputeId, from_status: DisputeStatusType.open, to_status: DisputeStatusType.under_review, actor_id: adminId },
+        data: {
+          dispute_id: disputeId,
+          from_status: DisputeStatusType.open,
+          to_status: DisputeStatusType.under_review,
+          actor_id: adminId,
+        },
       });
       return this.toApiDispute(reviewed);
     });
@@ -739,8 +874,13 @@ export class AdminService {
     return this.prisma.$transaction(async (tx) => {
       await tx.$queryRaw`SELECT id FROM disputes WHERE id = ${disputeId}::uuid FOR UPDATE`;
       const dispute = await tx.dispute.findUnique({ where: { id: disputeId } });
-      if (!dispute) throw new NotFoundException({ error: 'NOT_FOUND', message: 'Dispute not found' });
-      if (dispute.status === DisputeStatusType.closed) return this.toApiDispute(dispute);
+      if (!dispute)
+        throw new NotFoundException({
+          error: 'NOT_FOUND',
+          message: 'Dispute not found',
+        });
+      if (dispute.status === DisputeStatusType.closed)
+        return this.toApiDispute(dispute);
       if (dispute.status !== DisputeStatusType.resolved) {
         throw new BadRequestException({
           error: 'INVALID_DISPUTE_STATUS',
@@ -749,10 +889,21 @@ export class AdminService {
       }
       const closed = await tx.dispute.update({
         where: { id: disputeId },
-        data: { status: DisputeStatusType.closed, closed_by: adminId, closed_at: new Date(), close_note: closeNote ?? null },
+        data: {
+          status: DisputeStatusType.closed,
+          closed_by: adminId,
+          closed_at: new Date(),
+          close_note: closeNote ?? null,
+        },
       });
       await tx.disputeTransition.create({
-        data: { dispute_id: disputeId, from_status: DisputeStatusType.resolved, to_status: DisputeStatusType.closed, actor_id: adminId, note: closeNote ?? null },
+        data: {
+          dispute_id: disputeId,
+          from_status: DisputeStatusType.resolved,
+          to_status: DisputeStatusType.closed,
+          actor_id: adminId,
+          note: closeNote ?? null,
+        },
       });
       return this.toApiDispute(closed);
     });
