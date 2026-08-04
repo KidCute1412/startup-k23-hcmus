@@ -2,8 +2,8 @@
 import { useState } from "react";
 import { formatCurrency } from "@/lib/format";
 
-export function CreditLimitRequestModal({ tier, open, busy, onClose, onSubmit }: {
-  tier: number | null; open: boolean; busy: boolean; onClose: () => void; onSubmit: () => Promise<void>;
+export function CreditLimitRequestModal({ tier, open, busy, error, onClose, onSubmit }: {
+  tier: number | null; open: boolean; busy: boolean; error?: string | null; onClose: () => void; onSubmit: () => Promise<void>;
 }) {
   const [consent, setConsent] = useState(false);
   if (!open || tier === null) return null;
@@ -13,6 +13,7 @@ export function CreditLimitRequestModal({ tier, open, busy, onClose, onSubmit }:
       <p className="mt-2 text-sm text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted">
         Hạn mức đề nghị: <strong>{formatCurrency(tier)}</strong>. Mutux sẽ kiểm tra lại điều kiện khi admin duyệt.
       </p>
+      {error && <p role="alert" className="mt-4 rounded-v-md border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-400">{error}</p>}
       <label className="mt-5 flex items-start gap-3 text-sm">
         <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} className="mt-1" />
         Tôi đồng ý điều khoản tín dụng và xác nhận thông tin yêu cầu là chính xác.

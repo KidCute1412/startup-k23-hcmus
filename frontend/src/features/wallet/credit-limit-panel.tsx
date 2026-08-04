@@ -38,8 +38,16 @@ export function CreditLimitPanel({ credit, renterBalance, busy, onRepay, onRefre
       {tiers.map((value) => <button key={value} type="button" onClick={() => setTier(value)} className="rounded-v-sm border border-vanguard-primary/40 px-4 py-2 text-sm font-semibold text-vanguard-primary">Yêu cầu {formatCurrency(value)}</button>)}
     </div>}
     {requests.requests.active?.status === "pending" && <button type="button" disabled={requests.loading} onClick={() => void requests.cancel(requests.requests.active!.id)} className="mt-4 text-sm font-semibold text-red-400">Hủy yêu cầu</button>}
-    <CreditLimitRequestModal tier={tier} open={tier !== null} busy={requests.loading} onClose={() => setTier(null)} onSubmit={async () => {
-      if (tier === null) return; await requests.create(tier); await onRefresh(); setTier(null);
+    <CreditLimitRequestModal tier={tier} open={tier !== null} busy={requests.loading} error={requests.error} onClose={() => setTier(null)} onSubmit={async () => {
+      if (tier === null) return;
+      try {
+        await requests.create(tier);
+        await onRefresh();
+        setTier(null);
+      } catch {
+        // useCreditLimit stores the translated business error for the panel;
+        // consume the rejection here so Next.js does not show its error overlay.
+      }
     }} />
   </Card>;
 }
