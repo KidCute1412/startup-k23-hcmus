@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { PackagePlus, ClipboardList } from "lucide-react";
+import { PackagePlus, ClipboardList, WalletCards } from "lucide-react";
 import { cn } from "@/lib/cn";
 
 export default function LenderLayout({ children }: { children: React.ReactNode }) {
@@ -11,6 +11,7 @@ export default function LenderLayout({ children }: { children: React.ReactNode }
   const navItems = [
     { id: "gears", label: "Gear của tôi", href: "/lender/gears", icon: PackagePlus },
     { id: "orders", label: "Đơn thuê Gear", href: "/lender/orders", icon: ClipboardList },
+    { id: "revenue", label: "Doanh thu", href: "/lender/revenue", icon: WalletCards },
   ];
 
   return (
