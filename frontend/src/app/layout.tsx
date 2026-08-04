@@ -9,9 +9,9 @@ const body = Outfit({
 });
 
 export const metadata: Metadata = {
-  title: "Vanguard Elite | Thuê gear gaming cao cấp",
+  title: "Mutux | Thuê gear gaming cao cấp",
   description:
-    "Marketplace thuê bàn phím, chuột, tai nghe và setup gaming hi-end theo phong cách Vanguard Elite.",
+    "Marketplace thuê bàn phím, chuột, tai nghe và setup gaming hi-end.",
   icons: {
     icon: "/favicon.ico",
   },

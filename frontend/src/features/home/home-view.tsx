@@ -9,7 +9,7 @@ import { GoldSpotlight } from "@/components/ui/animations/gold-spotlight";
 import { GoldDustParticles } from "@/components/ui/animations/gold-dust-particles";
 import { AtelierLens } from "@/components/ui/animations/atelier-lens";
 import type { Gear, GearCategory } from "@/types/catalog";
-
+import { WalletCtaButton } from "@/components/about/wallet-cta-button";
 interface HomeViewProps {
   categories: GearCategory[];
   featured: Gear[];
@@ -35,7 +35,7 @@ export function HomeView({ categories, featured }: HomeViewProps) {
               <Reveal delay={0}>
                 <div className="inline-flex items-center gap-2 rounded-full border border-vanguard-primary/40 bg-vanguard-primary/10 px-4 py-1.5 font-display text-xs font-semibold uppercase tracking-widest text-vanguard-secondary shadow-sm dark:border-vanguard-primary/30 dark:bg-vanguard-primary/5 dark:text-vanguard-primary">
                   <span className="size-1.5 rounded-full bg-vanguard-secondary dark:bg-vanguard-primary animate-pulse" />
-                  Heritage & Precision Craftsmanship
+                  Mutux - Gear Up & Play
                 </div>
               </Reveal>
 
@@ -60,9 +60,9 @@ export function HomeView({ categories, featured }: HomeViewProps) {
                   <LinkButton href="/gears" icon={<ArrowRight size={15} />}>
                     Khám phá bộ sưu tập
                   </LinkButton>
-                  <LinkButton href="/wallet" variant="outline" icon={<ShieldCheck size={15} />}>
-                    Xem hạn mức cọc
-                  </LinkButton>
+                  <WalletCtaButton variant="outline" icon={<ShieldCheck size={15} />}>
+                      Xem Hạn Mức Cọc
+                  </WalletCtaButton>
                 </div>
               </Reveal>
             </div>
@@ -74,7 +74,7 @@ export function HomeView({ categories, featured }: HomeViewProps) {
                     <div className="gold-shimmer relative h-full overflow-hidden rounded-v-sm border border-vanguard-light-border dark:border-vanguard-dark-border">
                       <Image
                         src="https://images.unsplash.com/photo-1618384887929-16ec33fab9ef?auto=format&fit=crop&w=1200&q=80"
-                        alt="Bàn phím custom Vanguard Elite"
+                        alt="Bàn phím custom"
                         fill
                         priority
                         sizes="(min-width: 1024px) 50vw, 100vw"

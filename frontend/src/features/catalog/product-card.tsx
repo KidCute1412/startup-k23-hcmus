@@ -60,16 +60,16 @@ export function ProductCard({ gear }: ProductCardProps) {
                 <p className="uppercase tracking-widest text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted">
                   Giá thuê
                 </p>
-                <p className="mt-1 break-words font-display text-lg font-bold text-vanguard-secondary dark:text-vanguard-primary">
+                <div className="mt-1 break-words font-display text-lg font-bold text-vanguard-secondary dark:text-vanguard-primary">
                   {formatCurrency(gear.pricing.dailyPrice)}
-                  <span className="text-xs font-normal">/ngày</span>
-                </p>
+                  <div className="text-xs font-normal">/ngày</div>
+                </div>
               </div>
               <div>
                 <p className="uppercase tracking-widest text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted">
                   Tình trạng
                 </p>
-                <p className={`mt-1 font-semibold ${availabilityTone(gear.availability)}`}>
+                <p className={`mt-1 font-semibold  ${availabilityTone(gear.availability)}`}>
                   {availabilityLabel(gear.availability)}
                 </p>
               </div>

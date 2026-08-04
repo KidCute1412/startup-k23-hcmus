@@ -1,6 +1,11 @@
+"use client";
+
 import Link from "next/link";
+import { useAuth } from "@/hooks/useAuth";
 
 export function Footer() {
+  const { user } = useAuth();
+
   return (
     <footer className="border-t border-vanguard-light-border bg-vanguard-light-bg px-6 py-12 text-xs text-vanguard-light-textMuted transition-colors dark:border-vanguard-dark-border dark:bg-vanguard-dark-surfDim dark:text-vanguard-dark-textMuted">
       <div className="mx-auto flex max-w-7xl flex-col gap-8 md:flex-row md:items-center md:justify-between">
@@ -20,10 +25,16 @@ export function Footer() {
           <Link href="/gears" className="hover:text-vanguard-primary">
             Catalog
           </Link>
-          <Link href="/orders" className="hover:text-vanguard-primary">
+          <Link
+            href={user ? "/orders" : "/login?returnTo=%2Forders"}
+            className="hover:text-vanguard-primary"
+          >
             Đơn thuê
           </Link>
-          <Link href="/wallet" className="hover:text-vanguard-primary">
+          <Link
+            href={user ? "/wallet" : "/login?returnTo=%2Fwallet"}
+            className="hover:text-vanguard-primary"
+          >
             Ví Mutux
           </Link>
         </div>

@@ -393,11 +393,11 @@ export function OrderDetailView({ orderId, backPath = '/orders', backLabel = 'Qu
                     disabled={!hasPreShipmentProof}
                     className="w-full rounded-v-sm bg-vanguard-primary py-2.5 text-xs font-bold uppercase tracking-wider text-vanguard-dark-bg hover:opacity-90 transition disabled:cursor-not-allowed disabled:opacity-50"
                   >
-                    📦 Xác nhận đã giao hàng
+                    Xác nhận đã giao hàng
                   </button>
                   {!hasPreShipmentProof && (
                     <p className="text-[11px] text-amber-500 font-medium">
-                      ⚠️ Cần tải lên ảnh giao hàng (pre_shipment) trước.
+                      Cần tải lên ảnh giao hàng (pre_shipment) trước.
                     </p>
                   )}
                 </div>

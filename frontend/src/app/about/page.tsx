@@ -15,6 +15,7 @@ import {
   Zap,
 } from "lucide-react";
 import { LinkButton } from "@/components/ui/button";
+import { WalletCtaButton } from "@/components/about/wallet-cta-button";
 import { SectionHeading } from "@/components/ui/section-heading";
 import { GoldSpotlight } from "@/components/ui/animations/gold-spotlight";
 import { GoldDustParticles } from "@/components/ui/animations/gold-dust-particles";
@@ -180,9 +181,9 @@ export default function AboutPage() {
                 <LinkButton href="/gears" icon={<ArrowRight size={15} />}>
                   Thử Gear Ngay
                 </LinkButton>
-                <LinkButton href="/wallet" variant="outline" icon={<ShieldCheck size={15} />}>
+                <WalletCtaButton variant="outline" icon={<ShieldCheck size={15} />}>
                   Khám Phá Ví & Quyền Lợi Cọc
-                </LinkButton>
+                </WalletCtaButton>
               </div>
             </div>
 
@@ -520,9 +521,9 @@ export default function AboutPage() {
                 <LinkButton href="/gears" icon={<ArrowRight size={15} />}>
                   Xem Danh Sách Thiết Bị
                 </LinkButton>
-                <LinkButton href="/wallet" variant="outline" icon={<RefreshCw size={15} />}>
+                <WalletCtaButton variant="outline" icon={<RefreshCw size={15} />}>
                   Nạp Ví & Kiểm Tra Tín Dụng
-                </LinkButton>
+                </WalletCtaButton>
               </div>
             </div>
           </div>
