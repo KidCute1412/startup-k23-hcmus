@@ -3,6 +3,7 @@
 import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import Image from "next/image";
 import {
   LayoutDashboard,
   ShieldCheck,
@@ -67,9 +68,13 @@ export function AdminSidebar({ className }: { className?: string }) {
       {/* Brand Header */}
       <div className="flex h-20 items-center justify-between border-b border-vanguard-light-border px-6 dark:border-vanguard-dark-border">
         <Link href="/admin" className="flex items-center gap-3">
-          <span className="flex size-9 items-center justify-center rounded-v-sm bg-gold-metal font-display font-bold text-vanguard-dark-bg shadow-md">
-            M
-          </span>
+          <Image
+            src="/favicon.ico"
+            alt="Mutux logo"
+            width={32}
+            height={32}
+            className="object-contain"
+          />
           <div>
             <span className="font-display text-base font-bold tracking-wider text-vanguard-light-text dark:text-vanguard-dark-text">
               Mutux
@@ -95,43 +100,43 @@ export function AdminSidebar({ className }: { className?: string }) {
 
             return (
               <React.Fragment key={item.href}>
-              {index === 1 && <div className="mb-2 mt-7 px-3 text-[10px] font-bold uppercase tracking-widest text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted">Xử lý nghiệp vụ</div>}
-              <Link
-                key={item.href}
-                href={item.href}
-                className={cn(
-                  "group flex items-center justify-between rounded-v-sm px-3.5 py-3 font-display text-xs font-semibold tracking-wide transition-all",
-                  isActive
-                    ? "bg-vanguard-primary/10 text-vanguard-primary border-r-2 border-vanguard-primary"
-                    : "text-vanguard-light-textMuted hover:bg-vanguard-light-surfDim hover:text-vanguard-light-text dark:text-vanguard-dark-textMuted dark:hover:bg-vanguard-dark-surfBright dark:hover:text-vanguard-dark-text"
-                )}
-              >
-                <div className="flex items-center gap-3">
-                  <Icon
-                    size={18}
-                    className={cn(
-                      "transition-colors",
-                      isActive
-                        ? "text-vanguard-primary"
-                        : "group-hover:text-vanguard-primary"
-                    )}
-                  />
-                  <span>{item.label}</span>
-                </div>
+                {index === 1 && <div className="mb-2 mt-7 px-3 text-[10px] font-bold uppercase tracking-widest text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted">Xử lý nghiệp vụ</div>}
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={cn(
+                    "group flex items-center justify-between rounded-v-sm px-3.5 py-3 font-display text-xs font-semibold tracking-wide transition-all",
+                    isActive
+                      ? "bg-vanguard-primary/10 text-vanguard-primary border-r-2 border-vanguard-primary"
+                      : "text-vanguard-light-textMuted hover:bg-vanguard-light-surfDim hover:text-vanguard-light-text dark:text-vanguard-dark-textMuted dark:hover:bg-vanguard-dark-surfBright dark:hover:text-vanguard-dark-text"
+                  )}
+                >
+                  <div className="flex items-center gap-3">
+                    <Icon
+                      size={18}
+                      className={cn(
+                        "transition-colors",
+                        isActive
+                          ? "text-vanguard-primary"
+                          : "group-hover:text-vanguard-primary"
+                      )}
+                    />
+                    <span>{item.label}</span>
+                  </div>
 
-                {item.badge !== undefined && item.badge > 0 && (
-                  <span
-                    className={cn(
-                      "flex size-5 items-center justify-center rounded-full text-[10px] font-bold",
-                      isActive
-                        ? "bg-vanguard-primary text-vanguard-dark-bg"
-                        : "bg-vanguard-light-border text-vanguard-light-text dark:bg-vanguard-dark-border dark:text-vanguard-dark-text"
-                    )}
-                  >
-                    {item.badge}
-                  </span>
-                )}
-              </Link>
+                  {item.badge !== undefined && item.badge > 0 && (
+                    <span
+                      className={cn(
+                        "flex size-5 items-center justify-center rounded-full text-[10px] font-bold",
+                        isActive
+                          ? "bg-vanguard-primary text-vanguard-dark-bg"
+                          : "bg-vanguard-light-border text-vanguard-light-text dark:bg-vanguard-dark-border dark:text-vanguard-dark-text"
+                      )}
+                    >
+                      {item.badge}
+                    </span>
+                  )}
+                </Link>
               </React.Fragment>
             );
           })}

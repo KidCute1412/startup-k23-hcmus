@@ -84,7 +84,7 @@ export function EditGearForm({ gearId }: Props) {
         setLoadingGear(true);
         const data = await getGearById(gearId);
         setName(data.name);
-        
+
         // Reverse category map
         const categoryMapInverse: Record<string, string> = {
           "20000000-0000-0000-0000-000000000003": "keyboards",
@@ -95,7 +95,7 @@ export function EditGearForm({ gearId }: Props) {
         setCategoryId(categoryMapInverse[data.categoryId] || data.categoryId || "keyboards");
         setShortDesc(data.shortDescription);
         setDescription(data.description);
-        
+
         // Preset check
         const isPreset = CONDITION_PRESETS.some((p) => p.value === data.condition);
         if (data.condition) {
@@ -108,7 +108,7 @@ export function EditGearForm({ gearId }: Props) {
             setCustomConditionText(data.condition);
           }
         }
-        
+
         setBadge(data.badge || "");
         setImageUrls(data.media.map((m) => m.imageUrl));
         setDailyPrice(String(data.pricing.dailyPrice));
@@ -128,7 +128,7 @@ export function EditGearForm({ gearId }: Props) {
       }
     }
     void loadGear();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [gearId]);
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -232,7 +232,7 @@ export function EditGearForm({ gearId }: Props) {
   }
 
   return (
-    <div className="grid gap-8 lg:grid-cols-[1fr_360px]">
+    <div className="grid gap-8 lg:grid-cols-[1fr_200px]">
       <Card className="overflow-hidden">
         {/* Step header */}
         <div className="border-b border-vanguard-light-border bg-vanguard-light-surfDim px-6 py-4 dark:border-vanguard-dark-border dark:bg-vanguard-dark-surfDim">
@@ -246,22 +246,20 @@ export function EditGearForm({ gearId }: Props) {
                     type="button"
                     id={`step-${s.key}`}
                     onClick={() => done && setStep(s.key)}
-                    className={`flex items-center gap-2 font-display text-[10px] font-bold uppercase tracking-widest transition-colors ${
-                      current
-                        ? "text-vanguard-primary"
-                        : done
+                    className={`flex w-full items-center gap-2 font-display text-[15px] font-bold uppercase tracking-widest transition-colors ${current
+                      ? "text-vanguard-primary"
+                      : done
                         ? "cursor-pointer text-vanguard-primary/60 hover:text-vanguard-primary"
                         : "text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted"
-                    }`}
+                      }`}
                   >
                     <span
-                      className={`flex size-6 items-center justify-center rounded-full text-[10px] font-bold transition-colors ${
-                        current
-                          ? "bg-vanguard-primary text-vanguard-dark-bg"
-                          : done
+                      className={`flex size-10 flex-none items-center justify-center rounded-full text-[16px] font-bold transition-colors ${current
+                        ? "bg-vanguard-primary text-vanguard-dark-bg"
+                        : done
                           ? "bg-vanguard-primary/20 text-vanguard-primary"
                           : "bg-vanguard-light-surfBright text-vanguard-light-textMuted dark:bg-vanguard-dark-surfBright dark:text-vanguard-dark-textMuted"
-                      }`}
+                        }`}
                     >
                       {done ? <CheckCircle size={12} /> : i + 1}
                     </span>
@@ -369,11 +367,10 @@ export function EditGearForm({ gearId }: Props) {
                           setIsCustomCondition(false);
                           setCondition(preset.value);
                         }}
-                        className={`flex flex-col items-start gap-1 p-3.5 rounded-v-sm border text-left transition-all ${
-                          selected
-                            ? "border-vanguard-primary bg-vanguard-primary/10 text-vanguard-primary dark:bg-vanguard-primary/5"
-                            : "border-vanguard-light-border bg-vanguard-light-surfDim hover:border-vanguard-primary/55 dark:border-vanguard-dark-border dark:bg-vanguard-dark-surfDim"
-                        }`}
+                        className={`flex flex-col items-start gap-1 p-3.5 rounded-v-sm border text-left transition-all ${selected
+                          ? "border-vanguard-primary bg-vanguard-primary/10 text-vanguard-primary dark:bg-vanguard-primary/5"
+                          : "border-vanguard-light-border bg-vanguard-light-surfDim hover:border-vanguard-primary/55 dark:border-vanguard-dark-border dark:bg-vanguard-dark-surfDim"
+                          }`}
                       >
                         <span className="font-display text-sm font-bold">{preset.label}</span>
                         <span className="text-xs text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted">{preset.desc}</span>
@@ -386,11 +383,10 @@ export function EditGearForm({ gearId }: Props) {
                       setIsCustomCondition(true);
                       setCondition(customConditionText || "Tự định nghĩa");
                     }}
-                    className={`flex flex-col items-start gap-1 p-3.5 rounded-v-sm border text-left transition-all ${
-                      isCustomCondition
-                        ? "border-vanguard-primary bg-vanguard-primary/10 text-vanguard-primary dark:bg-vanguard-primary/5"
-                        : "border-vanguard-light-border bg-vanguard-light-surfDim hover:border-vanguard-primary/55 dark:border-vanguard-dark-border dark:bg-vanguard-dark-surfDim"
-                    }`}
+                    className={`flex flex-col items-start gap-1 p-3.5 rounded-v-sm border text-left transition-all ${isCustomCondition
+                      ? "border-vanguard-primary bg-vanguard-primary/10 text-vanguard-primary dark:bg-vanguard-primary/5"
+                      : "border-vanguard-light-border bg-vanguard-light-surfDim hover:border-vanguard-primary/55 dark:border-vanguard-dark-border dark:bg-vanguard-dark-surfDim"
+                      }`}
                   >
                     <span className="font-display text-sm font-bold">Tự định nghĩa</span>
                     <span className="text-xs text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted">
