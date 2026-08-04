@@ -7,7 +7,7 @@ import type { DisputeItem, DisputeStatus } from '@/types/dispute';
 export function useAdminDisputes(
   initialStatus?: DisputeStatus,
   initialPage = 1,
-  limit = 10,
+  initialLimit = 10,
 ) {
   const [disputes, setDisputes] = useState<DisputeItem[]>([]);
   const [meta, setMeta] = useState<PaginationMeta | null>(null);
@@ -16,6 +16,7 @@ export function useAdminDisputes(
   const [isNonAdmin, setIsNonAdmin] = useState<boolean>(false);
   const [statusFilter, setStatusFilter] = useState<DisputeStatus | undefined>(initialStatus);
   const [page, setPage] = useState<number>(initialPage);
+  const [limit, setLimit] = useState<number>(initialLimit);
 
   const fetchDisputes = useCallback(async () => {
     setLoading(true);
@@ -25,8 +26,8 @@ export function useAdminDisputes(
     try {
       const res = await adminService.getDisputeQueue({
         status: statusFilter,
-        page,
-        limit,
+    page,
+    limit,
       });
       setDisputes(res.data || []);
       setMeta(res.meta || null);
@@ -59,6 +60,16 @@ export function useAdminDisputes(
     }
   };
 
+  const startDisputeReview = async (id: string) => {
+    await adminService.startDisputeReview(id);
+    await fetchDisputes();
+  };
+
+  const closeDispute = async (id: string, closeNote?: string) => {
+    await adminService.closeDispute(id, closeNote);
+    await fetchDisputes();
+  };
+
   return {
     disputes,
     meta,
@@ -72,7 +83,14 @@ export function useAdminDisputes(
     },
     page,
     setPage,
+    limit,
+    setLimit: (nextLimit: number) => {
+      setLimit(nextLimit);
+      setPage(1);
+    },
     refetch: fetchDisputes,
     resolveDispute,
+    startDisputeReview,
+    closeDispute,
   };
 }

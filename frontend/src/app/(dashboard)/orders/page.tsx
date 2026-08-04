@@ -18,7 +18,7 @@ export default function OrdersPage() {
         <h1 className="mt-2 font-display text-4xl font-bold">Đơn thuê của tôi</h1>
       </div>
 
-      <OrdersOverview />
+      <OrdersOverview viewRole="renter" detailBasePath="/orders" />
     </section>
   );
 }

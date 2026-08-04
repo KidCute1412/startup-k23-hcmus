@@ -58,6 +58,20 @@ export interface DisputeItem {
   deductAmount: number | null;
   createdAt: string;
   resolvedAt: string | null;
+  reviewedBy?: string | null;
+  reviewedAt?: string | null;
+  closedBy?: string | null;
+  closedAt?: string | null;
+  closeNote?: string | null;
+  transitions?: Array<{
+    id: string;
+    fromStatus: DisputeStatus | null;
+    toStatus: DisputeStatus;
+    actorId: string;
+    note: string | null;
+    createdAt: string;
+  }>;
+  availableActions?: Array<'start_review' | 'resolve' | 'close'>;
   evidences?: DisputeEvidence[];
   rentalOrder?: DisputeRentalOrder;
 }
@@ -76,4 +90,6 @@ export interface GetDisputeQueueParams {
   status?: DisputeStatus;
   page?: number;
   limit?: number;
+  sortBy?: 'createdAt' | 'status';
+  sortOrder?: 'asc' | 'desc';
 }

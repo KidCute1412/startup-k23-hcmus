@@ -1,5 +1,6 @@
 export interface RentalOrder {
   id: string;
+  order_code?: string;
   gearId: string;
   gear_id?: string;
   renterId: string;
@@ -17,15 +18,51 @@ export interface RentalOrder {
   shippingPhone: string;
   createdAt: string;
   updatedAt: string;
+  created_at?: string;
+  updated_at?: string;
+  // snake_case variants returned by backend
   start_date?: string;
   end_date?: string;
   rental_fee?: number;
   deposit_amount?: number;
   deposit_type?: 'traditional' | 'credit_line';
   shipping_address?: string;
+  shipping_name?: string;
+  shipping_phone?: string;
+  duration_days?: number;
+  platform_fee?: number;
+  lender_income?: number;
+  // lifecycle timestamps
+  lender_shipped_at?: string | null;
+  renter_received_at?: string | null;
+  renter_returned_at?: string | null;
+  lender_received_back_at?: string | null;
+  // relations
   gear?: { id?: string; name: string; media?: { url: string }[] };
-  renter?: { fullName?: string; avatarUrl?: string; full_name?: string; avatar_url?: string };
-  lender?: { fullName?: string; avatarUrl?: string; full_name?: string; avatar_url?: string };
+  renter?: {
+    id?: string;
+    fullName?: string;
+    avatarUrl?: string;
+    full_name?: string;
+    avatar_url?: string;
+    phone?: string;
+    rating?: number;
+  };
+  lender?: {
+    id?: string;
+    fullName?: string;
+    avatarUrl?: string;
+    full_name?: string;
+    avatar_url?: string;
+    phone?: string;
+    rating?: number;
+  };
+  disputes?: Array<{
+    id: string;
+    status: 'open' | 'under_review' | 'resolved' | 'closed' | string;
+    reason: string;
+    description?: string | null;
+  }>;
 }
 
 export interface CreateRentalOrderRequest {
@@ -42,19 +79,26 @@ export interface GetRentalOrdersParams {
   page?: number;
   limit?: number;
   status?: string;
+  /** Pass 'lender' to fetch orders where the current user is the gear owner */
+  role?: 'renter' | 'lender';
 }
 
 export type ProofStage = 'pre_shipment' | 'post_received' | 'pre_return' | 'post_returned';
 
 export interface RentalProof {
   id: string;
-  rentalOrderId: string;
-  uploaderId: string;
-  stage: 'pre_shipment' | 'post_receipt' | 'pre_return' | 'post_return' | string;
-  proofType: 'image' | 'video';
-  fileUrl: string;
+  rentalOrderId?: string;
+  rental_order_id?: string;
+  uploadedBy?: string;
+  uploaded_by?: string;
+  stage: ProofStage | string;
+  proof_type?: 'image' | 'video';
+  proofType?: 'image' | 'video';
+  file_url?: string;
+  fileUrl?: string;
   note?: string | null;
-  createdAt: string;
+  uploadedAt?: string;
+  createdAt?: string;
 }
 
 export interface UploadProofRequest {

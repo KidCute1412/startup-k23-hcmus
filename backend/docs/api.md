@@ -814,7 +814,7 @@ Ngoài retry ở đúng target, status sai trả `400 INVALID_TRANSITION` (hoặ
   - Khi gọi lại endpoint với `dispute.status` đã ở trạng thái `resolved`, API trả về 200 kèm record dispute đã giải quyết và `EscrowService` KHÔNG được gọi lần thứ hai (số dư ví, escrow và ledger hoàn toàn không thay đổi).
 * **Errors & Atomicity**:
   - `400 DEDUCT_EXCEEDS_DEPOSIT` nếu `deductAmount > escrow.amount`. Record dispute KHÔNG được cập nhật (transaction rollback).
-  - `400 INVALID_DISPUTE_STATUS` nếu dispute ở trạng thái ngoại trừ `open` / `under_review` (hoặc `resolved` cho idempotency).
+  - `400 INVALID_DISPUTE_STATUS` nếu dispute không ở `under_review` (hoặc `resolved` cho idempotency).
   - `400 INVALID_ORDER_STATUS` nếu order liên quan không ở `disputed`.
   - `403 ADMIN_ONLY` nếu user đã đăng nhập nhưng không phải admin.
   - `404 NOT_FOUND` nếu dispute không tồn tại.
@@ -872,3 +872,14 @@ the order is `pending_confirm`, and the lender-confirm transition checks and
 locks the wallets again atomically. A credit wallet with a non-null
 `expiredAt <= now` is not granted for new credit-line checkouts and is rejected
 with `INSUFFICIENT_CREDIT` at both checkout and lender confirmation.
+
+### Admin dispute state machine
+
+Disputes follow `open -> under_review -> resolved -> closed`.
+
+- `POST /admin/disputes/:id/start-review`: admin-only; accepts `open`, records reviewer identity/time, and is idempotent for `under_review`.
+- `POST /admin/disputes/:id/resolve`: admin-only; accepts only `under_review`, performs escrow release/compensation atomically, completes the rental order, and records settlement metadata.
+- `POST /admin/disputes/:id/close`: admin-only; accepts only `resolved`, records close identity/time/note, and performs no financial operation.
+- Repeating an already completed transition is idempotent; invalid current statuses return `400 INVALID_DISPUTE_STATUS`.
+
+`GET /admin/disputes` accepts optional `status`, `page`, `limit`, `sortBy=createdAt|status`, and `sortOrder=asc|desc`. Responses include pagination metadata, transition audit data, and available next actions.

@@ -26,6 +26,7 @@ describe('AdminService — resolveDispute', () => {
     $queryRaw: jest.Mock;
     dispute: { findUnique: jest.Mock; update: jest.Mock };
     rentalOrder: { update: jest.Mock };
+    disputeTransition: { create: jest.Mock };
   };
 
   const sampleDispute = {
@@ -35,7 +36,7 @@ describe('AdminService — resolveDispute', () => {
     reporter_role: ReporterRoleEnum.renter,
     reason: DisputeReasonEnum.device_damaged,
     description: 'Cracked screen',
-    status: DisputeStatusType.open,
+    status: DisputeStatusType.under_review,
     resolved_by: null,
     resolution_note: null,
     resolution_type: null,
@@ -72,6 +73,9 @@ describe('AdminService — resolveDispute', () => {
           id: orderId,
           status: OrderStatusType.completed,
         }),
+      },
+      disputeTransition: {
+        create: jest.fn().mockResolvedValue({}),
       },
     };
 
@@ -281,7 +285,7 @@ describe('AdminService — resolveDispute', () => {
       OrderStatusType.disputed,
       'INVALID_DISPUTE_STATUS',
     ],
-    [DisputeStatusType.open, OrderStatusType.active, 'INVALID_ORDER_STATUS'],
+    [DisputeStatusType.under_review, OrderStatusType.active, 'INVALID_ORDER_STATUS'],
   ])(
     'rejects invalid dispute/order state: status=%s orderStatus=%s',
     async (status, orderStatus, code) => {

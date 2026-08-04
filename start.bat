@@ -45,7 +45,7 @@ if errorlevel 1 (
   goto :error
 )
 
-echo [4/6] Generating Prisma Client, applying migrations, and seeding database...
+echo [4/6] Generating Prisma Client and applying migrations...
 call npx.cmd prisma generate
 if errorlevel 1 (
   popd
@@ -56,11 +56,18 @@ if errorlevel 1 (
   popd
   goto :error
 )
-echo Seeding database...
-call npx.cmd prisma db seed
-if errorlevel 1 (
-  popd
-  goto :error
+echo Checking whether initial data is already present...
+for /f "usebackq tokens=* delims=" %%G in (`docker compose exec -T postgres psql -U postgres -d mutux_db -tAc "SELECT COUNT(*) FROM gears" 2^>nul`) do set "GEAR_COUNT=%%G"
+set "GEAR_COUNT=%GEAR_COUNT: =%"
+if "%GEAR_COUNT%"=="0" (
+  echo Database is empty. Seeding initial data...
+  call npx.cmd prisma db seed
+  if errorlevel 1 (
+    popd
+    goto :error
+  )
+) else (
+  echo Existing data found ^(%GEAR_COUNT% gears^). Skipping seed.
 )
 popd
 

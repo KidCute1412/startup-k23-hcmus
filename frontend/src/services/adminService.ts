@@ -85,6 +85,8 @@ export const adminService = {
     if (params.status) query.set('status', params.status);
     if (params.page) query.set('page', String(params.page));
     if (params.limit) query.set('limit', String(params.limit));
+    if (params.sortBy) query.set('sortBy', params.sortBy);
+    if (params.sortOrder) query.set('sortOrder', params.sortOrder);
 
     const queryString = query.toString();
     const path = `/admin/disputes${queryString ? `?${queryString}` : ''}`;
@@ -95,6 +97,17 @@ export const adminService = {
     apiClient<unknown>(`/admin/disputes/${id}/resolve`, {
       method: 'POST',
       body: JSON.stringify(payload),
+    }),
+
+  startDisputeReview: (id: string) =>
+    apiClient<DisputeItem>(`/admin/disputes/${id}/start-review`, {
+      method: 'POST',
+    }),
+
+  closeDispute: (id: string, closeNote?: string) =>
+    apiClient<DisputeItem>(`/admin/disputes/${id}/close`, {
+      method: 'POST',
+      body: JSON.stringify({ closeNote: closeNote || undefined }),
     }),
 
   listLenderUpgradeRequests: (

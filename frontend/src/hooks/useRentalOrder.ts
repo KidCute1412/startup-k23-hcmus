@@ -1,9 +1,7 @@
 'use client';
 
 import { useCallback, useState } from 'react';
-import {
-  rentalOrderService,
-} from '@/services/rentalOrderService';
+import { rentalOrderService } from '@/services/rentalOrderService';
 import { type PaginationMeta } from '@/lib/apiClient';
 import type {
   CreateRentalOrderRequest,
@@ -79,6 +77,7 @@ export function useRentalOrder() {
     fetchOrders,
     fetchOrder,
     createOrder,
+    setCurrentOrder,
     confirmOrder: (id: string) => updateOrderStatus(id, 'confirmRentalOrder'),
     shipOrder: (id: string) => updateOrderStatus(id, 'shipRentalOrder'),
     confirmReceipt: (id: string) => updateOrderStatus(id, 'confirmRentalReceipt'),

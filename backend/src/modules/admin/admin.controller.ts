@@ -22,6 +22,7 @@ import { GetKycQueueQueryDto } from './dto/get-kyc-queue-query.dto';
 import { GetDisputeQueueQueryDto } from './dto/get-dispute-queue-query.dto';
 import { GetLenderUpgradeRequestsQueryDto } from './dto/get-lender-upgrade-requests-query.dto';
 import { RejectLenderUpgradeRequestDto } from './dto/reject-lender-upgrade-request.dto';
+import { CloseDisputeDto } from './dto/close-dispute.dto';
 
 @Controller('admin')
 @UseGuards(JwtAuthGuard, AdminGuard)
@@ -119,5 +120,24 @@ export class AdminController {
       dto.deductAmount,
       dto.resolutionNote,
     );
+  }
+
+  @Post('disputes/:id/start-review')
+  @HttpCode(HttpStatus.OK)
+  startDisputeReview(
+    @Param('id', new ParseUUIDPipe()) id: string,
+    @Req() req: AuthenticatedRequest,
+  ) {
+    return this.adminService.startDisputeReview(id, req.user.id);
+  }
+
+  @Post('disputes/:id/close')
+  @HttpCode(HttpStatus.OK)
+  closeDispute(
+    @Param('id', new ParseUUIDPipe()) id: string,
+    @Body() dto: CloseDisputeDto,
+    @Req() req: AuthenticatedRequest,
+  ) {
+    return this.adminService.closeDispute(id, req.user.id, dto.closeNote);
   }
 }

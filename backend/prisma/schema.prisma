@@ -332,6 +332,9 @@ model User {
   messages                Message[]
   disputes_reported       Dispute[]          @relation("ReportedDisputes")
   disputes_resolved       Dispute[]          @relation("ResolvedDisputes")
+  disputes_reviewed       Dispute[]          @relation("ReviewedDisputes")
+  disputes_closed         Dispute[]          @relation("ClosedDisputes")
+  dispute_transitions     DisputeTransition[] @relation("DisputeTransitionActors")
   dispute_evidences       DisputeEvidence[]
   reviews_given           Review[]           @relation("ReviewerReviews")
   reviews_received        Review[]           @relation("TargetReviews")
@@ -710,14 +713,39 @@ model Dispute {
   resolution_type ResolutionTypeEnum?
   deduct_amount   Decimal?            @db.Decimal(15, 2)
   created_at      DateTime            @default(now())
+  reviewed_by     String?             @db.Uuid
+  reviewed_at     DateTime?
   resolved_at     DateTime?
+  closed_by       String?             @db.Uuid
+  closed_at       DateTime?
+  close_note      String?
 
   rental_order RentalOrder       @relation(fields: [rental_order_id], references: [id], onDelete: Cascade)
   reporter     User              @relation("ReportedDisputes", fields: [reported_by], references: [id], onDelete: Cascade)
   resolver     User?             @relation("ResolvedDisputes", fields: [resolved_by], references: [id], onDelete: SetNull)
+  reviewer     User?             @relation("ReviewedDisputes", fields: [reviewed_by], references: [id], onDelete: SetNull)
+  closer       User?             @relation("ClosedDisputes", fields: [closed_by], references: [id], onDelete: SetNull)
   evidences    DisputeEvidence[]
+  transitions  DisputeTransition[]
 
   @@map("disputes")
+}
+
+model DisputeTransition {
+  id          String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  dispute_id  String            @db.Uuid
+  from_status DisputeStatusType?
+  to_status   DisputeStatusType
+  actor_id    String            @db.Uuid
+  note        String?
+  created_at  DateTime          @default(now())
+
+  dispute Dispute @relation(fields: [dispute_id], references: [id], onDelete: Cascade)
+  actor   User    @relation("DisputeTransitionActors", fields: [actor_id], references: [id], onDelete: Restrict)
+
+  @@index([dispute_id, created_at])
+  @@index([actor_id, created_at])
+  @@map("dispute_transitions")
 }
 
 model DisputeEvidence {

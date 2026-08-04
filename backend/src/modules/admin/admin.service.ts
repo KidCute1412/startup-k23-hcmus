@@ -19,7 +19,11 @@ import {
   GetKycQueueQueryDto,
   KycQueueStatus,
 } from './dto/get-kyc-queue-query.dto';
-import { GetDisputeQueueQueryDto } from './dto/get-dispute-queue-query.dto';
+import {
+  DisputeQueueSortBy,
+  GetDisputeQueueQueryDto,
+  SortOrder,
+} from './dto/get-dispute-queue-query.dto';
 import { GetLenderUpgradeRequestsQueryDto } from './dto/get-lender-upgrade-requests-query.dto';
 import { EscrowService } from '../escrow/escrow.service';
 import { ResolutionType } from './dto/resolve-dispute.dto';
@@ -94,7 +98,20 @@ interface DisputePayload {
   resolution_type?: string | null;
   deduct_amount?: Prisma.Decimal | number | null;
   created_at: Date;
+  reviewed_by?: string | null;
+  reviewed_at?: Date | null;
   resolved_at?: Date | null;
+  closed_by?: string | null;
+  closed_at?: Date | null;
+  close_note?: string | null;
+  transitions?: Array<{
+    id: string;
+    from_status: DisputeStatusType | null;
+    to_status: DisputeStatusType;
+    actor_id: string;
+    note: string | null;
+    created_at: Date;
+  }>;
   evidences?: DisputeEvidencePayload[];
   rental_order?: DisputeRentalOrderPayload | null;
 }
@@ -203,8 +220,18 @@ export class AdminService {
   }
 
   async getDisputeQueue(query: GetDisputeQueueQueryDto) {
-    const { status, page = 1, limit = 10 } = query;
+    const {
+      status,
+      page = 1,
+      limit = 10,
+      sortBy = DisputeQueueSortBy.createdAt,
+      sortOrder = SortOrder.desc,
+    } = query;
     const where: Prisma.DisputeWhereInput = status ? { status } : {};
+    const orderBy =
+      sortBy === DisputeQueueSortBy.status
+        ? [{ status: sortOrder }, { created_at: 'desc' as const }, { id: 'asc' as const }]
+        : [{ created_at: sortOrder }, { id: 'asc' as const }];
 
     const [disputes, total] = await Promise.all([
       this.prisma.dispute.findMany({
@@ -244,8 +271,11 @@ export class AdminService {
               },
             },
           },
+          transitions: {
+            orderBy: { created_at: 'asc' },
+          },
         },
-        orderBy: [{ created_at: 'desc' }, { id: 'asc' }],
+        orderBy,
         skip: (page - 1) * limit,
         take: limit,
       }),
@@ -603,10 +633,10 @@ export class AdminService {
       if (dispute.status === DisputeStatusType.resolved) {
         return this.toApiDispute(dispute);
       }
-      if (dispute.status !== 'open' && dispute.status !== 'under_review') {
+      if (dispute.status !== DisputeStatusType.under_review) {
         throw new BadRequestException({
           error: 'INVALID_DISPUTE_STATUS',
-          message: `Dispute status is ${dispute.status}, expected open or under_review`,
+          message: `Dispute status is ${dispute.status}, expected under_review`,
         });
       }
 
@@ -618,6 +648,7 @@ export class AdminService {
         });
       }
 
+      let settlement;
       if (resolutionType === ResolutionType.deposit_deduct) {
         if (deductAmount === undefined) {
           throw new BadRequestException({
@@ -626,9 +657,9 @@ export class AdminService {
               'deductAmount must be a positive integer for deposit_deduct',
           });
         }
-        await this.escrowService.compensate(orderId, deductAmount, tx);
+        settlement = await this.escrowService.compensate(orderId, deductAmount, tx);
       } else {
-        await this.escrowService.release(orderId, tx);
+        settlement = await this.escrowService.release(orderId, tx);
       }
 
       await tx.rentalOrder.update({
@@ -653,7 +684,77 @@ export class AdminService {
           rental_order: true,
         },
       });
-      return this.toApiDispute(resolved);
+      await tx.disputeTransition.create({
+        data: {
+          dispute_id: disputeId,
+          from_status: DisputeStatusType.under_review,
+          to_status: DisputeStatusType.resolved,
+          actor_id: adminId,
+          note: resolutionNote ?? null,
+        },
+      });
+      return {
+        ...this.toApiDispute(resolved),
+        settlement: {
+          escrowAction: resolutionType === ResolutionType.deposit_deduct ? 'compensated' : 'released',
+          depositReturned: resolutionType === ResolutionType.deposit_deduct ? settlement.amount - (deductAmount ?? 0) : settlement.amount,
+          depositDeducted: resolutionType === ResolutionType.deposit_deduct ? deductAmount ?? 0 : 0,
+          lenderCompensation: resolutionType === ResolutionType.deposit_deduct ? deductAmount ?? 0 : 0,
+          lenderRentalIncome: dispute.rental_order.lender_income
+            ? typeof dispute.rental_order.lender_income === 'number'
+              ? dispute.rental_order.lender_income
+              : dispute.rental_order.lender_income.toNumber()
+            : 0,
+          depositSource: settlement.source,
+          escrowStatus: settlement.status,
+        },
+      };
+    });
+  }
+
+  async startDisputeReview(disputeId: string, adminId: string) {
+    return this.prisma.$transaction(async (tx) => {
+      await tx.$queryRaw`SELECT id FROM disputes WHERE id = ${disputeId}::uuid FOR UPDATE`;
+      const dispute = await tx.dispute.findUnique({ where: { id: disputeId } });
+      if (!dispute) throw new NotFoundException({ error: 'NOT_FOUND', message: 'Dispute not found' });
+      if (dispute.status === DisputeStatusType.under_review) return this.toApiDispute(dispute);
+      if (dispute.status !== DisputeStatusType.open) {
+        throw new BadRequestException({
+          error: 'INVALID_DISPUTE_STATUS',
+          message: `Dispute status is ${dispute.status}, expected open`,
+        });
+      }
+      const reviewed = await tx.dispute.update({
+        where: { id: disputeId },
+        data: { status: DisputeStatusType.under_review, reviewed_by: adminId, reviewed_at: new Date() },
+      });
+      await tx.disputeTransition.create({
+        data: { dispute_id: disputeId, from_status: DisputeStatusType.open, to_status: DisputeStatusType.under_review, actor_id: adminId },
+      });
+      return this.toApiDispute(reviewed);
+    });
+  }
+
+  async closeDispute(disputeId: string, adminId: string, closeNote?: string) {
+    return this.prisma.$transaction(async (tx) => {
+      await tx.$queryRaw`SELECT id FROM disputes WHERE id = ${disputeId}::uuid FOR UPDATE`;
+      const dispute = await tx.dispute.findUnique({ where: { id: disputeId } });
+      if (!dispute) throw new NotFoundException({ error: 'NOT_FOUND', message: 'Dispute not found' });
+      if (dispute.status === DisputeStatusType.closed) return this.toApiDispute(dispute);
+      if (dispute.status !== DisputeStatusType.resolved) {
+        throw new BadRequestException({
+          error: 'INVALID_DISPUTE_STATUS',
+          message: `Dispute status is ${dispute.status}, expected resolved`,
+        });
+      }
+      const closed = await tx.dispute.update({
+        where: { id: disputeId },
+        data: { status: DisputeStatusType.closed, closed_by: adminId, closed_at: new Date(), close_note: closeNote ?? null },
+      });
+      await tx.disputeTransition.create({
+        data: { dispute_id: disputeId, from_status: DisputeStatusType.resolved, to_status: DisputeStatusType.closed, actor_id: adminId, note: closeNote ?? null },
+      });
+      return this.toApiDispute(closed);
     });
   }
 
@@ -675,7 +776,28 @@ export class AdminService {
           : dispute.deduct_amount.toNumber()
         : null,
       createdAt: dispute.created_at,
+      reviewedBy: dispute.reviewed_by ?? null,
+      reviewedAt: dispute.reviewed_at ?? null,
       resolvedAt: dispute.resolved_at,
+      closedBy: dispute.closed_by ?? null,
+      closedAt: dispute.closed_at ?? null,
+      closeNote: dispute.close_note ?? null,
+      availableActions:
+        dispute.status === DisputeStatusType.open
+          ? ['start_review']
+          : dispute.status === DisputeStatusType.under_review
+            ? ['resolve']
+            : dispute.status === DisputeStatusType.resolved
+              ? ['close']
+              : [],
+      transitions: dispute.transitions?.map((transition) => ({
+        id: transition.id,
+        fromStatus: transition.from_status,
+        toStatus: transition.to_status,
+        actorId: transition.actor_id,
+        note: transition.note,
+        createdAt: transition.created_at,
+      })),
       evidences: dispute.evidences
         ? dispute.evidences.map((e: DisputeEvidencePayload) => ({
             id: e.id,

@@ -11,13 +11,14 @@ export const rentalOrderService = {
     if (params.page) query.set('page', String(params.page));
     if (params.limit) query.set('limit', String(params.limit));
     if (params.status) query.set('status', params.status);
+    if (params.role) query.set('role', params.role);
 
     return apiClientPaginated<RentalOrder[]>(
       `/rental-orders${query.size ? `?${query.toString()}` : ''}`
     );
   },
 
-  getRentalOrder: (id: string) => 
+  getRentalOrder: (id: string) =>
     apiClient<RentalOrder>(`/rental-orders/${encodeURIComponent(id)}`),
 
   createRentalOrder: (request: CreateRentalOrderRequest) =>

@@ -1,0 +1,25 @@
+meta {
+  name: Resolve Dispute From Open Invalid
+  type: http
+  seq: 26
+}
+
+post {
+  url: {{baseUrl}}/admin/disputes/{{disputeId}}/resolve
+  body: json
+  auth: inherit
+}
+
+tests {
+  test("requires under_review before resolution", function() {
+    expect(res.status).to.equal(400);
+    expect(res.body.error.code || res.body.error).to.equal("INVALID_DISPUTE_STATUS");
+  });
+}
+
+body:json {
+  {
+    "resolutionType": "no_action",
+    "resolutionNote": "Chưa được tiếp nhận review"
+  }
+}

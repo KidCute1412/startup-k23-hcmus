@@ -12,6 +12,8 @@ import {
   Loader2,
   FileImage,
   ShieldAlert,
+  Clock3,
+  ArrowRight,
 } from "lucide-react";
 import Image from "next/image";
 import { AdminPagination } from "@/components/ui/admin-pagination";
@@ -46,6 +48,10 @@ interface DisputeCase {
     proof_media: { url: string; mediaType: string }[];
   };
   status: DisputeStatus;
+  reviewed_at?: string;
+  resolved_at?: string;
+  closed_at?: string;
+  close_note?: string;
   resolution?: {
     type: ResolutionType;
     deduct_amount?: number;
@@ -66,6 +72,10 @@ export function DisputeResolutionFeature() {
     page,
     setPage,
     resolveDispute,
+    startDisputeReview,
+    closeDispute,
+    limit,
+    setLimit,
   } = useAdminDisputes(undefined, 1, 10);
 
   const [activeCase, setActiveCase] = useState<DisputeCase | null>(null);
@@ -80,6 +90,9 @@ export function DisputeResolutionFeature() {
     "Căn cứ hình ảnh bàn giao và đối soát bằng chứng hoàn trả: Xác nhận hỏng hóc thiết bị do quá trình sử dụng của Renter. Chấp thuận khấu trừ tiền cọc để bồi thường cho Lender."
   );
   const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
+  const [isTransitioning, setIsTransitioning] = useState(false);
+  const [closeNote, setCloseNote] = useState("");
 
   // Memoize mapped disputes to prevent infinite re-render loop in useEffect
   const disputes: DisputeCase[] = useMemo(() => {
@@ -131,6 +144,10 @@ export function DisputeResolutionFeature() {
             .map((e) => ({ url: resolveMediaUrl(e.url), mediaType: e.mediaType || "image" })),
         },
         status: item.status,
+        reviewed_at: item.reviewedAt || undefined,
+        resolved_at: item.resolvedAt || undefined,
+        closed_at: item.closedAt || undefined,
+        close_note: item.closeNote || undefined,
         resolution: item.resolvedAt ? {
           type: (item.resolutionType as ResolutionType) || "deposit_deduct",
           deduct_amount: item.deductAmount || undefined,
@@ -181,6 +198,7 @@ export function DisputeResolutionFeature() {
       };
 
       await resolveDispute(activeCase.id, payload);
+      setSuccessMessage("Đã settlement và chuyển dispute sang trạng thái Đã phân xử.");
       setIsSuccessModalOpen(true);
     } catch (err: any) {
       setApiError(
@@ -188,6 +206,37 @@ export function DisputeResolutionFeature() {
       );
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleStartReview = async () => {
+    if (!activeCase || activeCase.status !== "open") return;
+    setApiError(null);
+    setIsTransitioning(true);
+    try {
+      await startDisputeReview(activeCase.id);
+      setSuccessMessage("Đã tiếp nhận hồ sơ và chuyển sang Đang xem xét.");
+      setIsSuccessModalOpen(true);
+    } catch (err: any) {
+      setApiError(err.message || "Không thể bắt đầu xem xét hồ sơ.");
+    } finally {
+      setIsTransitioning(false);
+    }
+  };
+
+  const handleClose = async () => {
+    if (!activeCase || activeCase.status !== "resolved") return;
+    setApiError(null);
+    setIsTransitioning(true);
+    try {
+      await closeDispute(activeCase.id, closeNote.trim() || undefined);
+      setSuccessMessage("Đã đóng hồ sơ dispute. Không phát sinh thêm settlement.");
+      setIsSuccessModalOpen(true);
+      setCloseNote("");
+    } catch (err: any) {
+      setApiError(err.message || "Không thể đóng hồ sơ.");
+    } finally {
+      setIsTransitioning(false);
     }
   };
 
@@ -272,6 +321,17 @@ export function DisputeResolutionFeature() {
 
       {!isNonAdmin && (
         <>
+          <div className="mb-5 flex flex-wrap items-center justify-between gap-3 rounded-v-sm border border-vanguard-light-border bg-vanguard-light-surf p-3 text-xs dark:border-vanguard-dark-border dark:bg-vanguard-dark-surf">
+            <span className="text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted">
+              Queue được tải theo trang; trạng thái mới nhất sẽ được ưu tiên hiển thị.
+            </span>
+            <label className="flex items-center gap-2 font-semibold">
+              Số bản ghi/trang
+              <select value={limit} onChange={(e) => setLimit(Number(e.target.value))} className="rounded-v-sm border border-vanguard-light-border bg-transparent px-2 py-1 dark:border-vanguard-dark-border">
+                {[10, 20, 50].map((value) => <option key={value} value={value}>{value}</option>)}
+              </select>
+            </label>
+          </div>
           {isLoading ? (
             <div className="flex py-16 justify-center items-center text-sm text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted">
               <Loader2 className="mr-2 h-5 w-5 animate-spin text-vanguard-primary" />
@@ -397,6 +457,32 @@ export function DisputeResolutionFeature() {
                       </div>
                     </div>
 
+                    <div className="mt-5 rounded-v-sm border border-vanguard-primary/20 bg-vanguard-primary/5 p-4">
+                      <div className="mb-3 flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-vanguard-primary">
+                        <Clock3 size={15} /> Luồng xử lý hồ sơ
+                      </div>
+                      <div className="flex flex-wrap items-center gap-2 text-[11px] font-bold">
+                        {["open", "under_review", "resolved", "closed"].map((status, index) => {
+                          const labels: Record<string, string> = { open: "Mới gửi", under_review: "Đang xem xét", resolved: "Đã phân xử", closed: "Đã đóng" };
+                          const reached = ["open", "under_review", "resolved", "closed"].indexOf(activeCase.status) >= index;
+                          const date = status === "open" ? activeCase.created_at : status === "under_review" ? activeCase.reviewed_at : status === "resolved" ? activeCase.resolved_at : activeCase.closed_at;
+                          return <React.Fragment key={status}>
+                            <span className="flex flex-col items-center gap-1">
+                              <span className={`rounded-full px-2.5 py-1 ${reached ? "bg-vanguard-primary text-vanguard-dark-bg" : "bg-black/10 text-vanguard-light-textMuted dark:bg-white/10 dark:text-vanguard-dark-textMuted"}`}>{labels[status]}</span>
+                              {date && <time className="font-normal text-[9px] text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted">{new Date(date).toLocaleDateString("vi-VN")}</time>}
+                            </span>
+                            {index < 3 && <ArrowRight size={12} className="text-vanguard-light-textMuted" />}
+                          </React.Fragment>;
+                        })}
+                      </div>
+                      <p className="mt-3 text-[11px] text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted">
+                        {activeCase.status === "open" && "Bước tiếp theo: admin tiếp nhận hồ sơ để bắt đầu kiểm tra bằng chứng."}
+                        {activeCase.status === "under_review" && "Bước tiếp theo: chọn phương án settlement và xác nhận tác động tài chính."}
+                        {activeCase.status === "resolved" && "Bước tiếp theo: kiểm tra kết quả và đóng hồ sơ khi đã hoàn tất."}
+                        {activeCase.status === "closed" && "Hồ sơ đã hoàn tất và chỉ còn ở chế độ xem."}
+                      </p>
+                    </div>
+
                     {/* Evidence Comparison Grid */}
                     <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-2">
                       {/* Renter Claim */}
@@ -503,7 +589,15 @@ export function DisputeResolutionFeature() {
                     </div>
 
                     {/* Resolution Form or Persisted Summary */}
-                    {activeCase.status === "open" || activeCase.status === "under_review" ? (
+                    {activeCase.status === "open" ? (
+                      <div className="mt-8 border-t border-vanguard-light-border pt-6 dark:border-vanguard-dark-border">
+                        <h3 className="font-display text-sm font-bold uppercase tracking-wider">Tiếp nhận hồ sơ</h3>
+                        <p className="mt-2 text-xs text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted">Hành động này chỉ đổi trạng thái sang Đang xem xét và chưa tác động đến ví hoặc escrow.</p>
+                        <button type="button" onClick={handleStartReview} disabled={isTransitioning} className="mt-4 inline-flex items-center gap-2 rounded-v-sm bg-vanguard-primary px-5 py-2.5 text-xs font-bold text-vanguard-dark-bg disabled:opacity-50">
+                          {isTransitioning ? <Loader2 className="h-4 w-4 animate-spin" /> : <Clock3 size={16} />} Bắt đầu xem xét
+                        </button>
+                      </div>
+                    ) : activeCase.status === "under_review" ? (
                       <form onSubmit={handleResolveSubmit} className="mt-8 border-t border-vanguard-light-border pt-6 dark:border-vanguard-dark-border">
                         <h3 className="font-display text-sm font-bold uppercase tracking-wider text-vanguard-light-text dark:text-vanguard-dark-text">
                           Form Phân xử của Quản trị viên (Admin Resolution Action)
@@ -526,7 +620,7 @@ export function DisputeResolutionFeature() {
                                 }`}
                               >
                                 <DollarSign size={16} className="mb-1" />
-                                Khấu trừ cọc (deposit_deduct)
+                                Khấu trừ tiền cọc để bồi thường
                               </button>
 
                               <button
@@ -539,7 +633,7 @@ export function DisputeResolutionFeature() {
                                 }`}
                               >
                                 <CheckCircle2 size={16} className="mb-1 text-emerald-500" />
-                                Hoàn cọc 100% (refund)
+                                Hoàn cọc toàn bộ
                               </button>
 
                               <button
@@ -552,7 +646,7 @@ export function DisputeResolutionFeature() {
                                 }`}
                               >
                                 <ShieldOff size={16} className="mb-1 text-gray-400" />
-                                Không khấu trừ (no_action)
+                                Không khấu trừ tiền cọc
                               </button>
                             </div>
                           </div>
@@ -609,6 +703,15 @@ export function DisputeResolutionFeature() {
                           </div>
                         </div>
                       </form>
+                    ) : activeCase.status === "resolved" ? (
+                      <div className="mt-8 border-t border-vanguard-light-border pt-6 dark:border-vanguard-dark-border">
+                        <h3 className="font-display text-sm font-bold uppercase tracking-wider">Đóng hồ sơ</h3>
+                        <p className="mt-2 text-xs text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted">Settlement đã hoàn tất. Đóng hồ sơ chỉ ghi nhận hoàn tất quy trình và không chạy lại giao dịch tài chính.</p>
+                        <textarea value={closeNote} onChange={(e) => setCloseNote(e.target.value)} maxLength={2000} rows={2} placeholder="Ghi chú đóng hồ sơ (không bắt buộc)" className="mt-4 w-full rounded-v-sm border border-vanguard-light-border bg-transparent p-3 text-xs dark:border-vanguard-dark-border" />
+                        <button type="button" onClick={handleClose} disabled={isTransitioning} className="mt-3 inline-flex items-center gap-2 rounded-v-sm bg-vanguard-primary px-5 py-2.5 text-xs font-bold text-vanguard-dark-bg disabled:opacity-50">
+                          {isTransitioning ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 size={16} />} Đóng hồ sơ
+                        </button>
+                      </div>
                     ) : (
                       <div className="mt-8 border-t border-vanguard-light-border pt-6 dark:border-vanguard-dark-border">
                         <div className={`rounded-v-sm border p-5 ${
@@ -632,10 +735,10 @@ export function DisputeResolutionFeature() {
                               <span className="text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted block mb-1">Hình thức phân xử:</span>
                               <span className="font-bold uppercase tracking-wider text-vanguard-primary">
                                 {activeCase.resolution?.type === "deposit_deduct"
-                                  ? "Khấu trừ tiền cọc (deposit_deduct)"
+                                  ? "Khấu trừ tiền cọc để bồi thường"
                                   : activeCase.resolution?.type === "refund"
-                                  ? "Hoàn tiền cọc 100% (refund)"
-                                  : "Không khấu trừ (no_action)"}
+                                  ? "Hoàn cọc toàn bộ"
+                                  : "Không khấu trừ tiền cọc"}
                               </span>
                             </div>
 
@@ -655,6 +758,13 @@ export function DisputeResolutionFeature() {
                               <p className="rounded bg-black/30 p-3 text-vanguard-light-text dark:text-vanguard-dark-text">
                                 {activeCase.resolution.note}
                               </p>
+                            </div>
+                          )}
+
+                          {activeCase.close_note && (
+                            <div className="mt-4 text-xs">
+                              <span className="text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted block mb-1">Ghi chú đóng hồ sơ:</span>
+                              <p className="rounded bg-black/30 p-3 text-vanguard-light-text dark:text-vanguard-dark-text">{activeCase.close_note}</p>
                             </div>
                           )}
 
@@ -682,8 +792,8 @@ export function DisputeResolutionFeature() {
             <h3 className="mt-3 text-center font-display text-lg font-bold text-vanguard-light-text dark:text-vanguard-dark-text">
               Đã Phân xử Tranh chấp Thành công!
             </h3>
-            <p className="mt-2 text-center text-xs text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted">
-              Hệ thống đã giải quyết khiếu nại cho đơn hàng <code className="font-mono text-vanguard-primary">{activeCase.order_id}</code> và tự động giải tỏa/khấu trừ tiền cọc escrow.
+              <p className="mt-2 text-center text-xs text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted">
+              {successMessage} <code className="font-mono text-vanguard-primary">{activeCase.order_id}</code>
             </p>
             <div className="mt-6 text-center">
               <button
