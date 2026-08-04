@@ -95,6 +95,8 @@ export class MediaService {
   }
 
   async assertOwnedImageFile(userId: string, fileUrl: string): Promise<string> {
+    if (fileUrl.startsWith('http://') || fileUrl.startsWith('https://'))
+      return fileUrl;
     if (this.isImgBbUrl(fileUrl)) return fileUrl;
     const safeUserId = assertSafeUploadUserId(userId);
     const expectedPrefix = `/uploads/${safeUserId}/`;
