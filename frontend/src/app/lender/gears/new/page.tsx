@@ -16,14 +16,16 @@ export default function NewGearPage() {
       {/* Page header */}
       <div className="border-b border-vanguard-light-border bg-vanguard-light-surfDim/60 px-4 py-10 dark:border-vanguard-dark-border dark:bg-vanguard-dark-surfDim/50 sm:px-6">
         <div className="mx-auto max-w-7xl">
-          <Link
-            href="/lender/gears"
-            className="mb-4 inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-widest text-vanguard-light-textMuted transition hover:text-vanguard-primary dark:text-vanguard-dark-textMuted"
-          >
-            <ArrowLeft size={13} />
-            Quay lại danh sách
-          </Link>
-          <Badge tone="muted">Listing mới</Badge>
+          <div className="flex justify-start items-center gap-5">
+            <Link
+              href="/lender/gears"
+              className="inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-widest text-vanguard-light-textMuted transition hover:text-vanguard-primary dark:text-vanguard-dark-textMuted"
+            >
+              <ArrowLeft size={13} />
+              Quay lại danh sách
+            </Link>
+            <Badge tone="muted">Listing mới</Badge>
+          </div>
           <h1 className="mt-3 font-display text-3xl font-bold sm:text-4xl">
             Đăng gear cho thuê
           </h1>

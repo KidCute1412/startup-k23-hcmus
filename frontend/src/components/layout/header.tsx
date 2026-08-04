@@ -8,6 +8,7 @@ import { cn } from "@/lib/cn";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { useCart } from "@/features/cart/cart-context";
 import { useAuth } from "@/hooks/useAuth";
+import Image from "next/image";
 
 import { resolveMediaUrl } from "@/lib/media";
 
@@ -52,8 +53,14 @@ export function Header() {
     <header className="sticky top-0 z-50 border-b border-vanguard-light-border bg-vanguard-light-bg/90 backdrop-blur-md transition-colors dark:border-vanguard-dark-border dark:bg-vanguard-dark-bg/95">
       <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-4 py-4 sm:px-6">
         <Link href="/" className="flex items-center gap-2">
-          <span className="flex size-8 items-center justify-center rounded-v-sm bg-gold-metal font-display font-bold text-vanguard-dark-bg shadow-md">
-            M
+          <span className="flex size-8 items-center justify-center overflow-hidden rounded-v-sm shadow-md">
+            <Image
+              src="/favicon.ico"
+              alt="Mutux logo"
+              width={32}
+              height={32}
+              className="object-contain"
+            />
           </span>
           <span className="font-display text-lg font-semibold tracking-wider sm:text-xl">
             Mutux{" "}

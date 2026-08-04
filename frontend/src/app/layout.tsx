@@ -17,6 +17,9 @@ export const metadata: Metadata = {
   title: "Vanguard Elite | Thuê gear gaming cao cấp",
   description:
     "Marketplace thuê bàn phím, chuột, tai nghe và setup gaming hi-end theo phong cách Vanguard Elite.",
+  icons: {
+    icon: "/favicon.ico",
+  },
 };
 
 import { CartProvider } from "@/features/cart/cart-context";
