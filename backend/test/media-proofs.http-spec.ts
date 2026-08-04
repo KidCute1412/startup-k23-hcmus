@@ -39,6 +39,7 @@ describe('Media and rental proofs (HTTP)', () => {
   let app: INestApplication<App>;
   let uploadsRoot: string;
   let originalUploadsDir: string | undefined;
+  let originalImgbbApiKey: string | undefined;
   let currentUser: { id: string; role: UserRole };
   let fetchSpy: jest.SpyInstance;
   let repository: {
@@ -59,6 +60,8 @@ describe('Media and rental proofs (HTTP)', () => {
         Promise.resolve({ data: { url: 'https://i.ibb.co/mock/proof.jpg' } }),
     } as Response);
     originalUploadsDir = process.env.UPLOADS_DIR;
+    originalImgbbApiKey = process.env.IMGBB_API_KEY;
+    process.env.IMGBB_API_KEY = 'integration-test-imgbb-key';
     uploadsRoot = mkdtempSync(join(tmpdir(), 'mutux-media-http-'));
     process.env.UPLOADS_DIR = uploadsRoot;
     currentUser = { id: lenderId, role: UserRole.renter };
@@ -304,6 +307,11 @@ describe('Media and rental proofs (HTTP)', () => {
       delete process.env.UPLOADS_DIR;
     } else {
       process.env.UPLOADS_DIR = originalUploadsDir;
+    }
+    if (originalImgbbApiKey === undefined) {
+      delete process.env.IMGBB_API_KEY;
+    } else {
+      process.env.IMGBB_API_KEY = originalImgbbApiKey;
     }
     rmSync(uploadsRoot, { recursive: true, force: true });
   });

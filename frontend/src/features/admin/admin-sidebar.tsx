@@ -10,7 +10,7 @@ import {
   Scale,
   BadgeDollarSign,
   UserCheck,
-  User,
+  UserRound,
 } from "lucide-react";
 import { cn } from "@/lib/cn";
 
@@ -22,11 +22,6 @@ export interface AdminNavItem {
 }
 
 const ADMIN_NAV_ITEMS: AdminNavItem[] = [
-  {
-    href: "/admin/profile",
-    label: "Hồ sơ Admin",
-    icon: User,
-  },
   {
     href: "/admin",
     label: "Tổng quan Dashboard",
@@ -88,11 +83,9 @@ export function AdminSidebar({ className }: { className?: string }) {
 
       {/* Navigation Links */}
       <div className="flex-1 overflow-y-auto px-4 py-6">
-        <div className="mb-2 px-3 text-[10px] font-bold uppercase tracking-widest text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted">
-          Quản trị hệ thống
-        </div>
+        <div className="mb-2 px-3 text-[10px] font-bold uppercase tracking-widest text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted">Tổng quan</div>
         <nav className="space-y-1">
-          {ADMIN_NAV_ITEMS.map((item) => {
+          {ADMIN_NAV_ITEMS.map((item, index) => {
             const isActive =
               item.href === "/admin"
                 ? pathname === "/admin"
@@ -101,6 +94,8 @@ export function AdminSidebar({ className }: { className?: string }) {
             const Icon = item.icon;
 
             return (
+              <React.Fragment key={item.href}>
+              {index === 1 && <div className="mb-2 mt-7 px-3 text-[10px] font-bold uppercase tracking-widest text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted">Xử lý nghiệp vụ</div>}
               <Link
                 key={item.href}
                 href={item.href}
@@ -137,6 +132,7 @@ export function AdminSidebar({ className }: { className?: string }) {
                   </span>
                 )}
               </Link>
+              </React.Fragment>
             );
           })}
         </nav>
@@ -148,7 +144,7 @@ export function AdminSidebar({ className }: { className?: string }) {
           href="/admin/profile"
           className="flex w-full items-center justify-center gap-2 rounded-v-sm border border-vanguard-light-border bg-vanguard-light-bg px-4 py-2.5 font-display text-xs font-semibold text-vanguard-light-text transition hover:border-vanguard-primary dark:border-vanguard-dark-border dark:bg-vanguard-dark-bg dark:text-vanguard-dark-text dark:hover:border-vanguard-primary"
         >
-          <User size={14} />
+          <UserRound size={14} />
           <span>Hồ sơ & tài khoản</span>
         </Link>
       </div>
