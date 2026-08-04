@@ -1,6 +1,6 @@
 "use client";
 
-import { Menu, ShoppingBag, ShoppingCart, X, User, LogOut, KeyRound, Wallet, ShieldCheck, Package, ChevronDown } from "lucide-react";
+import { Menu, ShoppingBag, ShoppingCart, User, X, LogOut, KeyRound, Wallet, ShieldCheck, Package, ChevronDown } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
@@ -9,6 +9,7 @@ import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { useCart } from "@/features/cart/cart-context";
 import { useAuth } from "@/hooks/useAuth";
 import Image from "next/image";
+import { LogIn } from "lucide-react";
 
 import { resolveMediaUrl } from "@/lib/media";
 
@@ -67,7 +68,7 @@ export function Header() {
           </span>
         </Link>
 
-        <nav className="hidden items-center gap-8 font-display text-xs font-semibold uppercase tracking-widest md:flex">
+        <nav className="hidden items-center gap-8 font-display text-m font-semibold uppercase tracking-widest md:flex">
           {navItems.map((item) => {
             const active =
               item.href === "/"
@@ -226,11 +227,11 @@ export function Header() {
           ) : (
             <Link
               href="/login"
-              className="relative inline-flex size-10 items-center justify-center rounded-full text-vanguard-light-text transition-colors hover:bg-vanguard-light-surfDim dark:text-vanguard-dark-text dark:hover:bg-vanguard-dark-surfBright"
+              className="relative inline-flex size-15 items-center justify-center text-vanguard-light-text transition-colors hover:bg-vanguard-light-surfDim dark:text-vanguard-dark-text dark:hover:bg-vanguard-dark-surfBright"
               aria-label="Đăng nhập"
               title="Đăng nhập"
             >
-              <User size={18} />
+              Đăng nhập
             </Link>
           )}
 
@@ -320,9 +321,10 @@ export function Header() {
                 <Link
                   href="/login"
                   onClick={() => setOpen(false)}
-                  className="flex w-full items-center gap-2 rounded-v-sm px-3 py-3 text-xs font-bold uppercase tracking-widest text-vanguard-primary hover:bg-vanguard-light-surfDim dark:hover:bg-vanguard-dark-surfBright"
+                  className="flex w-full items-center justify-center gap-2 rounded-v-md border border-vanguard-primary bg-vanguard-primary px-4 py-3 font-display text-sm font-bold uppercase tracking-[0.2em] text-vanguard-dark-bg transition-all duration-200 hover:scale-[1.02] hover:bg-vanguard-primary/90 active:scale-[0.98]"
                 >
-                  Đăng nhập
+                  <LogIn size={16} />
+                  <span>Đăng nhập</span>
                 </Link>
               )}
             </div>
