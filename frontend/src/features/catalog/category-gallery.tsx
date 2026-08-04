@@ -67,9 +67,9 @@ export function CategoryGallery({ categories }: CategoryGalleryProps) {
               />
               <div className="absolute inset-0 bg-gradient-to-t from-vanguard-dark-bg via-vanguard-dark-bg/20 to-transparent" />
               <div className="absolute inset-x-6 bottom-6">
-                <p className="font-display text-[10px] font-bold uppercase tracking-widest text-vanguard-primary">
-                  Category {String(index + 1).padStart(2, "0")}
-                </p>
+                {/* <p className="font-display text-[10px] font-bold uppercase tracking-widest text-vanguard-primary">
+                  {String(index + 1).padStart(2, "0")}
+                </p> */}
                 <h3 className="mt-1 font-display text-xl font-bold text-vanguard-dark-text">
                   {category.name}
                 </h3>

@@ -38,7 +38,7 @@ const config: Config = {
       },
       fontFamily: {
         body: ["var(--font-body)", "sans-serif"],
-        display: ["var(--font-display)", "serif"],
+        display: ["var(--font-display)", "sans-serif"],
       },
       borderRadius: {
         "v-sm": "2px",
