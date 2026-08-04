@@ -1,12 +1,7 @@
 import type { Metadata } from "next";
-import { Playfair_Display, Outfit } from "next/font/google";
+import { Outfit } from "next/font/google";
 import { AppShell } from "@/components/layout/app-shell";
 import "./globals.css";
-
-const display = Playfair_Display({
-  subsets: ["latin", "vietnamese"],
-  variable: "--font-display",
-});
 
 const body = Outfit({
   subsets: ["latin"],
@@ -51,7 +46,7 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body className={`${display.variable} ${body.variable} font-body`}>
+      <body className={`${body.variable} font-body`}>
         <ToastProvider>
           <CartProvider>
             <AppShell>{children}</AppShell>

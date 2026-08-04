@@ -43,7 +43,7 @@ export function HomeView({ categories, featured }: HomeViewProps) {
                 <div className="space-y-5">
                   <h1 className="text-balance font-display text-4xl font-bold leading-[1.12] tracking-wide text-vanguard-light-text dark:text-vanguard-dark-text sm:text-5xl lg:text-6xl xl:text-7xl">
                     Thuê gear gaming hi-end,{" "}
-                    <span className="animate-gradient-text font-normal italic">
+                    <span className="animate-gradient-text font-normal">
                       giữ trải nghiệm ở đẳng cấp cao
                     </span>
                   </h1>
@@ -167,7 +167,7 @@ export function HomeView({ categories, featured }: HomeViewProps) {
         <Reveal className="mb-10 flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
           <SectionHeading
             eyebrow="Collections"
-            title="Phân nhóm hoàng gia"
+            title="Phân nhóm gear"
             description="Chọn nhanh theo nhu cầu thi đấu, livestream, setup sự kiện hoặc thử gear trước khi mua."
           />
           <LinkButton href="/gears" variant="outline" icon={<ArrowRight size={15} />}>
@@ -180,10 +180,10 @@ export function HomeView({ categories, featured }: HomeViewProps) {
       <section className="border-y border-vanguard-primary/30 bg-gradient-to-r from-vanguard-light-surfDim/80 via-vanguard-light-surf to-vanguard-light-surfDim/80 px-4 py-14 text-vanguard-light-text shadow-sm dark:from-vanguard-dark-surfDim dark:via-vanguard-dark-surf dark:to-vanguard-dark-surfDim dark:text-vanguard-dark-text sm:px-6">
         <Reveal className="mx-auto grid max-w-7xl items-center gap-8 md:grid-cols-12">
           <div className="space-y-5 md:col-span-8">
-            <span className="inline-flex items-center gap-2 rounded-v-sm bg-gold-metal px-3 py-1 font-display text-[10px] font-bold uppercase tracking-widest text-vanguard-dark-bg shadow-sm">
+            {/* <span className="inline-flex items-center gap-2 rounded-v-sm bg-gold-metal px-3 py-1 font-display text-[10px] font-bold uppercase tracking-widest text-vanguard-dark-bg shadow-sm">
               <Sparkles size={13} />
               Bespoke Atelier
-            </span>
+            </span> */}
             <h2 className="font-display text-3xl font-bold leading-tight text-vanguard-light-text dark:text-vanguard-dark-text md:text-5xl">
               Mượn thử cấu hình đắt giá trước khi đặt chế tác riêng
             </h2>
@@ -202,7 +202,7 @@ export function HomeView({ categories, featured }: HomeViewProps) {
       <section className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:py-20">
         <Reveal className="mb-10">
           <SectionHeading
-            eyebrow="Featured rentals"
+            eyebrow=""
             title="Gear nổi bật tuần này"
             description="Các món đang có rating cao, chủ gear phản hồi nhanh và sẵn sàng cho thuê ngay."
           />

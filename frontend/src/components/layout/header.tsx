@@ -68,7 +68,7 @@ export function Header() {
           </span>
         </Link>
 
-        <nav className="hidden items-center gap-8 font-display text-m font-semibold uppercase tracking-widest md:flex">
+        <nav className="hidden items-center gap-8 font-display text-xs font-semibold uppercase tracking-widest md:flex">
           {navItems.map((item) => {
             const active =
               item.href === "/"

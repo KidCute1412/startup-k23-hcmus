@@ -1,5 +1,6 @@
 import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { resolve } from 'path';
 import { CategoryModule } from './modules/categories/category.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { AuthModule } from './modules/auth/auth.module';
@@ -17,7 +18,11 @@ import { CartsModule } from './modules/carts/carts.module';
 
 @Module({
   imports: [
-    ConfigModule.forRoot({ isGlobal: true }),
+    ConfigModule.forRoot({
+      isGlobal: true,
+      // Resolve the backend .env even when the app is started from the repo root.
+      envFilePath: [resolve(__dirname, '../.env'), resolve(process.cwd(), '.env')],
+    }),
     PrismaModule,
     AuthModule,
     UsersModule,
