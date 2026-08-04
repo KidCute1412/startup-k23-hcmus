@@ -26,10 +26,12 @@ function LenderUpgradePanel() {
     useLenderUpgrade();
   const [reason, setReason] = useState("");
 
-  if (!user || user.role === "admin") return null;
+  // An active Lender no longer needs to see the upgrade/request card.
+  if (!user || user.role === "admin" || user.lenderEnabled) return null;
 
   const isPending = request?.status === "pending";
-  const isApproved = user.lenderEnabled || request?.status === "approved";
+  // The management CTA is available only after the capability is enabled.
+  const isApproved = user.lenderEnabled;
   const isRejected = request?.status === "rejected";
   const canRequest = !isPending && !isApproved && user.kycStatus === "verified";
 
@@ -118,7 +120,7 @@ function LenderUpgradePanel() {
                 onClick={handleSend}
                 className="rounded-v-sm bg-vanguard-primary px-6 py-2.5 text-xs font-bold uppercase tracking-wider text-vanguard-dark-bg transition hover:opacity-90 disabled:opacity-60 shadow-md"
               >
-                {isRejected ? "Gửi lại yêu cầu" : "Gửi yêu cầu"}
+                {isRejected ? "Gửi lại yêu cầu" : "Đăng ký làm Lender"}
               </button>
             )}
           </div>

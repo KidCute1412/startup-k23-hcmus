@@ -43,6 +43,10 @@ export function useWallet() {
       setLenderWallet(data);
       return data;
     } catch (cause) {
+      if (cause instanceof ApiError && cause.status === 404) {
+        setLenderWallet(null);
+        return null;
+      }
       const message = cause instanceof Error ? cause.message : 'Không thể lấy thông tin ví người cho thuê.';
       setError(message);
       throw cause;
