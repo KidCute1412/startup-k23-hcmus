@@ -56,9 +56,16 @@ describe('MediaService', () => {
   it.each([
     'https://example.com/proof.jpg',
     'https://evil-ibb.co/abc/proof.jpg',
+  ])('accepts an external URL during MVP phase: %s', async (fileUrl) => {
+    await expect(service.assertOwnedImageFile(ownerId, fileUrl)).resolves.toBe(
+      fileUrl,
+    );
+  });
+
+  it.each([
     `/uploads/${ownerId}/../proof.jpg`,
     `/uploads/${ownerId}/missing.jpg`,
-  ])('rejects an external, traversing, or missing URL: %s', async (fileUrl) => {
+  ])('rejects a traversing or missing local URL: %s', async (fileUrl) => {
     await expect(
       service.assertOwnedImageFile(ownerId, fileUrl),
     ).rejects.toMatchObject({

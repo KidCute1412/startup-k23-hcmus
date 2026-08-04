@@ -5,7 +5,6 @@ import { PackagePlus, Star, TrendingUp, Zap, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
-import { formatCurrency } from "@/lib/format";
 import { getMyGears } from "@/services/gearService";
 import { resolveMediaUrl } from "@/lib/media";
 import { MyGearsList } from "@/features/lender/my-gears-list";
@@ -72,7 +71,6 @@ export default function LenderGearsPage() {
   const stats = {
     active: gears.filter((g) => g.listingStatus === "active").length,
     totalRentals: gears.reduce((sum, g) => sum + g.totalRentals, 0),
-    totalRevenue: gears.reduce((sum, g) => sum + g.totalRevenue, 0),
     avgRating:
       gears.filter((g) => g.reviewCount > 0).reduce((sum, g) => sum + g.rating, 0) /
       (gears.filter((g) => g.reviewCount > 0).length || 1),
@@ -128,7 +126,7 @@ export default function LenderGearsPage() {
         </div>
 
         {/* Stats row */}
-        <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-4">
+        <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3">
           <Card className="p-4">
             <Zap size={18} className="text-vanguard-primary" />
             <p className="mt-3 text-[20px] uppercase tracking-widest text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted">
@@ -156,7 +154,7 @@ export default function LenderGearsPage() {
               Tổng doanh thu
             </p>
             <p className="mt-1 font-display text-xl font-bold text-vanguard-primary">
-              {formatCurrency(stats.totalRevenue)}
+              <Link href="/lender/revenue" className="text-sm text-vanguard-primary hover:underline">Xem doanh thu →</Link>
             </p>
           </Card>
         </div>

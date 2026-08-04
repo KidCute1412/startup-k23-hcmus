@@ -1,5 +1,7 @@
 "use client";
+import Image from "next/image";
 import { useEffect, useState } from "react";
+import { CreditCard } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { useAdminCreditLimits } from "@/hooks/useAdminCreditLimits";
 import { formatCurrency } from "@/lib/format";
@@ -16,16 +18,49 @@ export function CreditLimitQueue() {
     setActing(id);
     try { await action(); await load(status, page); } finally { setActing(null); }
   };
-  return <div className="space-y-5">
-    <header>
-      <h1 className="font-display text-2xl font-bold">Duyệt nâng hạn mức tín dụng</h1>
-      <p className="mt-1 text-sm text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted">Admin chỉ duyệt đúng tier renter đã yêu cầu; policy được backend kiểm tra lại.</p>
+  return <div className="mx-auto max-w-7xl space-y-5 px-4 py-8 sm:px-6">
+    <header className="mb-8">
+      <div className="flex items-center gap-2">
+        <CreditCard className="size-7 text-vanguard-primary" aria-hidden="true" />
+        <h1 className="font-display text-2xl font-bold tracking-tight text-vanguard-light-text dark:text-vanguard-dark-text sm:text-3xl">
+          Duyệt nâng hạn mức tín dụng
+        </h1>
+      </div>
+      <p className="mt-1 text-xs text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted sm:text-sm">
+        Admin chỉ duyệt đúng tier renter đã yêu cầu; policy được backend kiểm tra lại.
+      </p>
     </header>
     <select value={status} onChange={(e) => { setStatus(e.target.value as CreditLimitRequestStatus | ""); setPage(1); }} className="rounded-v-sm border bg-transparent px-3 py-2 text-sm">
       <option value="">Tất cả</option><option value="pending">Chờ duyệt</option><option value="under_review">Đang xem xét</option><option value="approved">Đã duyệt</option><option value="rejected">Từ chối</option><option value="cancelled">Đã hủy</option>
     </select>
     {queue.error && <p role="alert" className="text-red-400">{queue.error}</p>}
-    {queue.loading && queue.items.length === 0 ? <p>Đang tải...</p> : queue.items.length === 0 ? <Card className="p-10 text-center">Không có yêu cầu.</Card> :
+    {queue.loading && queue.items.length === 0 ? <p>Đang tải...</p> : queue.items.length === 0 ? (
+      <Card className="overflow-hidden">
+        <div className="grid items-center gap-6 p-6 sm:p-8 lg:grid-cols-[minmax(0,1fr)_280px]">
+          <div className="order-2 text-center lg:order-1 lg:text-left">
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-vanguard-primary">
+              Credit review queue
+            </p>
+            <h2 className="mt-2 font-display text-xl font-bold sm:text-2xl">
+              Chưa có yêu cầu nâng hạn mức
+            </h2>
+            <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted lg:mx-0">
+              Các hồ sơ mới sẽ xuất hiện tại đây khi renter gửi yêu cầu. Hệ thống sẽ tự kiểm tra điều kiện trước khi admin xét duyệt.
+            </p>
+          </div>
+          <div className="order-1 mx-auto w-full max-w-[220px] lg:order-2 lg:max-w-[260px]">
+            <Image
+              src="/admin/credit-limit-illustration.png"
+              alt="Minh hoạ xét duyệt hạn mức tín dụng"
+              width={512}
+              height={512}
+              priority
+              className="h-auto w-full object-contain"
+            />
+          </div>
+        </div>
+      </Card>
+    ) :
       <div className="grid gap-4">{queue.items.map((item) => <Card key={item.id} className="p-5">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div>
