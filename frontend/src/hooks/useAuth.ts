@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { createContext, createElement, useCallback, useContext, useEffect, useState } from 'react';
 import {
   clearSession,
 } from '@/lib/apiClient';
@@ -26,7 +26,21 @@ function storeUser(profile: User): boolean {
   return true;
 }
 
-export function useAuth() {
+export interface AuthContextValue {
+  user: User | null;
+  isAuthenticated: boolean;
+  isReady: boolean;
+  isLoading: boolean;
+  error: string | null;
+  login: (request: LoginRequest) => Promise<{ user: User }>;
+  register: (request: RegisterRequest) => Promise<unknown>;
+  changePassword: (oldPassword: string, newPassword: string) => Promise<void>;
+  logout: () => Promise<void>;
+}
+
+const AuthContext = createContext<AuthContextValue | null>(null);
+
+export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isReady, setIsReady] = useState(false);
@@ -91,5 +105,29 @@ export function useAuth() {
     try { await authService.logout(); } finally { clearSession(); setUser(null); }
   }, []);
 
-  return { user, isAuthenticated: !!user, isReady, isLoading, error, login, register, changePassword, logout };
+  return createElement(
+    AuthContext.Provider,
+    {
+      value: {
+        user,
+        isAuthenticated: !!user,
+        isReady,
+        isLoading,
+        error,
+        login,
+        register,
+        changePassword,
+        logout,
+      },
+    },
+    children,
+  );
+}
+
+export function useAuth(): AuthContextValue {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth must be used inside AuthProvider');
+  }
+  return context;
 }

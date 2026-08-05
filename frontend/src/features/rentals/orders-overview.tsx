@@ -41,14 +41,14 @@ interface OrdersOverviewProps {
 }
 
 export function OrdersOverview({ viewRole = 'renter', detailBasePath = '/orders' }: OrdersOverviewProps) {
-  const { orders, isLoading, fetchOrders } = useRentalOrder();
+  const { orders, isLoading, error, fetchOrders } = useRentalOrder();
   const { user } = useAuth();
   const [selectedStatus, setSelectedStatus] = useState<string>("all");
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [disputeOrder, setDisputeOrder] = useState<{ id: string; code: string } | null>(null);
 
   useEffect(() => {
-    fetchOrders({ role: viewRole }).catch(console.error);
+    void fetchOrders({ role: viewRole }).catch(() => undefined);
   }, [fetchOrders, viewRole]);
 
   const filterTabs = [
@@ -120,6 +120,21 @@ export function OrdersOverview({ viewRole = 'renter', detailBasePath = '/orders'
           <div className="text-center py-10 text-sm text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted">
             Đang tải dữ liệu đơn thuê...
           </div>
+        )}
+        {!isLoading && error && (
+          <Card className="p-12 text-center">
+            <p className="font-display text-lg font-bold">Không thể tải lịch sử đơn thuê</p>
+            <p className="mt-1 text-xs text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted">
+              {error}
+            </p>
+            <button
+              type="button"
+              onClick={() => void fetchOrders({ role: viewRole }).catch(() => undefined)}
+              className="mt-5 inline-flex items-center justify-center rounded-v-sm border border-vanguard-primary px-4 py-2 text-xs font-bold uppercase tracking-wider text-vanguard-primary transition hover:bg-vanguard-primary hover:text-vanguard-dark-bg"
+            >
+              Thử lại
+            </button>
+          </Card>
         )}
         {!isLoading && filteredOrders.map((order) => {
           const config = statusConfig[order.status] || statusConfig.pending_confirm;
@@ -216,7 +231,7 @@ export function OrdersOverview({ viewRole = 'renter', detailBasePath = '/orders'
           );
         })}
 
-        {!isLoading && filteredOrders.length === 0 && (
+        {!isLoading && !error && filteredOrders.length === 0 && (
           <Card className="p-12 text-center">
             <p className="font-display text-lg font-bold">Không có đơn thuê nào</p>
             <p className="text-xs text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted mt-1">

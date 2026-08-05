@@ -29,6 +29,8 @@ export class ApiError extends Error {
   }
 }
 
+let refreshInFlight: Promise<boolean> | null = null;
+
 export function clearSession(): void {
   if (typeof window === "undefined") return;
   localStorage.removeItem("user");
@@ -40,12 +42,24 @@ async function readBody<T>(response: Response): Promise<ApiSuccess<T> | ApiFailu
 }
 
 export async function refreshSession(): Promise<boolean> {
-  const response = await fetch(`${API_URL}/auth/refresh`, {
-    method: "POST",
-    credentials: "include",
-  });
-  const body = await readBody<null>(response);
-  return response.ok && body.success;
+  if (refreshInFlight) return refreshInFlight;
+
+  refreshInFlight = (async () => {
+    try {
+      const response = await fetch(`${API_URL}/auth/refresh`, {
+        method: "POST",
+        credentials: "include",
+      });
+      const body = await readBody<null>(response);
+      return response.ok && body.success;
+    } catch {
+      return false;
+    } finally {
+      refreshInFlight = null;
+    }
+  })();
+
+  return refreshInFlight;
 }
 
 export async function clearRefreshCookie(): Promise<void> {

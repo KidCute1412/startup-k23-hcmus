@@ -16,6 +16,7 @@ import {
 import { useAdminKyc } from "@/hooks/useAdminKyc";
 import { AdminPagination } from "@/components/ui/admin-pagination";
 import type { KycStatus, AdminKycUser } from "@/types/admin";
+import Image from "next/image";
 
 const STATUS_TABS: { label: string; value: KycStatus }[] = [
   { label: "Chờ duyệt", value: "pending" },
@@ -391,9 +392,10 @@ export function KycQueueFeature() {
                 </span>
                 {inspectingUser.kyc_front_card_url ? (
                   <div className="relative group overflow-hidden rounded-v border border-vanguard-light-border dark:border-vanguard-dark-border bg-black">
-                    <img
+                    <Image
                       src={inspectingUser.kyc_front_card_url}
                       alt="Mặt trước CCCD"
+                      fill
                       className="h-56 w-full object-contain transition group-hover:scale-105"
                     />
                     <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition">
@@ -421,9 +423,10 @@ export function KycQueueFeature() {
                 </span>
                 {inspectingUser.kyc_back_card_url ? (
                   <div className="relative group overflow-hidden rounded-v border border-vanguard-light-border dark:border-vanguard-dark-border bg-black">
-                    <img
+                    <Image
                       src={inspectingUser.kyc_back_card_url}
                       alt="Mặt sau CCCD"
+                      fill
                       className="h-56 w-full object-contain transition group-hover:scale-105"
                     />
                     <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition">
@@ -451,9 +454,10 @@ export function KycQueueFeature() {
                 </span>
                 {inspectingUser.kyc_portrait_url ? (
                   <div className="relative group overflow-hidden rounded-v border border-vanguard-light-border dark:border-vanguard-dark-border bg-black">
-                    <img
+                    <Image
                       src={inspectingUser.kyc_portrait_url}
                       alt="Ảnh chân dung"
+                      fill
                       className="h-56 w-full object-contain transition group-hover:scale-105"
                     />
                     <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition">

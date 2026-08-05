@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Outfit } from "next/font/google";
 import { AppShell } from "@/components/layout/app-shell";
+import { AuthProvider } from "@/hooks/useAuth";
 import "./globals.css";
 
 const body = Outfit({
@@ -61,7 +62,9 @@ export default function RootLayout({
         />
         <ToastProvider>
           <CartProvider>
-            <AppShell>{children}</AppShell>
+            <AuthProvider>
+              <AppShell>{children}</AppShell>
+            </AuthProvider>
           </CartProvider>
         </ToastProvider>
       </body>
