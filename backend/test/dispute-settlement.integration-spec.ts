@@ -326,7 +326,7 @@ describeIntegration(
       );
     });
 
-    it('refund resolution unlocks traditional deposit and pays lender income', async () => {
+    it('no_action resolution unlocks traditional deposit and pays lender income', async () => {
       const { order, dispute } =
         await createDisputedTraditionalOrderFixture(400000);
       const initialLenderWallet = await prisma.lenderWallet.findUniqueOrThrow({
@@ -341,7 +341,7 @@ describeIntegration(
         .set('Cookie', createAccessTokenCookie(adminToken))
         .set('Origin', INTEGRATION_FRONTEND_ORIGIN)
         .send({
-          resolutionType: 'refund',
+          resolutionType: 'no_action',
           resolutionNote: 'Full refund agreed',
         })
         .expect(200);
@@ -349,7 +349,7 @@ describeIntegration(
       expect(res.body.data).toMatchObject({
         id: dispute.id,
         status: 'resolved',
-        resolutionType: 'refund',
+        resolutionType: 'no_action',
         deductAmount: null,
         resolvedBy: adminId,
       });
@@ -384,7 +384,7 @@ describeIntegration(
       );
     });
 
-    it('deposit_deduct resolution deducts renter cash, pays lender income + deduction, and unlocks remaining deposit', async () => {
+    it('lender_compensation resolution deducts renter cash, pays lender income + deduction, and unlocks remaining deposit', async () => {
       const deductAmount = 150000;
       const { order, dispute } =
         await createDisputedTraditionalOrderFixture(400000);
@@ -400,7 +400,7 @@ describeIntegration(
         .set('Cookie', createAccessTokenCookie(adminToken))
         .set('Origin', INTEGRATION_FRONTEND_ORIGIN)
         .send({
-          resolutionType: 'deposit_deduct',
+          resolutionType: 'lender_compensation',
           deductAmount,
           resolutionNote: 'Deducted for crack',
         })
@@ -409,7 +409,7 @@ describeIntegration(
       expect(res.body.data).toMatchObject({
         id: dispute.id,
         status: 'resolved',
-        resolutionType: 'deposit_deduct',
+        resolutionType: 'lender_compensation',
         deductAmount,
       });
 
@@ -442,7 +442,7 @@ describeIntegration(
       expect(lenderTx?.amount.toNumber()).toBe(deductAmount);
     });
 
-    it('deposit_deduct resolution for credit-line increases outstanding_debt and recalculates display_balance accurately', async () => {
+    it('lender_compensation resolution for credit-line increases outstanding_debt and recalculates display_balance accurately', async () => {
       const deductAmount = 150000;
       const { dispute, creditWallet } =
         await createDisputedCreditLineOrderFixture(400000);
@@ -452,7 +452,7 @@ describeIntegration(
         .set('Cookie', createAccessTokenCookie(adminToken))
         .set('Origin', INTEGRATION_FRONTEND_ORIGIN)
         .send({
-          resolutionType: 'deposit_deduct',
+          resolutionType: 'lender_compensation',
           deductAmount,
           resolutionNote: 'Credit line deduction',
         })
@@ -461,7 +461,7 @@ describeIntegration(
       expect(res.body.data).toMatchObject({
         id: dispute.id,
         status: 'resolved',
-        resolutionType: 'deposit_deduct',
+        resolutionType: 'lender_compensation',
         deductAmount,
       });
 
@@ -493,7 +493,7 @@ describeIntegration(
         .set('Cookie', createAccessTokenCookie(adminToken))
         .set('Origin', INTEGRATION_FRONTEND_ORIGIN)
         .send({
-          resolutionType: 'deposit_deduct',
+          resolutionType: 'lender_compensation',
           deductAmount: 500000, // Exceeds deposit 400000
           resolutionNote: 'Excessive deduction attempt',
         })
@@ -537,7 +537,7 @@ describeIntegration(
         .set('Cookie', createAccessTokenCookie(adminToken))
         .set('Origin', INTEGRATION_FRONTEND_ORIGIN)
         .send({
-          resolutionType: 'refund',
+          resolutionType: 'no_action',
           resolutionNote: 'First resolve',
         })
         .expect(200);
@@ -555,7 +555,7 @@ describeIntegration(
         .set('Cookie', createAccessTokenCookie(adminToken))
         .set('Origin', INTEGRATION_FRONTEND_ORIGIN)
         .send({
-          resolutionType: 'refund',
+          resolutionType: 'no_action',
           resolutionNote: 'Second resolve attempt',
         })
         .expect(200);
@@ -584,7 +584,7 @@ describeIntegration(
           .set('Cookie', createAccessTokenCookie(adminToken))
           .set('Origin', INTEGRATION_FRONTEND_ORIGIN)
           .send({
-            resolutionType: 'refund',
+            resolutionType: 'no_action',
             resolutionNote: 'Concurrent 1',
           }),
         request(app.getHttpServer())
@@ -592,7 +592,7 @@ describeIntegration(
           .set('Cookie', createAccessTokenCookie(adminToken))
           .set('Origin', INTEGRATION_FRONTEND_ORIGIN)
           .send({
-            resolutionType: 'refund',
+            resolutionType: 'no_action',
             resolutionNote: 'Concurrent 2',
           }),
       ]);

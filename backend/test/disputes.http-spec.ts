@@ -90,7 +90,7 @@ describe('Dispute routes (HTTP)', () => {
       id: disputeId,
       rentalOrderId: orderId,
       status: 'resolved',
-      resolutionType: 'refund',
+      resolutionType: 'no_action',
       deductAmount: null,
     });
   });
@@ -163,7 +163,7 @@ describe('Dispute routes (HTTP)', () => {
       .post(`/api/v1/admin/disputes/${disputeId}/resolve`)
       .set('Cookie', lenderCookie)
       .set('Origin', 'http://localhost:3000')
-      .send({ resolutionType: 'refund' })
+      .send({ resolutionType: 'no_action' })
       .expect(403);
 
     const adminCookie = createAccessTokenCookie(createJwt(userId, 'admin'));
@@ -171,11 +171,11 @@ describe('Dispute routes (HTTP)', () => {
       .post(`/api/v1/admin/disputes/${disputeId}/resolve`)
       .set('Cookie', adminCookie)
       .set('Origin', 'http://localhost:3000')
-      .send({ resolutionType: 'refund' })
+      .send({ resolutionType: 'no_action' })
       .expect(200);
     expect(response.body).toMatchObject({
       success: true,
-      data: { status: 'resolved', resolutionType: 'refund' },
+      data: { status: 'resolved', resolutionType: 'no_action' },
     });
   });
 

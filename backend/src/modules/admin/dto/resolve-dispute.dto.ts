@@ -18,7 +18,7 @@ export enum ResolutionType {
   deposit_deduct = 'deposit_deduct',
 }
 
-const REQUEST_RESOLUTION_TYPES = [
+const REQUEST_RESOLUTION_TYPES: readonly ResolutionType[] = [
   ResolutionType.renter_compensation,
   ResolutionType.lender_compensation,
   ResolutionType.no_action,
