@@ -3,7 +3,8 @@ export type EscrowStatus =
   | 'locked'
   | 'pending_return'
   | 'released'
-  | 'compensated';
+  | 'compensated'
+  | 'renter_compensated';
 
 export interface EscrowResult {
   escrowId: string;
@@ -17,5 +18,9 @@ export interface IEscrowService {
   lock(orderId: string): Promise<EscrowResult>;
   release(orderId: string): Promise<EscrowResult>;
   compensate(orderId: string, deductAmount: number): Promise<EscrowResult>;
+  compensateRenter(
+    orderId: string,
+    compensationAmount: number,
+  ): Promise<EscrowResult>;
   refundLateDelivery(orderId: string): Promise<EscrowResult>;
 }

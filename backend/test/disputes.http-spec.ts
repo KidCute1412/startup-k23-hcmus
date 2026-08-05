@@ -179,6 +179,34 @@ describe('Dispute routes (HTTP)', () => {
     });
   });
 
+  it.each([
+    ['renter_compensation', 120000],
+    ['lender_compensation', 250000],
+  ])(
+    'accepts %s with an admin-selected compensation amount',
+    async (resolutionType, deductAmount) => {
+      const adminCookie = createAccessTokenCookie(createJwt(userId, 'admin'));
+      const response = await request(app.getHttpServer())
+        .post(`/api/v1/admin/disputes/${disputeId}/resolve`)
+        .set('Cookie', adminCookie)
+        .set('Origin', 'http://localhost:3000')
+        .send({ resolutionType, deductAmount })
+        .expect(200);
+
+      expect(response.body).toMatchObject({
+        success: true,
+        data: { status: 'resolved' },
+      });
+      expect(adminService.resolveDispute).toHaveBeenCalledWith(
+        disputeId,
+        userId,
+        resolutionType,
+        deductAmount,
+        undefined,
+      );
+    },
+  );
+
   it('accepts response evidence from the other participant', async () => {
     const response = await request(app.getHttpServer())
       .post(`/api/v1/disputes/${disputeId}/evidence`)
@@ -221,6 +249,7 @@ describe('Dispute routes (HTTP)', () => {
   });
 
   it.each([
+    { resolutionType: 'renter_compensation' },
     { resolutionType: 'refund', deductAmount: 1 },
     { resolutionType: 'deposit_deduct' },
     { resolutionType: 'deposit_deduct', deductAmount: 0 },

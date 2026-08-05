@@ -8,7 +8,7 @@ interface EscrowRecord {
   rental_order_id: string;
   amount: Prisma.Decimal;
   source: 'renter_cash' | 'credit_line';
-  status: 'locked';
+  status: 'locked' | 'renter_compensated';
 }
 
 interface EscrowState {
@@ -43,13 +43,21 @@ interface EscrowState {
 interface EscrowTransactionMock {
   $queryRaw: jest.Mock;
   rentalOrder: { findUnique: jest.Mock };
-  escrowWallet: { findUnique: jest.Mock; create: jest.Mock };
+  escrowWallet: {
+    findUnique: jest.Mock;
+    create: jest.Mock;
+    update: jest.Mock;
+  };
   renterWallet: {
     findUnique: jest.Mock;
     findUniqueOrThrow: jest.Mock;
     update: jest.Mock;
   };
-  renterWalletTransaction: { findUnique: jest.Mock; create: jest.Mock };
+  renterWalletTransaction: {
+    findUnique: jest.Mock;
+    findFirst: jest.Mock;
+    create: jest.Mock;
+  };
   mutuxWallet: {
     findUnique: jest.Mock;
     findUniqueOrThrow: jest.Mock;
@@ -124,6 +132,11 @@ describe('EscrowService', () => {
           };
           return state.order.escrow_wallet;
         }),
+        update: jest.fn(async ({ data }) => {
+          if (!state.order.escrow_wallet) throw new Error('Escrow not found');
+          state.order.escrow_wallet.status = data.status;
+          return state.order.escrow_wallet;
+        }),
       },
       renterWallet: {
         findUnique: jest.fn(async () => ({ ...state.wallet })),
@@ -137,6 +150,9 @@ describe('EscrowService', () => {
       },
       renterWalletTransaction: {
         findUnique: jest.fn(
+          async ({ where }) => state.transactions.get(where.reference) ?? null,
+        ),
+        findFirst: jest.fn(
           async ({ where }) => state.transactions.get(where.reference) ?? null,
         ),
         create: jest.fn(async ({ data }) => {
@@ -342,6 +358,31 @@ describe('EscrowService', () => {
     expect(tx.mutuxWallet.update).toHaveBeenCalledTimes(1);
     expect(tx.creditTransaction.create).toHaveBeenCalledTimes(1);
     expect(tx.escrowWallet.create).toHaveBeenCalledTimes(1);
+  });
+
+  it('compensates renter with the rental fee and releases a traditional deposit', async () => {
+    state.order.escrow_wallet = {
+      id: 'escrow-id',
+      rental_order_id: orderId,
+      amount: new Prisma.Decimal(400000),
+      source: 'renter_cash',
+      status: 'locked',
+    };
+    state.wallet.locked_balance = new Prisma.Decimal(400000);
+
+    const result = await service.compensateRenter(orderId, 100000);
+
+    expect(result.status).toBe('renter_compensated');
+    expect(state.wallet.balance).toEqual(new Prisma.Decimal(700000));
+    expect(state.wallet.locked_balance).toEqual(new Prisma.Decimal(0));
+    expect(state.order.escrow_wallet.status).toBe('renter_compensated');
+    expect(tx.renterWalletTransaction.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        type: 'renter_compensation',
+        amount: new Prisma.Decimal(100000),
+        reference: `RENTER-COMPENSATION-${orderId}`,
+      }),
+    });
   });
 });
 

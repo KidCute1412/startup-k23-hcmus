@@ -139,6 +139,7 @@ enum EscrowStatusType {
   pending_return
   released
   compensated
+  renter_compensated
 
   @@map("escrow_status_type")
 }
@@ -226,6 +227,8 @@ enum DisputeReasonEnum {
 enum ResolutionTypeEnum {
   refund
   deposit_deduct
+  renter_compensation
+  lender_compensation
   compensation
   account_ban
   no_action

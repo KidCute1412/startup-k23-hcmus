@@ -222,6 +222,110 @@ describeIntegration(
       return { order, dispute, creditWallet };
     }
 
+    it('renter_compensation refunds the admin-selected rental fee amount and does not pay lender income', async () => {
+      const compensationAmount = 60000;
+      const { order, dispute } =
+        await createDisputedTraditionalOrderFixture(400000);
+      const initialRenterWallet = await prisma.renterWallet.findUniqueOrThrow({
+        where: { id: renterWalletId },
+      });
+      const initialLenderWallet = await prisma.lenderWallet.findUniqueOrThrow({
+        where: { id: lenderWalletId },
+      });
+
+      const res = await request(app.getHttpServer())
+        .post(`/api/v1/admin/disputes/${dispute.id}/resolve`)
+        .set('Cookie', createAccessTokenCookie(adminToken))
+        .set('Origin', INTEGRATION_FRONTEND_ORIGIN)
+        .send({
+          resolutionType: 'renter_compensation',
+          deductAmount: compensationAmount,
+          resolutionNote: 'Partial rental-fee compensation',
+        })
+        .expect(200);
+
+      expect(res.body.data).toMatchObject({
+        id: dispute.id,
+        status: 'resolved',
+        resolutionType: 'renter_compensation',
+        deductAmount: compensationAmount,
+        settlement: {
+          escrowAction: 'renter_compensated',
+          renterCompensation: compensationAmount,
+          lenderCompensation: 0,
+          lenderRentalIncome: 0,
+        },
+      });
+
+      const updatedOrder = await prisma.rentalOrder.findUniqueOrThrow({
+        where: { id: order.id },
+      });
+      expect(updatedOrder.status).toBe(OrderStatusType.completed);
+
+      const escrow = await prisma.escrowWallet.findUniqueOrThrow({
+        where: { rental_order_id: order.id },
+      });
+      expect(escrow.status).toBe('renter_compensated');
+
+      const renterWallet = await prisma.renterWallet.findUniqueOrThrow({
+        where: { id: renterWalletId },
+      });
+      expect(renterWallet.balance.toNumber()).toBe(
+        initialRenterWallet.balance.toNumber() + compensationAmount,
+      );
+      expect(renterWallet.locked_balance.toNumber()).toBe(
+        initialRenterWallet.locked_balance.toNumber() - 400000,
+      );
+
+      const lenderWallet = await prisma.lenderWallet.findUniqueOrThrow({
+        where: { id: lenderWalletId },
+      });
+      expect(lenderWallet.balance.toNumber()).toBe(
+        initialLenderWallet.balance.toNumber(),
+      );
+
+      const renterTx = await prisma.renterWalletTransaction.findFirst({
+        where: { wallet_id: renterWalletId, type: 'renter_compensation' },
+        orderBy: { created_at: 'desc' },
+      });
+      expect(renterTx?.amount.toNumber()).toBe(compensationAmount);
+    });
+
+    it('rejects renter compensation above the rental fee without changing settlement state', async () => {
+      const { order, dispute } =
+        await createDisputedTraditionalOrderFixture(400000);
+      const initialRenterWallet = await prisma.renterWallet.findUniqueOrThrow({
+        where: { id: renterWalletId },
+      });
+
+      await request(app.getHttpServer())
+        .post(`/api/v1/admin/disputes/${dispute.id}/resolve`)
+        .set('Cookie', createAccessTokenCookie(adminToken))
+        .set('Origin', INTEGRATION_FRONTEND_ORIGIN)
+        .send({
+          resolutionType: 'renter_compensation',
+          deductAmount: 100001,
+        })
+        .expect(400);
+
+      const updatedDispute = await prisma.dispute.findUniqueOrThrow({
+        where: { id: dispute.id },
+      });
+      expect(updatedDispute.status).toBe('under_review');
+
+      const updatedOrder = await prisma.rentalOrder.findUniqueOrThrow({
+        where: { id: order.id },
+      });
+      expect(updatedOrder.status).toBe(OrderStatusType.disputed);
+
+      const renterWallet = await prisma.renterWallet.findUniqueOrThrow({
+        where: { id: renterWalletId },
+      });
+      expect(renterWallet.balance.toNumber()).toBe(
+        initialRenterWallet.balance.toNumber(),
+      );
+    });
+
     it('refund resolution unlocks traditional deposit and pays lender income', async () => {
       const { order, dispute } =
         await createDisputedTraditionalOrderFixture(400000);

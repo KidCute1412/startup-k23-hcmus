@@ -297,7 +297,7 @@ export class CreditLimitsService {
       this.prisma.dispute.count({
         where: {
           rental_order: { renter_id: userId },
-          resolution_type: 'deposit_deduct',
+          resolution_type: { in: ['deposit_deduct', 'lender_compensation'] },
         },
       }),
     ]);
@@ -339,7 +339,7 @@ export class CreditLimitsService {
       db.dispute.count({
         where: {
           rental_order: { renter_id: userId },
-          resolution_type: 'deposit_deduct',
+          resolution_type: { in: ['deposit_deduct', 'lender_compensation'] },
         },
       }),
     ]);

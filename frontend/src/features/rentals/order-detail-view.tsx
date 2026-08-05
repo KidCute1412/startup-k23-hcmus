@@ -14,7 +14,8 @@ import type { RentalOrder } from "@/types/rentals";
 import type { ProofStage } from "@/types/rentals";
 import { resolveMediaUrl } from "@/lib/media";
 import { SubmitDisputeModal } from "./submit-dispute-modal";
-import { PROOF_STAGE_LABELS, UploadProofModal } from "./upload-proof-modal";
+import { UploadProofModal } from "./upload-proof-modal";
+import { PROOF_STAGE_LABELS } from "./proof-stage-labels";
 
 export interface OrderDetailViewProps {
   orderId: string;
@@ -210,6 +211,10 @@ export function OrderDetailView({
       : new Date() > new Date(returnDeadline)),
   );
   const currentDispute = order.disputes?.[0];
+  const disputeResolutionType =
+    currentDispute?.resolution_type ?? currentDispute?.resolutionType;
+  const disputeWasResolved =
+    currentDispute?.status === "resolved" || currentDispute?.status === "closed";
   const disputeReporterId =
     currentDispute?.reported_by ?? currentDispute?.reportedBy;
   const disputeCreatedAt =
@@ -331,7 +336,11 @@ export function OrderDetailView({
         <div className="flex items-center space-x-3">
           <div className="flex items-center gap-2">
             <Badge tone={config.tone}>
-              {order.status === "disputed" ? "Đang khiếu nại" : config.label}
+               {order.status === "disputed"
+                 ? "Đang khiếu nại"
+                 : disputeWasResolved
+                   ? "Đã hoàn tất - Đã phân xử"
+                   : config.label}
             </Badge>
             {order.status === "disputed" && order.disputes?.[0] && (
               <Badge tone="muted">
@@ -397,6 +406,70 @@ export function OrderDetailView({
                     bằng chứng hiện có.
                   </div>
                 )}
+            </Card>
+          )}
+
+          {disputeWasResolved && currentDispute && (
+            <Card className="border-emerald-500/40 bg-emerald-500/5 p-6 dark:bg-emerald-950/20">
+              <h3 className="font-display text-lg font-bold text-emerald-600 dark:text-emerald-400">
+                Kết quả giải quyết tranh chấp
+              </h3>
+              <div className="mt-4 grid gap-3 text-xs sm:grid-cols-2">
+                <div>
+                  <span className="text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted">
+                    Phương án:
+                  </span>
+                  <p className="mt-1 font-bold text-vanguard-light-text dark:text-vanguard-dark-text">
+                    {disputeResolutionType === "renter_compensation"
+                      ? "Bồi thường renter bằng tiền thuê"
+                      : disputeResolutionType === "lender_compensation" ||
+                          disputeResolutionType === "deposit_deduct"
+                        ? "Bồi thường lender bằng tiền cọc"
+                        : "Không bên nào được bồi thường"}
+                  </p>
+                </div>
+                {disputeResolutionType === "renter_compensation" && (
+                  <div>
+                    <span className="text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted">
+                      Renter được hoàn tiền thuê:
+                    </span>
+                    <p className="mt-1 font-bold text-emerald-500">
+                      {formatCurrency(
+                        Number(
+                          currentDispute.deduct_amount ??
+                            currentDispute.deductAmount ??
+                            order.rental_fee ??
+                            order.rentPrice ??
+                            0,
+                        ),
+                      )}
+                    </p>
+                  </div>
+                )}
+                {(disputeResolutionType === "lender_compensation" ||
+                  disputeResolutionType === "deposit_deduct") && (
+                  <div>
+                    <span className="text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted">
+                      Lender được bồi thường:
+                    </span>
+                    <p className="mt-1 font-bold text-amber-500">
+                      {formatCurrency(
+                        Number(
+                          currentDispute.deduct_amount ??
+                            currentDispute.deductAmount ??
+                            0,
+                        ),
+                      )}
+                    </p>
+                  </div>
+                )}
+              </div>
+              {(currentDispute.resolution_note ?? currentDispute.resolutionNote) && (
+                <p className="mt-4 rounded-v-sm bg-black/10 p-3 text-xs dark:bg-white/5">
+                  <span className="font-semibold">Ghi chú Admin:</span>{" "}
+                  {currentDispute.resolution_note ?? currentDispute.resolutionNote}
+                </p>
+              )}
             </Card>
           )}
 

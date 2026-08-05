@@ -4,6 +4,19 @@ import { ResolutionType, ResolveDisputeDto } from './resolve-dispute.dto';
 
 describe('ResolveDisputeDto', () => {
   it.each([
+    [{ resolutionType: ResolutionType.renter_compensation }, 1],
+    [
+      { resolutionType: ResolutionType.renter_compensation, deductAmount: 1 },
+      0,
+    ],
+    [
+      {
+        resolutionType: ResolutionType.lender_compensation,
+        deductAmount: 1,
+      },
+      0,
+    ],
+    [{ resolutionType: ResolutionType.lender_compensation }, 1],
     [{ resolutionType: ResolutionType.refund }, 0],
     [
       {

@@ -71,6 +71,14 @@ export interface RentalOrder {
     reportedBy?: string;
     created_at?: string;
     createdAt?: string;
+    resolution_type?: string | null;
+    resolutionType?: string | null;
+    deduct_amount?: number | string | null;
+    deductAmount?: number | string | null;
+    resolution_note?: string | null;
+    resolutionNote?: string | null;
+    resolved_at?: string | null;
+    resolvedAt?: string | null;
     evidences?: Array<{
       uploaded_by?: string;
       uploadedBy?: string;

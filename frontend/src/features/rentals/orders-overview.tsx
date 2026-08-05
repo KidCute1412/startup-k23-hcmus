@@ -123,6 +123,12 @@ export function OrdersOverview({ viewRole = 'renter', detailBasePath = '/orders'
         )}
         {!isLoading && filteredOrders.map((order) => {
           const config = statusConfig[order.status] || statusConfig.pending_confirm;
+          const hasResolvedDispute =
+            order.status === "completed" &&
+            order.disputes?.some(
+              (dispute) =>
+                dispute.status === "resolved" || dispute.status === "closed",
+            );
           const gearImage = resolveMediaUrl(order.gear?.media?.[0]?.url);
           const gearTitle = order.gear?.name || "Sản phẩm chưa rõ";
           const code = order.order_code || order.id.slice(0, 8).toUpperCase();
@@ -158,7 +164,11 @@ export function OrdersOverview({ viewRole = 'renter', detailBasePath = '/orders'
                       <span className="font-mono text-xs font-bold uppercase tracking-wider text-vanguard-primary">
                         {code}
                       </span>
-                      <Badge tone={config.tone}>{config.label}</Badge>
+                       <Badge tone={config.tone}>
+                         {hasResolvedDispute
+                           ? "Đã hoàn tất - Đã phân xử"
+                           : config.label}
+                       </Badge>
                     </div>
                     <Link
                       href={`${detailBasePath}/${order.id}`}

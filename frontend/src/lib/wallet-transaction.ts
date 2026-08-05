@@ -5,6 +5,7 @@ const transactionLabels: Record<string, string> = {
   deposit_lock: "Khóa tiền cọc",
   deposit_release: "Hoàn tiền cọc",
   compensation: "Khoản bồi thường",
+  renter_compensation: "Hoàn tiền thuê do tranh chấp",
   income: "Doanh thu tiền thuê",
   withdrawal: "Rút tiền về ngân hàng",
   withdraw: "Rút tiền về ngân hàng",

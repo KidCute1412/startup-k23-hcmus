@@ -20,7 +20,11 @@ describe('AdminService — resolveDispute', () => {
   const createdAt = new Date('2026-07-27T00:00:00.000Z');
 
   let prisma: PrismaService;
-  let escrowService: { release: jest.Mock; compensate: jest.Mock };
+  let escrowService: {
+    release: jest.Mock;
+    compensate: jest.Mock;
+    compensateRenter: jest.Mock;
+  };
   let service: AdminService;
   let mockTx: {
     $queryRaw: jest.Mock;
@@ -46,6 +50,7 @@ describe('AdminService — resolveDispute', () => {
     rental_order: {
       id: orderId,
       status: OrderStatusType.disputed,
+      rental_fee: new Prisma.Decimal(1000),
     },
   };
 
@@ -86,12 +91,43 @@ describe('AdminService — resolveDispute', () => {
     escrowService = {
       release: jest.fn().mockResolvedValue({ status: 'released' }),
       compensate: jest.fn().mockResolvedValue({ status: 'compensated' }),
+      compensateRenter: jest
+        .fn()
+        .mockResolvedValue({ status: 'renter_compensated' }),
     };
 
     service = new AdminService(
       prisma,
       escrowService as unknown as EscrowService,
     );
+  });
+
+  it('resolves renter compensation by refunding rental fee without lender compensation', async () => {
+    const result = await service.resolveDispute(
+      disputeId,
+      adminId,
+      ResolutionType.renter_compensation,
+      1000,
+      'Lender giao gear không đúng mô tả',
+    );
+
+    expect(escrowService.compensateRenter).toHaveBeenCalledWith(
+      orderId,
+      1000,
+      mockTx,
+    );
+    expect(escrowService.release).not.toHaveBeenCalled();
+    expect(escrowService.compensate).not.toHaveBeenCalled();
+    expect(result).toMatchObject({
+      resolutionType: ResolutionType.renter_compensation,
+      deductAmount: 1000,
+      settlement: {
+        escrowAction: 'renter_compensated',
+        renterCompensation: 1000,
+        lenderCompensation: 0,
+        lenderRentalIncome: 0,
+      },
+    });
   });
 
   it('resolves dispute with resolutionType = refund by calling EscrowService.release(orderId)', async () => {

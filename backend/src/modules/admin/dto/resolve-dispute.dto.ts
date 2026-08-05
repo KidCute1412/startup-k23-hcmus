@@ -9,9 +9,13 @@ import {
 } from 'class-validator';
 
 export enum ResolutionType {
-  refund = 'refund',
-  deposit_deduct = 'deposit_deduct',
+  renter_compensation = 'renter_compensation',
+  lender_compensation = 'lender_compensation',
   no_action = 'no_action',
+  /** @deprecated Use renter_compensation. Kept for persisted dispute records. */
+  refund = 'refund',
+  /** @deprecated Use lender_compensation. Kept for persisted dispute records. */
+  deposit_deduct = 'deposit_deduct',
 }
 
 function IsValidDeductAmount(validationOptions?: ValidationOptions) {
@@ -24,7 +28,11 @@ function IsValidDeductAmount(validationOptions?: ValidationOptions) {
       validator: {
         validate(value: unknown, args: ValidationArguments) {
           const dto = args.object as ResolveDisputeDto;
-          if (dto.resolutionType !== ResolutionType.deposit_deduct) {
+          if (
+            dto.resolutionType !== ResolutionType.renter_compensation &&
+            dto.resolutionType !== ResolutionType.lender_compensation &&
+            dto.resolutionType !== ResolutionType.deposit_deduct
+          ) {
             return value === undefined;
           }
           return (
@@ -35,7 +43,7 @@ function IsValidDeductAmount(validationOptions?: ValidationOptions) {
           const dto = args.object as ResolveDisputeDto;
           return dto.resolutionType !== ResolutionType.deposit_deduct
             ? `deductAmount is not allowed for ${dto.resolutionType}`
-            : 'deductAmount must be a positive integer for deposit_deduct';
+            : 'deductAmount must be a positive integer for compensation settlement';
         },
       },
     });

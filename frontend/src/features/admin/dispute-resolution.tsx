@@ -23,7 +23,12 @@ import { resolveMediaUrl } from "@/lib/media";
 import type { DisputeStatus } from "@/types/dispute";
 import type { ResolveDisputePayload } from "@/types/admin";
 
-type ResolutionType = "refund" | "deposit_deduct" | "no_action";
+type ResolutionType =
+  | "renter_compensation"
+  | "lender_compensation"
+  | "no_action"
+  | "refund"
+  | "deposit_deduct";
 
 interface DisputeCase {
   id: string;
@@ -84,10 +89,10 @@ export function DisputeResolutionFeature() {
 
   // Form states
   const [resolutionType, setResolutionType] =
-    useState<ResolutionType>("deposit_deduct");
+    useState<ResolutionType>("lender_compensation");
   const [deductAmount, setDeductAmount] = useState<number>(300000);
   const [resolutionNote, setResolutionNote] = useState<string>(
-    "Căn cứ hình ảnh bàn giao và đối soát bằng chứng hoàn trả: Xác nhận hỏng hóc thiết bị do quá trình sử dụng của Renter. Chấp thuận khấu trừ tiền cọc để bồi thường cho Lender."
+    "Căn cứ hình ảnh bàn giao và đối soát bằng chứng của hai bên, Admin xác định phương án settlement theo mức độ trách nhiệm thực tế."
   );
   const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
@@ -149,7 +154,7 @@ export function DisputeResolutionFeature() {
         closed_at: item.closedAt || undefined,
         close_note: item.closeNote || undefined,
         resolution: item.resolvedAt ? {
-          type: (item.resolutionType as ResolutionType) || "deposit_deduct",
+           type: (item.resolutionType as ResolutionType) || "lender_compensation",
           deduct_amount: item.deductAmount || undefined,
           note: item.resolutionNote || "",
           resolved_at: item.resolvedAt,
@@ -171,14 +176,19 @@ export function DisputeResolutionFeature() {
     }
   }, [disputes]);
 
-  // Adjust default deduct amount when active case changes
+  // Keep the selected compensation within the winning party's funding source.
   useEffect(() => {
-    if (activeCase && activeCase.deposit_amount > 0) {
+    if (activeCase) {
+      const maxAmount =
+        resolutionType === "renter_compensation"
+          ? activeCase.total_rent_fee
+          : activeCase.deposit_amount;
+      if (maxAmount <= 0) return;
       setDeductAmount((prev) =>
-        prev > activeCase.deposit_amount ? activeCase.deposit_amount : prev
+        prev <= 0 ? maxAmount : Math.min(prev, maxAmount),
       );
     }
-  }, [activeCase]);
+  }, [activeCase, resolutionType]);
 
   const handleResolveSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -191,6 +201,8 @@ export function DisputeResolutionFeature() {
       const payload: ResolveDisputePayload = {
         resolutionType,
         deductAmount:
+          resolutionType === "renter_compensation" ||
+          resolutionType === "lender_compensation" ||
           resolutionType === "deposit_deduct"
             ? Math.max(1, Math.floor(deductAmount))
             : undefined,
@@ -612,59 +624,71 @@ export function DisputeResolutionFeature() {
                             <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                               <button
                                 type="button"
-                                onClick={() => setResolutionType("deposit_deduct")}
+                                 onClick={() => setResolutionType("renter_compensation")}
                                 className={`rounded-v-sm border p-3 text-left text-xs font-bold transition ${
-                                  resolutionType === "deposit_deduct"
+                                   resolutionType === "renter_compensation"
                                     ? "border-vanguard-primary bg-vanguard-primary/10 text-vanguard-primary"
                                     : "border-vanguard-light-border bg-vanguard-light-bg text-vanguard-light-text dark:border-vanguard-dark-border dark:bg-vanguard-dark-bg dark:text-vanguard-dark-text"
                                 }`}
                               >
                                 <DollarSign size={16} className="mb-1" />
-                                Khấu trừ tiền cọc để bồi thường
+                                 Bồi thường renter bằng tiền thuê
                               </button>
 
                               <button
                                 type="button"
-                                onClick={() => setResolutionType("refund")}
+                                 onClick={() => setResolutionType("lender_compensation")}
                                 className={`rounded-v-sm border p-3 text-left text-xs font-bold transition ${
-                                  resolutionType === "refund"
+                                   resolutionType === "lender_compensation"
                                     ? "border-vanguard-primary bg-vanguard-primary/10 text-vanguard-primary"
                                     : "border-vanguard-light-border bg-vanguard-light-bg text-vanguard-light-text dark:border-vanguard-dark-border dark:bg-vanguard-dark-bg dark:text-vanguard-dark-text"
                                 }`}
                               >
                                 <CheckCircle2 size={16} className="mb-1 text-emerald-500" />
-                                Hoàn cọc toàn bộ
+                                 Bồi thường lender bằng tiền cọc
                               </button>
 
                               <button
                                 type="button"
                                 onClick={() => setResolutionType("no_action")}
                                 className={`rounded-v-sm border p-3 text-left text-xs font-bold transition ${
-                                  resolutionType === "no_action"
+                                 resolutionType === "no_action"
                                     ? "border-vanguard-primary bg-vanguard-primary/10 text-vanguard-primary"
                                     : "border-vanguard-light-border bg-vanguard-light-bg text-vanguard-light-text dark:border-vanguard-dark-border dark:bg-vanguard-dark-bg dark:text-vanguard-dark-text"
                                 }`}
                               >
                                 <ShieldOff size={16} className="mb-1 text-gray-400" />
-                                Không khấu trừ tiền cọc
+                                 Không bên nào được bồi thường
                               </button>
                             </div>
                           </div>
 
                           {/* Deduct Amount Field */}
-                          {resolutionType === "deposit_deduct" && (
+                          {(resolutionType === "renter_compensation" ||
+                            resolutionType === "lender_compensation") && (
                             <div>
                               <label className="block text-xs font-bold text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted uppercase tracking-wider mb-1">
-                                Số tiền khấu trừ (deductAmount - VNĐ) <span className="text-red-400">*</span>
+                                Số tiền bồi thường (VNĐ) <span className="text-red-400">*</span>
                               </label>
                               <input
                                 type="number"
                                 min={1}
-                                max={activeCase.deposit_amount}
+                                max={
+                                  resolutionType === "renter_compensation"
+                                    ? activeCase.total_rent_fee
+                                    : activeCase.deposit_amount
+                                }
                                 value={deductAmount}
                                 onChange={(e) => setDeductAmount(Number(e.target.value))}
                                 className="w-full rounded-v-sm border border-vanguard-light-border bg-vanguard-light-bg p-3 text-xs font-mono font-bold text-vanguard-light-text outline-none focus:border-vanguard-primary dark:border-vanguard-dark-border dark:bg-vanguard-dark-bg dark:text-vanguard-dark-text"
                               />
+                              <p className="mt-1 text-[11px] text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted">
+                                Tối đa: {(
+                                  resolutionType === "renter_compensation"
+                                    ? activeCase.total_rent_fee
+                                    : activeCase.deposit_amount
+                                ).toLocaleString("vi-VN")} ₫
+                              </p>
                             </div>
                           )}
 
@@ -734,16 +758,28 @@ export function DisputeResolutionFeature() {
                             <div>
                               <span className="text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted block mb-1">Hình thức phân xử:</span>
                               <span className="font-bold uppercase tracking-wider text-vanguard-primary">
-                                {activeCase.resolution?.type === "deposit_deduct"
-                                  ? "Khấu trừ tiền cọc để bồi thường"
-                                  : activeCase.resolution?.type === "refund"
-                                  ? "Hoàn cọc toàn bộ"
-                                  : "Không khấu trừ tiền cọc"}
+                                 {activeCase.resolution?.type === "renter_compensation"
+                                   ? "Bồi thường renter bằng tiền thuê"
+                                   : activeCase.resolution?.type === "lender_compensation" ||
+                                     activeCase.resolution?.type === "deposit_deduct"
+                                   ? "Bồi thường lender bằng tiền cọc"
+                                   : activeCase.resolution?.type === "refund"
+                                   ? "Hoàn cọc (phương án cũ)"
+                                   : "Không bên nào được bồi thường"}
                               </span>
                             </div>
 
-                            {activeCase.resolution?.deduct_amount !== undefined && (
-                              <div>
+                              {activeCase.resolution?.type === "renter_compensation" ? (
+                                <div>
+                                 <span className="text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted block mb-1">
+                                   Renter được hoàn tiền thuê:
+                                 </span>
+                                 <span className="font-mono font-bold text-emerald-500 text-sm">
+                                    {(activeCase.resolution.deduct_amount ?? activeCase.total_rent_fee).toLocaleString("vi-VN")} ₫
+                                 </span>
+                               </div>
+                             ) : activeCase.resolution?.deduct_amount !== undefined && (
+                               <div>
                                 <span className="text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted block mb-1">Số tiền khấu trừ:</span>
                                 <span className="font-mono font-bold text-red-400 text-sm">
                                   {activeCase.resolution.deduct_amount.toLocaleString("vi-VN")} ₫

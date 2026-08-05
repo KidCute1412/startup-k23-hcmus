@@ -658,12 +658,38 @@ export class AdminService {
       }
 
       let settlement: EscrowResult;
-      if (resolutionType === ResolutionType.deposit_deduct) {
+      if (resolutionType === ResolutionType.renter_compensation) {
         if (deductAmount === undefined) {
           throw new BadRequestException({
             error: 'INVALID_DEDUCT_AMOUNT',
             message:
-              'deductAmount must be a positive integer for deposit_deduct',
+              'deductAmount must be a positive integer for renter_compensation',
+          });
+        }
+        if (
+          new Prisma.Decimal(deductAmount).greaterThan(
+            dispute.rental_order.rental_fee,
+          )
+        ) {
+          throw new BadRequestException({
+            error: 'COMPENSATION_EXCEEDS_RENTAL_FEE',
+            message: 'Renter compensation cannot exceed rental fee',
+          });
+        }
+        settlement = await this.escrowService.compensateRenter(
+          orderId,
+          deductAmount,
+          tx,
+        );
+      } else if (
+        resolutionType === ResolutionType.lender_compensation ||
+        resolutionType === ResolutionType.deposit_deduct
+      ) {
+        if (deductAmount === undefined) {
+          throw new BadRequestException({
+            error: 'INVALID_DEDUCT_AMOUNT',
+            message:
+              'deductAmount must be a positive integer for lender_compensation',
           });
         }
         settlement = await this.escrowService.compensate(
@@ -687,6 +713,8 @@ export class AdminService {
           resolved_by: adminId,
           resolution_type: resolutionType,
           deduct_amount:
+            resolutionType === ResolutionType.renter_compensation ||
+            resolutionType === ResolutionType.lender_compensation ||
             resolutionType === ResolutionType.deposit_deduct
               ? deductAmount
               : null,
@@ -710,26 +738,39 @@ export class AdminService {
         ...this.toApiDispute(resolved),
         settlement: {
           escrowAction:
-            resolutionType === ResolutionType.deposit_deduct
-              ? 'compensated'
-              : 'released',
+            resolutionType === ResolutionType.renter_compensation
+              ? 'renter_compensated'
+              : resolutionType === ResolutionType.lender_compensation ||
+                  resolutionType === ResolutionType.deposit_deduct
+                ? 'compensated'
+                : 'released',
           depositReturned:
+            resolutionType === ResolutionType.lender_compensation ||
             resolutionType === ResolutionType.deposit_deduct
               ? settlement.amount - (deductAmount ?? 0)
               : settlement.amount,
           depositDeducted:
+            resolutionType === ResolutionType.lender_compensation ||
             resolutionType === ResolutionType.deposit_deduct
+              ? (deductAmount ?? 0)
+              : 0,
+          renterCompensation:
+            resolutionType === ResolutionType.renter_compensation
               ? (deductAmount ?? 0)
               : 0,
           lenderCompensation:
+            resolutionType === ResolutionType.lender_compensation ||
             resolutionType === ResolutionType.deposit_deduct
               ? (deductAmount ?? 0)
               : 0,
-          lenderRentalIncome: dispute.rental_order.lender_income
-            ? typeof dispute.rental_order.lender_income === 'number'
-              ? dispute.rental_order.lender_income
-              : dispute.rental_order.lender_income.toNumber()
-            : 0,
+          lenderRentalIncome:
+            resolutionType === ResolutionType.renter_compensation
+              ? 0
+              : dispute.rental_order.lender_income
+                ? typeof dispute.rental_order.lender_income === 'number'
+                  ? dispute.rental_order.lender_income
+                  : dispute.rental_order.lender_income.toNumber()
+                : 0,
           depositSource: settlement.source,
           escrowStatus: settlement.status,
         },

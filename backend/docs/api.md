@@ -802,32 +802,40 @@ timeline activity, rental orders by status, and admin queue distributions.
 
 #### [POST] `/admin/disputes/:id/resolve` (Giải quyết tranh chấp đơn thuê)
 * **Authentication**: `accessToken` cookie, admin role, and valid `Origin`.
-* **Mô tả**: Quyết định số tiền khấu trừ từ khoản cọc của Renter để đền bù cho Lender. Hệ thống tự động gọi `EscrowService.compensate()` hoặc `release()` và chuyển order về `completed` trong cùng transaction nguyên tử (`prisma.$transaction`).
+* **Mô tả**: Admin quyết định renter được hoàn tiền thuê, lender được bồi thường từ tiền cọc, hoặc không bên nào được bồi thường. Hệ thống settlement và chuyển order về `completed` trong cùng transaction nguyên tử (`prisma.$transaction`).
 * **Body**:
   ```json
   {
-    "resolutionType": "deposit_deduct", // "deposit_deduct" | "refund" | "no_action"
-    "deductAmount": 1500000, // Số tiền cọc khấu trừ đền bù cho Lender (chỉ dùng khi resolutionType = deposit_deduct)
+    "resolutionType": "lender_compensation", // "renter_compensation" | "lender_compensation" | "no_action"
+    "deductAmount": 1500000, // renter_compensation: tối đa rental_fee; lender_compensation: tối đa deposit_amount
     "resolutionNote": "Khấu trừ 1.500.000đ do làm nứt vỏ nhôm"
   }
   ```
 * **Validation**:
-  - `deposit_deduct` bắt buộc có `deductAmount` là số nguyên dương.
-  - `refund` và `no_action` không được gửi `deductAmount`; cả hai release cọc, không khấu trừ.
+  - `renter_compensation` bắt buộc có `deductAmount` là số nguyên dương và không vượt quá `rental_fee`.
+  - `lender_compensation` bắt buộc có `deductAmount` là số nguyên dương và không vượt quá tiền cọc.
+  - `no_action` không được gửi `deductAmount`; chỉ release cọc theo settlement thông thường.
   - `resolutionNote` là tùy chọn, tối đa 2.000 ký tự.
 * **Behavior theo resolutionType & Số dư kỳ vọng**:
-  - **`refund` / `no_action`**:
+  - **`renter_compensation`**:
+    - Gọi `EscrowService.compensateRenter(orderId, tx)`.
+    - Renter nhận lại `deductAmount` vào ví renter và được giải phóng tiền cọc.
+    - Cọc trả sau được mở khóa và ghi `CreditTransaction(type = deposit_release)`.
+    - Lender không nhận `lenderIncome` từ đơn này.
+    - Escrow status chuyển sang `renter_compensated`.
+  - **`no_action`**:
     - Gọi `EscrowService.release(orderId, tx)`.
     - Cọc truyền thống (`renter_cash`): Renter `locked_balance` giảm đúng `escrow.amount` (mở khóa cọc). Số dư `balance` không đổi.
     - Cọc trả sau (`credit_line`): Mutux credit wallet `locked_balance` giảm `escrow.amount`, `display_balance` tăng lại `escrow.amount` tương ứng. Ghi `CreditTransaction(type = deposit_release)`.
     - Lender: `balance` tăng thêm `lenderIncome` (`rental_fee` trừ 15% phí sàn), ghi `LenderWalletTransaction(type = income)`.
     - Escrow status chuyển sang `released`.
-  - **`deposit_deduct` (với `deductAmount = X`)**:
+  - **`lender_compensation` (với `deductAmount = X`)**:
     - Gọi `EscrowService.compensate(orderId, X, tx)`.
     - Cọc truyền thống (`renter_cash`): Renter `balance` giảm X, `locked_balance` giảm `escrow.amount` (phần cọc còn lại `escrow.amount - X` được mở khóa). Ghi `RenterWalletTransaction(type = compensation)`.
     - Cọc trả sau (`credit_line`): Mutux credit wallet `outstanding_debt` tăng X, `locked_balance` giảm `escrow.amount`, `display_balance` tính lại bằng `total_limit - locked_balance - outstanding_debt`. Ghi `CreditTransaction(type = compensation)`.
     - Lender: `balance` tăng thêm `lenderIncome + X` (nhận đủ doanh thu thuê + tiền đền bù X), ghi `LenderWalletTransaction(type = income)` và `LenderWalletTransaction(type = compensation)`.
-    - Escrow status chuyển sang `compensated`.
+     - Escrow status chuyển sang `compensated`.
+  - Các giá trị cũ `refund` và `deposit_deduct` vẫn được đọc để tương thích dữ liệu cũ; request mới phải dùng các giá trị settlement mới.
 * **Idempotency**:
   - Áp dụng ở tầng W3.5a: Kiểm tra `dispute.status === 'resolved'` trước khi thực thi settlement.
   - Khi gọi lại endpoint với `dispute.status` đã ở trạng thái `resolved`, API trả về 200 kèm record dispute đã giải quyết và `EscrowService` KHÔNG được gọi lần thứ hai (số dư ví, escrow và ledger hoàn toàn không thay đổi).
@@ -858,8 +866,8 @@ are fixed at 3,000,000, 5,000,000 and 10,000,000 VND.
   `review`, `approve`, and `reject`. Approval must equal the requested tier.
 
 The backend requires 3 completed orders for 5,000,000 and 10 for 10,000,000,
-and blocks increases for debt, an open/under-review dispute, or any
-`deposit_deduct` resolution. It rechecks this policy at approval.
+  and blocks increases for debt, an open/under-review dispute, or any
+  `lender_compensation` resolution. It rechecks this policy at approval.
 # Cart and batch checkout
 
 All routes require authentication and renter role (`403 RENTER_ONLY`).
