@@ -24,11 +24,13 @@ describeIntegration('Rental order transitions (PostgreSQL integration)', () => {
   let prisma: PrismaService;
   let lenderId: string;
   let renterId: string;
+  let monthlyFeeRenterId: string;
   let poorRenterId: string;
   let feePoorRenterId: string;
   let gearId: string;
   let lenderToken: string;
   let renterToken: string;
+  let monthlyFeeRenterToken: string;
   const { ids: fixtureIds, newId } = createFixtureIds();
 
   beforeAll(async () => {
@@ -39,6 +41,7 @@ describeIntegration('Rental order transitions (PostgreSQL integration)', () => {
 
     lenderId = newId();
     renterId = newId();
+    monthlyFeeRenterId = newId();
     poorRenterId = newId();
     feePoorRenterId = newId();
     gearId = newId();
@@ -55,6 +58,13 @@ describeIntegration('Rental order transitions (PostgreSQL integration)', () => {
         {
           id: renterId,
           email: `renter-${renterId}@integration.test`,
+          password_hash: 'x',
+          role: 'renter',
+          kyc_status: 'verified',
+        },
+        {
+          id: monthlyFeeRenterId,
+          email: `monthly-fee-renter-${monthlyFeeRenterId}@integration.test`,
           password_hash: 'x',
           role: 'renter',
           kyc_status: 'verified',
@@ -89,6 +99,7 @@ describeIntegration('Rental order transitions (PostgreSQL integration)', () => {
     await prisma.renterWallet.createMany({
       data: [
         { user_id: renterId, balance: 20_000_000 },
+        { user_id: monthlyFeeRenterId, balance: 20_000_000 },
         { user_id: poorRenterId, balance: 300_000 },
         { user_id: feePoorRenterId, balance: 129_999 },
       ],
@@ -99,6 +110,12 @@ describeIntegration('Rental order transitions (PostgreSQL integration)', () => {
           user_id: renterId,
           total_limit: 1_000_000,
           display_balance: 1_000_000,
+          status: 'active',
+        },
+        {
+          user_id: monthlyFeeRenterId,
+          total_limit: 10_000_000,
+          display_balance: 10_000_000,
           status: 'active',
         },
         {
@@ -121,6 +138,7 @@ describeIntegration('Rental order transitions (PostgreSQL integration)', () => {
 
     lenderToken = createJwt(lenderId, 'lender');
     renterToken = createJwt(renterId, 'renter');
+    monthlyFeeRenterToken = createJwt(monthlyFeeRenterId, 'renter');
   });
 
   async function createOrder(
@@ -266,19 +284,19 @@ describeIntegration('Rental order transitions (PostgreSQL integration)', () => {
 
   it('charges the first monthly credit usage fee through the HTTP confirm flow and exposes its wallet snapshot', async () => {
     const order = await createOrder(
-      renterId,
+      monthlyFeeRenterId,
       OrderStatusType.pending_confirm,
       DepositTypeEnum.credit_line,
       '2026-08-03',
       '2026-08-04',
     );
     const walletBefore = await prisma.renterWallet.findUniqueOrThrow({
-      where: { user_id: renterId },
+      where: { user_id: monthlyFeeRenterId },
     });
 
     const beforeSnapshot = await request(app.getHttpServer())
       .get('/api/v1/wallets/mutux')
-      .set('Cookie', createAccessTokenCookie(renterToken))
+      .set('Cookie', createAccessTokenCookie(monthlyFeeRenterToken))
       .expect(200);
     expect(beforeSnapshot.body).toMatchObject({
       data: {
@@ -294,7 +312,7 @@ describeIntegration('Rental order transitions (PostgreSQL integration)', () => {
       .expect(200);
 
     const walletAfter = await prisma.renterWallet.findUniqueOrThrow({
-      where: { user_id: renterId },
+      where: { user_id: monthlyFeeRenterId },
     });
     expect(walletAfter.balance).toEqual(
       walletBefore.balance.sub(new Prisma.Decimal(130_000)),
@@ -307,7 +325,7 @@ describeIntegration('Rental order transitions (PostgreSQL integration)', () => {
     expect(
       await prisma.payment.count({
         where: {
-          user_id: renterId,
+          user_id: monthlyFeeRenterId,
           rental_order_id: order.id,
           type: 'credit_fee',
           status: 'success',
@@ -317,7 +335,7 @@ describeIntegration('Rental order transitions (PostgreSQL integration)', () => {
 
     const afterSnapshot = await request(app.getHttpServer())
       .get('/api/v1/wallets/mutux')
-      .set('Cookie', createAccessTokenCookie(renterToken))
+      .set('Cookie', createAccessTokenCookie(monthlyFeeRenterToken))
       .expect(200);
     expect(afterSnapshot.body).toMatchObject({
       data: {
@@ -329,14 +347,14 @@ describeIntegration('Rental order transitions (PostgreSQL integration)', () => {
 
   it('does not charge the monthly credit usage fee again for a second credit order', async () => {
     const order = await createOrder(
-      renterId,
+      monthlyFeeRenterId,
       OrderStatusType.pending_confirm,
       DepositTypeEnum.credit_line,
       '2026-08-05',
       '2026-08-06',
     );
     const walletBefore = await prisma.renterWallet.findUniqueOrThrow({
-      where: { user_id: renterId },
+      where: { user_id: monthlyFeeRenterId },
     });
 
     await request(app.getHttpServer())
@@ -346,7 +364,7 @@ describeIntegration('Rental order transitions (PostgreSQL integration)', () => {
       .expect(200);
 
     const walletAfter = await prisma.renterWallet.findUniqueOrThrow({
-      where: { user_id: renterId },
+      where: { user_id: monthlyFeeRenterId },
     });
     expect(walletAfter.balance).toEqual(
       walletBefore.balance.sub(new Prisma.Decimal(100_000)),
@@ -359,7 +377,7 @@ describeIntegration('Rental order transitions (PostgreSQL integration)', () => {
     expect(
       await prisma.payment.count({
         where: {
-          user_id: renterId,
+          user_id: monthlyFeeRenterId,
           type: 'credit_fee',
           status: 'success',
         },
@@ -750,7 +768,7 @@ describeIntegration('Rental order transitions (PostgreSQL integration)', () => {
     ).toBe(ledgerCountBeforeCancel);
   });
 
-  it('confirms a credit-line order with credit lock, escrow, and debits rental fee from cash', async () => {
+  it('confirms a credit-line order with credit lock, escrow, rental fee, and monthly usage fee', async () => {
     const order = await createOrder(
       renterId,
       OrderStatusType.pending_confirm,
@@ -785,9 +803,26 @@ describeIntegration('Rental order transitions (PostgreSQL integration)', () => {
       where: { user_id: renterId },
     });
     expect(cashAfter.balance).toEqual(
-      cashBefore.balance.minus(order.rental_fee),
+      cashBefore.balance
+        .minus(order.rental_fee)
+        .minus(new Prisma.Decimal(30_000)),
     );
     expect(cashAfter.locked_balance).toEqual(cashBefore.locked_balance);
+    expect(
+      await prisma.renterWalletTransaction.count({
+        where: { wallet_id: cashAfter.id, type: 'credit_fee' },
+      }),
+    ).toBe(1);
+    expect(
+      await prisma.payment.count({
+        where: {
+          user_id: renterId,
+          rental_order_id: order.id,
+          type: 'credit_fee',
+          status: 'success',
+        },
+      }),
+    ).toBe(1);
     const creditAfter = await prisma.mutuxWallet.findUniqueOrThrow({
       where: { user_id: renterId },
     });
