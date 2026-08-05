@@ -24,6 +24,17 @@ const MONTHS = [
   "Tháng 7", "Tháng 8", "Tháng 9", "Tháng 10", "Tháng 11", "Tháng 12"
 ];
 
+function businessToday() {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Ho_Chi_Minh",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(new Date());
+  const values = Object.fromEntries(parts.map(({ type, value }) => [type, value]));
+  return `${values.year}-${values.month}-${values.day}`;
+}
+
 function formatDisplayDate(isoString?: string): string {
   if (!isoString) return "";
   const parts = isoString.split("-");
@@ -244,7 +255,7 @@ export function DatePicker({
           <div className="grid grid-cols-7 gap-1 text-center text-xs">
             {daysGrid.map((dayObj, index) => {
               const isSelected = value === dayObj.dateStr;
-              const isToday = dayObj.dateStr === new Date().toISOString().slice(0, 10);
+              const isToday = dayObj.dateStr === businessToday();
 
               return (
                 <button

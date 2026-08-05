@@ -64,6 +64,12 @@ export class RentalOrdersService {
       });
     }
     const today = this.parseDateOnly(this.currentBusinessDate());
+    if (startDate.getTime() < today.getTime()) {
+      throw new BadRequestException({
+        error: 'START_DATE_IN_PAST',
+        message: `startDate cannot be in the past in ${RENTAL_BUSINESS_TIME_ZONE}`,
+      });
+    }
     const earliestStartDate = new Date(today.getTime() + MILLISECONDS_PER_DAY);
     if (startDate.getTime() < earliestStartDate.getTime()) {
       throw new BadRequestException({
@@ -137,10 +143,24 @@ export class RentalOrdersService {
   async createLocked(renterId: string, dto: CreateRentalOrderDto) {
     const startDate = this.parseDateOnly(dto.startDate);
     const endDate = this.parseDateOnly(dto.endDate);
-    if (startDate >= endDate) {
+    if (startDate.getTime() >= endDate.getTime()) {
       throw new BadRequestException({
         error: 'INVALID_DATE_RANGE',
         message: 'startDate must be earlier than endDate',
+      });
+    }
+    const today = this.parseDateOnly(this.currentBusinessDate());
+    if (startDate.getTime() < today.getTime()) {
+      throw new BadRequestException({
+        error: 'START_DATE_IN_PAST',
+        message: `startDate cannot be in the past in ${RENTAL_BUSINESS_TIME_ZONE}`,
+      });
+    }
+    const earliestStartDate = new Date(today.getTime() + MILLISECONDS_PER_DAY);
+    if (startDate.getTime() < earliestStartDate.getTime()) {
+      throw new BadRequestException({
+        error: 'START_DATE_TOO_SOON',
+        message: `startDate must be tomorrow or later in ${RENTAL_BUSINESS_TIME_ZONE}`,
       });
     }
     return this.prisma.$transaction(async (tx) => {
