@@ -12,14 +12,14 @@
         \toprule
         \textbf{Hạng mục chi phí} & \textbf{Mức dự kiến (VNĐ)} & \textbf{Phân bổ} \\
         \midrule
-        \textbf{Marketing (CAC, Khuyến mãi)} & 120.000.000 & Ads mạng xã hội, voucher giải quyết Cold-start. \\
-        \textbf{Phát triển Sản phẩm (Tech/R\&D)} & 30.000.000 & Phát triển tính năng Escrow, tích hợp eKYC, PayOS. \\
-        \textbf{Hạ tầng Công nghệ (Server, API)} & 100.000.000 & Phí Cloud Server, OTP, API đối soát, Domain name,... \\
-        \textbf{Vận hành \& Nhân sự (Operations)} & 180.000.000 & Đội ngũ thiết kế, tạo sản phẩm, đội ngũ CSKH và giải quyết tranh chấp. \\
-        \textbf{Tư vấn Pháp lý} & 30.000.000 & Soạn thảo hợp đồng điện tử, quy định bảo mật. \\
-        \textbf{Quỹ Dự phòng} & 20.000.000 & Dự phòng rủi ro tài sản và thanh khoản. \\
+        \textbf{Marketing (CAC, Khuyến mãi)} & 250.000.000 & Ads mạng xã hội, voucher giải quyết Cold-start. \\
+        \textbf{Phát triển Sản phẩm (Tech/R\&D)} & 30.000.000 & Phát triển tính năng Escrow, tích hợp eKYC. \\
+        \textbf{Hạ tầng Công nghệ (Server, API)} & 50.000.000 & Phí Cloud Server, OTP, API đối soát, Domain name,... \\
+        \textbf{Vận hành \& Nhân sự (Operations)} & 264.000.000 & Thiết kế, CSKH, bổ sung team Marketing, Finance (7tr/tháng). \\
+        \textbf{Tư vấn Pháp lý \& Luật} & 40.000.000 & Soạn hợp đồng, quy định, bổ sung nhân sự luật. \\
+        \textbf{Quỹ Dự phòng} & 50.000.000 & Dự phòng rủi ro tài sản và thanh khoản (khoảng 10\%). \\
         \midrule
-        \textbf{TỔNG CHI PHÍ DỰ KIẾN (NĂM 1)} & \textbf{480.000.000} & \\
+        \textbf{TỔNG CHI PHÍ DỰ KIẾN (NĂM 1)} & \textbf{684.000.000} & \\
         \bottomrule
     \end{tabular}%
     }
@@ -31,11 +31,14 @@ Các số liệu dự phóng tài chính trong năm đầu tiên được xây d
 
 \textbf{Cơ sở logic của các giả định tài chính:}
 \begin{itemize}
-    \item \textbf{Giá trị đơn thuê trung bình (AOV - Average Order Value):} Dựa trên khảo sát giá thuê thiết bị gaming phổ biến (30.000đ - 200.000đ/ngày), lấy trung bình là \textbf{50.000 VNĐ / 1 ngày} và hành vi thuê thường kéo dài 2-3 ngày dịp cuối tuần, AOV được ước tính ở mức an toàn là \textbf{150.000 VNĐ/đơn}.
-    \item \textbf{Lãi gộp cơ sở (Gross Margin):} Mức tiền cọc trung bình được giả định khoảng \textbf{2.000.000 VNĐ}, tương ứng với giá trị của các thiết bị gaming phổ biến (bàn phím cơ, chuột gaming, tai nghe, tay cầm...) trên nền tảng. 
+    \item \textbf{Giá trị đơn trung bình (AOV - Average Order Value):} Dựa trên khảo sát, giá thuê thiết bị trung bình là 150.000 VNĐ/đơn. Khi cộng thêm tỷ lệ chuyển đổi mua bảo hiểm kỳ vọng (15\%) và tỷ lệ mua đứt (5\%) phân bổ vào từng đơn hàng, ta có \textbf{AOV thực tế $\sim$ 265.000 VNĐ/đơn}.
+    \item \textbf{Lãi gộp cơ sở (Gross Margin) mỗi đơn hàng:}
     \begin{itemize}
-        \item Phí mở ví là \textbf{30.000 VNĐ / 1 tháng} và người thuê được sử dụng trong mức tiền cọc cho phép. Tỉ lệ phần trăm chia giữa Dịch vụ hỗ trợ tiền cọc (Deposit Advance Service) và Mutux là \textbf{50\%} vậy nên lợi nhuận thu được là \textbf{15.000 VNĐ / 1 tháng / 1 user}. Tỉ lệ người sử dụng ví là \textbf{30\%} người thuê thực tế, còn lại sẽ là người dùng tiền họ tự nạp.
-        \item Doanh thu từ đơn thuê sẽ chiếm \textbf{30\%} trên giá trị đơn thuê. Giả sử với \textbf{AOV} = 150.000 VNĐ thì lợi nhuận mỗi đơn Mutux nhận được là \textbf{45.000 VNĐ}.
+        \item \textbf{Lợi nhuận từ đơn thuê:} Mutux thu \textbf{30\%} trên giá trị thuê (150.000 VNĐ) $\rightarrow$ \textbf{45.000 VNĐ}.
+        \item \textbf{Lợi nhuận từ phí bảo hiểm:} Giả định tỷ lệ mua bảo hiểm là \textbf{15\%} (dựa trên mức trung bình 10-20\% của ngành e-commerce và cho thuê\footnote{Theo bài nghiên cứu công bố trên The Review of Economic Studies về tỷ lệ mua bảo hiểm mở rộng \cite{abito2019warranty}}). Với phí bảo hiểm 5\% giá trị sản phẩm (100.000 VNĐ), lợi nhuận kỳ vọng / 1 đơn $\rightarrow$ \textbf{15.000 VNĐ}.
+        \item \textbf{Lợi nhuận từ phí mua đứt (Try-before-you-buy):} Tỷ lệ chuyển đổi mua luôn sản phẩm dự kiến ở mức \textbf{5\%} (tương đương với các startup Rent-to-own công nghệ như Grover\footnote{Dữ liệu từ TechCrunch về mô hình Consumer Electronics Rental \& Subscriptions của Grover \cite{techcrunch2022grover}}). Với phí hoa hồng 3\% (60.000 VNĐ), lợi nhuận kỳ vọng / 1 đơn $\rightarrow$ \textbf{3.000 VNĐ}.
+        \item \textbf{Tổng lợi nhuận Mutux thu về / 1 đơn:} \textbf{63.000 VNĐ}.
+        \item \textbf{Doanh thu từ ví liên kết MoMo:} Do độ phủ của MoMo rất lớn, giả định người dùng mới (chưa có ví) chỉ chiếm \textbf{10\%}. Với phí giới thiệu 50.000 VNĐ, doanh thu quy đổi trung bình là \textbf{5.000 VNĐ / user ví / kỳ}.
     \end{itemize}
 \end{itemize}
 
@@ -50,9 +53,9 @@ Các số liệu dự phóng tài chính trong năm đầu tiên được xây d
             \item Số người thuê thực tế: 150
             \item Số người mở ví: 50
             \item Tổng đơn thuê: 150
-            \item Tổng giá trị giao dịch trên nền tảng: 45.000.000 VNĐ
-            \item Tổng doanh thu nhờ mở ví (GMW): 1.500.000 VNĐ
-            \item Tổng giao dịch quý (GMV): 46.500.000 VNĐ
+            \item Tổng giá trị giao dịch trên nền tảng (GD đơn): 39.750.000 VNĐ
+            \item Tổng doanh thu nhờ mở ví (GD ví): 250.000 VNĐ
+            \item Tổng giao dịch quý (GMV): 40.000.000 VNĐ
         \end{itemize}
     \end{itemize}
     \item \textbf{Quý 2:}
@@ -65,9 +68,9 @@ Các số liệu dự phóng tài chính trong năm đầu tiên được xây d
             \item Số người thuê thực tế: 350
             \item Số người mở ví: 100
             \item Tổng đơn thuê: 600
-            \item Tổng giá trị giao dịch trên nền tảng: 90.000.000 VNĐ
-            \item Tổng doanh thu nhờ mở ví: 3.000.000 VNĐ
-            \item Tổng giao dịch quý (GMV): 93.000.000 VNĐ
+            \item Tổng giá trị giao dịch trên nền tảng: 159.000.000 VNĐ
+            \item Tổng doanh thu nhờ mở ví: 500.000 VNĐ
+            \item Tổng giao dịch quý (GMV): 159.500.000 VNĐ
         \end{itemize}
     \end{itemize}
     \item \textbf{Quý 3:}
@@ -80,9 +83,9 @@ Các số liệu dự phóng tài chính trong năm đầu tiên được xây d
             \item Số người thuê thực tế: 900
             \item Số người mở ví: 300
             \item Tổng đơn thuê: 1.800
-            \item Tổng giá trị giao dịch trên nền tảng: 270.000.000 VNĐ
-            \item Tổng doanh thu nhờ mở ví: 9.000.000 VNĐ
-            \item Tổng giao dịch quý (GMV): 279.000.000 VNĐ
+            \item Tổng giá trị giao dịch trên nền tảng: 477.000.000 VNĐ
+            \item Tổng doanh thu nhờ mở ví: 1.500.000 VNĐ
+            \item Tổng giao dịch quý (GMV): 478.500.000 VNĐ
         \end{itemize}
     \end{itemize}
     \item \textbf{Quý 4:}
@@ -95,9 +98,9 @@ Các số liệu dự phóng tài chính trong năm đầu tiên được xây d
             \item Số người thuê thực tế: 2.000
             \item Số người mở ví: 600
             \item Tổng đơn thuê: 4.500
-            \item Tổng giá trị giao dịch trên nền tảng: 675.000.000 VNĐ
-            \item Tổng giao dịch nhờ mở ví: 18.000.000 VNĐ
-            \item Tổng giao dịch quý (GMV): 693.000.000 VNĐ
+            \item Tổng giá trị giao dịch trên nền tảng: 1.192.500.000 VNĐ
+            \item Tổng giao dịch nhờ mở ví: 3.000.000 VNĐ
+            \item Tổng giao dịch quý (GMV): 1.195.500.000 VNĐ
         \end{itemize}
     \end{itemize}
     \item \textbf{Tổng kết năm đầu:}
@@ -108,7 +111,7 @@ Các số liệu dự phóng tài chính trong năm đầu tiên được xây d
             \item Số người thuê thực tế: 2.000
             \item Số người dùng ví: 600
             \item Tổng đơn thuê: 7.050
-            \item Tổng doanh thu giao dịch cả năm (GMV): 1.111.200.000 VNĐ
+            \item Tổng doanh thu giao dịch cả năm (GMV): 1.873.500.000 VNĐ
         \end{itemize}
     \end{itemize}
 \end{itemize}
@@ -123,12 +126,12 @@ Các số liệu dự phóng tài chính trong năm đầu tiên được xây d
         \toprule
         \textbf{Giai đoạn} & \textbf{User ví/Tổng User} & \textbf{Số đơn} & \textbf{GD theo đơn} & \textbf{GD mở ví} & \textbf{Tổng GD Quý (GMV)} \\
         \midrule
-        \textbf{Quý 1} (Thử nghiệm) & 50/500 & 150 & 45.000.000 & 1.500.000 & \textbf{46.500.000} \\
-        \textbf{Quý 2} (Tăng trưởng) & 100/2.000 & 600 & 90.000.000 & 3.000.000 & \textbf{93.000.000} \\
-        \textbf{Quý 3} (Chiếm lĩnh) & 300/5.000 & 1.800 & 270.000.000 & 9.000.000 & \textbf{279.000.000} \\
-        \textbf{Quý 4} (Mở rộng \& B2B) & 600/10.000 & 4.500 & 675.000.000 & 18.000.000 & \textbf{693.000.000} \\
+        \textbf{Quý 1} (Thử nghiệm) & 50/500 & 150 & 39.750.000 & 250.000 & \textbf{40.000.000} \\
+        \textbf{Quý 2} (Tăng trưởng) & 100/2.000 & 600 & 159.000.000 & 500.000 & \textbf{159.500.000} \\
+        \textbf{Quý 3} (Chiếm lĩnh) & 300/5.000 & 1.800 & 477.000.000 & 1.500.000 & \textbf{478.500.000} \\
+        \textbf{Quý 4} (Mở rộng \& B2B) & 600/10.000 & 4.500 & 1.192.500.000 & 3.000.000 & \textbf{1.195.500.000} \\
         \midrule
-        \textbf{TỔNG NĂM 1} & 600/10.000 & 7.050 & 1.080.000.000 & 31.500.000 & \textbf{1.111.500.000} \\
+        \textbf{TỔNG NĂM 1} & 600/10.000 & 7.050 & 1.868.250.000 & 5.250.000 & \textbf{1.873.500.000} \\
         \bottomrule
     \end{tabular}%
     }
@@ -142,14 +145,14 @@ Các số liệu dự phóng tài chính trong năm đầu tiên được xây d
     \resizebox{\textwidth}{!}{%
     \begin{tabular}{@{}lrrrr@{}}
         \toprule
-        \textbf{Giai đoạn} & \textbf{GMV} & \textbf{Doanh thu thuê} & \textbf{Doanh thu mở ví} & \textbf{Doanh thu tổng} \\
+        \textbf{Giai đoạn} & \textbf{GMV} & \textbf{Doanh thu đơn} & \textbf{Doanh thu mở ví} & \textbf{Doanh thu tổng} \\
         \midrule
-        \textbf{Quý 1} & 46.200.000 & 13.500.000 & 750.000 & \textbf{14.250.000} \\
-        \textbf{Quý 2} & 93.000.000 & 27.000.000 & 1.500.000 & \textbf{28.500.000} \\
-        \textbf{Quý 3} & 279.000.000 & 81.000.000 & 4.500.000 & \textbf{85.500.000} \\
-        \textbf{Quý 4} & 693.000.000 & 202.500.000 & 9.000.000 & \textbf{211.500.000} \\
+        \textbf{Quý 1} & 40.000.000 & 9.450.000 & 250.000 & \textbf{9.700.000} \\
+        \textbf{Quý 2} & 159.500.000 & 37.800.000 & 500.000 & \textbf{38.300.000} \\
+        \textbf{Quý 3} & 478.500.000 & 113.400.000 & 1.500.000 & \textbf{114.900.000} \\
+        \textbf{Quý 4} & 1.195.500.000 & 283.500.000 & 3.000.000 & \textbf{286.500.000} \\
         \midrule
-        \textbf{CẢ NĂM} & 1.111.200.000 & 324.000.000 & 15.750.000 & \textbf{339.750.000} \\
+        \textbf{CẢ NĂM} & 1.873.500.000 & 444.150.000 & 5.250.000 & \textbf{449.400.000} \\
         \bottomrule
     \end{tabular}%
     }
@@ -166,10 +169,10 @@ Các số liệu dự phóng tài chính trong năm đầu tiên được xây d
         \toprule
         \textbf{Quarter} & \textbf{Thu} & \textbf{Chi} & \textbf{Net Burn} & \textbf{Cash Flow} & \textbf{Cash Drain} \\
         \midrule
-        \textbf{Q1} & 15 & 120 & -105 & -105 & -105 \\
-        \textbf{Q2} & 29 & 120 & -91 & -91 & -196 \\
-        \textbf{Q3} & 85 & 120 & -35 & -35 & -231 \\
-        \textbf{Q4} & 211 & 120 & +91 & +91 & -140 \\
+        \textbf{Q1} & 10 & 171 & -161 & -161 & -161 \\
+        \textbf{Q2} & 38 & 171 & -133 & -133 & -294 \\
+        \textbf{Q3} & 115 & 171 & -56 & -56 & -350 \\
+        \textbf{Q4} & 287 & 171 & +116 & +116 & -234 \\
         \bottomrule 
     \end{tabular}%
     }
@@ -178,13 +181,14 @@ Các số liệu dự phóng tài chính trong năm đầu tiên được xây d
 Bắt đầu từ năm thứ 2, các doanh thu tăng theo số lượng người dùng, số lượng đơn hàng. Các nguồn thu mới như nhận quảng cáo trên nền tảng, đẩy các bài đăng gaming gear, phí hoa hồng mua luôn sản phẩm sau khi thuê. Dù vậy doanh thu chính vẫn đến từ số lượng đơn thuê.
 
 \textbf{Tổng kết tài chính Năm 1:} 
-Tổng chi phí vận hành trong năm đầu tiên của Mutux được ước tính khoảng 480 triệu đồng. Tuy nhiên, doanh nghiệp dự kiến tạo ra khoảng 340 triệu đồng doanh thu trong cùng giai đoạn. Do đó, khoản thiếu hụt dòng tiền tích lũy (Funding Gap) vào khoảng 156 triệu đồng.
+Tổng chi phí vận hành trong năm đầu tiên của Mutux được ước tính khoảng 684 triệu đồng. Nhờ việc bổ sung phí bảo hiểm và hoa hồng mua đứt (dựa trên các benchmark thực tế của ngành e-commerce/cho thuê), dự án kỳ vọng tạo ra doanh thu đạt khoảng 449 triệu đồng. Khoản thiếu hụt dòng tiền lớn nhất (Maximum Cash Drain) sẽ diễn ra ở Quý 3 với mức \textbf{-350 triệu đồng}.
 
-Để đảm bảo doanh nghiệp có đủ dòng tiền duy trì hoạt động liên tục, xử lý các rủi ro phát sinh và không bị gián đoạn trong giai đoạn đầu, Mutux dự kiến chuẩn bị nguồn vốn khoảng \textbf{250--300 triệu đồng}. Nguồn vốn này có thể đến từ vốn tự có của nhóm sáng lập, các chương trình hỗ trợ khởi nghiệp hoặc vòng gọi vốn Pre-seed. Chi tiết các thông số:
+Để đảm bảo doanh nghiệp có đủ dòng tiền duy trì hoạt động liên tục, xử lý các rủi ro phát sinh và không bị gián đoạn trong giai đoạn đầu, Mutux dự kiến chuẩn bị nguồn vốn khoảng \textbf{500.000.000 VNĐ}. Nguồn vốn này có thể đến từ vốn tự có của nhóm sáng lập, các chương trình hỗ trợ khởi nghiệp hoặc vòng gọi vốn Pre-seed. Chi tiết các thông số:
 \begin{itemize}
-    \item Burn rate: Ta có \textit{Gross Burn} hay chi phí mỗi tháng là 480/12 = 40 triệu, \textit{Net Burn} sau khi đã bù doanh thu theo từng quý đã được tính theo bảng trên.
-    \item Vậy nên nhu cầu tìm kiếm nhà đầu tư để tăng hoặc có vốn làm runway trong ít nhất 2 năm tương đương \textbf{$\sim$300 triệu}. Với 2 năm đầu làm nền tảng thì Mutux có thể chạm đến điểm hòa vốn và bắt đầu lời. Từ đó bứt phá và chiếm lĩnh thị trường cho thuê gaming gear và phát triển thêm.
+    \item Burn rate: Chi phí mỗi tháng là 684/12 = 57 triệu, tuy nhiên nhờ doanh thu tăng dần, \textit{Net Burn} sẽ giảm mạnh qua từng quý và bắt đầu dương từ Quý 4.
+    \item Nhu cầu tìm kiếm nhà đầu tư để có vốn làm runway an toàn tương đương \textbf{$\sim$500 triệu VNĐ}. Lượng vốn này đủ bao phủ hoàn toàn mức Cash Drain tối đa (-350 triệu) và một khoản dư làm bộ đệm cho rủi ro hoạt động trước khi sinh lời vững chắc.
 \end{itemize}
 
 \textbf{Điểm hòa vốn (Break-even):} 
-Đặt mục tiêu đạt được vào khoảng \textbf{năm thứ 2 (Quý 3)} theo tốc độ tăng trưởng hiện tại. Mục tiêu năm 2 sẽ đạt được ít nhất 50.000 người dùng và 10.000 giao dịch trên sàn. Lộ trình này hoàn toàn phù hợp với vòng đời của một Startup Marketplace. Khi lượng người dùng thường xuyên đi vào ổn định ở năm thứ 2, chi phí thu hút khách hàng (CAC) sẽ giảm dần. Khi đó, mức doanh thu kỳ vọng sẽ đủ để bù đắp chi phí vận hành hàng tháng theo kịch bản tài chính của dự án (ước tính dao động khoảng 80 - 100 triệu VNĐ/tháng).
+Nhờ cơ cấu nguồn thu mở rộng hiệu quả, dự án sẽ đạt được \textbf{Hòa vốn dòng tiền kinh doanh (Operational Break-even)} ngay trong \textbf{Quý 4 của Năm 1} (dòng tiền Cash Flow đạt dương +116 triệu VNĐ, thu bắt đầu vượt chi). 
+Tuy nhiên, để bù đắp hết khoản lỗ lũy kế -234 triệu VNĐ của năm đầu tiên, dự án sẽ đạt \textbf{Hòa vốn lũy kế (Cumulative Break-even)} vào khoảng \textbf{năm thứ 2 (Quý 3)}. Lộ trình này hoàn toàn phù hợp với vòng đời và mô hình tăng trưởng của một Startup Marketplace.
