@@ -327,7 +327,7 @@ HTTP Status: `400`, `401`, `403`, `404`, `422`, `500`.
 
 #### [GET] `/wallets/mutux` (Thông tin Ví trả sau / Credit Line - Renter)
 * **Authentication**: `accessToken` cookie; chỉ role `renter`.
-* **Success (200)**: Trả về hạn mức khả dụng (`displayBalance`), hạn mức bị khóa (`lockedBalance`), dư nợ (`outstandingDebt`), tổng hạn mức (`totalLimit`), trạng thái (`status`) và trạng thái phí sử dụng tháng hiện tại. Ví này chỉ dùng để bảo đảm cọc khi `depositType = credit_line`; phí sử dụng được trừ từ ví renter.
+* **Success (200)**: Trả về hạn mức khả dụng (`displayBalance`), hạn mức bị khóa (`lockedBalance`), dư nợ (`outstandingDebt`), tổng hạn mức (`totalLimit`) và trạng thái (`status`). Ví này chỉ dùng để bảo đảm cọc khi `depositType = credit_line`.
 * **Response**:
   ```json
   {
@@ -339,16 +339,11 @@ HTTP Status: `400`, `401`, `403`, `404`, `422`, `500`.
       "displayBalance": 3000000,
       "lockedBalance": 1000000,
       "outstandingDebt": 1000000,
-      "status": "active",
-      "monthlyUsageFee": 30000,
-      "billingMonth": "2026-08",
-      "feeChargedThisMonth": false,
-      "feeChargedAt": null
+      "status": "active"
     }
   }
   ```
   > `displayBalance` luôn được tính theo invariant: `displayBalance = totalLimit - lockedBalance - outstandingDebt`.
-  > Với giao dịch credit line đầu tiên lock cọc thành công trong tháng, hệ thống trừ `30.000đ` từ ví renter và ghi `Payment.type = credit_fee` cùng ledger `RenterWalletTransaction.type = credit_fee`. Tạo đơn chỉ kiểm tra số dư dự kiến; giao dịch thất bại không bị thu phí.
 
 #### [GET] `/wallets/lender` (Thông tin Ví thu nhập ảo & Yêu cầu rút tiền - Lender)
 * **Authentication**: `accessToken` cookie; yêu cầu tài khoản `renter` có `lenderEnabled = true`.
@@ -399,7 +394,7 @@ HTTP Status: `400`, `401`, `403`, `404`, `422`, `500`.
 
 ---
 
-### 3.4 Rental Orders (9 APIs)
+### 3.4 Rental Orders (10 APIs)
 
 #### State-transition matrix (Lean MVP)
 
@@ -449,6 +444,15 @@ HTTP Status: `400`, `401`, `403`, `404`, `422`, `500`.
 * **Query Params**: `role` (renter hoặc lender), `status`, `page`, `limit`
 * **Auth scope**: renter chỉ xem order có `renter_id = req.user.id`; lender chỉ xem order có `lender_id = req.user.id`; admin xem tất cả order. Ownership được quyết định từ JWT, không tin `role` do client gửi.
 * **Success (200)**: Trả về `{ "success": true, "data": [...], "meta": { "total": 0, "page": 1, "limit": 10, "totalPages": 0 } }`. Có thể lọc `status` (ví dụ `?status=confirmed&page=1&limit=10`).
+
+#### [GET] `/rental-orders/financial-summary` (Tóm tắt nghĩa vụ tài chính pending)
+* **Actor**: renter hiện tại.
+* **Success (200)**: Trả về số dư khả dụng, tổng nghĩa vụ tiền mặt từ các order
+  `pending_confirm`, tổng tiền cọc hạn mức Mutux đang chờ và số lượng order
+  pending. Đây là dữ liệu hiển thị; kiểm tra quyết định vẫn
+  được thực hiện lại trong transaction tạo order có khóa wallet.
+* **Concurrency**: API có thể hơi stale giữa lúc tải và lúc submit; backend không
+  dùng response này để bỏ qua bước kiểm tra transaction.
 
 #### [GET] `/rental-orders/:id` (Chi tiết đơn thuê)
 * **Success (200)**: Trả về chi tiết đơn, thông tin người thuê, người cho thuê, thiết bị và thông tin khiếu nại/tranh chấp đính kèm (nếu đơn hàng đang ở trạng thái `disputed`).
@@ -899,14 +903,19 @@ address-book edits do not change existing orders. An unknown or foreign
 
 Before either single or batch order creation commits, the backend recalculates
 the current database prices and validates the renter's aggregate financial
-capacity. A `traditional` deposit requires available renter-wallet cash for the
-rental fee plus deposit. A `credit_line` deposit requires renter-wallet cash for
-the rental fee and Mutux available credit for the deposit. Failures return
-`400 INSUFFICIENT_CASH`, `400 INSUFFICIENT_CREDIT`, or
-`400 WALLET_INACTIVE`; the transaction creates no orders and removes no cart
-items. This is a checkout-time eligibility check only: no funds are held while
-the order is `pending_confirm`, and the lender-confirm transition checks and
-locks the wallets again atomically. A credit wallet with a non-null
+capacity, including all existing `pending_confirm` orders. A `traditional`
+deposit requires available renter-wallet cash for the rental fee plus deposit.
+A `credit_line` deposit requires renter-wallet cash for the rental fee and
+Mutux available credit for the deposit. The renter wallet row is locked with
+`FOR UPDATE` while this check and order creation run, so concurrent checkout
+requests for the same renter are serialized. Failures return
+`400 INSUFFICIENT_CASH`, `400 INSUFFICIENT_CREDIT`, or `400 WALLET_INACTIVE`;
+the transaction creates no orders and removes no cart items. Insufficient
+financial-capacity errors include `error.details` with available amount,
+pending commitment, current-order requirement, total required amount and
+shortfall. This is a checkout-time eligibility check only: no funds are held
+while the order is `pending_confirm`, and the lender-confirm transition checks
+and locks the wallets again atomically. A credit wallet with a non-null
 `expiredAt <= now` is not granted for new credit-line checkouts and is rejected
 with `INSUFFICIENT_CREDIT` at both checkout and lender confirmation.
 

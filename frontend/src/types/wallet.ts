@@ -84,10 +84,6 @@ export interface MutuxCreditLine {
   status: string;
   approvedAt: string | null;
   expiredAt: string | null;
-  monthlyUsageFee: number;
-  billingMonth: string;
-  feeChargedThisMonth: boolean;
-  feeChargedAt: string | null;
 }
 
 export interface RepayCreditDebtResult {

@@ -10,6 +10,7 @@ import { Response } from 'express';
 interface HttpExceptionResponseBody {
   message?: string | string[];
   error?: string;
+  details?: unknown;
 }
 
 function isHttpExceptionResponseBody(
@@ -27,13 +28,14 @@ export class HttpExceptionFilter implements ExceptionFilter {
     let status = HttpStatus.INTERNAL_SERVER_ERROR;
     let message: string | string[] = 'Internal server error';
     let errorCode = 'INTERNAL_SERVER_ERROR';
+    const exceptionResponse =
+      exception instanceof HttpException ? exception.getResponse() : undefined;
+    const responseBody = isHttpExceptionResponseBody(exceptionResponse)
+      ? exceptionResponse
+      : undefined;
 
     if (exception instanceof HttpException) {
       status = exception.getStatus();
-      const exceptionResponse = exception.getResponse();
-      const responseBody = isHttpExceptionResponseBody(exceptionResponse)
-        ? exceptionResponse
-        : undefined;
 
       message = responseBody
         ? (responseBody.message ?? exception.message)
@@ -59,6 +61,9 @@ export class HttpExceptionFilter implements ExceptionFilter {
       error: {
         code: errorCode,
         message: Array.isArray(message) ? message.join(', ') : message,
+        ...(responseBody?.details !== undefined
+          ? { details: responseBody.details }
+          : {}),
       },
     });
   }

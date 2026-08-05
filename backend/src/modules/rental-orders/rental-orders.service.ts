@@ -4,6 +4,7 @@ import {
   ForbiddenException,
   Injectable,
   InternalServerErrorException,
+  Logger,
   NotFoundException,
   Optional,
 } from '@nestjs/common';
@@ -24,10 +25,6 @@ import { GetRentalOrdersQueryDto } from './dto/get-rental-orders-query.dto';
 import { RentalOrderOrchestrationService } from './rental-order-orchestration.service';
 import { RentalOrdersRepository } from './rental-orders.repository';
 import { MediaService } from '../media/media.service';
-import {
-  CREDIT_USAGE_FEE,
-  creditFeeReference,
-} from '../wallets/credit-fee-policy';
 
 interface CurrentUser {
   id: string;
@@ -39,8 +36,17 @@ const BUSINESS_TIME_ZONE_OFFSET_MS = 7 * 60 * 60 * 1000;
 const LAST_MILLISECOND = 1;
 export const RENTAL_BUSINESS_TIME_ZONE = 'Asia/Ho_Chi_Minh';
 
+interface PendingFinancialCommitment {
+  pendingCash: Prisma.Decimal;
+  pendingCreditDeposit: Prisma.Decimal;
+  pendingOrderCount: number;
+  pendingCreditOrderCount: number;
+}
+
 @Injectable()
 export class RentalOrdersService {
+  private readonly logger = new Logger(RentalOrdersService.name);
+
   constructor(
     private readonly rentalOrdersRepository: RentalOrdersRepository,
     private readonly orchestration: RentalOrderOrchestrationService,
@@ -367,6 +373,65 @@ export class RentalOrdersService {
     });
   }
 
+  async getFinancialSummary(renterId: string) {
+    const [cashWallet, creditWallet, pendingOrders] = await Promise.all([
+      this.prisma.renterWallet.findUnique({
+        where: { user_id: renterId },
+        select: { balance: true, locked_balance: true, status: true },
+      }),
+      this.prisma.mutuxWallet.findUnique({
+        where: { user_id: renterId },
+        select: {
+          display_balance: true,
+          locked_balance: true,
+          outstanding_debt: true,
+          status: true,
+          expired_at: true,
+        },
+      }),
+      this.prisma.rentalOrder.findMany({
+        where: {
+          renter_id: renterId,
+          status: OrderStatusType.pending_confirm,
+        },
+        select: {
+          rental_fee: true,
+          deposit_amount: true,
+          deposit_type: true,
+        },
+      }),
+    ]);
+
+    const commitment = this.calculatePendingCommitment(pendingOrders);
+    const balance = cashWallet?.balance ?? new Prisma.Decimal(0);
+    const lockedBalance = cashWallet?.locked_balance ?? new Prisma.Decimal(0);
+    const creditDisplayBalance =
+      creditWallet?.display_balance ?? new Prisma.Decimal(0);
+    const creditLockedBalance =
+      creditWallet?.locked_balance ?? new Prisma.Decimal(0);
+    const creditDebt = creditWallet?.outstanding_debt ?? new Prisma.Decimal(0);
+
+    return {
+      cash: {
+        balance: balance.toNumber(),
+        lockedBalance: lockedBalance.toNumber(),
+        availableBalance: balance.minus(lockedBalance).toNumber(),
+        pendingCashCommitment: commitment.pendingCash.toNumber(),
+      },
+      credit: {
+        availableCredit: creditDisplayBalance.toNumber(),
+        lockedBalance: creditLockedBalance.toNumber(),
+        outstandingDebt: creditDebt.toNumber(),
+        pendingDepositCommitment: commitment.pendingCreditDeposit.toNumber(),
+        status: creditWallet?.status ?? 'not_granted',
+        expiredAt: creditWallet?.expired_at ?? null,
+      },
+      pendingOrderCount: commitment.pendingOrderCount,
+      pendingCreditOrderCount: commitment.pendingCreditOrderCount,
+      walletStatus: cashWallet?.status ?? WalletStatusType.active,
+    };
+  }
+
   private async resolveShippingAddress(
     client: PrismaService | Prisma.TransactionClient,
     renterId: string,
@@ -562,27 +627,44 @@ export class RentalOrdersService {
       });
     }
 
-    let usageFee = new Prisma.Decimal(0);
-    if (depositType === DepositTypeEnum.credit_line) {
-      const feeTransaction = await tx.renterWalletTransaction.findUnique({
-        where: { reference: creditFeeReference(renterId) },
-        select: { id: true },
-      });
-      if (!feeTransaction) usageFee = CREDIT_USAGE_FEE;
-    }
-    const cashRequired =
+    const pendingOrders =
+      typeof tx.rentalOrder?.findMany === 'function'
+        ? await tx.rentalOrder.findMany({
+            where: {
+              renter_id: renterId,
+              status: OrderStatusType.pending_confirm,
+            },
+            select: {
+              rental_fee: true,
+              deposit_amount: true,
+              deposit_type: true,
+            },
+          })
+        : [];
+    const pending = this.calculatePendingCommitment(pendingOrders);
+    const currentCashRequired =
       depositType === DepositTypeEnum.traditional
         ? rentalFee.plus(depositAmount)
-        : rentalFee.plus(usageFee);
+        : rentalFee;
+    const cashRequired = pending.pendingCash.plus(currentCashRequired);
     const availableCash = cashWallet.balance.minus(cashWallet.locked_balance);
     if (availableCash.lessThan(cashRequired)) {
+      const shortfall = cashRequired.minus(availableCash);
+      this.logger.warn(
+        `Rental checkout rejected for renter=${renterId}: cash shortfall=${shortfall.toString()}, pendingOrders=${pending.pendingOrderCount}`,
+      );
       throw new BadRequestException({
-        error: usageFee.greaterThan(0)
-          ? 'INSUFFICIENT_BALANCE_FOR_CREDIT_FEE'
-          : 'INSUFFICIENT_CASH',
-        message: usageFee.greaterThan(0)
-          ? 'Renter wallet balance is insufficient for the monthly credit usage fee'
-          : 'Renter wallet balance is insufficient for this order',
+        error: 'INSUFFICIENT_CASH',
+        message:
+          'Renter wallet balance is insufficient for this order and pending rental orders',
+        details: {
+          available: availableCash.toNumber(),
+          pendingCommitment: pending.pendingCash.toNumber(),
+          currentOrderRequirement: currentCashRequired.toNumber(),
+          totalRequired: cashRequired.toNumber(),
+          shortfall: shortfall.toNumber(),
+          pendingOrderCount: pending.pendingOrderCount,
+        },
       });
     }
 
@@ -613,12 +695,55 @@ export class RentalOrdersService {
           : 'Mutux credit wallet is not active',
       });
     }
-    if (creditWallet.display_balance.lessThan(depositAmount)) {
+    const creditRequired = pending.pendingCreditDeposit.plus(depositAmount);
+    if (creditWallet.display_balance.lessThan(creditRequired)) {
+      const shortfall = creditRequired.minus(creditWallet.display_balance);
+      this.logger.warn(
+        `Rental checkout rejected for renter=${renterId}: credit shortfall=${shortfall.toString()}, pendingOrders=${pending.pendingOrderCount}`,
+      );
       throw new BadRequestException({
         error: 'INSUFFICIENT_CREDIT',
-        message: 'Mutux credit is not granted or is insufficient',
+        message:
+          'Mutux credit is not enough for this order and pending rental orders',
+        details: {
+          available: creditWallet.display_balance.toNumber(),
+          pendingCommitment: pending.pendingCreditDeposit.toNumber(),
+          currentOrderRequirement: depositAmount.toNumber(),
+          totalRequired: creditRequired.toNumber(),
+          shortfall: shortfall.toNumber(),
+          pendingOrderCount: pending.pendingOrderCount,
+        },
       });
     }
+  }
+
+  private calculatePendingCommitment(
+    orders: Array<{
+      rental_fee: Prisma.Decimal;
+      deposit_amount: Prisma.Decimal;
+      deposit_type: DepositTypeEnum;
+    }>,
+  ): PendingFinancialCommitment {
+    let pendingCash = new Prisma.Decimal(0);
+    let pendingCreditDeposit = new Prisma.Decimal(0);
+    let pendingCreditOrderCount = 0;
+
+    for (const order of orders) {
+      pendingCash = pendingCash.plus(order.rental_fee);
+      if (order.deposit_type === DepositTypeEnum.traditional) {
+        pendingCash = pendingCash.plus(order.deposit_amount);
+      } else {
+        pendingCreditDeposit = pendingCreditDeposit.plus(order.deposit_amount);
+        pendingCreditOrderCount += 1;
+      }
+    }
+
+    return {
+      pendingCash,
+      pendingCreditDeposit,
+      pendingOrderCount: orders.length,
+      pendingCreditOrderCount,
+    };
   }
 
   private parseDateOnly(value: string): Date {

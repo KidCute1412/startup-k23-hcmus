@@ -469,16 +469,15 @@ lender_wallets.balance += rental_fee_after_platform_fee
 
 ### Luồng
 
-1. Renter top-up ví ảo nếu cần để trả `rental_fee` và phí sử dụng hạn mức tháng (nếu chưa thu).
+1. Renter top-up ví ảo nếu cần để trả `rental_fee`.
 2. Ví renter tăng số dư.
 3. Renter tạo order với `deposit_type = credit_line`.
 4. Lender accept.
 5. Backend kiểm tra và debit `rental_fee` từ ví renter.
-6. Nếu đây là giao dịch credit line đầu tiên trong tháng, backend debit thêm `30.000đ` từ ví renter và ghi payment/ledger `credit_fee`.
-7. Backend lock `deposit_amount` từ `mutux_wallets` credit line.
-8. Tạo `escrow_wallets.source = credit_line`.
-9. Order -> `confirmed`.
-10. Khi order completed bình thường:
+6. Backend lock `deposit_amount` từ `mutux_wallets` credit line.
+7. Tạo `escrow_wallets.source = credit_line`.
+8. Order -> `confirmed`.
+9. Khi order completed bình thường:
    - release credit line lock
    - settle doanh thu ảo cho lender
 
@@ -489,7 +488,6 @@ Ví renter:
 ```text
 topup:      + amount mô phỏng
 rental_fee: - rental_fee
-credit_fee: - 30.000 (tối đa một lần mỗi tháng)
 ```
 
 Credit line:

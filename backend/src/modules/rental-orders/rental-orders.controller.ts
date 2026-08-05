@@ -51,6 +51,12 @@ export class RentalOrdersController {
     return this.rentalOrdersService.findAll(req.user, query);
   }
 
+  @Get('financial-summary')
+  financialSummary(@Req() req: AuthenticatedRequest) {
+    this.assertRenter(req);
+    return this.rentalOrdersService.getFinancialSummary(req.user.id);
+  }
+
   @Get(':id')
   findOne(@Req() req: AuthenticatedRequest, @Param('id') id: string) {
     return this.rentalOrdersService.findOne(req.user, id);

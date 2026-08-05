@@ -118,29 +118,6 @@ describe('WalletsService', () => {
     });
   });
 
-  it('reports the current monthly credit usage fee status', async () => {
-    prisma.mutuxWallet.findUnique.mockResolvedValue({
-      id: '30000000-0000-0000-0000-000000000001',
-      user_id: userId,
-      total_limit: new Prisma.Decimal(5_000_000),
-      display_balance: new Prisma.Decimal(5_000_000),
-      locked_balance: new Prisma.Decimal(0),
-      outstanding_debt: new Prisma.Decimal(0),
-      status: 'active',
-      approved_at: null,
-      expired_at: null,
-    });
-    prisma.renterWalletTransaction.findUnique.mockResolvedValue({
-      created_at: new Date('2026-08-05T00:00:00.000Z'),
-    });
-
-    await expect(service.getMutux(userId)).resolves.toMatchObject({
-      monthlyUsageFee: 30000,
-      feeChargedThisMonth: true,
-      feeChargedAt: new Date('2026-08-05T00:00:00.000Z'),
-    });
-  });
-
   it('rejects checkout amount = 0 with validation error', async () => {
     await expect(service.checkout(userId, 0, 'payos')).rejects.toMatchObject({
       status: 400,

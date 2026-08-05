@@ -7,12 +7,20 @@ export interface RentalOrder {
   lenderId: string;
   renter_id?: string;
   lender_id?: string;
-  status: 'pending_confirm' | 'confirmed' | 'delivering' | 'active' | 'returning' | 'completed' | 'cancelled' | 'disputed';
+  status:
+    | "pending_confirm"
+    | "confirmed"
+    | "delivering"
+    | "active"
+    | "returning"
+    | "completed"
+    | "cancelled"
+    | "disputed";
   startDate: string;
   endDate: string;
   rentPrice: number;
   depositCash: number;
-  depositType: 'traditional' | 'credit_line';
+  depositType: "traditional" | "credit_line";
   shippingAddress: string;
   shippingName: string;
   shippingPhone: string;
@@ -25,7 +33,7 @@ export interface RentalOrder {
   end_date?: string;
   rental_fee?: number;
   deposit_amount?: number;
-  deposit_type?: 'traditional' | 'credit_line';
+  deposit_type?: "traditional" | "credit_line";
   shipping_address?: string;
   shipping_name?: string;
   shipping_phone?: string;
@@ -64,7 +72,7 @@ export interface RentalOrder {
   };
   disputes?: Array<{
     id: string;
-    status: 'open' | 'under_review' | 'resolved' | 'closed' | string;
+    status: "open" | "under_review" | "resolved" | "closed" | string;
     reason: string;
     description?: string | null;
     reported_by?: string;
@@ -93,8 +101,28 @@ export interface CreateRentalOrderRequest {
   gearId: string;
   startDate: string;
   endDate: string;
-  depositType: 'traditional' | 'credit_line';
+  depositType: "traditional" | "credit_line";
   addressId: string;
+}
+
+export interface RentalFinancialSummary {
+  cash: {
+    balance: number;
+    lockedBalance: number;
+    availableBalance: number;
+    pendingCashCommitment: number;
+  };
+  credit: {
+    availableCredit: number;
+    lockedBalance: number;
+    outstandingDebt: number;
+    pendingDepositCommitment: number;
+    status: string;
+    expiredAt: string | null;
+  };
+  pendingOrderCount: number;
+  pendingCreditOrderCount: number;
+  walletStatus: string;
 }
 
 export interface GetRentalOrdersParams {
@@ -102,10 +130,14 @@ export interface GetRentalOrdersParams {
   limit?: number;
   status?: string;
   /** Pass 'lender' to fetch orders where the current user is the gear owner */
-  role?: 'renter' | 'lender';
+  role?: "renter" | "lender";
 }
 
-export type ProofStage = 'pre_shipment' | 'post_received' | 'pre_return' | 'post_returned';
+export type ProofStage =
+  | "pre_shipment"
+  | "post_received"
+  | "pre_return"
+  | "post_returned";
 
 export interface RentalProof {
   id: string;
@@ -114,8 +146,8 @@ export interface RentalProof {
   uploadedBy?: string;
   uploaded_by?: string;
   stage: ProofStage | string;
-  proof_type?: 'image' | 'video';
-  proofType?: 'image' | 'video';
+  proof_type?: "image" | "video";
+  proofType?: "image" | "video";
   file_url?: string;
   fileUrl?: string;
   note?: string | null;

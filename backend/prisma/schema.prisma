@@ -617,6 +617,7 @@ model RentalOrder {
   lender_wallet_transactions LenderWalletTransaction[]
 
   @@index([renter_id], name: "idx_rental_orders_renter")
+  @@index([renter_id, status], name: "idx_rental_orders_renter_status")
   @@index([lender_id], name: "idx_rental_orders_lender")
   @@index([gear_id], name: "idx_rental_orders_gear")
   @@index([status], name: "idx_rental_orders_status")

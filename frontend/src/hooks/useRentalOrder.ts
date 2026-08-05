@@ -6,6 +6,7 @@ import { type PaginationMeta } from '@/lib/apiClient';
 import type {
   CreateRentalOrderRequest,
   GetRentalOrdersParams,
+  RentalFinancialSummary,
   RentalOrder,
 } from '@/types/rentals';
 
@@ -52,6 +53,12 @@ export function useRentalOrder() {
     } finally { setIsLoading(false); }
   }, []);
 
+  const fetchFinancialSummary = useCallback(
+    (): Promise<RentalFinancialSummary> =>
+      rentalOrderService.getFinancialSummary(),
+    [],
+  );
+
   const updateOrderStatus = useCallback(
     async (id: string, action: keyof typeof rentalOrderService, request?: unknown) => {
       setIsLoading(true); setError(null);
@@ -76,6 +83,7 @@ export function useRentalOrder() {
     error,
     fetchOrders,
     fetchOrder,
+    fetchFinancialSummary,
     createOrder,
     setCurrentOrder,
     confirmOrder: (id: string) => updateOrderStatus(id, 'confirmRentalOrder'),
