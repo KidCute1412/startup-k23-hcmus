@@ -668,15 +668,22 @@ export function OrderDetailView({
               {isCurrentLender && order.status === "confirmed" && (
                 <div className="space-y-1.5">
                   {shipDeadline ? (
-                    <p className="rounded-v-sm border border-amber-500/30 bg-amber-500/10 p-3 text-[11px] font-medium text-amber-500">
+                    <div className="space-y-2">
+                      <p className="rounded-v-sm border border-slate-500/30 bg-slate-500/10 p-3 text-[11px] font-medium text-vanguard-light-text dark:text-vanguard-dark-text">
+                        Hạn giao: {new Date(shipDeadline).toLocaleString("vi-VN", {
+                          timeZone: "Asia/Ho_Chi_Minh",
+                        })}
+                      </p>
+                      <p className="rounded-v-sm border border-amber-500/30 bg-amber-500/10 p-3 text-[11px] font-medium text-amber-500">
                       {isShipmentLate
                         ? "Đã quá hạn giao. Nếu tiếp tục xác nhận, hệ thống sẽ hủy đơn và hoàn tiền renter."
                         : `Vui lòng gửi gear trước ${new Date(shipDeadline).toLocaleString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" })} để kịp ngày bắt đầu thuê.`}
-                    </p>
+                      </p>
+                    </div>
                   ) : null}
                   <button
                     onClick={() =>
-                      hasPreShipmentProof
+                      isShipmentLate || hasPreShipmentProof
                         ? void handleShip()
                         : setActiveModal("shipment")
                     }
@@ -686,7 +693,7 @@ export function OrderDetailView({
                       ? "Xử lý giao trễ và hoàn tiền"
                       : "Xác nhận đã giao hàng"}
                   </button>
-                  {!hasPreShipmentProof && (
+                  {!isShipmentLate && !hasPreShipmentProof && (
                     <p className="text-[11px] text-amber-500 font-medium">
                       Bấm nút để upload ảnh giao hàng trước khi xác nhận.
                     </p>
