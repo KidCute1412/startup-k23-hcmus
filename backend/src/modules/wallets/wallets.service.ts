@@ -68,7 +68,9 @@ export class WalletsService {
         expiredAt: null,
       };
     }
-    return this.toMutuxWallet(wallet);
+    return {
+      ...this.toMutuxWallet(wallet),
+    };
   }
 
   async repayMutuxDebt(userId: string) {

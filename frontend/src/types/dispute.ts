@@ -58,6 +58,7 @@ export interface DisputeItem {
   deductAmount: number | null;
   createdAt: string;
   resolvedAt: string | null;
+  responseDeadlineAt?: string;
   reviewedBy?: string | null;
   reviewedAt?: string | null;
   closedBy?: string | null;
@@ -80,6 +81,13 @@ export interface CreateDisputePayload {
   rentalOrderId: string;
   reason: DisputeReason;
   description?: string;
+  evidences: Array<{
+    mediaType: 'image';
+    url: string;
+  }>;
+}
+
+export interface CreateDisputeResponsePayload {
   evidences: Array<{
     mediaType: 'image';
     url: string;

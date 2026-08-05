@@ -19,6 +19,7 @@ import { CreateRentalOrderDto } from './dto/create-rental-order.dto';
 import { GetRentalOrdersQueryDto } from './dto/get-rental-orders-query.dto';
 import { RentalOrdersService } from './rental-orders.service';
 import { CreateBatchRentalOrdersDto } from './dto/create-batch-rental-orders.dto';
+import { TransitionWithProofDto } from './dto/transition-with-proof.dto';
 
 @UseGuards(JwtAuthGuard)
 @Controller('rental-orders')
@@ -50,6 +51,12 @@ export class RentalOrdersController {
     return this.rentalOrdersService.findAll(req.user, query);
   }
 
+  @Get('financial-summary')
+  financialSummary(@Req() req: AuthenticatedRequest) {
+    this.assertRenter(req);
+    return this.rentalOrdersService.getFinancialSummary(req.user.id);
+  }
+
   @Get(':id')
   findOne(@Req() req: AuthenticatedRequest, @Param('id') id: string) {
     return this.rentalOrdersService.findOne(req.user, id);
@@ -71,13 +78,31 @@ export class RentalOrdersController {
   }
 
   @Patch(':id/confirm-receipt')
-  confirmReceipt(@Req() req: AuthenticatedRequest, @Param('id') id: string) {
-    return this.rentalOrdersService.confirmReceipt(req.user.id, id);
+  confirmReceipt(
+    @Req() req: AuthenticatedRequest,
+    @Param('id') id: string,
+    @Body() dto: TransitionWithProofDto,
+  ) {
+    return this.rentalOrdersService.confirmReceiptWithProof(
+      req.user.id,
+      id,
+      dto.fileUrls,
+      dto.note,
+    );
   }
 
   @Patch(':id/return')
-  returnOrder(@Req() req: AuthenticatedRequest, @Param('id') id: string) {
-    return this.rentalOrdersService.returnOrder(req.user.id, id);
+  returnOrder(
+    @Req() req: AuthenticatedRequest,
+    @Param('id') id: string,
+    @Body() dto: TransitionWithProofDto,
+  ) {
+    return this.rentalOrdersService.returnWithProof(
+      req.user.id,
+      id,
+      dto.fileUrls,
+      dto.note,
+    );
   }
 
   @Patch(':id/confirm-return')

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { disputeService } from '@/services/disputeService';
 import { mediaService } from '@/services/mediaService';
-import type { CreateDisputePayload } from '@/types/dispute';
+import type { CreateDisputePayload, CreateDisputeResponsePayload } from '@/types/dispute';
 
 export function useDispute() {
   const [loading, setLoading] = useState<boolean>(false);
@@ -26,9 +26,27 @@ export function useDispute() {
     return mediaService.uploadImage(file);
   };
 
+  const addResponseEvidence = async (
+    disputeId: string,
+    payload: CreateDisputeResponsePayload,
+  ) => {
+    setLoading(true);
+    setError(null);
+    try {
+      return await disputeService.addResponseEvidence(disputeId, payload);
+    } catch (err: any) {
+      const msg = err.message || 'Gửi bằng chứng phản hồi thất bại.';
+      setError(msg);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return {
     createDispute,
     uploadMedia,
+    addResponseEvidence,
     loading,
     error,
   };

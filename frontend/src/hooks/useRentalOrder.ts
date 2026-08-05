@@ -6,6 +6,7 @@ import { type PaginationMeta } from '@/lib/apiClient';
 import type {
   CreateRentalOrderRequest,
   GetRentalOrdersParams,
+  RentalFinancialSummary,
   RentalOrder,
 } from '@/types/rentals';
 
@@ -52,12 +53,18 @@ export function useRentalOrder() {
     } finally { setIsLoading(false); }
   }, []);
 
+  const fetchFinancialSummary = useCallback(
+    (): Promise<RentalFinancialSummary> =>
+      rentalOrderService.getFinancialSummary(),
+    [],
+  );
+
   const updateOrderStatus = useCallback(
-    async (id: string, action: keyof typeof rentalOrderService) => {
+    async (id: string, action: keyof typeof rentalOrderService, request?: unknown) => {
       setIsLoading(true); setError(null);
       try {
-        const method = rentalOrderService[action] as (id: string) => Promise<RentalOrder>;
-        const updated = await method(id);
+        const method = rentalOrderService[action] as (id: string, request?: unknown) => Promise<RentalOrder>;
+        const updated = await method(id, request);
         setCurrentOrder(updated);
         return updated;
       } catch (cause) {
@@ -76,12 +83,15 @@ export function useRentalOrder() {
     error,
     fetchOrders,
     fetchOrder,
+    fetchFinancialSummary,
     createOrder,
     setCurrentOrder,
     confirmOrder: (id: string) => updateOrderStatus(id, 'confirmRentalOrder'),
     shipOrder: (id: string) => updateOrderStatus(id, 'shipRentalOrder'),
-    confirmReceipt: (id: string) => updateOrderStatus(id, 'confirmRentalReceipt'),
-    returnOrder: (id: string) => updateOrderStatus(id, 'returnRentalOrder'),
+    confirmReceipt: (id: string, fileUrls: string[], note?: string) =>
+      updateOrderStatus(id, 'confirmRentalReceipt', { fileUrls, note }),
+    returnOrder: (id: string, fileUrls: string[], note?: string) =>
+      updateOrderStatus(id, 'returnRentalOrder', { fileUrls, note }),
     confirmReturn: (id: string) => updateOrderStatus(id, 'confirmRentalReturn'),
     cancelOrder: (id: string) => updateOrderStatus(id, 'cancelRentalOrder'),
   };

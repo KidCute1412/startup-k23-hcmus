@@ -4,7 +4,9 @@ import {
   ForbiddenException,
   Injectable,
   InternalServerErrorException,
+  Logger,
   NotFoundException,
+  Optional,
 } from '@nestjs/common';
 import {
   ApprovalStatusType,
@@ -22,6 +24,7 @@ import { CreateBatchRentalOrdersDto } from './dto/create-batch-rental-orders.dto
 import { GetRentalOrdersQueryDto } from './dto/get-rental-orders-query.dto';
 import { RentalOrderOrchestrationService } from './rental-order-orchestration.service';
 import { RentalOrdersRepository } from './rental-orders.repository';
+import { MediaService } from '../media/media.service';
 
 interface CurrentUser {
   id: string;
@@ -29,14 +32,26 @@ interface CurrentUser {
 }
 
 const MILLISECONDS_PER_DAY = 24 * 60 * 60 * 1000;
+const BUSINESS_TIME_ZONE_OFFSET_MS = 7 * 60 * 60 * 1000;
+const LAST_MILLISECOND = 1;
 export const RENTAL_BUSINESS_TIME_ZONE = 'Asia/Ho_Chi_Minh';
+
+interface PendingFinancialCommitment {
+  pendingCash: Prisma.Decimal;
+  pendingCreditDeposit: Prisma.Decimal;
+  pendingOrderCount: number;
+  pendingCreditOrderCount: number;
+}
 
 @Injectable()
 export class RentalOrdersService {
+  private readonly logger = new Logger(RentalOrdersService.name);
+
   constructor(
     private readonly rentalOrdersRepository: RentalOrdersRepository,
     private readonly orchestration: RentalOrderOrchestrationService,
     private readonly prisma: PrismaService,
+    @Optional() private readonly mediaService?: MediaService,
   ) {}
 
   async create(renterId: string, dto: CreateRentalOrderDto) {
@@ -58,7 +73,14 @@ export class RentalOrdersService {
     if (startDate.getTime() < today.getTime()) {
       throw new BadRequestException({
         error: 'START_DATE_IN_PAST',
-        message: `startDate cannot be before today in ${RENTAL_BUSINESS_TIME_ZONE}`,
+        message: `startDate cannot be in the past in ${RENTAL_BUSINESS_TIME_ZONE}`,
+      });
+    }
+    const earliestStartDate = new Date(today.getTime() + MILLISECONDS_PER_DAY);
+    if (startDate.getTime() < earliestStartDate.getTime()) {
+      throw new BadRequestException({
+        error: 'START_DATE_TOO_SOON',
+        message: `startDate must be tomorrow or later in ${RENTAL_BUSINESS_TIME_ZONE}`,
       });
     }
 
@@ -117,6 +139,8 @@ export class RentalOrdersService {
       shipping_address: shipping.address,
       shipping_name: shipping.name,
       shipping_phone: shipping.phone,
+      ship_deadline_at: this.shipDeadline(startDate),
+      return_deadline_at: this.returnDeadline(endDate),
     };
 
     return this.rentalOrdersRepository.create(data);
@@ -125,10 +149,24 @@ export class RentalOrdersService {
   async createLocked(renterId: string, dto: CreateRentalOrderDto) {
     const startDate = this.parseDateOnly(dto.startDate);
     const endDate = this.parseDateOnly(dto.endDate);
-    if (startDate >= endDate) {
+    if (startDate.getTime() >= endDate.getTime()) {
       throw new BadRequestException({
         error: 'INVALID_DATE_RANGE',
         message: 'startDate must be earlier than endDate',
+      });
+    }
+    const today = this.parseDateOnly(this.currentBusinessDate());
+    if (startDate.getTime() < today.getTime()) {
+      throw new BadRequestException({
+        error: 'START_DATE_IN_PAST',
+        message: `startDate cannot be in the past in ${RENTAL_BUSINESS_TIME_ZONE}`,
+      });
+    }
+    const earliestStartDate = new Date(today.getTime() + MILLISECONDS_PER_DAY);
+    if (startDate.getTime() < earliestStartDate.getTime()) {
+      throw new BadRequestException({
+        error: 'START_DATE_TOO_SOON',
+        message: `startDate must be tomorrow or later in ${RENTAL_BUSINESS_TIME_ZONE}`,
       });
     }
     return this.prisma.$transaction(async (tx) => {
@@ -202,6 +240,8 @@ export class RentalOrdersService {
           shipping_address: shipping.address,
           shipping_name: shipping.name,
           shipping_phone: shipping.phone,
+          ship_deadline_at: this.shipDeadline(startDate),
+          return_deadline_at: this.returnDeadline(endDate),
         },
       });
     });
@@ -311,6 +351,8 @@ export class RentalOrdersService {
           shipping_address: shipping.address,
           shipping_name: shipping.name,
           shipping_phone: shipping.phone,
+          ship_deadline_at: this.shipDeadline(item.start_date),
+          return_deadline_at: this.returnDeadline(item.end_date),
         });
       }
 
@@ -329,6 +371,65 @@ export class RentalOrdersService {
       await tx.cartItem.deleteMany({ where: { id: { in: itemIds } } });
       return { orders, removedCartItemIds: itemIds };
     });
+  }
+
+  async getFinancialSummary(renterId: string) {
+    const [cashWallet, creditWallet, pendingOrders] = await Promise.all([
+      this.prisma.renterWallet.findUnique({
+        where: { user_id: renterId },
+        select: { balance: true, locked_balance: true, status: true },
+      }),
+      this.prisma.mutuxWallet.findUnique({
+        where: { user_id: renterId },
+        select: {
+          display_balance: true,
+          locked_balance: true,
+          outstanding_debt: true,
+          status: true,
+          expired_at: true,
+        },
+      }),
+      this.prisma.rentalOrder.findMany({
+        where: {
+          renter_id: renterId,
+          status: OrderStatusType.pending_confirm,
+        },
+        select: {
+          rental_fee: true,
+          deposit_amount: true,
+          deposit_type: true,
+        },
+      }),
+    ]);
+
+    const commitment = this.calculatePendingCommitment(pendingOrders);
+    const balance = cashWallet?.balance ?? new Prisma.Decimal(0);
+    const lockedBalance = cashWallet?.locked_balance ?? new Prisma.Decimal(0);
+    const creditDisplayBalance =
+      creditWallet?.display_balance ?? new Prisma.Decimal(0);
+    const creditLockedBalance =
+      creditWallet?.locked_balance ?? new Prisma.Decimal(0);
+    const creditDebt = creditWallet?.outstanding_debt ?? new Prisma.Decimal(0);
+
+    return {
+      cash: {
+        balance: balance.toNumber(),
+        lockedBalance: lockedBalance.toNumber(),
+        availableBalance: balance.minus(lockedBalance).toNumber(),
+        pendingCashCommitment: commitment.pendingCash.toNumber(),
+      },
+      credit: {
+        availableCredit: creditDisplayBalance.toNumber(),
+        lockedBalance: creditLockedBalance.toNumber(),
+        outstandingDebt: creditDebt.toNumber(),
+        pendingDepositCommitment: commitment.pendingCreditDeposit.toNumber(),
+        status: creditWallet?.status ?? 'not_granted',
+        expiredAt: creditWallet?.expired_at ?? null,
+      },
+      pendingOrderCount: commitment.pendingOrderCount,
+      pendingCreditOrderCount: commitment.pendingCreditOrderCount,
+      walletStatus: cashWallet?.status ?? WalletStatusType.active,
+    };
   }
 
   private async resolveShippingAddress(
@@ -418,8 +519,36 @@ export class RentalOrdersService {
     return this.orchestration.confirmReceipt(userId, id);
   }
 
+  async confirmReceiptWithProof(
+    userId: string,
+    id: string,
+    fileUrls: string[],
+    note?: string,
+  ) {
+    return this.orchestration.confirmReceiptWithProof(
+      userId,
+      id,
+      await this.assertOwnedProofFiles(userId, fileUrls),
+      note,
+    );
+  }
+
   returnOrder(userId: string, id: string) {
     return this.orchestration.returnOrder(userId, id);
+  }
+
+  async returnWithProof(
+    userId: string,
+    id: string,
+    fileUrls: string[],
+    note?: string,
+  ) {
+    return this.orchestration.returnWithProof(
+      userId,
+      id,
+      await this.assertOwnedProofFiles(userId, fileUrls),
+      note,
+    );
   }
 
   confirmReturn(userId: string, id: string) {
@@ -434,6 +563,39 @@ export class RentalOrdersService {
 
     if (role === 'lender') return { lender_id: user.id };
     return { renter_id: user.id };
+  }
+
+  private shipDeadline(startDate: Date): Date {
+    // Date-only values are stored at UTC midnight. The deadline is 23:59:59.999
+    // in Vietnam on the previous calendar day.
+    return new Date(
+      startDate.getTime() - BUSINESS_TIME_ZONE_OFFSET_MS - LAST_MILLISECOND,
+    );
+  }
+
+  private returnDeadline(endDate: Date): Date {
+    // Date-only end dates represent a Vietnam calendar date, so 23:59:59.999
+    // Vietnam is 17:00 minus 1ms from the next UTC midnight representation.
+    return new Date(
+      endDate.getTime() +
+        MILLISECONDS_PER_DAY -
+        BUSINESS_TIME_ZONE_OFFSET_MS -
+        LAST_MILLISECOND,
+    );
+  }
+
+  private async assertOwnedProofFiles(
+    userId: string,
+    fileUrls: string[],
+  ): Promise<string[]> {
+    if (!this.mediaService) {
+      throw new InternalServerErrorException('Media service is unavailable');
+    }
+    return Promise.all(
+      fileUrls.map((fileUrl) =>
+        this.mediaService!.assertOwnedImageFile(userId, fileUrl),
+      ),
+    );
   }
 
   async assertCheckoutFunds(
@@ -465,15 +627,44 @@ export class RentalOrdersService {
       });
     }
 
-    const cashRequired =
+    const pendingOrders =
+      typeof tx.rentalOrder?.findMany === 'function'
+        ? await tx.rentalOrder.findMany({
+            where: {
+              renter_id: renterId,
+              status: OrderStatusType.pending_confirm,
+            },
+            select: {
+              rental_fee: true,
+              deposit_amount: true,
+              deposit_type: true,
+            },
+          })
+        : [];
+    const pending = this.calculatePendingCommitment(pendingOrders);
+    const currentCashRequired =
       depositType === DepositTypeEnum.traditional
         ? rentalFee.plus(depositAmount)
         : rentalFee;
+    const cashRequired = pending.pendingCash.plus(currentCashRequired);
     const availableCash = cashWallet.balance.minus(cashWallet.locked_balance);
     if (availableCash.lessThan(cashRequired)) {
+      const shortfall = cashRequired.minus(availableCash);
+      this.logger.warn(
+        `Rental checkout rejected for renter=${renterId}: cash shortfall=${shortfall.toString()}, pendingOrders=${pending.pendingOrderCount}`,
+      );
       throw new BadRequestException({
         error: 'INSUFFICIENT_CASH',
-        message: 'Renter wallet balance is insufficient for this order',
+        message:
+          'Renter wallet balance is insufficient for this order and pending rental orders',
+        details: {
+          available: availableCash.toNumber(),
+          pendingCommitment: pending.pendingCash.toNumber(),
+          currentOrderRequirement: currentCashRequired.toNumber(),
+          totalRequired: cashRequired.toNumber(),
+          shortfall: shortfall.toNumber(),
+          pendingOrderCount: pending.pendingOrderCount,
+        },
       });
     }
 
@@ -504,12 +695,55 @@ export class RentalOrdersService {
           : 'Mutux credit wallet is not active',
       });
     }
-    if (creditWallet.display_balance.lessThan(depositAmount)) {
+    const creditRequired = pending.pendingCreditDeposit.plus(depositAmount);
+    if (creditWallet.display_balance.lessThan(creditRequired)) {
+      const shortfall = creditRequired.minus(creditWallet.display_balance);
+      this.logger.warn(
+        `Rental checkout rejected for renter=${renterId}: credit shortfall=${shortfall.toString()}, pendingOrders=${pending.pendingOrderCount}`,
+      );
       throw new BadRequestException({
         error: 'INSUFFICIENT_CREDIT',
-        message: 'Mutux credit is not granted or is insufficient',
+        message:
+          'Mutux credit is not enough for this order and pending rental orders',
+        details: {
+          available: creditWallet.display_balance.toNumber(),
+          pendingCommitment: pending.pendingCreditDeposit.toNumber(),
+          currentOrderRequirement: depositAmount.toNumber(),
+          totalRequired: creditRequired.toNumber(),
+          shortfall: shortfall.toNumber(),
+          pendingOrderCount: pending.pendingOrderCount,
+        },
       });
     }
+  }
+
+  private calculatePendingCommitment(
+    orders: Array<{
+      rental_fee: Prisma.Decimal;
+      deposit_amount: Prisma.Decimal;
+      deposit_type: DepositTypeEnum;
+    }>,
+  ): PendingFinancialCommitment {
+    let pendingCash = new Prisma.Decimal(0);
+    let pendingCreditDeposit = new Prisma.Decimal(0);
+    let pendingCreditOrderCount = 0;
+
+    for (const order of orders) {
+      pendingCash = pendingCash.plus(order.rental_fee);
+      if (order.deposit_type === DepositTypeEnum.traditional) {
+        pendingCash = pendingCash.plus(order.deposit_amount);
+      } else {
+        pendingCreditDeposit = pendingCreditDeposit.plus(order.deposit_amount);
+        pendingCreditOrderCount += 1;
+      }
+    }
+
+    return {
+      pendingCash,
+      pendingCreditDeposit,
+      pendingOrderCount: orders.length,
+      pendingCreditOrderCount,
+    };
   }
 
   private parseDateOnly(value: string): Date {

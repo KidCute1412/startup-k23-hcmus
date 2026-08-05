@@ -20,6 +20,7 @@ interface WalletPrismaMock {
   $transaction: jest.Mock;
   renterWallet: { upsert: jest.Mock };
   mutuxWallet: { findUnique: jest.Mock };
+  renterWalletTransaction: { findUnique: jest.Mock };
   walletTopup: { create: jest.Mock; findFirst: jest.Mock };
   user: { findUnique: jest.Mock };
 }
@@ -64,6 +65,9 @@ describe('WalletsService', () => {
       $transaction: jest.fn((callback) => callback(tx)),
       renterWallet: { upsert: jest.fn() },
       mutuxWallet: { findUnique: jest.fn() },
+      renterWalletTransaction: {
+        findUnique: jest.fn().mockResolvedValue(null),
+      },
       user: {
         findUnique: jest.fn().mockResolvedValue({ lender_enabled: true }),
       },

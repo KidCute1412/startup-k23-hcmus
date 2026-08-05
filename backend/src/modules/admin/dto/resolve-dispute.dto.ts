@@ -1,5 +1,5 @@
 import {
-  IsEnum,
+  IsIn,
   IsOptional,
   IsString,
   MaxLength,
@@ -9,10 +9,20 @@ import {
 } from 'class-validator';
 
 export enum ResolutionType {
-  refund = 'refund',
-  deposit_deduct = 'deposit_deduct',
+  renter_compensation = 'renter_compensation',
+  lender_compensation = 'lender_compensation',
   no_action = 'no_action',
+  /** @deprecated Use renter_compensation. Kept for persisted dispute records. */
+  refund = 'refund',
+  /** @deprecated Use lender_compensation. Kept for persisted dispute records. */
+  deposit_deduct = 'deposit_deduct',
 }
+
+const REQUEST_RESOLUTION_TYPES: readonly ResolutionType[] = [
+  ResolutionType.renter_compensation,
+  ResolutionType.lender_compensation,
+  ResolutionType.no_action,
+] as const;
 
 function IsValidDeductAmount(validationOptions?: ValidationOptions) {
   return (object: object, propertyName: string) => {
@@ -24,7 +34,10 @@ function IsValidDeductAmount(validationOptions?: ValidationOptions) {
       validator: {
         validate(value: unknown, args: ValidationArguments) {
           const dto = args.object as ResolveDisputeDto;
-          if (dto.resolutionType !== ResolutionType.deposit_deduct) {
+          if (!REQUEST_RESOLUTION_TYPES.includes(dto.resolutionType)) {
+            return true;
+          }
+          if (dto.resolutionType === ResolutionType.no_action) {
             return value === undefined;
           }
           return (
@@ -33,9 +46,9 @@ function IsValidDeductAmount(validationOptions?: ValidationOptions) {
         },
         defaultMessage(args: ValidationArguments) {
           const dto = args.object as ResolveDisputeDto;
-          return dto.resolutionType !== ResolutionType.deposit_deduct
+          return dto.resolutionType === ResolutionType.no_action
             ? `deductAmount is not allowed for ${dto.resolutionType}`
-            : 'deductAmount must be a positive integer for deposit_deduct';
+            : 'deductAmount must be a positive integer for compensation settlement';
         },
       },
     });
@@ -43,7 +56,7 @@ function IsValidDeductAmount(validationOptions?: ValidationOptions) {
 }
 
 export class ResolveDisputeDto {
-  @IsEnum(ResolutionType)
+  @IsIn(REQUEST_RESOLUTION_TYPES)
   resolutionType: ResolutionType;
 
   @IsValidDeductAmount()

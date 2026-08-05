@@ -9,6 +9,18 @@ import { DatePicker, Input } from "@/components/ui/field";
 import { useCart } from "@/features/cart/cart-context";
 import { formatCurrency } from "@/lib/format";
 
+function tomorrowDate() {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Ho_Chi_Minh",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(new Date());
+  const values = Object.fromEntries(parts.map(({ type, value }) => [type, value]));
+  const date = new Date(Date.UTC(Number(values.year), Number(values.month) - 1, Number(values.day) + 1));
+  return date.toISOString().slice(0, 10);
+}
+
 export function CartClient() {
   const {
     items, removeItem, selectedItemIds, toggleSelectItem, selectAll, clearSelected,
@@ -18,6 +30,8 @@ export function CartClient() {
   const selected = items.filter((item) => selectedItemIds.includes(item.id));
   const total = selected.reduce((sum, item) => sum + item.rentalFee, 0);
   const allSelected = eligible.length > 0 && eligible.every((item) => selectedItemIds.includes(item.id));
+  const earliestStartDate = tomorrowDate();
+  const hasTooSoonStartDate = items.some((item) => item.startDate < earliestStartDate);
 
   if (loading) return <Card className="p-12 text-center">Đang tải giỏ hàng…</Card>;
   if (role !== "renter") {
@@ -62,6 +76,11 @@ export function CartClient() {
             <div>
               <Link href={`/gears/${item.gear.id}`} className="font-display text-lg font-bold hover:text-vanguard-primary">{item.gear.name}</Link>
               <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                {hasTooSoonStartDate && (
+                  <p className="sm:col-span-2 text-xs text-amber-500">
+                    Ngày bắt đầu thuê phải từ ngày mai trở đi để lender có thời gian chuẩn bị và giao gear.
+                  </p>
+                )}
                 <DatePicker value={item.startDate} disabled={mutating} onChange={(val) => void upsertItem(item.gearId, val, item.endDate)} placeholder="Từ ngày" />
                 <DatePicker value={item.endDate} disabled={mutating} min={item.startDate} onChange={(val) => void upsertItem(item.gearId, item.startDate, val)} placeholder="Đến ngày" />
               </div>

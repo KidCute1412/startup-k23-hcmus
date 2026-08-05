@@ -8,6 +8,7 @@ import {
   OrderStatusType,
   Prisma,
   ProofStageEnum,
+  ProofTypeEnum,
   type RentalOrder,
 } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
@@ -37,6 +38,12 @@ interface TransitionRule {
 
 type LockedOrder = RentalOrder;
 const PLATFORM_FEE_RATE = 0.15;
+
+interface ProofUpload {
+  stage: ProofStageEnum;
+  fileUrls: string[];
+  note?: string;
+}
 
 export const RENTAL_ORDER_TRANSITION_MATRIX: readonly TransitionRule[] = [
   {
@@ -118,8 +125,37 @@ export class RentalOrderOrchestrationService {
     return this.transition(userId, orderId, 'confirm-receipt');
   }
 
+  confirmReceiptWithProof(
+    userId: string,
+    orderId: string,
+    fileUrls: string[],
+    note?: string,
+  ) {
+    return this.transition(
+      userId,
+      orderId,
+      'confirm-receipt',
+      undefined,
+      undefined,
+      { stage: ProofStageEnum.post_received, fileUrls, note },
+    );
+  }
+
   returnOrder(userId: string, orderId: string) {
     return this.transition(userId, orderId, 'return');
+  }
+
+  returnWithProof(
+    userId: string,
+    orderId: string,
+    fileUrls: string[],
+    note?: string,
+  ) {
+    return this.transition(userId, orderId, 'return', undefined, undefined, {
+      stage: ProofStageEnum.pre_return,
+      fileUrls,
+      note,
+    });
   }
 
   confirmReturn(userId: string, orderId: string) {
@@ -139,6 +175,7 @@ export class RentalOrderOrchestrationService {
     additionalUpdateData?: (
       order: LockedOrder,
     ) => Prisma.RentalOrderUpdateInput,
+    proofUpload?: ProofUpload,
   ) {
     const rule = RENTAL_ORDER_TRANSITION_MATRIX.find(
       (candidate) => candidate.action === action,
@@ -177,7 +214,35 @@ export class RentalOrderOrchestrationService {
         });
       }
 
+      if (
+        action === 'ship' &&
+        order.ship_deadline_at &&
+        new Date() > order.ship_deadline_at
+      ) {
+        await this.escrowService.refundLateDelivery(orderId, tx);
+        return tx.rentalOrder.update({
+          where: { id: orderId },
+          data: {
+            status: OrderStatusType.cancelled,
+            cancelled_reason: 'late_delivery_refund',
+          },
+        });
+      }
+
       await this.assertRequiredProofs(tx, order, rule);
+      if (proofUpload) {
+        await this.assertNoExistingProof(tx, order.id, proofUpload.stage);
+        await tx.rentalProof.createMany({
+          data: proofUpload.fileUrls.map((fileUrl) => ({
+            rental_order_id: order.id,
+            uploaded_by: userId,
+            stage: proofUpload.stage,
+            proof_type: ProofTypeEnum.image,
+            file_url: fileUrl,
+            note: proofUpload.note,
+          })),
+        });
+      }
       await financialSideEffect?.(tx, order);
 
       const data: Prisma.RentalOrderUpdateInput = {
@@ -232,6 +297,23 @@ export class RentalOrderOrchestrationService {
           message: `Proof ${stage} is required before ${rule.action}`,
         });
       }
+    }
+  }
+
+  private async assertNoExistingProof(
+    tx: Prisma.TransactionClient,
+    orderId: string,
+    stage: ProofStageEnum,
+  ): Promise<void> {
+    const exists = await tx.rentalProof.findFirst({
+      where: { rental_order_id: orderId, stage },
+      select: { id: true },
+    });
+    if (exists) {
+      throw new BadRequestException({
+        error: 'PROOF_STAGE_ALREADY_SUBMITTED',
+        message: `Proof stage ${stage} has already been submitted`,
+      });
     }
   }
 }

@@ -8,6 +8,7 @@ import type { BatchCheckoutRequest, Cart } from "@/types/cart";
 import type { User } from "@/types/auth";
 
 export const messages: Record<string, string> = {
+  START_DATE_TOO_SOON: "Ngày bắt đầu thuê phải từ ngày mai trở đi để lender có thời gian chuẩn bị và giao gear.",
   INVALID_DATE_RANGE: "Khoảng ngày thuê không hợp lệ.",
   GEAR_NOT_AVAILABLE: "Gear hiện không thể cho thuê.",
   CANNOT_RENT_OWN_GEAR: "Bạn không thể thuê gear của chính mình.",

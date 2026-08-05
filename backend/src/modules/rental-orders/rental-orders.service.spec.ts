@@ -174,6 +174,12 @@ describe('RentalOrdersService', () => {
     creditStatus?: WalletStatusType;
     creditExpiredAt?: Date | null;
     hasCredit?: boolean;
+    feeCharged?: boolean;
+    pendingOrders?: Array<{
+      rental_fee: number;
+      deposit_amount: number;
+      deposit_type: DepositTypeEnum;
+    }>;
   }) {
     const values = {
       cashBalance: 5_000_000,
@@ -183,6 +189,8 @@ describe('RentalOrdersService', () => {
       creditStatus: WalletStatusType.active,
       creditExpiredAt: null,
       hasCredit: true,
+      feeCharged: false,
+      pendingOrders: [],
       ...options,
     };
     return {
@@ -195,6 +203,20 @@ describe('RentalOrdersService', () => {
           locked_balance: new Prisma.Decimal(values.cashLocked),
           status: values.cashStatus,
         }),
+      },
+      renterWalletTransaction: {
+        findUnique: jest
+          .fn()
+          .mockResolvedValue(values.feeCharged ? { id: 'fee-tx' } : null),
+      },
+      rentalOrder: {
+        findMany: jest.fn().mockResolvedValue(
+          values.pendingOrders.map((order) => ({
+            rental_fee: new Prisma.Decimal(order.rental_fee),
+            deposit_amount: new Prisma.Decimal(order.deposit_amount),
+            deposit_type: order.deposit_type,
+          })),
+        ),
       },
       mutuxWallet: {
         findUnique: jest
@@ -262,6 +284,24 @@ describe('RentalOrdersService', () => {
       status: 400,
       response: { error: 'INSUFFICIENT_CREDIT' },
     });
+  });
+
+  it('requires only the rental fee for a credit-line checkout', async () => {
+    const tx = checkoutWalletTx({
+      cashBalance: 400_000,
+      cashLocked: 0,
+      creditBalance: 5_000_000,
+    });
+
+    await expect(
+      service.assertCheckoutFunds(
+        tx,
+        'renter-id',
+        DepositTypeEnum.credit_line,
+        new Prisma.Decimal(400_000),
+        new Prisma.Decimal(4_500_000),
+      ),
+    ).resolves.toBeUndefined();
   });
 
   it('rejects checkout when the renter wallet is inactive', async () => {
@@ -417,16 +457,119 @@ describe('RentalOrdersService', () => {
     expect(repository.findGearById).not.toHaveBeenCalled();
   });
 
-  it('allows startDate on the current Ho Chi Minh business date', async () => {
+  it('rejects startDate on the current Ho Chi Minh business date', async () => {
     await expect(
       service.create('renter-id', {
         ...dto,
         startDate: '2026-07-29',
         endDate: '2026-07-30',
       }),
-    ).resolves.toMatchObject({
-      status: OrderStatusType.pending_confirm,
+    ).rejects.toMatchObject({
+      status: 400,
+      response: { error: 'START_DATE_TOO_SOON' },
     });
+  });
+
+  it('includes existing pending orders in the cash affordability check', async () => {
+    const tx = checkoutWalletTx({
+      cashBalance: 5_000_000,
+      cashLocked: 0,
+      pendingOrders: [
+        {
+          rental_fee: 500_000,
+          deposit_amount: 1_000_000,
+          deposit_type: DepositTypeEnum.traditional,
+        },
+      ],
+    });
+
+    await expect(
+      service.assertCheckoutFunds(
+        tx,
+        'renter-id',
+        DepositTypeEnum.traditional,
+        new Prisma.Decimal(2_500_000),
+        new Prisma.Decimal(1_500_000),
+      ),
+    ).rejects.toMatchObject({
+      response: {
+        error: 'INSUFFICIENT_CASH',
+        details: {
+          pendingCommitment: 1_500_000,
+          totalRequired: 5_500_000,
+          shortfall: 500_000,
+        },
+      },
+    });
+  });
+
+  it('includes existing pending credit deposits without double-counting the usage fee', async () => {
+    const tx = checkoutWalletTx({
+      cashBalance: 5_000_000,
+      cashLocked: 0,
+      creditBalance: 4_000_000,
+      feeCharged: true,
+      pendingOrders: [
+        {
+          rental_fee: 200_000,
+          deposit_amount: 3_000_000,
+          deposit_type: DepositTypeEnum.credit_line,
+        },
+      ],
+    });
+
+    await expect(
+      service.assertCheckoutFunds(
+        tx,
+        'renter-id',
+        DepositTypeEnum.credit_line,
+        new Prisma.Decimal(200_000),
+        new Prisma.Decimal(1_500_000),
+      ),
+    ).rejects.toMatchObject({
+      response: {
+        error: 'INSUFFICIENT_CREDIT',
+        details: {
+          pendingCommitment: 3_000_000,
+          totalRequired: 4_500_000,
+          shortfall: 500_000,
+        },
+      },
+    });
+  });
+
+  it('stores the shipment deadline at the previous business-day midnight', async () => {
+    const result = await service.create('renter-id', {
+      ...dto,
+      startDate: '2026-08-01',
+      endDate: '2026-08-02',
+    });
+
+    expect(result).toMatchObject({
+      ship_deadline_at: new Date('2026-07-31T16:59:59.999Z'),
+      return_deadline_at: new Date('2026-08-02T16:59:59.999Z'),
+    });
+  });
+
+  it('rejects a checkout when the delivery address is not owned by the renter', async () => {
+    const addressLookup = jest.fn().mockResolvedValue(null);
+    const addressPrisma = {
+      userAddress: { findFirst: addressLookup },
+    } as unknown as PrismaService;
+    const addressService = new RentalOrdersService(
+      repository as unknown as RentalOrdersRepository,
+      new RentalOrderOrchestrationService(
+        addressPrisma,
+        escrowService as unknown as EscrowService,
+      ),
+      addressPrisma,
+    );
+
+    await expect(addressService.create('renter-id', dto)).rejects.toMatchObject(
+      {
+        response: { error: 'ADDRESS_NOT_FOUND' },
+      },
+    );
   });
 
   it('blocks overlap only for non-terminal order statuses', () => {

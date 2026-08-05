@@ -15,14 +15,14 @@ tests {
     expect(res.getStatus()).to.equal(200);
     expect(res.getBody().success).to.equal(true);
     expect(res.getBody().data.status).to.equal("resolved");
-    expect(res.getBody().data.resolutionType).to.equal("deposit_deduct");
+    expect(res.getBody().data.resolutionType).to.equal("lender_compensation");
     expect(res.getBody().data.deductAmount).to.equal(1500000);
   });
 }
 
 body:json {
   {
-    "resolutionType": "deposit_deduct",
+    "resolutionType": "lender_compensation",
     "deductAmount": 1500000,
     "resolutionNote": "Khấu trừ 1.500.000đ do làm nứt vỏ nhôm"
   }
@@ -31,11 +31,11 @@ body:json {
 docs {
   # POST /api/v1/admin/disputes/:id/resolve
   
-  Atomically updates dispute status and triggers financial settlement via `EscrowService` within a single `prisma.$transaction`. `no_action` follows the same release path as `refund` and does not accept `deductAmount`.
+  Atomically updates dispute status and triggers financial settlement via `EscrowService` within a single `prisma.$transaction`. `no_action` releases escrow and does not accept `deductAmount`.
   
   ## Resolution Types & Expected Balances
   
-  ### 1. `resolutionType = "deposit_deduct"` (deductAmount = X)
+  ### 1. `resolutionType = "lender_compensation"` (deductAmount = X)
   - **Traditional Deposit (`renter_cash`)**:
     - Renter cash `balance` -= X
     - Renter cash `locked_balance` -= escrow.amount (remaining `escrow.amount - X` unlocked)
@@ -48,7 +48,7 @@ docs {
     - Lender `balance` += lenderIncome + X
     - Escrow status -> `compensated`
 
-  ### 2. `resolutionType = "refund"`
+  ### 2. `resolutionType = "no_action"`
   - **Traditional Deposit (`renter_cash`)**:
     - Renter cash `locked_balance` -= escrow.amount (full deposit unlocked)
     - Lender `balance` += lenderIncome

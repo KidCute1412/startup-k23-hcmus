@@ -32,8 +32,14 @@ const ORDER_STATUS_LABELS: Record<RentalOrder["status"], string> = {
 };
 
 function dateOffset(days: number) {
-  const value = new Date();
-  value.setDate(value.getDate() + days);
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Ho_Chi_Minh",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(new Date());
+  const values = Object.fromEntries(parts.map(({ type, value }) => [type, value]));
+  const value = new Date(Date.UTC(Number(values.year), Number(values.month) - 1, Number(values.day) + days));
   return value.toISOString().slice(0, 10);
 }
 

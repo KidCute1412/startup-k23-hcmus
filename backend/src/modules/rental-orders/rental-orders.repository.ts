@@ -116,7 +116,7 @@ export class RentalOrdersRepository {
             rating: true,
           },
         },
-        disputes: true,
+        disputes: { include: { evidences: true } },
       },
     });
   }

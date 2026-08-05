@@ -92,6 +92,8 @@ describeIntegration('Dispute workflow (PostgreSQL integration)', () => {
     });
     mkdirSync(join(uploadsRoot, renterId), { recursive: true });
     writeFileSync(join(uploadsRoot, renterId, 'evidence.jpg'), 'image');
+    mkdirSync(join(uploadsRoot, lenderId), { recursive: true });
+    writeFileSync(join(uploadsRoot, lenderId, 'response.jpg'), 'image');
   });
 
   async function createOrder(status: OrderStatusType) {
@@ -161,6 +163,86 @@ describeIntegration('Dispute workflow (PostgreSQL integration)', () => {
     await expect(
       prisma.rentalOrder.findUniqueOrThrow({ where: { id: order.id } }),
     ).resolves.toMatchObject({ status: OrderStatusType.disputed });
+  });
+
+  it('allows the other participant to submit one response-evidence batch', async () => {
+    const order = await createOrder(OrderStatusType.active);
+    const dispute = await disputesService.create(renterId, {
+      rentalOrderId: order.id,
+      reason: DisputeReasonEnum.device_damaged,
+      evidences: [
+        {
+          mediaType: DisputeEvidenceMediaType.image,
+          url: `/uploads/${renterId}/evidence.jpg`,
+        },
+      ],
+    });
+
+    const response = await disputesService.addResponseEvidence(
+      lenderId,
+      dispute.id,
+      {
+        evidences: [
+          {
+            mediaType: DisputeEvidenceMediaType.image,
+            url: `/uploads/${lenderId}/response.jpg`,
+          },
+        ],
+      },
+    );
+
+    expect(response.id).toBe(dispute.id);
+    const responseDeadlineAt = (response as { responseDeadlineAt: unknown })
+      .responseDeadlineAt;
+    expect(responseDeadlineAt).toBeInstanceOf(Date);
+    expect(
+      await prisma.disputeEvidence.count({
+        where: { dispute_id: dispute.id, uploaded_by: lenderId },
+      }),
+    ).toBe(1);
+    await expect(
+      disputesService.addResponseEvidence(lenderId, dispute.id, {
+        evidences: [
+          {
+            mediaType: DisputeEvidenceMediaType.image,
+            url: `/uploads/${lenderId}/response.jpg`,
+          },
+        ],
+      }),
+    ).rejects.toMatchObject({
+      response: { error: 'RESPONSE_EVIDENCE_ALREADY_SUBMITTED' },
+    });
+  });
+
+  it('rejects response evidence after three days', async () => {
+    const order = await createOrder(OrderStatusType.active);
+    const dispute = await disputesService.create(renterId, {
+      rentalOrderId: order.id,
+      reason: DisputeReasonEnum.device_damaged,
+      evidences: [
+        {
+          mediaType: DisputeEvidenceMediaType.image,
+          url: `/uploads/${renterId}/evidence.jpg`,
+        },
+      ],
+    });
+    await prisma.dispute.update({
+      where: { id: dispute.id },
+      data: { created_at: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000) },
+    });
+
+    await expect(
+      disputesService.addResponseEvidence(lenderId, dispute.id, {
+        evidences: [
+          {
+            mediaType: DisputeEvidenceMediaType.image,
+            url: `/uploads/${lenderId}/response.jpg`,
+          },
+        ],
+      }),
+    ).rejects.toMatchObject({
+      response: { error: 'RESPONSE_DEADLINE_PASSED' },
+    });
   });
 
   it.each([

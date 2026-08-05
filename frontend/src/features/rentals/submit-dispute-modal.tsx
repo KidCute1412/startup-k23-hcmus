@@ -11,6 +11,8 @@ interface SubmitDisputeModalProps {
   orderId: string;
   orderCode?: string;
   onSuccess: () => void;
+  mode?: "create" | "response";
+  disputeId?: string;
 }
 
 const REASON_OPTIONS: Array<{ value: DisputeReason; label: string }> = [
@@ -28,8 +30,10 @@ export function SubmitDisputeModal({
   orderId,
   orderCode,
   onSuccess,
+  mode = "create",
+  disputeId,
 }: SubmitDisputeModalProps) {
-  const { createDispute, uploadMedia } = useDispute();
+  const { createDispute, addResponseEvidence, uploadMedia } = useDispute();
   const [reason, setReason] = useState<DisputeReason>("device_damaged");
   const [description, setDescription] = useState<string>("");
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
@@ -66,7 +70,7 @@ export function SubmitDisputeModal({
     e.preventDefault();
     setErrorMessage(null);
 
-    if (!description.trim()) {
+    if (mode === "create" && !description.trim()) {
       setErrorMessage("Vui lòng nhập mô tả chi tiết về sự cố.");
       return;
     }
@@ -85,16 +89,22 @@ export function SubmitDisputeModal({
         uploadedUrls.push(url);
       }
 
-      // 2. Submit dispute API
-      await createDispute({
-        rentalOrderId: orderId,
-        reason,
-        description: description.trim(),
-        evidences: uploadedUrls.map((url) => ({
-          mediaType: "image",
-          url,
-        })),
-      });
+      if (mode === "response") {
+        if (!disputeId) throw new Error("Thiếu mã khiếu nại.");
+        await addResponseEvidence(disputeId, {
+          evidences: uploadedUrls.map((url) => ({ mediaType: "image", url })),
+        });
+      } else {
+        await createDispute({
+          rentalOrderId: orderId,
+          reason,
+          description: description.trim(),
+          evidences: uploadedUrls.map((url) => ({
+            mediaType: "image",
+            url,
+          })),
+        });
+      }
 
       onSuccess();
       onClose();
@@ -108,8 +118,8 @@ export function SubmitDisputeModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm">
-      <div className="relative w-full max-w-lg rounded-xl border border-red-500/30 bg-vanguard-dark-card p-6 shadow-2xl">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4 backdrop-blur-sm">
+      <div className="relative w-full max-w-lg rounded-xl border border-red-500/30 bg-vanguard-dark-surf p-6 shadow-2xl">
         {/* Close Button */}
         <button
           onClick={onClose}
@@ -123,7 +133,7 @@ export function SubmitDisputeModal({
         <div className="flex items-center space-x-3 text-red-400 mb-4">
           <AlertTriangle className="h-6 w-6" />
           <h2 className="font-display text-xl font-bold uppercase tracking-wider text-white">
-            Báo cáo khiếu nại đơn thuê
+            {mode === "response" ? "Gửi bằng chứng phản hồi" : "Báo cáo khiếu nại đơn thuê"}
           </h2>
         </div>
 
@@ -141,7 +151,7 @@ export function SubmitDisputeModal({
 
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Reason Selection */}
-          <div>
+          {mode === "create" && <div>
             <label className="block text-xs font-bold uppercase tracking-wider text-gray-300 mb-1.5">
               Lý do khiếu nại <span className="text-red-400">*</span>
             </label>
@@ -156,10 +166,10 @@ export function SubmitDisputeModal({
                 </option>
               ))}
             </select>
-          </div>
+          </div>}
 
           {/* Description */}
-          <div>
+          {mode === "create" && <div>
             <label className="block text-xs font-bold uppercase tracking-wider text-gray-300 mb-1.5">
               Mô tả chi tiết sự cố <span className="text-red-400">*</span>
             </label>
@@ -170,12 +180,12 @@ export function SubmitDisputeModal({
               placeholder="Mô tả cụ thể tình trạng hư hỏng, thiếu phụ kiện hoặc lý do bạn gửi khiếu nại..."
               className="w-full rounded-lg border border-gray-700 bg-vanguard-dark-bg p-2.5 text-sm text-white placeholder-gray-500 focus:border-vanguard-primary focus:outline-none"
             />
-          </div>
+          </div>}
 
           {/* File Upload */}
           <div>
             <label className="block text-xs font-bold uppercase tracking-wider text-gray-300 mb-1.5">
-              Hình ảnh bằng chứng (1 - 5 ảnh) <span className="text-red-400">*</span>
+              {mode === "response" ? "Hình ảnh kháng cáo (1 - 5 ảnh)" : "Hình ảnh bằng chứng (1 - 5 ảnh)"} <span className="text-red-400">*</span>
             </label>
 
             {/* Previews */}
@@ -231,7 +241,7 @@ export function SubmitDisputeModal({
                   <span>Đang gửi...</span>
                 </>
               ) : (
-                <span>Gửi khiếu nại</span>
+                <span>{mode === "response" ? "Gửi bằng chứng" : "Gửi khiếu nại"}</span>
               )}
             </button>
           </div>

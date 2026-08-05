@@ -2,6 +2,7 @@
 
 import { CheckCircle, ChevronRight, ImageIcon, Plus, Trash2, X, Upload, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { useEffect, useState } from "react";
 import { useMedia } from "@/hooks/useMedia";
 import { resolveMediaUrl } from "@/lib/media";
@@ -456,7 +457,7 @@ export function EditGearForm({ gearId }: Props) {
                   <div className="mt-2 grid grid-cols-3 gap-2">
                     {imageUrls.map((url, i) => (
                       <div key={i} className="relative aspect-video w-full overflow-hidden rounded-v-sm border border-vanguard-light-border dark:border-vanguard-dark-border group">
-                        <img src={resolveMediaUrl(url) ?? url} alt={`Preview ${i}`} className="h-full w-full object-cover" />
+                        <Image src={resolveMediaUrl(url) ?? url} alt={`Preview ${i}`} fill sizes="(max-width: 768px) 33vw, 200px" className="h-full w-full object-cover" />
                         <button type="button" onClick={() => setImageUrls(imageUrls.filter((_, idx) => idx !== i))} className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity">
                           <X size={12} />
                         </button>
@@ -576,7 +577,7 @@ export function EditGearForm({ gearId }: Props) {
                     </span>
                   )}
                   {imageUrls.length > 0 ? (
-                    <img src={resolveMediaUrl(imageUrls[0]) ?? imageUrls[0]} alt={name} className="h-full w-full object-cover" />
+                    <Image src={resolveMediaUrl(imageUrls[0]) ?? imageUrls[0]} alt={name} fill sizes="(max-width: 768px) 100vw, 640px" className="h-full w-full object-cover" />
                   ) : (
                     <div className="flex h-full flex-col items-center justify-center gap-2 text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted">
                       <ImageIcon size={32} />

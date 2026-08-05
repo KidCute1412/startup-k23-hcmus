@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { resolveMediaUrl, type AccountUser, useAccount } from "@/hooks/useAccount";
 import { useAuth } from "@/hooks/useAuth";
+import Image from "next/image";
 
 const inputClass = "w-full rounded-v-sm border border-vanguard-light-border bg-vanguard-light-surf px-3 py-2.5 text-sm outline-none focus:border-vanguard-primary dark:border-vanguard-dark-border dark:bg-vanguard-dark-surfDim";
 
@@ -67,7 +68,7 @@ export function AdminProfile() {
     <Card className="p-6">
       <div className="mb-6 flex items-center gap-4">
         <button type="button" onClick={() => fileRef.current?.click()} className="flex size-20 items-center justify-center overflow-hidden rounded-full border-2 border-vanguard-primary bg-vanguard-primary/10 text-2xl font-bold text-vanguard-primary">
-          {resolveMediaUrl(avatarUrl) ? <img src={resolveMediaUrl(avatarUrl) ?? ""} alt="Ảnh đại diện admin" className="size-full object-cover" /> : initials}
+          {resolveMediaUrl(avatarUrl) ? <Image src={resolveMediaUrl(avatarUrl) ?? ""} alt="Ảnh đại diện admin" width={80} height={80} className="size-full object-cover" /> : initials}
         </button>
         <div><h2 className="font-display text-xl font-bold">{profile.fullName || "Admin Mutux"}</h2><p className="text-sm text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted">{profile.email}</p><input ref={fileRef} type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={(event) => { const file = event.target.files?.[0]; if (file) void uploadAvatar(file); }} /><button type="button" onClick={() => fileRef.current?.click()} className="mt-2 text-xs font-bold text-vanguard-primary">Đổi ảnh đại diện</button></div>
       </div>

@@ -41,14 +41,14 @@ interface OrdersOverviewProps {
 }
 
 export function OrdersOverview({ viewRole = 'renter', detailBasePath = '/orders' }: OrdersOverviewProps) {
-  const { orders, isLoading, fetchOrders } = useRentalOrder();
+  const { orders, isLoading, error, fetchOrders } = useRentalOrder();
   const { user } = useAuth();
   const [selectedStatus, setSelectedStatus] = useState<string>("all");
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [disputeOrder, setDisputeOrder] = useState<{ id: string; code: string } | null>(null);
 
   useEffect(() => {
-    fetchOrders({ role: viewRole }).catch(console.error);
+    void fetchOrders({ role: viewRole }).catch(() => undefined);
   }, [fetchOrders, viewRole]);
 
   const filterTabs = [
@@ -121,8 +121,29 @@ export function OrdersOverview({ viewRole = 'renter', detailBasePath = '/orders'
             Đang tải dữ liệu đơn thuê...
           </div>
         )}
+        {!isLoading && error && (
+          <Card className="p-12 text-center">
+            <p className="font-display text-lg font-bold">Không thể tải lịch sử đơn thuê</p>
+            <p className="mt-1 text-xs text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted">
+              {error}
+            </p>
+            <button
+              type="button"
+              onClick={() => void fetchOrders({ role: viewRole }).catch(() => undefined)}
+              className="mt-5 inline-flex items-center justify-center rounded-v-sm border border-vanguard-primary px-4 py-2 text-xs font-bold uppercase tracking-wider text-vanguard-primary transition hover:bg-vanguard-primary hover:text-vanguard-dark-bg"
+            >
+              Thử lại
+            </button>
+          </Card>
+        )}
         {!isLoading && filteredOrders.map((order) => {
           const config = statusConfig[order.status] || statusConfig.pending_confirm;
+          const hasResolvedDispute =
+            order.status === "completed" &&
+            order.disputes?.some(
+              (dispute) =>
+                dispute.status === "resolved" || dispute.status === "closed",
+            );
           const gearImage = resolveMediaUrl(order.gear?.media?.[0]?.url);
           const gearTitle = order.gear?.name || "Sản phẩm chưa rõ";
           const code = order.order_code || order.id.slice(0, 8).toUpperCase();
@@ -137,7 +158,9 @@ export function OrdersOverview({ viewRole = 'renter', detailBasePath = '/orders'
           const renterId = order.renter?.id ?? order.renterId ?? order.renter_id;
           const lenderId = order.lender?.id ?? order.lenderId ?? order.lender_id;
           const isParticipant = user?.id === renterId || user?.id === lenderId;
-          const canDispute = isParticipant && (order.status === 'active' || order.status === 'returning');
+           const canDispute = viewRole === 'lender'
+             ? user?.id === lenderId && order.status === 'returning'
+             : user?.id === renterId && (order.status === 'delivering' || order.status === 'active' || order.status === 'returning');
 
           return (
             <Card key={order.id} className="p-5 hover:border-vanguard-primary/50 transition">
@@ -156,7 +179,11 @@ export function OrdersOverview({ viewRole = 'renter', detailBasePath = '/orders'
                       <span className="font-mono text-xs font-bold uppercase tracking-wider text-vanguard-primary">
                         {code}
                       </span>
-                      <Badge tone={config.tone}>{config.label}</Badge>
+                       <Badge tone={config.tone}>
+                         {hasResolvedDispute
+                           ? "Đã hoàn tất - Đã phân xử"
+                           : config.label}
+                       </Badge>
                     </div>
                     <Link
                       href={`${detailBasePath}/${order.id}`}
@@ -204,7 +231,7 @@ export function OrdersOverview({ viewRole = 'renter', detailBasePath = '/orders'
           );
         })}
 
-        {!isLoading && filteredOrders.length === 0 && (
+        {!isLoading && !error && filteredOrders.length === 0 && (
           <Card className="p-12 text-center">
             <p className="font-display text-lg font-bold">Không có đơn thuê nào</p>
             <p className="text-xs text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted mt-1">

@@ -1,47 +1,80 @@
-import { apiClient, apiClientPaginated, type PaginationMeta } from '@/lib/apiClient';
+import {
+  apiClient,
+  apiClientPaginated,
+  type PaginationMeta,
+} from "@/lib/apiClient";
 import type {
   CreateRentalOrderRequest,
   GetRentalOrdersParams,
   RentalOrder,
-} from '@/types/rentals';
+  RentalFinancialSummary,
+  UploadProofBatchRequest,
+} from "@/types/rentals";
 
 export const rentalOrderService = {
   getRentalOrders: async (params: GetRentalOrdersParams = {}) => {
     const query = new URLSearchParams();
-    if (params.page) query.set('page', String(params.page));
-    if (params.limit) query.set('limit', String(params.limit));
-    if (params.status) query.set('status', params.status);
-    if (params.role) query.set('role', params.role);
+    if (params.page) query.set("page", String(params.page));
+    if (params.limit) query.set("limit", String(params.limit));
+    if (params.status) query.set("status", params.status);
+    if (params.role) query.set("role", params.role);
 
     return apiClientPaginated<RentalOrder[]>(
-      `/rental-orders${query.size ? `?${query.toString()}` : ''}`
+      `/rental-orders${query.size ? `?${query.toString()}` : ""}`,
     );
   },
 
   getRentalOrder: (id: string) =>
     apiClient<RentalOrder>(`/rental-orders/${encodeURIComponent(id)}`),
 
+  getFinancialSummary: () =>
+    apiClient<RentalFinancialSummary>("/rental-orders/financial-summary"),
+
   createRentalOrder: (request: CreateRentalOrderRequest) =>
-    apiClient<RentalOrder>('/rental-orders', {
-      method: 'POST',
+    apiClient<RentalOrder>("/rental-orders", {
+      method: "POST",
       body: JSON.stringify(request),
     }),
 
   confirmRentalOrder: (id: string) =>
-    apiClient<RentalOrder>(`/rental-orders/${encodeURIComponent(id)}/confirm`, { method: 'PATCH' }),
+    apiClient<RentalOrder>(`/rental-orders/${encodeURIComponent(id)}/confirm`, {
+      method: "PATCH",
+    }),
 
   shipRentalOrder: (id: string) =>
-    apiClient<RentalOrder>(`/rental-orders/${encodeURIComponent(id)}/ship`, { method: 'PATCH' }),
+    apiClient<RentalOrder>(`/rental-orders/${encodeURIComponent(id)}/ship`, {
+      method: "PATCH",
+    }),
 
-  confirmRentalReceipt: (id: string) =>
-    apiClient<RentalOrder>(`/rental-orders/${encodeURIComponent(id)}/confirm-receipt`, { method: 'PATCH' }),
+  confirmRentalReceipt: (
+    id: string,
+    request: Omit<UploadProofBatchRequest, "stage">,
+  ) =>
+    apiClient<RentalOrder>(
+      `/rental-orders/${encodeURIComponent(id)}/confirm-receipt`,
+      {
+        method: "PATCH",
+        body: JSON.stringify(request),
+      },
+    ),
 
-  returnRentalOrder: (id: string) =>
-    apiClient<RentalOrder>(`/rental-orders/${encodeURIComponent(id)}/return`, { method: 'PATCH' }),
+  returnRentalOrder: (
+    id: string,
+    request: Omit<UploadProofBatchRequest, "stage">,
+  ) =>
+    apiClient<RentalOrder>(`/rental-orders/${encodeURIComponent(id)}/return`, {
+      method: "PATCH",
+      body: JSON.stringify(request),
+    }),
 
   confirmRentalReturn: (id: string) =>
-    apiClient<RentalOrder>(`/rental-orders/${encodeURIComponent(id)}/confirm-return`, { method: 'PATCH' }),
+    apiClient<RentalOrder>(
+      `/rental-orders/${encodeURIComponent(id)}/confirm-return`,
+      { method: "PATCH" },
+    ),
 
   cancelRentalOrder: (id: string) =>
-    apiClient<RentalOrder>(`/rental-orders/${encodeURIComponent(id)}/cancel`, { method: 'PATCH' }),
+    apiClient<RentalOrder>(`/rental-orders/${encodeURIComponent(id)}/cancel`, {
+      method: "PATCH",
+    }),
 };

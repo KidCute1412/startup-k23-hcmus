@@ -19,8 +19,8 @@ type ActiveFiltersProps = {
 const SORT_LABELS: Record<string, string> = {
   relevance: "Liên quan nhất",
   newest: "Mới nhất",
-  priceAsc: "Giá: Thấp → Cao",
-  priceDesc: "Giá: Cao → Thấp",
+  priceAsc: "Giá thuê: Thấp → Cao",
+  priceDesc: "Giá thuê: Cao → Thấp",
   ratingDesc: "Đánh giá cao nhất",
 };
 
@@ -47,6 +47,15 @@ export function ActiveFilters({
     return map;
   }, [categories]);
 
+  const activeCategoryName = useMemo(() => {
+    if (!activeCategoryKey) return null;
+    const matched = categories.find(
+      (c) => c.slug === activeCategoryKey || c.id === activeCategoryKey
+    );
+    if (matched) return matched.name;
+    return categoryMap.get(activeCategoryKey) || activeCategoryKey;
+  }, [categories, categoryMap, activeCategoryKey]);
+
   const removeFilter = (keysToRemove: string | string[]) => {
     const removed = new Set(
       Array.isArray(keysToRemove) ? keysToRemove : [keysToRemove],
@@ -70,7 +79,9 @@ export function ActiveFilters({
     router.push("/gears");
   };
 
-  const hasActiveFilters = Boolean(search || categoryId || minPrice || maxPrice || sort);
+  const hasActiveFilters = Boolean(
+    search || category || categoryId || minPrice || maxPrice || (sort && sort !== "default")
+  );
 
   const formatPrice = (val: string) => {
     const num = Number(val);
@@ -79,7 +90,7 @@ export function ActiveFilters({
   };
 
   return (
-    <div className="flex flex-wrap items-center justify-between gap-3 rounded-v-sm border border-vanguard-light-border bg-vanguard-light-surf px-4 py-3 text-xs dark:border-vanguard-dark-border dark:bg-vanguard-dark-surf">
+    <div className="royal-glow flex flex-wrap items-center justify-between gap-3 rounded-v-sm border border-vanguard-light-border bg-white px-4 py-3 text-xs dark:border-vanguard-dark-border dark:bg-vanguard-dark-surf transition-all duration-300">
       <div className="flex flex-wrap items-center gap-2">
         <span className="font-display font-semibold uppercase tracking-widest text-vanguard-light-text dark:text-vanguard-dark-text">
           Tìm thấy <span className="text-vanguard-primary font-bold">{resultCount}</span> gear
@@ -90,7 +101,7 @@ export function ActiveFilters({
             <span className="h-3.5 w-px bg-vanguard-light-border dark:bg-vanguard-dark-border" />
             
             {search ? (
-              <span className="inline-flex items-center gap-1.5 rounded-full border border-vanguard-primary/30 bg-vanguard-primary/10 px-2.5 py-1 text-[11px] font-medium text-vanguard-primary">
+              <span className="inline-flex items-center gap-1.5 rounded-v-sm border border-vanguard-primary/30 bg-vanguard-primary/5 px-2.5 py-1 text-[11px] font-semibold text-vanguard-primary">
                 Từ khóa: &quot;{search}&quot;
                 <button
                   type="button"
@@ -103,9 +114,9 @@ export function ActiveFilters({
               </span>
             ) : null}
 
-            {activeCategoryKey && categoryMap.has(activeCategoryKey) ? (
-              <span className="inline-flex items-center gap-1.5 rounded-full border border-vanguard-primary/30 bg-vanguard-primary/10 px-2.5 py-1 text-[11px] font-medium text-vanguard-primary">
-                Danh mục: {categoryMap.get(activeCategoryKey)}
+            {activeCategoryName ? (
+              <span className="inline-flex items-center gap-1.5 rounded-v-sm border border-vanguard-primary/30 bg-vanguard-primary/5 px-2.5 py-1 text-[11px] font-semibold text-vanguard-primary">
+                Danh mục: {activeCategoryName}
                 <button
                   type="button"
                   onClick={() => removeFilter(["category", "categoryId"])}
@@ -118,7 +129,7 @@ export function ActiveFilters({
             ) : null}
 
             {minPrice || maxPrice ? (
-              <span className="inline-flex items-center gap-1.5 rounded-full border border-vanguard-primary/30 bg-vanguard-primary/10 px-2.5 py-1 text-[11px] font-medium text-vanguard-primary">
+              <span className="inline-flex items-center gap-1.5 rounded-v-sm border border-vanguard-primary/30 bg-vanguard-primary/5 px-2.5 py-1 text-[11px] font-semibold text-vanguard-primary">
                 Giá: {minPrice ? `${formatPrice(minPrice)}đ` : "0đ"} - {maxPrice ? `${formatPrice(maxPrice)}đ` : "∞"}
                 <button
                   type="button"
@@ -131,8 +142,8 @@ export function ActiveFilters({
               </span>
             ) : null}
 
-            {sort && SORT_LABELS[sort] ? (
-              <span className="inline-flex items-center gap-1.5 rounded-full border border-vanguard-primary/30 bg-vanguard-primary/10 px-2.5 py-1 text-[11px] font-medium text-vanguard-primary">
+            {sort && sort !== "default" && SORT_LABELS[sort] ? (
+              <span className="inline-flex items-center gap-1.5 rounded-v-sm border border-vanguard-primary/30 bg-vanguard-primary/5 px-2.5 py-1 text-[11px] font-semibold text-vanguard-primary">
                 Sắp xếp: {SORT_LABELS[sort]}
                 <button
                   type="button"

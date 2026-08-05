@@ -527,7 +527,7 @@ erDiagram
 | `DisputeStatusType` | `dispute_status_type` | `open`, `under_review`, `resolved`, `closed` |
 | `ReporterRoleEnum` | `reporter_role_enum` | `renter`, `lender` |
 | `DisputeReasonEnum` | `dispute_reason_enum` | `device_not_as_described`, `device_faulty`, `missing_accessory`, `device_damaged`, `component_replaced`, `other` |
-| `ResolutionTypeEnum` | `resolution_type_enum` | `refund`, `deposit_deduct`, `compensation`, `account_ban`, `no_action` |
+| `ResolutionTypeEnum` | `resolution_type_enum` | `renter_compensation`, `lender_compensation`, `no_action` (legacy: `refund`, `deposit_deduct`, `compensation`, `account_ban`) |
 | `ReviewTargetType` | `review_target_type` | `gear`, `lender`, `renter` |
 | `MembershipStatusType` | `membership_status_type` | `active`, `expired`, `cancelled` |
 | `LenderWalletStatus` | `lender_wallet_status` | `active`, `suspended`, `closed` |

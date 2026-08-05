@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { ComponentPropsWithoutRef, ReactNode } from "react";
 import { cn } from "@/lib/cn";
+import { Loader2 } from "lucide-react";
 
 type Variant = "primary" | "outline" | "ghost" | "dark";
 
@@ -18,6 +19,7 @@ const variants: Record<Variant, string> = {
 type ButtonProps = ComponentPropsWithoutRef<"button"> & {
   variant?: Variant;
   icon?: ReactNode;
+  isLoading?: boolean;
 };
 
 type LinkButtonProps = ComponentPropsWithoutRef<typeof Link> & {
@@ -32,13 +34,21 @@ export function Button({
   className,
   variant = "primary",
   icon,
+  isLoading = false,
   children,
+  disabled,
   ...props
 }: ButtonProps) {
   return (
-    <button className={cn(base, variants[variant], className)} {...props}>
-      {children}
-      {icon}
+    <button
+      className={cn(base, variants[variant], className)}
+      disabled={disabled || isLoading}
+      {...props}
+    >
+      {isLoading && <Loader2 className="h-4 w-4 animate-spin text-current" />}
+      {!isLoading && children}
+      {isLoading && <span className="opacity-80">Đang xử lý...</span>}
+      {!isLoading && icon}
     </button>
   );
 }

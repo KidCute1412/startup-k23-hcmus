@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Outfit } from "next/font/google";
 import { AppShell } from "@/components/layout/app-shell";
+import { AuthProvider } from "@/hooks/useAuth";
 import "./globals.css";
 
 const body = Outfit({
@@ -19,6 +20,7 @@ export const metadata: Metadata = {
 
 import { CartProvider } from "@/features/cart/cart-context";
 import { ToastProvider } from "@/components/ui/toast";
+import NextTopLoader from "nextjs-toploader";
 
 export default function RootLayout({
   children,
@@ -47,9 +49,22 @@ export default function RootLayout({
         />
       </head>
       <body className={`${body.variable} font-body`}>
+        <NextTopLoader
+          color="#d4af37"
+          initialPosition={0.08}
+          crawlSpeed={200}
+          height={3}
+          crawl={true}
+          showSpinner={false}
+          easing="ease"
+          speed={200}
+          shadow="0 0 10px #d4af37, 0 0 5px #d4af37"
+        />
         <ToastProvider>
           <CartProvider>
-            <AppShell>{children}</AppShell>
+            <AuthProvider>
+              <AppShell>{children}</AppShell>
+            </AuthProvider>
           </CartProvider>
         </ToastProvider>
       </body>

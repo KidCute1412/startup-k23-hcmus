@@ -2,6 +2,7 @@ import type { INestApplication } from '@nestjs/common';
 import {
   DepositTypeEnum,
   OrderStatusType,
+  Prisma,
   ProofStageEnum,
 } from '@prisma/client';
 import request from 'supertest';
@@ -23,10 +24,13 @@ describeIntegration('Rental order transitions (PostgreSQL integration)', () => {
   let prisma: PrismaService;
   let lenderId: string;
   let renterId: string;
+  let monthlyFeeRenterId: string;
   let poorRenterId: string;
+  let feePoorRenterId: string;
   let gearId: string;
   let lenderToken: string;
   let renterToken: string;
+  let monthlyFeeRenterToken: string;
   const { ids: fixtureIds, newId } = createFixtureIds();
 
   beforeAll(async () => {
@@ -37,7 +41,9 @@ describeIntegration('Rental order transitions (PostgreSQL integration)', () => {
 
     lenderId = newId();
     renterId = newId();
+    monthlyFeeRenterId = newId();
     poorRenterId = newId();
+    feePoorRenterId = newId();
     gearId = newId();
     await prisma.user.createMany({
       data: [
@@ -57,8 +63,22 @@ describeIntegration('Rental order transitions (PostgreSQL integration)', () => {
           kyc_status: 'verified',
         },
         {
+          id: monthlyFeeRenterId,
+          email: `monthly-fee-renter-${monthlyFeeRenterId}@integration.test`,
+          password_hash: 'x',
+          role: 'renter',
+          kyc_status: 'verified',
+        },
+        {
           id: poorRenterId,
           email: `poor-renter-${poorRenterId}@integration.test`,
+          password_hash: 'x',
+          role: 'renter',
+          kyc_status: 'verified',
+        },
+        {
+          id: feePoorRenterId,
+          email: `fee-poor-renter-${feePoorRenterId}@integration.test`,
           password_hash: 'x',
           role: 'renter',
           kyc_status: 'verified',
@@ -79,7 +99,9 @@ describeIntegration('Rental order transitions (PostgreSQL integration)', () => {
     await prisma.renterWallet.createMany({
       data: [
         { user_id: renterId, balance: 20_000_000 },
+        { user_id: monthlyFeeRenterId, balance: 20_000_000 },
         { user_id: poorRenterId, balance: 300_000 },
+        { user_id: feePoorRenterId, balance: 129_999 },
       ],
     });
     await prisma.mutuxWallet.createMany({
@@ -91,9 +113,21 @@ describeIntegration('Rental order transitions (PostgreSQL integration)', () => {
           status: 'active',
         },
         {
+          user_id: monthlyFeeRenterId,
+          total_limit: 10_000_000,
+          display_balance: 10_000_000,
+          status: 'active',
+        },
+        {
           user_id: poorRenterId,
           total_limit: 300_000,
           display_balance: 300_000,
+          status: 'active',
+        },
+        {
+          user_id: feePoorRenterId,
+          total_limit: 1_000_000,
+          display_balance: 1_000_000,
           status: 'active',
         },
       ],
@@ -104,12 +138,15 @@ describeIntegration('Rental order transitions (PostgreSQL integration)', () => {
 
     lenderToken = createJwt(lenderId, 'lender');
     renterToken = createJwt(renterId, 'renter');
+    monthlyFeeRenterToken = createJwt(monthlyFeeRenterId, 'renter');
   });
 
   async function createOrder(
     ownerId: string,
     status = OrderStatusType.pending_confirm,
     depositType = DepositTypeEnum.traditional,
+    startDate = '2026-08-01',
+    endDate = '2026-08-02',
   ) {
     const id = newId();
     return prisma.rentalOrder.create({
@@ -119,8 +156,8 @@ describeIntegration('Rental order transitions (PostgreSQL integration)', () => {
         renter_id: ownerId,
         lender_id: lenderId,
         gear_id: gearId,
-        start_date: new Date('2026-08-01T00:00:00.000Z'),
-        end_date: new Date('2026-08-02T00:00:00.000Z'),
+        start_date: new Date(`${startDate}T00:00:00.000Z`),
+        end_date: new Date(`${endDate}T00:00:00.000Z`),
         duration_days: 1,
         snapped_rent_price_per_day: 100_000,
         rental_fee: 100_000,
@@ -161,6 +198,7 @@ describeIntegration('Rental order transitions (PostgreSQL integration)', () => {
       .patch(`/api/v1/rental-orders/${order.id}/return`)
       .set('Cookie', createAccessTokenCookie(lenderToken))
       .set('Origin', INTEGRATION_FRONTEND_ORIGIN)
+      .send({ fileUrls: ['https://i.ibb.co/integration/return.jpg'] })
       .expect(403);
 
     await request(app.getHttpServer())
@@ -209,13 +247,14 @@ describeIntegration('Rental order transitions (PostgreSQL integration)', () => {
       .patch(`/api/v1/rental-orders/${order.id}/confirm-receipt`)
       .set('Cookie', createAccessTokenCookie(renterToken))
       .set('Origin', INTEGRATION_FRONTEND_ORIGIN)
+      .send({ fileUrls: ['https://i.ibb.co/integration/received.jpg'] })
       .expect(200);
     await request(app.getHttpServer())
       .patch(`/api/v1/rental-orders/${order.id}/return`)
       .set('Cookie', createAccessTokenCookie(renterToken))
       .set('Origin', INTEGRATION_FRONTEND_ORIGIN)
+      .send({ fileUrls: ['https://i.ibb.co/integration/return.jpg'] })
       .expect(200);
-    await addProof(order.id, renterId, ProofStageEnum.pre_return);
     await addProof(order.id, lenderId, ProofStageEnum.post_returned);
     await request(app.getHttpServer())
       .patch(`/api/v1/rental-orders/${order.id}/confirm-return`)
@@ -241,6 +280,131 @@ describeIntegration('Rental order transitions (PostgreSQL integration)', () => {
         where: { rental_order_id: order.id, type: 'income' },
       }),
     ).toBe(1);
+  });
+
+  it('debits only the rental fee for a credit-line confirmation', async () => {
+    const order = await createOrder(
+      monthlyFeeRenterId,
+      OrderStatusType.pending_confirm,
+      DepositTypeEnum.credit_line,
+      '2026-08-03',
+      '2026-08-04',
+    );
+    const walletBefore = await prisma.renterWallet.findUniqueOrThrow({
+      where: { user_id: monthlyFeeRenterId },
+    });
+
+    const creditSnapshot = await request(app.getHttpServer())
+      .get('/api/v1/wallets/mutux')
+      .set('Cookie', createAccessTokenCookie(monthlyFeeRenterToken))
+      .expect(200);
+    expect(creditSnapshot.body).not.toHaveProperty('data.monthlyUsageFee');
+    expect(creditSnapshot.body).not.toHaveProperty('data.feeChargedThisMonth');
+
+    await request(app.getHttpServer())
+      .patch(`/api/v1/rental-orders/${order.id}/confirm`)
+      .set('Cookie', createAccessTokenCookie(lenderToken))
+      .set('Origin', INTEGRATION_FRONTEND_ORIGIN)
+      .expect(200);
+
+    const walletAfter = await prisma.renterWallet.findUniqueOrThrow({
+      where: { user_id: monthlyFeeRenterId },
+    });
+    expect(walletAfter.balance).toEqual(
+      walletBefore.balance.sub(new Prisma.Decimal(100_000)),
+    );
+    expect(
+      await prisma.renterWalletTransaction.count({
+        where: { wallet_id: walletAfter.id, type: 'credit_fee' },
+      }),
+    ).toBe(0);
+    expect(
+      await prisma.payment.count({
+        where: {
+          user_id: monthlyFeeRenterId,
+          rental_order_id: order.id,
+          type: 'credit_fee',
+          status: 'success',
+        },
+      }),
+    ).toBe(0);
+  });
+
+  it('does not create a credit fee for subsequent credit-line confirmations', async () => {
+    const order = await createOrder(
+      monthlyFeeRenterId,
+      OrderStatusType.pending_confirm,
+      DepositTypeEnum.credit_line,
+      '2026-08-05',
+      '2026-08-06',
+    );
+    const walletBefore = await prisma.renterWallet.findUniqueOrThrow({
+      where: { user_id: monthlyFeeRenterId },
+    });
+
+    await request(app.getHttpServer())
+      .patch(`/api/v1/rental-orders/${order.id}/confirm`)
+      .set('Cookie', createAccessTokenCookie(lenderToken))
+      .set('Origin', INTEGRATION_FRONTEND_ORIGIN)
+      .expect(200);
+
+    const walletAfter = await prisma.renterWallet.findUniqueOrThrow({
+      where: { user_id: monthlyFeeRenterId },
+    });
+    expect(walletAfter.balance).toEqual(
+      walletBefore.balance.sub(new Prisma.Decimal(100_000)),
+    );
+    expect(
+      await prisma.renterWalletTransaction.count({
+        where: { wallet_id: walletAfter.id, type: 'credit_fee' },
+      }),
+    ).toBe(0);
+    expect(
+      await prisma.payment.count({
+        where: {
+          user_id: monthlyFeeRenterId,
+          type: 'credit_fee',
+          status: 'success',
+        },
+      }),
+    ).toBe(0);
+  });
+
+  it('confirms a credit order when cash covers the rental fee but not the removed fee', async () => {
+    const order = await createOrder(
+      feePoorRenterId,
+      OrderStatusType.pending_confirm,
+      DepositTypeEnum.credit_line,
+      '2026-08-07',
+      '2026-08-08',
+    );
+    const walletBefore = await prisma.renterWallet.findUniqueOrThrow({
+      where: { user_id: feePoorRenterId },
+    });
+
+    await request(app.getHttpServer())
+      .patch(`/api/v1/rental-orders/${order.id}/confirm`)
+      .set('Cookie', createAccessTokenCookie(lenderToken))
+      .set('Origin', INTEGRATION_FRONTEND_ORIGIN)
+      .expect(200);
+    expect(
+      await prisma.rentalOrder.findUniqueOrThrow({ where: { id: order.id } }),
+    ).toMatchObject({ status: OrderStatusType.confirmed });
+    expect(
+      await prisma.escrowWallet.count({ where: { rental_order_id: order.id } }),
+    ).toBe(1);
+    expect(
+      await prisma.payment.count({
+        where: { user_id: feePoorRenterId, rental_order_id: order.id },
+      }),
+    ).toBe(0);
+    expect(
+      await prisma.renterWallet.findUniqueOrThrow({
+        where: { user_id: feePoorRenterId },
+      }),
+    ).toMatchObject({
+      balance: walletBefore.balance.sub(new Prisma.Decimal(100_000)),
+    });
   });
 
   it('keeps the order pending when escrow reports INSUFFICIENT_CASH', async () => {
@@ -329,13 +493,14 @@ describeIntegration('Rental order transitions (PostgreSQL integration)', () => {
       .patch(`/api/v1/rental-orders/${order.id}/confirm-receipt`)
       .set('Cookie', createAccessTokenCookie(renterToken))
       .set('Origin', INTEGRATION_FRONTEND_ORIGIN)
+      .send({ fileUrls: ['https://i.ibb.co/integration/received-gated.jpg'] })
       .expect(200);
     await request(app.getHttpServer())
       .patch(`/api/v1/rental-orders/${order.id}/return`)
       .set('Cookie', createAccessTokenCookie(renterToken))
       .set('Origin', INTEGRATION_FRONTEND_ORIGIN)
+      .send({ fileUrls: ['https://i.ibb.co/integration/return-gated.jpg'] })
       .expect(200);
-    await addProof(order.id, renterId, ProofStageEnum.pre_return);
 
     const returnWithoutPostProof = await request(app.getHttpServer())
       .patch(`/api/v1/rental-orders/${order.id}/confirm-return`)
@@ -353,6 +518,47 @@ describeIntegration('Rental order transitions (PostgreSQL integration)', () => {
         where: { rental_order_id: order.id },
       }),
     ).resolves.toMatchObject({ status: 'locked' });
+  });
+
+  it('refunds the renter and cancels the order when lender ships after the deadline', async () => {
+    const order = await createOrder(renterId);
+    await request(app.getHttpServer())
+      .patch(`/api/v1/rental-orders/${order.id}/confirm`)
+      .set('Cookie', createAccessTokenCookie(lenderToken))
+      .set('Origin', INTEGRATION_FRONTEND_ORIGIN)
+      .expect(200);
+    await prisma.rentalOrder.update({
+      where: { id: order.id },
+      data: {
+        ship_deadline_at: new Date('2026-08-01T16:59:59.999Z'),
+      },
+    });
+
+    const response = await request(app.getHttpServer())
+      .patch(`/api/v1/rental-orders/${order.id}/ship`)
+      .set('Cookie', createAccessTokenCookie(lenderToken))
+      .set('Origin', INTEGRATION_FRONTEND_ORIGIN)
+      .expect(200);
+
+    expect(response.body).toMatchObject({
+      data: {
+        status: OrderStatusType.cancelled,
+        cancelled_reason: 'late_delivery_refund',
+      },
+    });
+    await expect(
+      prisma.escrowWallet.findUniqueOrThrow({
+        where: { rental_order_id: order.id },
+      }),
+    ).resolves.toMatchObject({ status: 'released' });
+    expect(
+      await prisma.renterWalletTransaction.count({
+        where: {
+          reference: `LATE-DELIVERY-REFUND-${order.id}`,
+          type: 'late_delivery_refund',
+        },
+      }),
+    ).toBe(1);
   });
 
   it('serializes duplicate confirm and cancel requests without duplicate side effects', async () => {
@@ -413,13 +619,16 @@ describeIntegration('Rental order transitions (PostgreSQL integration)', () => {
       .patch(`/api/v1/rental-orders/${order.id}/confirm-receipt`)
       .set('Cookie', createAccessTokenCookie(renterToken))
       .set('Origin', INTEGRATION_FRONTEND_ORIGIN)
+      .send({
+        fileUrls: ['https://i.ibb.co/integration/received-duplicate.jpg'],
+      })
       .expect(200);
     await request(app.getHttpServer())
       .patch(`/api/v1/rental-orders/${order.id}/return`)
       .set('Cookie', createAccessTokenCookie(renterToken))
       .set('Origin', INTEGRATION_FRONTEND_ORIGIN)
+      .send({ fileUrls: ['https://i.ibb.co/integration/return-duplicate.jpg'] })
       .expect(200);
-    await addProof(order.id, renterId, ProofStageEnum.pre_return);
     await addProof(order.id, lenderId, ProofStageEnum.post_returned);
 
     const responses = await Promise.all(
@@ -542,7 +751,7 @@ describeIntegration('Rental order transitions (PostgreSQL integration)', () => {
     ).toBe(ledgerCountBeforeCancel);
   });
 
-  it('confirms a credit-line order with credit lock, escrow, and debits rental fee from cash', async () => {
+  it('confirms a credit-line order with credit lock, escrow, rental fee, and monthly usage fee', async () => {
     const order = await createOrder(
       renterId,
       OrderStatusType.pending_confirm,
@@ -580,6 +789,21 @@ describeIntegration('Rental order transitions (PostgreSQL integration)', () => {
       cashBefore.balance.minus(order.rental_fee),
     );
     expect(cashAfter.locked_balance).toEqual(cashBefore.locked_balance);
+    expect(
+      await prisma.renterWalletTransaction.count({
+        where: { wallet_id: cashAfter.id, type: 'credit_fee' },
+      }),
+    ).toBe(0);
+    expect(
+      await prisma.payment.count({
+        where: {
+          user_id: renterId,
+          rental_order_id: order.id,
+          type: 'credit_fee',
+          status: 'success',
+        },
+      }),
+    ).toBe(0);
     const creditAfter = await prisma.mutuxWallet.findUniqueOrThrow({
       where: { user_id: renterId },
     });

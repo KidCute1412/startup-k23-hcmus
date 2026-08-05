@@ -22,7 +22,10 @@ describe('Dispute routes (HTTP)', () => {
   const userId = '10000000-0000-4000-8000-000000000001';
   const orderId = '20000000-0000-4000-8000-000000000001';
   const disputeId = '30000000-0000-4000-8000-000000000001';
-  const disputesService = { create: jest.fn() };
+  const disputesService = {
+    create: jest.fn(),
+    addResponseEvidence: jest.fn(),
+  };
   const adminService = { resolveDispute: jest.fn() };
   const validBody = {
     rentalOrderId: orderId,
@@ -76,11 +79,18 @@ describe('Dispute routes (HTTP)', () => {
       status: 'open',
       evidences: [],
     });
+    disputesService.addResponseEvidence.mockResolvedValue({
+      id: disputeId,
+      rentalOrderId: orderId,
+      status: 'open',
+      responseDeadlineAt: '2026-08-01T00:00:00.000Z',
+      evidences: [],
+    });
     adminService.resolveDispute.mockResolvedValue({
       id: disputeId,
       rentalOrderId: orderId,
       status: 'resolved',
-      resolutionType: 'refund',
+      resolutionType: 'no_action',
       deductAmount: null,
     });
   });
@@ -153,7 +163,7 @@ describe('Dispute routes (HTTP)', () => {
       .post(`/api/v1/admin/disputes/${disputeId}/resolve`)
       .set('Cookie', lenderCookie)
       .set('Origin', 'http://localhost:3000')
-      .send({ resolutionType: 'refund' })
+      .send({ resolutionType: 'no_action' })
       .expect(403);
 
     const adminCookie = createAccessTokenCookie(createJwt(userId, 'admin'));
@@ -161,15 +171,85 @@ describe('Dispute routes (HTTP)', () => {
       .post(`/api/v1/admin/disputes/${disputeId}/resolve`)
       .set('Cookie', adminCookie)
       .set('Origin', 'http://localhost:3000')
-      .send({ resolutionType: 'refund' })
+      .send({ resolutionType: 'no_action' })
       .expect(200);
     expect(response.body).toMatchObject({
       success: true,
-      data: { status: 'resolved', resolutionType: 'refund' },
+      data: { status: 'resolved', resolutionType: 'no_action' },
     });
   });
 
   it.each([
+    ['renter_compensation', 120000],
+    ['lender_compensation', 250000],
+  ])(
+    'accepts %s with an admin-selected compensation amount',
+    async (resolutionType, deductAmount) => {
+      const adminCookie = createAccessTokenCookie(createJwt(userId, 'admin'));
+      const response = await request(app.getHttpServer())
+        .post(`/api/v1/admin/disputes/${disputeId}/resolve`)
+        .set('Cookie', adminCookie)
+        .set('Origin', 'http://localhost:3000')
+        .send({ resolutionType, deductAmount })
+        .expect(200);
+
+      expect(response.body).toMatchObject({
+        success: true,
+        data: { status: 'resolved' },
+      });
+      expect(adminService.resolveDispute).toHaveBeenCalledWith(
+        disputeId,
+        userId,
+        resolutionType,
+        deductAmount,
+        undefined,
+      );
+    },
+  );
+
+  it('accepts response evidence from the other participant', async () => {
+    const response = await request(app.getHttpServer())
+      .post(`/api/v1/disputes/${disputeId}/evidence`)
+      .set('Cookie', createAccessTokenCookie(createJwt(userId, 'renter')))
+      .set('Origin', 'http://localhost:3000')
+      .send({
+        evidences: [
+          { mediaType: 'image', url: `/uploads/${userId}/reply.jpg` },
+        ],
+      })
+      .expect(201);
+
+    expect(response.body).toMatchObject({
+      success: true,
+      data: { id: disputeId, responseDeadlineAt: '2026-08-01T00:00:00.000Z' },
+    });
+    expect(disputesService.addResponseEvidence).toHaveBeenCalledWith(
+      userId,
+      disputeId,
+      {
+        evidences: [
+          { mediaType: 'image', url: `/uploads/${userId}/reply.jpg` },
+        ],
+      },
+    );
+  });
+
+  it.each([
+    { evidences: [] },
+    { evidences: Array(6).fill({ mediaType: 'image', url: 'x' }) },
+    { evidences: [{ mediaType: 'video', url: 'x' }] },
+  ])('validates response evidence body %o', async (body) => {
+    await request(app.getHttpServer())
+      .post(`/api/v1/disputes/${disputeId}/evidence`)
+      .set('Cookie', createAccessTokenCookie(createJwt(userId, 'renter')))
+      .set('Origin', 'http://localhost:3000')
+      .send(body)
+      .expect(400);
+    expect(disputesService.addResponseEvidence).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    { resolutionType: 'renter_compensation' },
     { resolutionType: 'refund', deductAmount: 1 },
     { resolutionType: 'deposit_deduct' },
     { resolutionType: 'deposit_deduct', deductAmount: 0 },

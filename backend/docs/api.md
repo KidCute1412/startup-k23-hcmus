@@ -327,7 +327,7 @@ HTTP Status: `400`, `401`, `403`, `404`, `422`, `500`.
 
 #### [GET] `/wallets/mutux` (Thông tin Ví trả sau / Credit Line - Renter)
 * **Authentication**: `accessToken` cookie; chỉ role `renter`.
-* **Success (200)**: Trả về hạn mức khả dụng (`displayBalance`), hạn mức bị khóa (`lockedBalance`), dư nợ (`outstandingDebt`), tổng hạn mức (`totalLimit`), trạng thái (`status`). Ví này chỉ dùng để bảo đảm cọc khi `depositType = credit_line`.
+* **Success (200)**: Trả về hạn mức khả dụng (`displayBalance`), hạn mức bị khóa (`lockedBalance`), dư nợ (`outstandingDebt`), tổng hạn mức (`totalLimit`) và trạng thái (`status`). Ví này chỉ dùng để bảo đảm cọc khi `depositType = credit_line`.
 * **Response**:
   ```json
   {
@@ -394,7 +394,7 @@ HTTP Status: `400`, `401`, `403`, `404`, `422`, `500`.
 
 ---
 
-### 3.4 Rental Orders (9 APIs)
+### 3.4 Rental Orders (10 APIs)
 
 #### State-transition matrix (Lean MVP)
 
@@ -404,17 +404,17 @@ HTTP Status: `400`, `401`, `403`, `404`, `422`, `500`.
 | --- | --- | --- | --- | --- | --- |
 | Tạo order `POST /rental-orders` | renter | — | — | Không chạm ví | `pending_confirm` |
 | `PATCH /:id/confirm` | lender | `pending_confirm` | — | Debit rental fee, lock cọc, tạo escrow, snapshot phí/doanh thu | `confirmed` |
-| `PATCH /:id/ship` | lender | `confirmed` | `pre_shipment` của lender | Ghi `lender_shipped_at` | `delivering` |
+| `PATCH /:id/ship` | lender | `confirmed` | `pre_shipment` của lender | Giao đúng hạn: ghi `lender_shipped_at`; giao trễ: hoàn tiền renter, giải phóng cọc | `delivering` hoặc `cancelled` |
 | `PATCH /:id/cancel` | renter | `pending_confirm` | — | Không chạm ví/escrow | `cancelled` |
-| `PATCH /:id/confirm-receipt` | renter | `delivering` | — | Ghi `renter_received_at` | `active` |
-| `PATCH /:id/return` | renter | `active` | — | Ghi `renter_returned_at` | `returning` |
-| `POST /disputes` | renter hoặc lender của order | `active` hoặc `returning` | — | Tạo dispute/evidence | `disputed` |
+| `PATCH /:id/confirm-receipt` | renter | `delivering` | batch `post_received` của renter trong body | Ghi `renter_received_at` | `active` |
+| `PATCH /:id/return` | renter | `active` | batch `pre_return` của renter trong body | Ghi `renter_returned_at` | `returning` |
+| `POST /disputes` | renter hoặc lender của order | renter: `delivering`/`active`/`returning`; lender: `returning` | — | Tạo dispute/evidence | `disputed` |
 | `PATCH /:id/confirm-return` | lender | `returning` | `pre_return` của renter và `post_returned` của lender | Release cọc, settle lender, ghi `lender_received_back_at` | `completed` |
 | `POST /admin/disputes/:id/resolve` | admin | `disputed` | — | Release/compensate escrow và resolve dispute | `completed` |
 
 **Idempotency**: retry cùng action sau khi transaction trước đã commit và order đang đúng target trả `200` với state hiện tại, không chạy lại timestamp hoặc side effect ví/escrow/ledger. Riêng tạo dispute retry trả lại dispute `open`/`under_review` đang có. Trạng thái khác source/target trả `400 INVALID_TRANSITION`; riêng cancel ngoài `pending_confirm`/`cancelled` trả `400 CANCEL_NOT_ALLOWED`.
 
-**Late return**: Sprint 3 không tự tính late fee. Trả trễ phải đi qua dispute và admin resolution thủ công.
+**Deadline**: `ship_deadline_at` là `23:59:59.999` giờ Việt Nam của ngày trước `start_date`; `return_deadline_at` là `23:59:59.999` giờ Việt Nam của `end_date`. Giao trễ tự động hoàn `rental_fee` về ví renter, giải phóng cọc và chuyển order thành `cancelled` với `cancelled_reason = late_delivery_refund`. Trả trễ vẫn được phép chuyển sang `returning`, lender có thể mở dispute để Admin phân xử.
 
 #### [POST] `/rental-orders` (Tạo yêu cầu thuê thiết bị - Renter)
 * **Authentication**: `accessToken` cookie (and valid `Origin`); chỉ role `renter`.
@@ -433,6 +433,7 @@ HTTP Status: `400`, `401`, `403`, `404`, `422`, `500`.
   - `gear.approval_status` phải là `approved` và gear phải đang `available`; nếu không trả `400 GEAR_NOT_AVAILABLE`.
   - `startDate` phải nhỏ hơn `endDate`; nếu không trả `400 INVALID_DATE_RANGE`.
   - `startDate` không được trước ngày hiện tại theo timezone business cố định `Asia/Ho_Chi_Minh`; nếu vi phạm trả `400 START_DATE_IN_PAST`. Date-only được so sánh độc lập timezone máy chạy.
+  - Response lưu `ship_deadline_at` và `return_deadline_at` theo UTC, tương ứng các mốc cuối ngày ở `Asia/Ho_Chi_Minh`.
   - Chỉ các order `pending_confirm`, `confirmed`, `delivering`, `active`, `returning`, `disputed` chặn lịch trùng. `cancelled` và `completed` không chặn khoảng thuê mới; overlap trả `409 GEAR_UNAVAILABLE_FOR_PERIOD`.
   - `lenderId` luôn được lấy từ `gear.lender_id`, không nhận từ request body.
   - `duration_days = endDate - startDate` theo khoảng ngày nửa mở `[startDate, endDate)`; `rentalFee = snappedRentPricePerDay × durationDays`.
@@ -443,6 +444,15 @@ HTTP Status: `400`, `401`, `403`, `404`, `422`, `500`.
 * **Query Params**: `role` (renter hoặc lender), `status`, `page`, `limit`
 * **Auth scope**: renter chỉ xem order có `renter_id = req.user.id`; lender chỉ xem order có `lender_id = req.user.id`; admin xem tất cả order. Ownership được quyết định từ JWT, không tin `role` do client gửi.
 * **Success (200)**: Trả về `{ "success": true, "data": [...], "meta": { "total": 0, "page": 1, "limit": 10, "totalPages": 0 } }`. Có thể lọc `status` (ví dụ `?status=confirmed&page=1&limit=10`).
+
+#### [GET] `/rental-orders/financial-summary` (Tóm tắt nghĩa vụ tài chính pending)
+* **Actor**: renter hiện tại.
+* **Success (200)**: Trả về số dư khả dụng, tổng nghĩa vụ tiền mặt từ các order
+  `pending_confirm`, tổng tiền cọc hạn mức Mutux đang chờ và số lượng order
+  pending. Đây là dữ liệu hiển thị; kiểm tra quyết định vẫn
+  được thực hiện lại trong transaction tạo order có khóa wallet.
+* **Concurrency**: API có thể hơi stale giữa lúc tải và lúc submit; backend không
+  dùng response này để bỏ qua bước kiểm tra transaction.
 
 #### [GET] `/rental-orders/:id` (Chi tiết đơn thuê)
 * **Success (200)**: Trả về chi tiết đơn, thông tin người thuê, người cho thuê, thiết bị và thông tin khiếu nại/tranh chấp đính kèm (nếu đơn hàng đang ở trạng thái `disputed`).
@@ -469,6 +479,7 @@ HTTP Status: `400`, `401`, `403`, `404`, `422`, `500`.
 * **Transition**: `confirmed` → `delivering`.
 * **Proof gate**: bắt buộc đã có `pre_shipment` do lender upload; thiếu proof trả `400 PROOF_REQUIRED` và order vẫn `confirmed`.
 * **Side effect**: cập nhật `lender_shipped_at` bằng thời điểm hiện tại.
+* **Late shipment**: nếu quá `ship_deadline_at`, hệ thống không giao order; trong cùng transaction hoàn `rental_fee` về ví renter, mở khóa cọc, ghi ledger `late_delivery_refund`, cập nhật `cancelled_reason = late_delivery_refund` và trả order `cancelled`.
 * **Success (200)**: trả về order với `status = delivering`; retry khi đã `delivering` không đổi timestamp.
 
 #### [PATCH] `/rental-orders/:id/cancel` (Renter hủy yêu cầu thuê)
@@ -482,15 +493,17 @@ HTTP Status: `400`, `401`, `403`, `404`, `422`, `500`.
 #### [PATCH] `/rental-orders/:id/confirm-receipt` (Renter xác nhận đã nhận hàng)
 * **Authentication**: `accessToken` cookie (and valid `Origin` for state changes).
 * **Actor**: chỉ renter của order.
+* **Body bắt buộc**: `{ "fileUrls": ["/uploads/.../received-1.jpg", "/uploads/.../received-2.jpg"], "note": "..." }`. Ảnh được kiểm tra quyền sở hữu và lưu thành proof `post_received` trong cùng transaction với transition.
 * **Transition**: `delivering` → `active`.
-* **Side effect**: cập nhật `renter_received_at` bằng thời điểm hiện tại.
+* **Side effect**: cập nhật `renter_received_at` bằng thời điểm hiện tại; thiếu ảnh hoặc stage đã gửi trước đó trả `400 PROOF_REQUIRED` / `400 PROOF_STAGE_ALREADY_SUBMITTED`.
 * **Success (200)**: trả về order với `status = active`.
 
 #### [PATCH] `/rental-orders/:id/return` (Renter xác nhận đã gửi trả)
 * **Authentication**: `accessToken` cookie (and valid `Origin` for state changes).
 * **Actor**: chỉ renter của order; lender hoặc user khác nhận `403 FORBIDDEN`.
+* **Body bắt buộc**: `{ "fileUrls": ["/uploads/.../return-1.jpg", "/uploads/.../return-2.jpg"], "note": "..." }`. Ảnh được lưu thành proof `pre_return` trong cùng transaction với transition.
 * **Transition**: `active` → `returning`.
-* **Side effect**: cập nhật `renter_returned_at` bằng thời điểm hiện tại.
+* **Side effect**: cập nhật `renter_returned_at` bằng thời điểm hiện tại; không thể gửi lại proof của cùng một stage.
 * **Success (200)**: trả về order với `status = returning`.
 
 #### [PATCH] `/rental-orders/:id/confirm-return` (Lender xác nhận đã nhận lại gear)
@@ -543,6 +556,7 @@ Ngoài retry ở đúng target, status sai trả `400 INVALID_TRANSITION` (hoặ
   - `400 INVALID_FILE_URL`: URL không thuộc thư mục upload của caller.
   - `403 FORBIDDEN`: caller không phải participant của order.
   - `404 NOT_FOUND`: order không tồn tại.
+  - `400 PROOF_STAGE_ALREADY_SUBMITTED`: stage này đã có proof; mỗi stage chỉ được gửi một batch duy nhất.
 * **Success (201)**:
   ```json
   {
@@ -559,6 +573,10 @@ Ngoài retry ở đúng target, status sai trả `400 INVALID_TRANSITION` (hoặ
     }
   }
   ```
+
+#### [POST] `/rental-orders/:id/proofs/batch` (Tạo nhiều bằng chứng trong một giai đoạn)
+* **Body**: `{ "stage": "pre_shipment", "fileUrls": ["/uploads/.../front.jpg", "/uploads/.../back.jpg"], "note": "..." }`.
+* **Rule**: tối đa 10 ảnh, chỉ actor đúng stage được gửi và mỗi stage của một order chỉ được submit một lần.
 
 #### [GET] `/rental-orders/:id/proofs` (Xem bằng chứng đơn hàng)
 * **Authentication**: `accessToken` cookie.
@@ -634,15 +652,20 @@ Ngoài retry ở đúng target, status sai trả `400 INVALID_TRANSITION` (hoặ
 * **Evidence**: Tối đa 5 ảnh. Mỗi URL phải là ảnh local còn tồn tại do chính người gọi upload qua `/media/upload`; URL ngoài hệ thống hoặc của user khác trả `400 INVALID_FILE_URL`.
 * **Business rules**:
   - Chỉ renter hoặc lender của order được gửi; `reporterRole` do server suy ra, không nhận từ client.
-  - Order phải ở `active` hoặc `returning`.
+  - Renter có thể khiếu nại ở `delivering`, `active` hoặc `returning`; lender chỉ có thể khiếu nại ở `returning`.
   - Việc tạo dispute, evidence và chuyển order sang `disputed` chạy trong cùng transaction. Order được khóa để hai request đồng thời không thể cùng tạo dispute đang hoạt động.
   - Retry/concurrent request cho cùng order trả lại dispute `open`/`under_review` đã tồn tại, không tạo evidence hoặc dispute thứ hai.
 * **Errors**:
-  - `400 DISPUTE_NOT_ALLOWED_AT_THIS_STAGE` nếu order không ở `active` / `returning`.
+  - `400 DISPUTE_NOT_ALLOWED_AT_THIS_STAGE` nếu order không ở stage cho phép theo actor.
   - `400 INVALID_FILE_URL` nếu evidence không phải ảnh local thuộc người gọi.
   - `403 FORBIDDEN` nếu người gọi không phải participant.
   - `404 NOT_FOUND` nếu order không tồn tại.
 * **Success (201)**: Tạo tranh chấp cùng evidence thành công, server trả dữ liệu camelCase và order đổi sang `disputed`. Retry trả cùng dispute hiện hữu.
+
+#### [POST] `/disputes/:id/evidence` (Bên còn lại gửi bằng chứng phản hồi)
+* **Body**: `{ "evidences": [{ "mediaType": "image", "url": "/uploads/{currentUserId}/{uploadedFile}.jpg" }] }`.
+* **Rule**: chỉ bên không tạo dispute được gửi một lần, tối đa 5 ảnh, trong vòng 3 ngày kể từ `createdAt`; URL phải là ảnh do chính người gửi upload.
+* **Success (201)**: trả dispute cùng toàn bộ evidence và `responseDeadlineAt`.
 
 ---
 
@@ -788,32 +811,40 @@ timeline activity, rental orders by status, and admin queue distributions.
 
 #### [POST] `/admin/disputes/:id/resolve` (Giải quyết tranh chấp đơn thuê)
 * **Authentication**: `accessToken` cookie, admin role, and valid `Origin`.
-* **Mô tả**: Quyết định số tiền khấu trừ từ khoản cọc của Renter để đền bù cho Lender. Hệ thống tự động gọi `EscrowService.compensate()` hoặc `release()` và chuyển order về `completed` trong cùng transaction nguyên tử (`prisma.$transaction`).
+* **Mô tả**: Admin quyết định renter được hoàn tiền thuê, lender được bồi thường từ tiền cọc, hoặc không bên nào được bồi thường. Hệ thống settlement và chuyển order về `completed` trong cùng transaction nguyên tử (`prisma.$transaction`).
 * **Body**:
   ```json
   {
-    "resolutionType": "deposit_deduct", // "deposit_deduct" | "refund" | "no_action"
-    "deductAmount": 1500000, // Số tiền cọc khấu trừ đền bù cho Lender (chỉ dùng khi resolutionType = deposit_deduct)
+    "resolutionType": "lender_compensation", // "renter_compensation" | "lender_compensation" | "no_action"
+    "deductAmount": 1500000, // renter_compensation: tối đa rental_fee; lender_compensation: tối đa deposit_amount
     "resolutionNote": "Khấu trừ 1.500.000đ do làm nứt vỏ nhôm"
   }
   ```
 * **Validation**:
-  - `deposit_deduct` bắt buộc có `deductAmount` là số nguyên dương.
-  - `refund` và `no_action` không được gửi `deductAmount`; cả hai release cọc, không khấu trừ.
+  - `renter_compensation` bắt buộc có `deductAmount` là số nguyên dương và không vượt quá `rental_fee`.
+  - `lender_compensation` bắt buộc có `deductAmount` là số nguyên dương và không vượt quá tiền cọc.
+  - `no_action` không được gửi `deductAmount`; chỉ release cọc theo settlement thông thường.
   - `resolutionNote` là tùy chọn, tối đa 2.000 ký tự.
 * **Behavior theo resolutionType & Số dư kỳ vọng**:
-  - **`refund` / `no_action`**:
+  - **`renter_compensation`**:
+    - Gọi `EscrowService.compensateRenter(orderId, tx)`.
+    - Renter nhận lại `deductAmount` vào ví renter và được giải phóng tiền cọc.
+    - Cọc trả sau được mở khóa và ghi `CreditTransaction(type = deposit_release)`.
+    - Lender không nhận `lenderIncome` từ đơn này.
+    - Escrow status chuyển sang `renter_compensated`.
+  - **`no_action`**:
     - Gọi `EscrowService.release(orderId, tx)`.
     - Cọc truyền thống (`renter_cash`): Renter `locked_balance` giảm đúng `escrow.amount` (mở khóa cọc). Số dư `balance` không đổi.
     - Cọc trả sau (`credit_line`): Mutux credit wallet `locked_balance` giảm `escrow.amount`, `display_balance` tăng lại `escrow.amount` tương ứng. Ghi `CreditTransaction(type = deposit_release)`.
     - Lender: `balance` tăng thêm `lenderIncome` (`rental_fee` trừ 15% phí sàn), ghi `LenderWalletTransaction(type = income)`.
     - Escrow status chuyển sang `released`.
-  - **`deposit_deduct` (với `deductAmount = X`)**:
+  - **`lender_compensation` (với `deductAmount = X`)**:
     - Gọi `EscrowService.compensate(orderId, X, tx)`.
     - Cọc truyền thống (`renter_cash`): Renter `balance` giảm X, `locked_balance` giảm `escrow.amount` (phần cọc còn lại `escrow.amount - X` được mở khóa). Ghi `RenterWalletTransaction(type = compensation)`.
     - Cọc trả sau (`credit_line`): Mutux credit wallet `outstanding_debt` tăng X, `locked_balance` giảm `escrow.amount`, `display_balance` tính lại bằng `total_limit - locked_balance - outstanding_debt`. Ghi `CreditTransaction(type = compensation)`.
     - Lender: `balance` tăng thêm `lenderIncome + X` (nhận đủ doanh thu thuê + tiền đền bù X), ghi `LenderWalletTransaction(type = income)` và `LenderWalletTransaction(type = compensation)`.
-    - Escrow status chuyển sang `compensated`.
+     - Escrow status chuyển sang `compensated`.
+  - Các giá trị cũ `refund` và `deposit_deduct` vẫn được đọc để tương thích dữ liệu cũ; request mới phải dùng các giá trị settlement mới.
 * **Idempotency**:
   - Áp dụng ở tầng W3.5a: Kiểm tra `dispute.status === 'resolved'` trước khi thực thi settlement.
   - Khi gọi lại endpoint với `dispute.status` đã ở trạng thái `resolved`, API trả về 200 kèm record dispute đã giải quyết và `EscrowService` KHÔNG được gọi lần thứ hai (số dư ví, escrow và ledger hoàn toàn không thay đổi).
@@ -844,8 +875,8 @@ are fixed at 3,000,000, 5,000,000 and 10,000,000 VND.
   `review`, `approve`, and `reject`. Approval must equal the requested tier.
 
 The backend requires 3 completed orders for 5,000,000 and 10 for 10,000,000,
-and blocks increases for debt, an open/under-review dispute, or any
-`deposit_deduct` resolution. It rechecks this policy at approval.
+  and blocks increases for debt, an open/under-review dispute, or any
+  `lender_compensation` resolution. It rechecks this policy at approval.
 # Cart and batch checkout
 
 All routes require authentication and renter role (`403 RENTER_ONLY`).
@@ -872,14 +903,19 @@ address-book edits do not change existing orders. An unknown or foreign
 
 Before either single or batch order creation commits, the backend recalculates
 the current database prices and validates the renter's aggregate financial
-capacity. A `traditional` deposit requires available renter-wallet cash for the
-rental fee plus deposit. A `credit_line` deposit requires renter-wallet cash for
-the rental fee and Mutux available credit for the deposit. Failures return
-`400 INSUFFICIENT_CASH`, `400 INSUFFICIENT_CREDIT`, or
-`400 WALLET_INACTIVE`; the transaction creates no orders and removes no cart
-items. This is a checkout-time eligibility check only: no funds are held while
-the order is `pending_confirm`, and the lender-confirm transition checks and
-locks the wallets again atomically. A credit wallet with a non-null
+capacity, including all existing `pending_confirm` orders. A `traditional`
+deposit requires available renter-wallet cash for the rental fee plus deposit.
+A `credit_line` deposit requires renter-wallet cash for the rental fee and
+Mutux available credit for the deposit. The renter wallet row is locked with
+`FOR UPDATE` while this check and order creation run, so concurrent checkout
+requests for the same renter are serialized. Failures return
+`400 INSUFFICIENT_CASH`, `400 INSUFFICIENT_CREDIT`, or `400 WALLET_INACTIVE`;
+the transaction creates no orders and removes no cart items. Insufficient
+financial-capacity errors include `error.details` with available amount,
+pending commitment, current-order requirement, total required amount and
+shortfall. This is a checkout-time eligibility check only: no funds are held
+while the order is `pending_confirm`, and the lender-confirm transition checks
+and locks the wallets again atomically. A credit wallet with a non-null
 `expiredAt <= now` is not granted for new credit-line checkouts and is rejected
 with `INSUFFICIENT_CREDIT` at both checkout and lender confirmation.
 

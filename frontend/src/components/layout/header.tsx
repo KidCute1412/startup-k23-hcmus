@@ -130,9 +130,11 @@ export function Header() {
                 aria-label="Tài khoản"
               >
                 {user.avatarUrl ? (
-                  <img
+                  <Image
                     src={resolveMediaUrl(user.avatarUrl)}
                     alt={user.fullName || "Avatar"}
+                    width={28}
+                    height={28}
                     className="size-7 rounded-full object-cover border border-vanguard-primary/20"
                   />
                 ) : (

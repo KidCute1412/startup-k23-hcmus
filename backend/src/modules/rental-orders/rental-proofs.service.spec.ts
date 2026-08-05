@@ -1,5 +1,6 @@
 import { OrderStatusType, ProofStageEnum, ProofTypeEnum } from '@prisma/client';
 import { MediaService } from '../media/media.service';
+import { PrismaService } from '../../prisma/prisma.service';
 import { RentalOrdersRepository } from './rental-orders.repository';
 import { RentalProofsService } from './rental-proofs.service';
 
@@ -184,5 +185,118 @@ describe('RentalProofsService', () => {
       response: { error: 'INVALID_FILE_URL' },
     });
     expect(repository.createProof).not.toHaveBeenCalled();
+  });
+});
+
+describe('RentalProofsService batch upload', () => {
+  const orderId = 'batch-order-id';
+  const lenderId = 'batch-lender-id';
+  let service: RentalProofsService;
+  let tx: {
+    $queryRaw: jest.Mock;
+    rentalOrder: { findUnique: jest.Mock };
+    rentalProof: {
+      findFirst: jest.Mock;
+      createMany: jest.Mock;
+      findMany: jest.Mock;
+    };
+  };
+  let mediaService: { assertOwnedImageFile: jest.Mock };
+
+  beforeEach(() => {
+    tx = {
+      $queryRaw: jest.fn().mockResolvedValue([]),
+      rentalOrder: {
+        findUnique: jest.fn().mockResolvedValue({
+          id: orderId,
+          renter_id: 'batch-renter-id',
+          lender_id: lenderId,
+          status: OrderStatusType.confirmed,
+        }),
+      },
+      rentalProof: {
+        findFirst: jest.fn().mockResolvedValue(null),
+        createMany: jest.fn().mockResolvedValue({ count: 2 }),
+        findMany: jest.fn().mockResolvedValue([
+          {
+            id: 'batch-proof-1',
+            rental_order_id: orderId,
+            uploaded_by: lenderId,
+            stage: ProofStageEnum.pre_shipment,
+            proof_type: ProofTypeEnum.image,
+            file_url: `/uploads/${lenderId}/front.jpg`,
+            note: 'Đủ phụ kiện',
+            uploaded_at: new Date('2026-07-29T00:00:00.000Z'),
+          },
+          {
+            id: 'batch-proof-2',
+            rental_order_id: orderId,
+            uploaded_by: lenderId,
+            stage: ProofStageEnum.pre_shipment,
+            proof_type: ProofTypeEnum.image,
+            file_url: `/uploads/${lenderId}/back.jpg`,
+            note: 'Đủ phụ kiện',
+            uploaded_at: new Date('2026-07-29T00:00:01.000Z'),
+          },
+        ]),
+      },
+    };
+    mediaService = {
+      assertOwnedImageFile: jest.fn((_userId: string, url: string) =>
+        Promise.resolve(url),
+      ),
+    };
+    const prisma = {
+      $transaction: jest.fn((callback: (client: typeof tx) => unknown) =>
+        callback(tx),
+      ),
+    } as unknown as PrismaService;
+    service = new RentalProofsService(
+      {
+        findProofOrderById: jest.fn().mockResolvedValue({
+          id: orderId,
+          renter_id: 'batch-renter-id',
+          lender_id: lenderId,
+          status: OrderStatusType.confirmed,
+        }),
+      } as unknown as RentalOrdersRepository,
+      mediaService as unknown as MediaService,
+      prisma,
+    );
+  });
+
+  it('uploads multiple images in one stage and returns all proofs', async () => {
+    const result = await service.createBatch(lenderId, orderId, {
+      stage: ProofStageEnum.pre_shipment,
+      fileUrls: [
+        `/uploads/${lenderId}/front.jpg`,
+        `/uploads/${lenderId}/back.jpg`,
+      ],
+      note: 'Đủ phụ kiện',
+    });
+
+    const createManyCall = tx.rentalProof.createMany.mock
+      .calls[0] as unknown as [{ data: Array<{ file_url: string }> }];
+    expect(createManyCall[0].data.map(({ file_url }) => file_url)).toEqual([
+      `/uploads/${lenderId}/front.jpg`,
+      `/uploads/${lenderId}/back.jpg`,
+    ]);
+    expect(result).toHaveLength(2);
+    expect(mediaService.assertOwnedImageFile).toHaveBeenCalledTimes(2);
+  });
+
+  it('rejects a second batch for the same stage', async () => {
+    tx.rentalProof.findFirst.mockResolvedValue({ id: 'existing-proof' });
+
+    await expect(
+      service.createBatch(lenderId, orderId, {
+        stage: ProofStageEnum.pre_shipment,
+        fileUrls: [`/uploads/${lenderId}/again.jpg`],
+      }),
+    ).rejects.toMatchObject({
+      status: 400,
+      response: { error: 'PROOF_STAGE_ALREADY_SUBMITTED' },
+    });
+    expect(tx.rentalProof.createMany).not.toHaveBeenCalled();
   });
 });

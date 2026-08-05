@@ -22,6 +22,7 @@ import { RentalOrdersController } from '../src/modules/rental-orders/rental-orde
 import { RentalOrdersRepository } from '../src/modules/rental-orders/rental-orders.repository';
 import { RentalOrdersService } from '../src/modules/rental-orders/rental-orders.service';
 import { RentalOrderOrchestrationService } from '../src/modules/rental-orders/rental-order-orchestration.service';
+import { MediaService } from '../src/modules/media/media.service';
 
 describe('RentalOrdersController (HTTP)', () => {
   let app: INestApplication<App>;
@@ -131,7 +132,13 @@ describe('RentalOrdersController (HTTP)', () => {
         })),
       },
       rentalProof: {
-        findFirst: jest.fn().mockResolvedValue({ id: 'proof-id' }),
+        findFirst: jest
+          .fn()
+          .mockImplementation(
+            ({ where }: { where: { uploaded_by?: string } }) =>
+              Promise.resolve(where.uploaded_by ? { id: 'proof-id' } : null),
+          ),
+        createMany: jest.fn().mockResolvedValue({ count: 2 }),
       },
       renterWallet: {
         findUnique: jest.fn().mockResolvedValue({ id: 'cash-wallet-id' }),
@@ -141,6 +148,9 @@ describe('RentalOrdersController (HTTP)', () => {
           locked_balance: new Prisma.Decimal(0),
           status: 'active',
         }),
+      },
+      renterWalletTransaction: {
+        findUnique: jest.fn().mockResolvedValue(null),
       },
       mutuxWallet: {
         findUnique: jest.fn().mockResolvedValue({ id: 'credit-wallet-id' }),
@@ -165,6 +175,14 @@ describe('RentalOrdersController (HTTP)', () => {
         { provide: PrismaService, useValue: prismaService },
         { provide: RentalOrdersRepository, useValue: repository },
         { provide: EscrowService, useValue: escrowService },
+        {
+          provide: MediaService,
+          useValue: {
+            assertOwnedImageFile: jest.fn((_userId: string, url: string) =>
+              Promise.resolve(url),
+            ),
+          },
+        },
       ],
     })
       .overrideGuard(JwtAuthGuard)
@@ -349,6 +367,7 @@ describe('RentalOrdersController (HTTP)', () => {
 
     const response = await request(app.getHttpServer())
       .patch('/api/v1/rental-orders/order-id/return')
+      .send({ fileUrls: ['/uploads/renter-id/return.jpg'] })
       .expect(403);
 
     expect(response.body).toMatchObject({
@@ -433,6 +452,10 @@ describe('RentalOrdersController (HTTP)', () => {
               return Promise.resolve({ ...txOrder });
             }),
           },
+          rentalProof: {
+            findFirst: jest.fn().mockResolvedValue(null),
+            createMany: jest.fn().mockResolvedValue({ count: 1 }),
+          },
         }),
       );
 
@@ -447,9 +470,17 @@ describe('RentalOrdersController (HTTP)', () => {
     currentUser = { id: 'renter-id', role: UserRole.renter };
     await request(app.getHttpServer())
       .patch('/api/v1/rental-orders/order-id/confirm-receipt')
+      .send({
+        fileUrls: ['/uploads/renter-id/received-front.jpg'],
+        note: 'Gear nguyên vẹn',
+      })
       .expect(200);
     await request(app.getHttpServer())
       .patch('/api/v1/rental-orders/order-id/return')
+      .send({
+        fileUrls: ['/uploads/renter-id/return-front.jpg'],
+        note: 'Đã đóng gói gear',
+      })
       .expect(200);
 
     currentUser = { id: 'lender-id', role: UserRole.renter };

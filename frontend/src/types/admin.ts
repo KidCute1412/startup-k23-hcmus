@@ -74,7 +74,12 @@ export interface GetGearQueueParams {
 }
 
 export interface ResolveDisputePayload {
-  resolutionType: 'refund' | 'deposit_deduct' | 'no_action';
+  resolutionType:
+    | 'renter_compensation'
+    | 'lender_compensation'
+    | 'no_action'
+    | 'refund'
+    | 'deposit_deduct';
   deductAmount?: number;
   resolutionNote?: string;
 }

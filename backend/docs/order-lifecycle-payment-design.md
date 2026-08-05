@@ -473,7 +473,7 @@ lender_wallets.balance += rental_fee_after_platform_fee
 2. Ví renter tăng số dư.
 3. Renter tạo order với `deposit_type = credit_line`.
 4. Lender accept.
-5. Backend debit `rental_fee` từ ví renter.
+5. Backend kiểm tra và debit `rental_fee` từ ví renter.
 6. Backend lock `deposit_amount` từ `mutux_wallets` credit line.
 7. Tạo `escrow_wallets.source = credit_line`.
 8. Order -> `confirmed`.

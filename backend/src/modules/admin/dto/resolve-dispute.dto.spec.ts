@@ -4,13 +4,26 @@ import { ResolutionType, ResolveDisputeDto } from './resolve-dispute.dto';
 
 describe('ResolveDisputeDto', () => {
   it.each([
-    [{ resolutionType: ResolutionType.refund }, 0],
+    [{ resolutionType: ResolutionType.renter_compensation }, 1],
+    [
+      { resolutionType: ResolutionType.renter_compensation, deductAmount: 1 },
+      0,
+    ],
+    [
+      {
+        resolutionType: ResolutionType.lender_compensation,
+        deductAmount: 1,
+      },
+      0,
+    ],
+    [{ resolutionType: ResolutionType.lender_compensation }, 1],
+    [{ resolutionType: ResolutionType.refund }, 1],
     [
       {
         resolutionType: ResolutionType.deposit_deduct,
         deductAmount: 1,
       },
-      0,
+      1,
     ],
     [{ resolutionType: ResolutionType.deposit_deduct }, 1],
     [
@@ -52,7 +65,7 @@ describe('ResolveDisputeDto', () => {
 
   it('limits the optional resolution note to 2000 characters', async () => {
     const dto = plainToInstance(ResolveDisputeDto, {
-      resolutionType: ResolutionType.refund,
+      resolutionType: ResolutionType.no_action,
       resolutionNote: 'x'.repeat(2001),
     });
     await expect(validate(dto)).resolves.toHaveLength(1);
