@@ -29,6 +29,11 @@ export interface RentalOrder {
   shipping_address?: string;
   shipping_name?: string;
   shipping_phone?: string;
+  ship_deadline_at?: string | null;
+  shipDeadlineAt?: string | null;
+  return_deadline_at?: string | null;
+  returnDeadlineAt?: string | null;
+  cancelled_reason?: string | null;
   duration_days?: number;
   platform_fee?: number;
   lender_income?: number;
@@ -62,6 +67,17 @@ export interface RentalOrder {
     status: 'open' | 'under_review' | 'resolved' | 'closed' | string;
     reason: string;
     description?: string | null;
+    reported_by?: string;
+    reportedBy?: string;
+    created_at?: string;
+    createdAt?: string;
+    evidences?: Array<{
+      uploaded_by?: string;
+      uploadedBy?: string;
+      url: string;
+      uploaded_at?: string;
+      uploadedAt?: string;
+    }>;
   }>;
 }
 
@@ -102,5 +118,11 @@ export interface RentalProof {
 export interface UploadProofRequest {
   stage: string;
   fileUrl: string;
+  note?: string;
+}
+
+export interface UploadProofBatchRequest {
+  stage: string;
+  fileUrls: string[];
   note?: string;
 }

@@ -418,15 +418,50 @@ describe('RentalOrdersService', () => {
   });
 
   it('allows startDate on the current Ho Chi Minh business date', async () => {
-    await expect(
-      service.create('renter-id', {
-        ...dto,
-        startDate: '2026-07-29',
-        endDate: '2026-07-30',
-      }),
-    ).resolves.toMatchObject({
-      status: OrderStatusType.pending_confirm,
+    const result = await service.create('renter-id', {
+      ...dto,
+      startDate: '2026-07-29',
+      endDate: '2026-07-30',
     });
+
+    expect(result).toMatchObject({
+      status: OrderStatusType.pending_confirm,
+      ship_deadline_at: new Date('2026-07-28T16:59:59.999Z'),
+    });
+  });
+
+  it('stores the shipment deadline at the previous business-day midnight', async () => {
+    const result = await service.create('renter-id', {
+      ...dto,
+      startDate: '2026-08-01',
+      endDate: '2026-08-02',
+    });
+
+    expect(result).toMatchObject({
+      ship_deadline_at: new Date('2026-07-31T16:59:59.999Z'),
+      return_deadline_at: new Date('2026-08-02T16:59:59.999Z'),
+    });
+  });
+
+  it('rejects a checkout when the delivery address is not owned by the renter', async () => {
+    const addressLookup = jest.fn().mockResolvedValue(null);
+    const addressPrisma = {
+      userAddress: { findFirst: addressLookup },
+    } as unknown as PrismaService;
+    const addressService = new RentalOrdersService(
+      repository as unknown as RentalOrdersRepository,
+      new RentalOrderOrchestrationService(
+        addressPrisma,
+        escrowService as unknown as EscrowService,
+      ),
+      addressPrisma,
+    );
+
+    await expect(addressService.create('renter-id', dto)).rejects.toMatchObject(
+      {
+        response: { error: 'ADDRESS_NOT_FOUND' },
+      },
+    );
   });
 
   it('blocks overlap only for non-terminal order statuses', () => {

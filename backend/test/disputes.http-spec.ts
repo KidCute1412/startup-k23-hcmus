@@ -22,7 +22,10 @@ describe('Dispute routes (HTTP)', () => {
   const userId = '10000000-0000-4000-8000-000000000001';
   const orderId = '20000000-0000-4000-8000-000000000001';
   const disputeId = '30000000-0000-4000-8000-000000000001';
-  const disputesService = { create: jest.fn() };
+  const disputesService = {
+    create: jest.fn(),
+    addResponseEvidence: jest.fn(),
+  };
   const adminService = { resolveDispute: jest.fn() };
   const validBody = {
     rentalOrderId: orderId,
@@ -74,6 +77,13 @@ describe('Dispute routes (HTTP)', () => {
       reportedBy: userId,
       reporterRole: 'renter',
       status: 'open',
+      evidences: [],
+    });
+    disputesService.addResponseEvidence.mockResolvedValue({
+      id: disputeId,
+      rentalOrderId: orderId,
+      status: 'open',
+      responseDeadlineAt: '2026-08-01T00:00:00.000Z',
       evidences: [],
     });
     adminService.resolveDispute.mockResolvedValue({
@@ -167,6 +177,47 @@ describe('Dispute routes (HTTP)', () => {
       success: true,
       data: { status: 'resolved', resolutionType: 'refund' },
     });
+  });
+
+  it('accepts response evidence from the other participant', async () => {
+    const response = await request(app.getHttpServer())
+      .post(`/api/v1/disputes/${disputeId}/evidence`)
+      .set('Cookie', createAccessTokenCookie(createJwt(userId, 'renter')))
+      .set('Origin', 'http://localhost:3000')
+      .send({
+        evidences: [
+          { mediaType: 'image', url: `/uploads/${userId}/reply.jpg` },
+        ],
+      })
+      .expect(201);
+
+    expect(response.body).toMatchObject({
+      success: true,
+      data: { id: disputeId, responseDeadlineAt: '2026-08-01T00:00:00.000Z' },
+    });
+    expect(disputesService.addResponseEvidence).toHaveBeenCalledWith(
+      userId,
+      disputeId,
+      {
+        evidences: [
+          { mediaType: 'image', url: `/uploads/${userId}/reply.jpg` },
+        ],
+      },
+    );
+  });
+
+  it.each([
+    { evidences: [] },
+    { evidences: Array(6).fill({ mediaType: 'image', url: 'x' }) },
+    { evidences: [{ mediaType: 'video', url: 'x' }] },
+  ])('validates response evidence body %o', async (body) => {
+    await request(app.getHttpServer())
+      .post(`/api/v1/disputes/${disputeId}/evidence`)
+      .set('Cookie', createAccessTokenCookie(createJwt(userId, 'renter')))
+      .set('Origin', 'http://localhost:3000')
+      .send(body)
+      .expect(400);
+    expect(disputesService.addResponseEvidence).not.toHaveBeenCalled();
   });
 
   it.each([

@@ -2,7 +2,7 @@
 
 import { useCallback, useState } from 'react';
 import { rentalProofService } from '@/services/rentalProofService';
-import type { RentalProof, UploadProofRequest } from '@/types/rentals';
+import type { RentalProof, UploadProofBatchRequest, UploadProofRequest } from '@/types/rentals';
 
 export function useRentalProof(rentalOrderId: string) {
   const [isLoading, setIsLoading] = useState(false);
@@ -33,11 +33,24 @@ export function useRentalProof(rentalOrderId: string) {
     } finally { setIsLoading(false); }
   }, [rentalOrderId]);
 
+  const uploadProofBatch = useCallback(async (request: UploadProofBatchRequest) => {
+    setIsLoading(true); setError(null);
+    try {
+      const newProofs = await rentalProofService.uploadRentalProofBatch(rentalOrderId, request);
+      setProofs((prev) => [...prev, ...newProofs]);
+      return newProofs;
+    } catch (cause) {
+      const message = cause instanceof Error ? cause.message : 'Tải lên minh chứng thất bại.';
+      setError(message); throw cause;
+    } finally { setIsLoading(false); }
+  }, [rentalOrderId]);
+
   return {
     proofs,
     isLoading,
     error,
     fetchProofs,
     uploadProof,
+    uploadProofBatch,
   };
 }

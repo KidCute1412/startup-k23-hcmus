@@ -17,9 +17,13 @@ describe('RentalOrderOrchestrationService', () => {
   let tx: {
     $queryRaw: jest.Mock;
     rentalOrder: { findUnique: jest.Mock; update: jest.Mock };
-    rentalProof: { findFirst: jest.Mock };
+    rentalProof: { findFirst: jest.Mock; createMany: jest.Mock };
   };
-  let escrow: { lock: jest.Mock; release: jest.Mock };
+  let escrow: {
+    lock: jest.Mock;
+    release: jest.Mock;
+    refundLateDelivery: jest.Mock;
+  };
 
   const invoke = (
     action: (typeof RENTAL_ORDER_TRANSITION_MATRIX)[number]['action'],
@@ -71,7 +75,7 @@ describe('RentalOrderOrchestrationService', () => {
             ({
               where,
             }: {
-              where: { stage: ProofStageEnum; uploaded_by: string };
+              where: { stage: ProofStageEnum; uploaded_by?: string };
             }) =>
               Promise.resolve(
                 proofs.has(`${where.stage}:${where.uploaded_by}`)
@@ -79,6 +83,7 @@ describe('RentalOrderOrchestrationService', () => {
                   : null,
               ),
           ),
+        createMany: jest.fn().mockResolvedValue({ count: 2 }),
       },
     };
     const prisma = {
@@ -91,6 +96,7 @@ describe('RentalOrderOrchestrationService', () => {
     escrow = {
       lock: jest.fn().mockResolvedValue({ status: 'locked' }),
       release: jest.fn().mockResolvedValue({ status: 'released' }),
+      refundLateDelivery: jest.fn().mockResolvedValue({ status: 'released' }),
     };
     service = new RentalOrderOrchestrationService(
       prisma as unknown as PrismaService,
@@ -205,6 +211,93 @@ describe('RentalOrderOrchestrationService', () => {
       response: { error: 'PROOF_REQUIRED' },
     });
     expect(tx.rentalOrder.update).not.toHaveBeenCalled();
+  });
+
+  it('rejects shipping after the previous business-day midnight deadline', async () => {
+    state.status = OrderStatusType.confirmed;
+    state.ship_deadline_at = new Date('2026-07-28T17:00:00.000Z');
+    proofs.add(`${ProofStageEnum.pre_shipment}:${lenderId}`);
+
+    await expect(service.ship(lenderId, orderId)).resolves.toMatchObject({
+      status: OrderStatusType.cancelled,
+      cancelled_reason: 'late_delivery_refund',
+    });
+    expect(escrow.refundLateDelivery).toHaveBeenCalledWith(orderId, tx);
+  });
+
+  it('creates post_received proofs and activates the order atomically', async () => {
+    state.status = OrderStatusType.delivering;
+
+    await expect(
+      service.confirmReceiptWithProof(
+        renterId,
+        orderId,
+        [
+          '/uploads/renter-id/received-front.jpg',
+          '/uploads/renter-id/received-back.jpg',
+        ],
+        'Gear nguyên vẹn',
+      ),
+    ).resolves.toMatchObject({ status: OrderStatusType.active });
+
+    expect(tx.rentalProof.createMany).toHaveBeenCalledWith({
+      data: [
+        expect.objectContaining({
+          uploaded_by: renterId,
+          stage: ProofStageEnum.post_received,
+          file_url: '/uploads/renter-id/received-front.jpg',
+          note: 'Gear nguyên vẹn',
+        }),
+        expect.objectContaining({
+          uploaded_by: renterId,
+          stage: ProofStageEnum.post_received,
+          file_url: '/uploads/renter-id/received-back.jpg',
+        }),
+      ],
+    });
+    const updateCall = tx.rentalOrder.update.mock.calls[0] as unknown as [
+      { data: { status: OrderStatusType } },
+    ];
+    expect(updateCall[0].data.status).toBe(OrderStatusType.active);
+  });
+
+  it('does not allow a second combined proof submission for the same stage', async () => {
+    state.status = OrderStatusType.delivering;
+    tx.rentalProof.findFirst.mockImplementation(
+      ({ where }: { where: { stage: ProofStageEnum; uploaded_by?: string } }) =>
+        Promise.resolve(where.uploaded_by ? null : { id: 'existing-proof' }),
+    );
+
+    await expect(
+      service.confirmReceiptWithProof(renterId, orderId, [
+        '/uploads/renter-id/received.jpg',
+      ]),
+    ).rejects.toMatchObject({
+      status: 400,
+      response: { error: 'PROOF_STAGE_ALREADY_SUBMITTED' },
+    });
+    expect(tx.rentalProof.createMany).not.toHaveBeenCalled();
+    expect(tx.rentalOrder.update).not.toHaveBeenCalled();
+  });
+
+  it('creates pre_return proofs and moves the order to returning atomically', async () => {
+    state.status = OrderStatusType.active;
+
+    await expect(
+      service.returnWithProof(renterId, orderId, [
+        '/uploads/renter-id/return-front.jpg',
+      ]),
+    ).resolves.toMatchObject({ status: OrderStatusType.returning });
+
+    expect(tx.rentalProof.createMany).toHaveBeenCalledWith({
+      data: [
+        expect.objectContaining({
+          uploaded_by: renterId,
+          stage: ProofStageEnum.pre_return,
+          file_url: '/uploads/renter-id/return-front.jpg',
+        }),
+      ],
+    });
   });
 
   it('requires both renter pre_return and lender post_returned before settlement', async () => {

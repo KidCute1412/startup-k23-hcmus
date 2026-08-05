@@ -5,6 +5,7 @@ import {
   Injectable,
   InternalServerErrorException,
   NotFoundException,
+  Optional,
 } from '@nestjs/common';
 import {
   ApprovalStatusType,
@@ -22,6 +23,7 @@ import { CreateBatchRentalOrdersDto } from './dto/create-batch-rental-orders.dto
 import { GetRentalOrdersQueryDto } from './dto/get-rental-orders-query.dto';
 import { RentalOrderOrchestrationService } from './rental-order-orchestration.service';
 import { RentalOrdersRepository } from './rental-orders.repository';
+import { MediaService } from '../media/media.service';
 
 interface CurrentUser {
   id: string;
@@ -29,6 +31,8 @@ interface CurrentUser {
 }
 
 const MILLISECONDS_PER_DAY = 24 * 60 * 60 * 1000;
+const BUSINESS_TIME_ZONE_OFFSET_MS = 7 * 60 * 60 * 1000;
+const LAST_MILLISECOND = 1;
 export const RENTAL_BUSINESS_TIME_ZONE = 'Asia/Ho_Chi_Minh';
 
 @Injectable()
@@ -37,6 +41,7 @@ export class RentalOrdersService {
     private readonly rentalOrdersRepository: RentalOrdersRepository,
     private readonly orchestration: RentalOrderOrchestrationService,
     private readonly prisma: PrismaService,
+    @Optional() private readonly mediaService?: MediaService,
   ) {}
 
   async create(renterId: string, dto: CreateRentalOrderDto) {
@@ -117,6 +122,8 @@ export class RentalOrdersService {
       shipping_address: shipping.address,
       shipping_name: shipping.name,
       shipping_phone: shipping.phone,
+      ship_deadline_at: this.shipDeadline(startDate),
+      return_deadline_at: this.returnDeadline(endDate),
     };
 
     return this.rentalOrdersRepository.create(data);
@@ -202,6 +209,8 @@ export class RentalOrdersService {
           shipping_address: shipping.address,
           shipping_name: shipping.name,
           shipping_phone: shipping.phone,
+          ship_deadline_at: this.shipDeadline(startDate),
+          return_deadline_at: this.returnDeadline(endDate),
         },
       });
     });
@@ -311,6 +320,8 @@ export class RentalOrdersService {
           shipping_address: shipping.address,
           shipping_name: shipping.name,
           shipping_phone: shipping.phone,
+          ship_deadline_at: this.shipDeadline(item.start_date),
+          return_deadline_at: this.returnDeadline(item.end_date),
         });
       }
 
@@ -418,8 +429,36 @@ export class RentalOrdersService {
     return this.orchestration.confirmReceipt(userId, id);
   }
 
+  async confirmReceiptWithProof(
+    userId: string,
+    id: string,
+    fileUrls: string[],
+    note?: string,
+  ) {
+    return this.orchestration.confirmReceiptWithProof(
+      userId,
+      id,
+      await this.assertOwnedProofFiles(userId, fileUrls),
+      note,
+    );
+  }
+
   returnOrder(userId: string, id: string) {
     return this.orchestration.returnOrder(userId, id);
+  }
+
+  async returnWithProof(
+    userId: string,
+    id: string,
+    fileUrls: string[],
+    note?: string,
+  ) {
+    return this.orchestration.returnWithProof(
+      userId,
+      id,
+      await this.assertOwnedProofFiles(userId, fileUrls),
+      note,
+    );
   }
 
   confirmReturn(userId: string, id: string) {
@@ -434,6 +473,39 @@ export class RentalOrdersService {
 
     if (role === 'lender') return { lender_id: user.id };
     return { renter_id: user.id };
+  }
+
+  private shipDeadline(startDate: Date): Date {
+    // Date-only values are stored at UTC midnight. The deadline is 23:59:59.999
+    // in Vietnam on the previous calendar day.
+    return new Date(
+      startDate.getTime() - BUSINESS_TIME_ZONE_OFFSET_MS - LAST_MILLISECOND,
+    );
+  }
+
+  private returnDeadline(endDate: Date): Date {
+    // Date-only end dates represent a Vietnam calendar date, so 23:59:59.999
+    // Vietnam is 17:00 minus 1ms from the next UTC midnight representation.
+    return new Date(
+      endDate.getTime() +
+        MILLISECONDS_PER_DAY -
+        BUSINESS_TIME_ZONE_OFFSET_MS -
+        LAST_MILLISECOND,
+    );
+  }
+
+  private async assertOwnedProofFiles(
+    userId: string,
+    fileUrls: string[],
+  ): Promise<string[]> {
+    if (!this.mediaService) {
+      throw new InternalServerErrorException('Media service is unavailable');
+    }
+    return Promise.all(
+      fileUrls.map((fileUrl) =>
+        this.mediaService!.assertOwnedImageFile(userId, fileUrl),
+      ),
+    );
   }
 
   async assertCheckoutFunds(

@@ -3,6 +3,7 @@ import type {
   CreateRentalOrderRequest,
   GetRentalOrdersParams,
   RentalOrder,
+  UploadProofBatchRequest,
 } from '@/types/rentals';
 
 export const rentalOrderService = {
@@ -33,11 +34,17 @@ export const rentalOrderService = {
   shipRentalOrder: (id: string) =>
     apiClient<RentalOrder>(`/rental-orders/${encodeURIComponent(id)}/ship`, { method: 'PATCH' }),
 
-  confirmRentalReceipt: (id: string) =>
-    apiClient<RentalOrder>(`/rental-orders/${encodeURIComponent(id)}/confirm-receipt`, { method: 'PATCH' }),
+  confirmRentalReceipt: (id: string, request: Omit<UploadProofBatchRequest, 'stage'>) =>
+    apiClient<RentalOrder>(`/rental-orders/${encodeURIComponent(id)}/confirm-receipt`, {
+      method: 'PATCH',
+      body: JSON.stringify(request),
+    }),
 
-  returnRentalOrder: (id: string) =>
-    apiClient<RentalOrder>(`/rental-orders/${encodeURIComponent(id)}/return`, { method: 'PATCH' }),
+  returnRentalOrder: (id: string, request: Omit<UploadProofBatchRequest, 'stage'>) =>
+    apiClient<RentalOrder>(`/rental-orders/${encodeURIComponent(id)}/return`, {
+      method: 'PATCH',
+      body: JSON.stringify(request),
+    }),
 
   confirmRentalReturn: (id: string) =>
     apiClient<RentalOrder>(`/rental-orders/${encodeURIComponent(id)}/confirm-return`, { method: 'PATCH' }),

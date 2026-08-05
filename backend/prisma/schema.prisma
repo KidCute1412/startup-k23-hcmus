@@ -589,9 +589,12 @@ model RentalOrder {
   platform_fee               Decimal         @default(0) @db.Decimal(15, 2)
   lender_income              Decimal         @default(0) @db.Decimal(15, 2)
   status                     OrderStatusType @default(pending_confirm)
+  cancelled_reason           String?         @db.VarChar(100)
   shipping_address           String?
   shipping_name              String?         @db.VarChar(255)
   shipping_phone             String?         @db.VarChar(20)
+  ship_deadline_at           DateTime?
+  return_deadline_at         DateTime?
   lender_shipped_at          DateTime?
   renter_received_at         DateTime?
   renter_returned_at         DateTime?

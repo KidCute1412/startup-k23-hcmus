@@ -137,7 +137,9 @@ export function OrdersOverview({ viewRole = 'renter', detailBasePath = '/orders'
           const renterId = order.renter?.id ?? order.renterId ?? order.renter_id;
           const lenderId = order.lender?.id ?? order.lenderId ?? order.lender_id;
           const isParticipant = user?.id === renterId || user?.id === lenderId;
-          const canDispute = isParticipant && (order.status === 'active' || order.status === 'returning');
+           const canDispute = viewRole === 'lender'
+             ? user?.id === lenderId && order.status === 'returning'
+             : user?.id === renterId && (order.status === 'delivering' || order.status === 'active' || order.status === 'returning');
 
           return (
             <Card key={order.id} className="p-5 hover:border-vanguard-primary/50 transition">

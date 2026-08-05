@@ -382,6 +382,127 @@ export class EscrowService implements IEscrowService {
     return tx ? execute(tx) : this.prisma.$transaction(execute);
   }
 
+  async refundLateDelivery(
+    orderId: string,
+    tx?: Prisma.TransactionClient,
+  ): Promise<EscrowResult> {
+    const execute = async (client: Prisma.TransactionClient) => {
+      await client.$queryRaw`SELECT id FROM rental_orders WHERE id = ${orderId}::uuid FOR UPDATE`;
+      const order = await client.rentalOrder.findUnique({
+        where: { id: orderId },
+        include: { escrow_wallet: true },
+      });
+      if (!order) throw new NotFoundException('Order not found');
+
+      const escrow = order.escrow_wallet;
+      if (!escrow) {
+        throw new BadRequestException({
+          error: 'ESCROW_NOT_FOUND',
+          message: 'No escrow found for this order',
+        });
+      }
+
+      const reference = `LATE-DELIVERY-REFUND-${orderId}`;
+      const existingRefund = await client.renterWalletTransaction.findUnique({
+        where: { reference },
+      });
+      if (escrow.status === 'released' && existingRefund) {
+        return this.toResult(escrow);
+      }
+      if (escrow.status !== 'locked') {
+        throw new BadRequestException({
+          error: 'ESCROW_INVALID_STATUS',
+          message: `Escrow status is ${escrow.status}, expected locked`,
+        });
+      }
+      if (existingRefund) {
+        throw new BadRequestException({
+          error: 'SETTLEMENT_STATE_INCONSISTENT',
+          message: 'Late-delivery refund ledger exists while escrow is locked',
+        });
+      }
+
+      const renterWallet = await client.renterWallet.findUnique({
+        where: { user_id: order.renter_id },
+      });
+      if (!renterWallet) {
+        throw new BadRequestException({
+          error: 'RENTER_WALLET_NOT_FOUND',
+          message: 'Renter wallet not found',
+        });
+      }
+      await client.$queryRaw`SELECT id FROM renter_wallets WHERE id = ${renterWallet.id}::uuid FOR UPDATE`;
+      const balanceAfter = renterWallet.balance.plus(order.rental_fee);
+
+      await client.renterWallet.update({
+        where: { id: renterWallet.id },
+        data: {
+          balance: balanceAfter,
+          locked_balance:
+            escrow.source === 'renter_cash'
+              ? renterWallet.locked_balance.sub(escrow.amount)
+              : renterWallet.locked_balance,
+        },
+      });
+      await client.renterWalletTransaction.create({
+        data: {
+          wallet_id: renterWallet.id,
+          type: 'late_delivery_refund',
+          amount: order.rental_fee,
+          balance_before: renterWallet.balance,
+          balance_after: balanceAfter,
+          reference,
+        },
+      });
+
+      if (escrow.source === 'credit_line') {
+        const creditWallet = await client.mutuxWallet.findUnique({
+          where: { user_id: order.renter_id },
+        });
+        if (!creditWallet) {
+          throw new BadRequestException({
+            error: 'CREDIT_WALLET_NOT_FOUND',
+            message: 'Credit wallet not found',
+          });
+        }
+        await client.$queryRaw`SELECT id FROM mutux_wallets WHERE id = ${creditWallet.id}::uuid FOR UPDATE`;
+        const lockedAfter = creditWallet.locked_balance.sub(escrow.amount);
+        const displayAfter = creditWallet.total_limit
+          .sub(lockedAfter)
+          .sub(creditWallet.outstanding_debt);
+        await client.mutuxWallet.update({
+          where: { id: creditWallet.id },
+          data: {
+            locked_balance: lockedAfter,
+            display_balance: displayAfter,
+          },
+        });
+        await client.creditTransaction.create({
+          data: {
+            mutux_wallet_id: creditWallet.id,
+            type: 'deposit_release',
+            amount: escrow.amount,
+            display_balance_before: creditWallet.display_balance,
+            display_balance_after: displayAfter,
+            direction: 'in',
+            ref_type: 'rental_order',
+            ref_id: order.id,
+            note: `Release deposit after late delivery refund for ${order.id}`,
+            status: 'success',
+          },
+        });
+      }
+
+      const updated = await client.escrowWallet.update({
+        where: { id: escrow.id },
+        data: { status: 'released', released_at: new Date() },
+      });
+      return this.toResult(updated);
+    };
+
+    return tx ? execute(tx) : this.prisma.$transaction(execute);
+  }
+
   async compensate(
     orderId: string,
     deductAmount: number,

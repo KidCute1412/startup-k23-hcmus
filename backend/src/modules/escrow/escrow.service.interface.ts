@@ -17,4 +17,5 @@ export interface IEscrowService {
   lock(orderId: string): Promise<EscrowResult>;
   release(orderId: string): Promise<EscrowResult>;
   compensate(orderId: string, deductAmount: number): Promise<EscrowResult>;
+  refundLateDelivery(orderId: string): Promise<EscrowResult>;
 }

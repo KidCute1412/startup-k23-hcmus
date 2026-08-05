@@ -404,17 +404,17 @@ HTTP Status: `400`, `401`, `403`, `404`, `422`, `500`.
 | --- | --- | --- | --- | --- | --- |
 | Tạo order `POST /rental-orders` | renter | — | — | Không chạm ví | `pending_confirm` |
 | `PATCH /:id/confirm` | lender | `pending_confirm` | — | Debit rental fee, lock cọc, tạo escrow, snapshot phí/doanh thu | `confirmed` |
-| `PATCH /:id/ship` | lender | `confirmed` | `pre_shipment` của lender | Ghi `lender_shipped_at` | `delivering` |
+| `PATCH /:id/ship` | lender | `confirmed` | `pre_shipment` của lender | Giao đúng hạn: ghi `lender_shipped_at`; giao trễ: hoàn tiền renter, giải phóng cọc | `delivering` hoặc `cancelled` |
 | `PATCH /:id/cancel` | renter | `pending_confirm` | — | Không chạm ví/escrow | `cancelled` |
-| `PATCH /:id/confirm-receipt` | renter | `delivering` | — | Ghi `renter_received_at` | `active` |
-| `PATCH /:id/return` | renter | `active` | — | Ghi `renter_returned_at` | `returning` |
-| `POST /disputes` | renter hoặc lender của order | `active` hoặc `returning` | — | Tạo dispute/evidence | `disputed` |
+| `PATCH /:id/confirm-receipt` | renter | `delivering` | batch `post_received` của renter trong body | Ghi `renter_received_at` | `active` |
+| `PATCH /:id/return` | renter | `active` | batch `pre_return` của renter trong body | Ghi `renter_returned_at` | `returning` |
+| `POST /disputes` | renter hoặc lender của order | renter: `delivering`/`active`/`returning`; lender: `returning` | — | Tạo dispute/evidence | `disputed` |
 | `PATCH /:id/confirm-return` | lender | `returning` | `pre_return` của renter và `post_returned` của lender | Release cọc, settle lender, ghi `lender_received_back_at` | `completed` |
 | `POST /admin/disputes/:id/resolve` | admin | `disputed` | — | Release/compensate escrow và resolve dispute | `completed` |
 
 **Idempotency**: retry cùng action sau khi transaction trước đã commit và order đang đúng target trả `200` với state hiện tại, không chạy lại timestamp hoặc side effect ví/escrow/ledger. Riêng tạo dispute retry trả lại dispute `open`/`under_review` đang có. Trạng thái khác source/target trả `400 INVALID_TRANSITION`; riêng cancel ngoài `pending_confirm`/`cancelled` trả `400 CANCEL_NOT_ALLOWED`.
 
-**Late return**: Sprint 3 không tự tính late fee. Trả trễ phải đi qua dispute và admin resolution thủ công.
+**Deadline**: `ship_deadline_at` là `23:59:59.999` giờ Việt Nam của ngày trước `start_date`; `return_deadline_at` là `23:59:59.999` giờ Việt Nam của `end_date`. Giao trễ tự động hoàn `rental_fee` về ví renter, giải phóng cọc và chuyển order thành `cancelled` với `cancelled_reason = late_delivery_refund`. Trả trễ vẫn được phép chuyển sang `returning`, lender có thể mở dispute để Admin phân xử.
 
 #### [POST] `/rental-orders` (Tạo yêu cầu thuê thiết bị - Renter)
 * **Authentication**: `accessToken` cookie (and valid `Origin`); chỉ role `renter`.
@@ -433,6 +433,7 @@ HTTP Status: `400`, `401`, `403`, `404`, `422`, `500`.
   - `gear.approval_status` phải là `approved` và gear phải đang `available`; nếu không trả `400 GEAR_NOT_AVAILABLE`.
   - `startDate` phải nhỏ hơn `endDate`; nếu không trả `400 INVALID_DATE_RANGE`.
   - `startDate` không được trước ngày hiện tại theo timezone business cố định `Asia/Ho_Chi_Minh`; nếu vi phạm trả `400 START_DATE_IN_PAST`. Date-only được so sánh độc lập timezone máy chạy.
+  - Response lưu `ship_deadline_at` và `return_deadline_at` theo UTC, tương ứng các mốc cuối ngày ở `Asia/Ho_Chi_Minh`.
   - Chỉ các order `pending_confirm`, `confirmed`, `delivering`, `active`, `returning`, `disputed` chặn lịch trùng. `cancelled` và `completed` không chặn khoảng thuê mới; overlap trả `409 GEAR_UNAVAILABLE_FOR_PERIOD`.
   - `lenderId` luôn được lấy từ `gear.lender_id`, không nhận từ request body.
   - `duration_days = endDate - startDate` theo khoảng ngày nửa mở `[startDate, endDate)`; `rentalFee = snappedRentPricePerDay × durationDays`.
@@ -469,6 +470,7 @@ HTTP Status: `400`, `401`, `403`, `404`, `422`, `500`.
 * **Transition**: `confirmed` → `delivering`.
 * **Proof gate**: bắt buộc đã có `pre_shipment` do lender upload; thiếu proof trả `400 PROOF_REQUIRED` và order vẫn `confirmed`.
 * **Side effect**: cập nhật `lender_shipped_at` bằng thời điểm hiện tại.
+* **Late shipment**: nếu quá `ship_deadline_at`, hệ thống không giao order; trong cùng transaction hoàn `rental_fee` về ví renter, mở khóa cọc, ghi ledger `late_delivery_refund`, cập nhật `cancelled_reason = late_delivery_refund` và trả order `cancelled`.
 * **Success (200)**: trả về order với `status = delivering`; retry khi đã `delivering` không đổi timestamp.
 
 #### [PATCH] `/rental-orders/:id/cancel` (Renter hủy yêu cầu thuê)
@@ -482,15 +484,17 @@ HTTP Status: `400`, `401`, `403`, `404`, `422`, `500`.
 #### [PATCH] `/rental-orders/:id/confirm-receipt` (Renter xác nhận đã nhận hàng)
 * **Authentication**: `accessToken` cookie (and valid `Origin` for state changes).
 * **Actor**: chỉ renter của order.
+* **Body bắt buộc**: `{ "fileUrls": ["/uploads/.../received-1.jpg", "/uploads/.../received-2.jpg"], "note": "..." }`. Ảnh được kiểm tra quyền sở hữu và lưu thành proof `post_received` trong cùng transaction với transition.
 * **Transition**: `delivering` → `active`.
-* **Side effect**: cập nhật `renter_received_at` bằng thời điểm hiện tại.
+* **Side effect**: cập nhật `renter_received_at` bằng thời điểm hiện tại; thiếu ảnh hoặc stage đã gửi trước đó trả `400 PROOF_REQUIRED` / `400 PROOF_STAGE_ALREADY_SUBMITTED`.
 * **Success (200)**: trả về order với `status = active`.
 
 #### [PATCH] `/rental-orders/:id/return` (Renter xác nhận đã gửi trả)
 * **Authentication**: `accessToken` cookie (and valid `Origin` for state changes).
 * **Actor**: chỉ renter của order; lender hoặc user khác nhận `403 FORBIDDEN`.
+* **Body bắt buộc**: `{ "fileUrls": ["/uploads/.../return-1.jpg", "/uploads/.../return-2.jpg"], "note": "..." }`. Ảnh được lưu thành proof `pre_return` trong cùng transaction với transition.
 * **Transition**: `active` → `returning`.
-* **Side effect**: cập nhật `renter_returned_at` bằng thời điểm hiện tại.
+* **Side effect**: cập nhật `renter_returned_at` bằng thời điểm hiện tại; không thể gửi lại proof của cùng một stage.
 * **Success (200)**: trả về order với `status = returning`.
 
 #### [PATCH] `/rental-orders/:id/confirm-return` (Lender xác nhận đã nhận lại gear)
@@ -543,6 +547,7 @@ Ngoài retry ở đúng target, status sai trả `400 INVALID_TRANSITION` (hoặ
   - `400 INVALID_FILE_URL`: URL không thuộc thư mục upload của caller.
   - `403 FORBIDDEN`: caller không phải participant của order.
   - `404 NOT_FOUND`: order không tồn tại.
+  - `400 PROOF_STAGE_ALREADY_SUBMITTED`: stage này đã có proof; mỗi stage chỉ được gửi một batch duy nhất.
 * **Success (201)**:
   ```json
   {
@@ -559,6 +564,10 @@ Ngoài retry ở đúng target, status sai trả `400 INVALID_TRANSITION` (hoặ
     }
   }
   ```
+
+#### [POST] `/rental-orders/:id/proofs/batch` (Tạo nhiều bằng chứng trong một giai đoạn)
+* **Body**: `{ "stage": "pre_shipment", "fileUrls": ["/uploads/.../front.jpg", "/uploads/.../back.jpg"], "note": "..." }`.
+* **Rule**: tối đa 10 ảnh, chỉ actor đúng stage được gửi và mỗi stage của một order chỉ được submit một lần.
 
 #### [GET] `/rental-orders/:id/proofs` (Xem bằng chứng đơn hàng)
 * **Authentication**: `accessToken` cookie.
@@ -634,15 +643,20 @@ Ngoài retry ở đúng target, status sai trả `400 INVALID_TRANSITION` (hoặ
 * **Evidence**: Tối đa 5 ảnh. Mỗi URL phải là ảnh local còn tồn tại do chính người gọi upload qua `/media/upload`; URL ngoài hệ thống hoặc của user khác trả `400 INVALID_FILE_URL`.
 * **Business rules**:
   - Chỉ renter hoặc lender của order được gửi; `reporterRole` do server suy ra, không nhận từ client.
-  - Order phải ở `active` hoặc `returning`.
+  - Renter có thể khiếu nại ở `delivering`, `active` hoặc `returning`; lender chỉ có thể khiếu nại ở `returning`.
   - Việc tạo dispute, evidence và chuyển order sang `disputed` chạy trong cùng transaction. Order được khóa để hai request đồng thời không thể cùng tạo dispute đang hoạt động.
   - Retry/concurrent request cho cùng order trả lại dispute `open`/`under_review` đã tồn tại, không tạo evidence hoặc dispute thứ hai.
 * **Errors**:
-  - `400 DISPUTE_NOT_ALLOWED_AT_THIS_STAGE` nếu order không ở `active` / `returning`.
+  - `400 DISPUTE_NOT_ALLOWED_AT_THIS_STAGE` nếu order không ở stage cho phép theo actor.
   - `400 INVALID_FILE_URL` nếu evidence không phải ảnh local thuộc người gọi.
   - `403 FORBIDDEN` nếu người gọi không phải participant.
   - `404 NOT_FOUND` nếu order không tồn tại.
 * **Success (201)**: Tạo tranh chấp cùng evidence thành công, server trả dữ liệu camelCase và order đổi sang `disputed`. Retry trả cùng dispute hiện hữu.
+
+#### [POST] `/disputes/:id/evidence` (Bên còn lại gửi bằng chứng phản hồi)
+* **Body**: `{ "evidences": [{ "mediaType": "image", "url": "/uploads/{currentUserId}/{uploadedFile}.jpg" }] }`.
+* **Rule**: chỉ bên không tạo dispute được gửi một lần, tối đa 5 ảnh, trong vòng 3 ngày kể từ `createdAt`; URL phải là ảnh do chính người gửi upload.
+* **Success (201)**: trả dispute cùng toàn bộ evidence và `responseDeadlineAt`.
 
 ---
 

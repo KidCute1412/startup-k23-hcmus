@@ -161,6 +161,7 @@ describeIntegration('Rental order transitions (PostgreSQL integration)', () => {
       .patch(`/api/v1/rental-orders/${order.id}/return`)
       .set('Cookie', createAccessTokenCookie(lenderToken))
       .set('Origin', INTEGRATION_FRONTEND_ORIGIN)
+      .send({ fileUrls: ['https://i.ibb.co/integration/return.jpg'] })
       .expect(403);
 
     await request(app.getHttpServer())
@@ -209,13 +210,14 @@ describeIntegration('Rental order transitions (PostgreSQL integration)', () => {
       .patch(`/api/v1/rental-orders/${order.id}/confirm-receipt`)
       .set('Cookie', createAccessTokenCookie(renterToken))
       .set('Origin', INTEGRATION_FRONTEND_ORIGIN)
+      .send({ fileUrls: ['https://i.ibb.co/integration/received.jpg'] })
       .expect(200);
     await request(app.getHttpServer())
       .patch(`/api/v1/rental-orders/${order.id}/return`)
       .set('Cookie', createAccessTokenCookie(renterToken))
       .set('Origin', INTEGRATION_FRONTEND_ORIGIN)
+      .send({ fileUrls: ['https://i.ibb.co/integration/return.jpg'] })
       .expect(200);
-    await addProof(order.id, renterId, ProofStageEnum.pre_return);
     await addProof(order.id, lenderId, ProofStageEnum.post_returned);
     await request(app.getHttpServer())
       .patch(`/api/v1/rental-orders/${order.id}/confirm-return`)
@@ -329,13 +331,14 @@ describeIntegration('Rental order transitions (PostgreSQL integration)', () => {
       .patch(`/api/v1/rental-orders/${order.id}/confirm-receipt`)
       .set('Cookie', createAccessTokenCookie(renterToken))
       .set('Origin', INTEGRATION_FRONTEND_ORIGIN)
+      .send({ fileUrls: ['https://i.ibb.co/integration/received-gated.jpg'] })
       .expect(200);
     await request(app.getHttpServer())
       .patch(`/api/v1/rental-orders/${order.id}/return`)
       .set('Cookie', createAccessTokenCookie(renterToken))
       .set('Origin', INTEGRATION_FRONTEND_ORIGIN)
+      .send({ fileUrls: ['https://i.ibb.co/integration/return-gated.jpg'] })
       .expect(200);
-    await addProof(order.id, renterId, ProofStageEnum.pre_return);
 
     const returnWithoutPostProof = await request(app.getHttpServer())
       .patch(`/api/v1/rental-orders/${order.id}/confirm-return`)
@@ -353,6 +356,47 @@ describeIntegration('Rental order transitions (PostgreSQL integration)', () => {
         where: { rental_order_id: order.id },
       }),
     ).resolves.toMatchObject({ status: 'locked' });
+  });
+
+  it('refunds the renter and cancels the order when lender ships after the deadline', async () => {
+    const order = await createOrder(renterId);
+    await request(app.getHttpServer())
+      .patch(`/api/v1/rental-orders/${order.id}/confirm`)
+      .set('Cookie', createAccessTokenCookie(lenderToken))
+      .set('Origin', INTEGRATION_FRONTEND_ORIGIN)
+      .expect(200);
+    await prisma.rentalOrder.update({
+      where: { id: order.id },
+      data: {
+        ship_deadline_at: new Date('2026-08-01T16:59:59.999Z'),
+      },
+    });
+
+    const response = await request(app.getHttpServer())
+      .patch(`/api/v1/rental-orders/${order.id}/ship`)
+      .set('Cookie', createAccessTokenCookie(lenderToken))
+      .set('Origin', INTEGRATION_FRONTEND_ORIGIN)
+      .expect(200);
+
+    expect(response.body).toMatchObject({
+      data: {
+        status: OrderStatusType.cancelled,
+        cancelled_reason: 'late_delivery_refund',
+      },
+    });
+    await expect(
+      prisma.escrowWallet.findUniqueOrThrow({
+        where: { rental_order_id: order.id },
+      }),
+    ).resolves.toMatchObject({ status: 'released' });
+    expect(
+      await prisma.renterWalletTransaction.count({
+        where: {
+          reference: `LATE-DELIVERY-REFUND-${order.id}`,
+          type: 'late_delivery_refund',
+        },
+      }),
+    ).toBe(1);
   });
 
   it('serializes duplicate confirm and cancel requests without duplicate side effects', async () => {
@@ -413,13 +457,16 @@ describeIntegration('Rental order transitions (PostgreSQL integration)', () => {
       .patch(`/api/v1/rental-orders/${order.id}/confirm-receipt`)
       .set('Cookie', createAccessTokenCookie(renterToken))
       .set('Origin', INTEGRATION_FRONTEND_ORIGIN)
+      .send({
+        fileUrls: ['https://i.ibb.co/integration/received-duplicate.jpg'],
+      })
       .expect(200);
     await request(app.getHttpServer())
       .patch(`/api/v1/rental-orders/${order.id}/return`)
       .set('Cookie', createAccessTokenCookie(renterToken))
       .set('Origin', INTEGRATION_FRONTEND_ORIGIN)
+      .send({ fileUrls: ['https://i.ibb.co/integration/return-duplicate.jpg'] })
       .expect(200);
-    await addProof(order.id, renterId, ProofStageEnum.pre_return);
     await addProof(order.id, lenderId, ProofStageEnum.post_returned);
 
     const responses = await Promise.all(

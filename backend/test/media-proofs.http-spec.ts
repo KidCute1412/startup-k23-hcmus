@@ -268,6 +268,19 @@ describe('Media and rental proofs (HTTP)', () => {
     expect(repository.createProof).not.toHaveBeenCalled();
   });
 
+  it.each([
+    { stage: ProofStageEnum.pre_shipment, fileUrls: [] },
+    {
+      stage: ProofStageEnum.pre_shipment,
+      fileUrls: Array(11).fill('/uploads/lender-id/proof.jpg'),
+    },
+  ])('validates batch proof payload %o', async (body) => {
+    await request(app.getHttpServer())
+      .post(`/api/v1/rental-orders/${orderId}/proofs/batch`)
+      .send(body)
+      .expect(400);
+  });
+
   it('accepts an ImgBB URL when the other participant submits the proof', async () => {
     const uploadResponse = await uploadImage('lender-only.jpg', 'image/jpeg');
     const uploadBody = responseBody<UploadResponseBody>(uploadResponse);
