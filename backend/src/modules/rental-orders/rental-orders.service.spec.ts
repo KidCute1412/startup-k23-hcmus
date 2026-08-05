@@ -464,16 +464,14 @@ describe('RentalOrdersService', () => {
     expect(repository.findGearById).not.toHaveBeenCalled();
   });
 
-  it('allows startDate on the current Ho Chi Minh business date', async () => {
-    const result = await service.create('renter-id', {
+  it('rejects startDate on the current Ho Chi Minh business date', async () => {
+    await expect(service.create('renter-id', {
       ...dto,
       startDate: '2026-07-29',
       endDate: '2026-07-30',
-    });
-
-    expect(result).toMatchObject({
-      status: OrderStatusType.pending_confirm,
-      ship_deadline_at: new Date('2026-07-28T16:59:59.999Z'),
+    })).rejects.toMatchObject({
+      status: 400,
+      response: { error: 'START_DATE_TOO_SOON' },
     });
   });
 

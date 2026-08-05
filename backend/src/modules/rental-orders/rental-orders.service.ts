@@ -64,10 +64,11 @@ export class RentalOrdersService {
       });
     }
     const today = this.parseDateOnly(this.currentBusinessDate());
-    if (startDate.getTime() < today.getTime()) {
+    const earliestStartDate = new Date(today.getTime() + MILLISECONDS_PER_DAY);
+    if (startDate.getTime() < earliestStartDate.getTime()) {
       throw new BadRequestException({
-        error: 'START_DATE_IN_PAST',
-        message: `startDate cannot be before today in ${RENTAL_BUSINESS_TIME_ZONE}`,
+        error: 'START_DATE_TOO_SOON',
+        message: `startDate must be tomorrow or later in ${RENTAL_BUSINESS_TIME_ZONE}`,
       });
     }
 
