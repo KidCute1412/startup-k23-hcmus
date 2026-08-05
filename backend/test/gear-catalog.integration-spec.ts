@@ -354,6 +354,12 @@ describeIntegration('Public gear catalog (PostgreSQL integration)', () => {
       await prisma.review.deleteMany({
         where: { rental_order_id: { in: orderIds } },
       });
+      await prisma.platformLedgerTransaction.deleteMany({
+        where: { rental_order_id: { in: orderIds } },
+      });
+      await prisma.rentalFeeSettlement.deleteMany({
+        where: { rental_order_id: { in: orderIds } },
+      });
       await prisma.rentalOrder.deleteMany({ where: { id: { in: orderIds } } });
       await prisma.gearMedia.deleteMany({ where: { gear_id: { in: ids } } });
       await prisma.gear.deleteMany({ where: { id: { in: ids } } });

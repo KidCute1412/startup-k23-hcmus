@@ -337,6 +337,12 @@ describeIntegration('Dispute workflow (PostgreSQL integration)', () => {
 
   afterAll(async () => {
     if (prisma) {
+      await prisma.platformLedgerTransaction.deleteMany({
+        where: { rental_order_id: { in: fixtureIds } },
+      });
+      await prisma.rentalFeeSettlement.deleteMany({
+        where: { rental_order_id: { in: fixtureIds } },
+      });
       await prisma.rentalOrder.deleteMany({
         where: { id: { in: fixtureIds } },
       });

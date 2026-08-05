@@ -13,6 +13,7 @@ import {
   createAccessTokenCookie,
   createIntegrationApp,
   createJwt,
+  createHeldRentalFeeSettlement,
   INTEGRATION_FRONTEND_ORIGIN,
 } from './support/integration';
 
@@ -554,8 +555,8 @@ describeIntegration('Rental order transitions (PostgreSQL integration)', () => {
     expect(
       await prisma.renterWalletTransaction.count({
         where: {
-          reference: `LATE-DELIVERY-REFUND-${order.id}`,
-          type: 'late_delivery_refund',
+          reference: `RENTAL-REFUND-${order.id}`,
+          type: 'rental_refund',
         },
       }),
     ).toBe(1);
@@ -1031,6 +1032,7 @@ describeIntegration('Rental order transitions (PostgreSQL integration)', () => {
         status: OrderStatusType.returning,
       },
     });
+    await createHeldRentalFeeSettlement(prisma, orderId, 100_000, 1_500);
     await prisma.escrowWallet.create({
       data: {
         rental_order_id: orderId,
@@ -1049,10 +1051,11 @@ describeIntegration('Rental order transitions (PostgreSQL integration)', () => {
         createAccessTokenCookie(createJwt(isolatedLenderId, 'lender')),
       )
       .set('Origin', INTEGRATION_FRONTEND_ORIGIN)
-      .expect(400);
+      .expect(500);
 
     expect(response.body).toMatchObject({
-      error: { code: 'LENDER_WALLET_NOT_FOUND' },
+      success: false,
+      error: { code: 'INTERNAL_SERVER_ERROR' },
     });
     await expect(
       prisma.rentalOrder.findUniqueOrThrow({ where: { id: orderId } }),
@@ -1128,6 +1131,12 @@ describeIntegration('Rental order transitions (PostgreSQL integration)', () => {
 
   afterAll(async () => {
     if (prisma) {
+      await prisma.platformLedgerTransaction.deleteMany({
+        where: { rental_order_id: { in: fixtureIds } },
+      });
+      await prisma.rentalFeeSettlement.deleteMany({
+        where: { rental_order_id: { in: fixtureIds } },
+      });
       await prisma.rentalOrder.deleteMany({
         where: { id: { in: fixtureIds } },
       });

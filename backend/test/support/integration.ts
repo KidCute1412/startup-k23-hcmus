@@ -82,3 +82,33 @@ export function createJwt(id: string, role: string) {
 export function createAccessTokenCookie(token: string) {
   return `${ACCESS_TOKEN_COOKIE}=${encodeURIComponent(token)}`;
 }
+
+export async function createHeldRentalFeeSettlement(
+  prisma: PrismaService,
+  orderId: string,
+  grossRentalFee = 100_000,
+  platformFeeRateBps = 1_500,
+) {
+  await prisma.platformWallet.upsert({
+    where: { id: 1 },
+    create: { id: 1, rental_hold_balance: grossRentalFee },
+    update: { rental_hold_balance: { increment: grossRentalFee } },
+  });
+  await prisma.platformLedgerTransaction.create({
+    data: {
+      platform_wallet_id: 1,
+      rental_order_id: orderId,
+      type: 'rental_hold',
+      amount: grossRentalFee,
+      reference: `RENTAL-HOLD-${orderId}`,
+      note: `Integration fixture rental hold for ${orderId}`,
+    },
+  });
+  return prisma.rentalFeeSettlement.create({
+    data: {
+      rental_order_id: orderId,
+      gross_rental_fee: grossRentalFee,
+      platform_fee_rate_bps: platformFeeRateBps,
+    },
+  });
+}

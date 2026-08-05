@@ -14,6 +14,7 @@ import {
   createAccessTokenCookie,
   createIntegrationApp,
   createJwt,
+  createHeldRentalFeeSettlement,
   INTEGRATION_FRONTEND_ORIGIN,
 } from './support/integration';
 
@@ -125,11 +126,15 @@ describeIntegration(
           rental_fee: 100000,
           base_rental_fee: 100000,
           deposit_amount: depositAmount,
+          platform_fee: 15000,
+          platform_fee_rate_bps: 1500,
           lender_income: 85000,
           deposit_type: DepositTypeEnum.traditional,
           status: OrderStatusType.disputed,
         },
       });
+
+      await createHeldRentalFeeSettlement(prisma, orderId, 100_000, 1_500);
 
       await prisma.renterWallet.update({
         where: { id: renterWalletId },
@@ -192,11 +197,15 @@ describeIntegration(
           rental_fee: 100000,
           base_rental_fee: 100000,
           deposit_amount: depositAmount,
+          platform_fee: 15000,
+          platform_fee_rate_bps: 1500,
           lender_income: 85000,
           deposit_type: DepositTypeEnum.credit_line,
           status: OrderStatusType.disputed,
         },
       });
+
+      await createHeldRentalFeeSettlement(prisma, orderId, 100_000, 1_500);
 
       await prisma.escrowWallet.create({
         data: {
@@ -222,7 +231,7 @@ describeIntegration(
       return { order, dispute, creditWallet };
     }
 
-    it('renter_compensation refunds the admin-selected rental fee amount and does not pay lender income', async () => {
+    it('renter_compensation refunds the selected fee amount and settles the remaining rental income', async () => {
       const compensationAmount = 60000;
       const { order, dispute } =
         await createDisputedTraditionalOrderFixture(400000);
@@ -253,7 +262,7 @@ describeIntegration(
           escrowAction: 'renter_compensated',
           renterCompensation: compensationAmount,
           lenderCompensation: 0,
-          lenderRentalIncome: 0,
+          lenderRentalIncome: 34000,
         },
       });
 
@@ -281,11 +290,15 @@ describeIntegration(
         where: { id: lenderWalletId },
       });
       expect(lenderWallet.balance.toNumber()).toBe(
-        initialLenderWallet.balance.toNumber(),
+        initialLenderWallet.balance.toNumber() + 34_000,
       );
 
       const renterTx = await prisma.renterWalletTransaction.findFirst({
-        where: { wallet_id: renterWalletId, type: 'renter_compensation' },
+        where: {
+          wallet_id: renterWalletId,
+          type: 'rental_refund',
+          reference: `RENTAL-REFUND-${order.id}`,
+        },
         orderBy: { created_at: 'desc' },
       });
       expect(renterTx?.amount.toNumber()).toBe(compensationAmount);
@@ -612,6 +625,12 @@ describeIntegration(
       if (prisma) {
         await prisma.dispute.deleteMany({ where: { id: { in: fixtureIds } } });
         await prisma.escrowWallet.deleteMany({
+          where: { rental_order_id: { in: fixtureIds } },
+        });
+        await prisma.platformLedgerTransaction.deleteMany({
+          where: { rental_order_id: { in: fixtureIds } },
+        });
+        await prisma.rentalFeeSettlement.deleteMany({
           where: { rental_order_id: { in: fixtureIds } },
         });
         await prisma.rentalOrder.deleteMany({
