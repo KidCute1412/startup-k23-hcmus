@@ -24,12 +24,12 @@
 
 \begin{frame}{Hành trình sử dụng}{Thuê thử trước, mua khi đã chắc}
   \centering
-  \begin{tikzpicture}[node distance=8mm and 12mm]
-    \node[cookie accent node,minimum width=2cm] (a) {Khám phá};
-    \node[cookie node,minimum width=2cm,right=of a] (b) {Đặt thuê};
-    \node[cookie node,minimum width=2cm,right=of b] (c) {Dùng thật};
-    \node[cookie node,minimum width=2cm,right=of c] (d) {Đánh giá};
-    \node[cookie node,minimum width=2cm,right=of d] (e) {Mua / thuê lại};
+  \begin{tikzpicture}[node distance=7mm]
+    \node[cookie accent node,minimum width=1.75cm] (a) {Khám phá};
+    \node[cookie node,minimum width=1.75cm,right=of a] (b) {Đặt thuê};
+    \node[cookie node,minimum width=1.75cm,right=of b] (c) {Dùng thật};
+    \node[cookie node,minimum width=1.75cm,right=of c] (d) {Đánh giá};
+    \node[cookie node,minimum width=2.15cm,right=of d] (e) {Mua / thuê lại};
     \foreach \x/\y in {a/b,b/c,c/d,d/e} \draw[cookie arrow] (\x) -- (\y);
   \end{tikzpicture}
   \vspace{1em}
