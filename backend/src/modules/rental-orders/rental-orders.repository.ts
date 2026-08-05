@@ -82,6 +82,7 @@ export class RentalOrdersRepository {
           },
           renter: { select: { id: true, full_name: true, avatar_url: true } },
           lender: { select: { id: true, full_name: true, avatar_url: true } },
+          rental_fee_settlement: true,
         },
         orderBy: { created_at: 'desc' },
         skip: (page - 1) * limit,
@@ -117,6 +118,7 @@ export class RentalOrdersRepository {
           },
         },
         disputes: { include: { evidences: true } },
+        rental_fee_settlement: true,
       },
     });
   }

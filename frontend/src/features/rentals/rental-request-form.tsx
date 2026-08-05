@@ -281,21 +281,32 @@ export function RentalRequestForm({ items }: RentalRequestFormProps) {
                     Ví Mutux của bạn chưa đủ số dư để hoàn tất đơn thuê này!
                   </p>
                   <p className="mt-1 text-xs text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted">
-                    Cần {formatCurrency(cashRequiredWithPending)} từ ví tiêu
-                    dùng, gồm {formatCurrency(pendingCashCommitment)} nghĩa vụ
-                    từ đơn đang chờ
-                    {draft.depositType === "credit_line" &&
-                      ` và ${formatCurrency(creditRequiredWithPending)} hạn mức, gồm ${formatCurrency(pendingCreditCommitment)} từ đơn đang chờ`}
-                    . Hiện có {formatCurrency(currentBalance)} trong ví
+                    Cần tổng {formatCurrency(cashRequiredWithPending)} tiền khả
+                    dụng trong ví trước khi lender xác nhận. Hiện có {formatCurrency(currentBalance)} trong ví
                     {draft.depositType === "credit_line" &&
                       ` và ${formatCurrency(availableCredit)} hạn mức`}
                     .
                   </p>
+                  <div className="mt-2 space-y-1 rounded-v-sm border border-amber-500/25 bg-amber-500/5 p-2 text-xs">
+                    <div className="flex items-center justify-between gap-3">
+                      <span>Đơn bạn đang tạo</span>
+                      <span className="font-semibold">{formatCurrency(cashRequired)}</span>
+                    </div>
+                    {financialSummary?.pendingOrderCount ? (
+                      <div className="flex items-center justify-between gap-3">
+                        <span>Nghĩa vụ dự trù cho đơn đang chờ</span>
+                        <span className="font-semibold">{formatCurrency(pendingCashCommitment)}</span>
+                      </div>
+                    ) : null}
+                    <p className="pt-1 text-[11px] text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted">
+                      Khoản dự trù gồm tiền thuê và tiền cọc tiền mặt (nếu áp dụng); tiền cọc sẽ được khóa khi lender xác nhận.
+                    </p>
+                  </div>
                   {financialSummary?.pendingOrderCount ? (
                     <p className="mt-1 text-xs">
                       Có {financialSummary.pendingOrderCount} đơn đang chờ
-                      lender xác nhận. Các đơn này chưa trừ tiền nhưng vẫn được
-                      tính vào khả năng chi trả.
+                      lender xác nhận. Các đơn này chưa trừ tiền hay khóa cọc,
+                      nhưng được dự trù để bảo đảm ví đủ tiền khi xác nhận.
                     </p>
                   ) : null}
                   {(!isBalanceSufficient || !isCreditSufficient) && (

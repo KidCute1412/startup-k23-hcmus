@@ -6,6 +6,7 @@ import { useMedia } from "@/hooks/useMedia";
 import { useRentalProof } from "@/hooks/useRentalProof";
 import type { ProofStage } from "@/types/rentals";
 import { PROOF_STAGE_LABELS } from "./proof-stage-labels";
+import { CustomSelect } from "@/components/ui/custom-select";
 
 interface UploadProofModalProps {
   isOpen: boolean;
@@ -135,17 +136,15 @@ export function UploadProofModal({
               <label className="block text-xs font-bold uppercase tracking-wider text-vanguard-dark-textMuted mb-1.5">
                 Giai đoạn kiểm định bàn giao <span className="text-vanguard-primary">*</span>
               </label>
-              <select
+              <CustomSelect
                 value={stage}
-                onChange={(e) => setStage(e.target.value as ProofStage)}
-                className="w-full rounded-lg border border-vanguard-dark-border bg-vanguard-dark-bg p-2.5 text-xs font-semibold text-vanguard-dark-text focus:border-vanguard-primary focus:outline-none"
-              >
-                {allowedStages.map((stg) => (
-                  <option key={stg} value={stg}>
-                  {PROOF_STAGE_LABELS[stg].title}
-                  </option>
-                ))}
-              </select>
+                onValueChange={(val) => setStage(val as ProofStage)}
+                options={allowedStages.map((stg) => ({
+                  value: stg,
+                  label: PROOF_STAGE_LABELS[stg].title,
+                }))}
+                className="w-full text-xs font-semibold"
+              />
               <p className="mt-1 text-[11px] text-vanguard-dark-textMuted">
                 {PROOF_STAGE_LABELS[stage]?.desc}
               </p>

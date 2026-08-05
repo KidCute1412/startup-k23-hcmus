@@ -269,6 +269,24 @@ enum LenderTxType {
   @@map("lender_tx_type")
 }
 
+enum RentalFeeSettlementStatus {
+  held
+  settled
+  refunded
+
+  @@map("rental_fee_settlement_status")
+}
+
+enum PlatformLedgerType {
+  rental_hold
+  rental_refund
+  platform_revenue
+  lender_payable
+  lender_withdrawal
+
+  @@map("platform_ledger_type")
+}
+
 enum TopupStatusType {
   pending
   success
@@ -591,6 +609,7 @@ model RentalOrder {
   deposit_type               DepositTypeEnum @default(traditional)
   platform_fee               Decimal         @default(0) @db.Decimal(15, 2)
   lender_income              Decimal         @default(0) @db.Decimal(15, 2)
+  platform_fee_rate_bps      Int             @default(0)
   status                     OrderStatusType @default(pending_confirm)
   cancelled_reason           String?         @db.VarChar(100)
   shipping_address           String?
@@ -615,6 +634,8 @@ model RentalOrder {
   disputes                   Dispute[]
   reviews                    Review[]
   lender_wallet_transactions LenderWalletTransaction[]
+  rental_fee_settlement      RentalFeeSettlement?
+  platform_ledger_transactions PlatformLedgerTransaction[]
 
   @@index([renter_id], name: "idx_rental_orders_renter")
   @@index([renter_id, status], name: "idx_rental_orders_renter_status")
@@ -622,6 +643,71 @@ model RentalOrder {
   @@index([gear_id], name: "idx_rental_orders_gear")
   @@index([status], name: "idx_rental_orders_status")
   @@map("rental_orders")
+}
+
+model PlatformFeeConfig {
+  id                   Int      @id @default(1)
+  platform_fee_rate_bps Int    @default(3000)
+  updated_by           String?  @db.Uuid
+  updated_at           DateTime @default(now()) @updatedAt
+
+  @@map("platform_fee_config")
+}
+
+model PlatformFeeConfigAudit {
+  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  previous_rate_bps Int
+  next_rate_bps   Int
+  changed_by      String   @db.Uuid
+  created_at      DateTime @default(now())
+
+  @@index([created_at])
+  @@map("platform_fee_config_audits")
+}
+
+model PlatformWallet {
+  id                        Int      @id @default(1)
+  rental_hold_balance       Decimal  @default(0) @db.Decimal(15, 2)
+  revenue_available_balance Decimal  @default(0) @db.Decimal(15, 2)
+  lender_payable_balance    Decimal  @default(0) @db.Decimal(15, 2)
+  updated_at                DateTime @default(now()) @updatedAt
+  transactions              PlatformLedgerTransaction[]
+
+  @@map("platform_wallets")
+}
+
+model RentalFeeSettlement {
+  id                    String                     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  rental_order_id       String                     @unique @db.Uuid
+  gross_rental_fee      Decimal                    @db.Decimal(15, 2)
+  rental_refund_amount  Decimal                    @default(0) @db.Decimal(15, 2)
+  distributable_amount  Decimal                    @default(0) @db.Decimal(15, 2)
+  platform_fee_amount   Decimal                    @default(0) @db.Decimal(15, 2)
+  lender_income_amount  Decimal                    @default(0) @db.Decimal(15, 2)
+  platform_fee_rate_bps Int
+  status                RentalFeeSettlementStatus  @default(held)
+  held_at               DateTime                   @default(now())
+  settled_at            DateTime?
+  rental_order          RentalOrder                @relation(fields: [rental_order_id], references: [id], onDelete: Restrict)
+
+  @@map("rental_fee_settlements")
+}
+
+model PlatformLedgerTransaction {
+  id              String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  platform_wallet_id Int
+  rental_order_id String?            @db.Uuid
+  type            PlatformLedgerType
+  amount          Decimal            @db.Decimal(15, 2)
+  reference       String             @unique @db.VarChar(255)
+  note            String?
+  created_at      DateTime           @default(now())
+  platform_wallet PlatformWallet     @relation(fields: [platform_wallet_id], references: [id], onDelete: Restrict)
+  rental_order    RentalOrder?       @relation(fields: [rental_order_id], references: [id], onDelete: SetNull)
+
+  @@index([rental_order_id, type])
+  @@index([created_at])
+  @@map("platform_ledger_transactions")
 }
 
 model EscrowWallet {
@@ -714,6 +800,7 @@ model Dispute {
   reporter_role   ReporterRoleEnum
   reason          DisputeReasonEnum
   description     String?
+  response_description String?
   status          DisputeStatusType   @default(open)
   resolved_by     String?             @db.Uuid
   resolution_note String?

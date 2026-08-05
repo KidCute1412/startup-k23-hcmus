@@ -51,6 +51,7 @@ export interface DisputeItem {
   reporterRole: ReporterRole;
   reason: DisputeReason | string;
   description: string | null;
+  responseDescription?: string | null;
   status: DisputeStatus;
   resolvedBy: string | null;
   resolutionNote: string | null;
@@ -88,6 +89,7 @@ export interface CreateDisputePayload {
 }
 
 export interface CreateDisputeResponsePayload {
+  description?: string;
   evidences: Array<{
     mediaType: 'image';
     url: string;

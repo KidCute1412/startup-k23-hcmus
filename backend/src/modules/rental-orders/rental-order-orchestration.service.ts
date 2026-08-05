@@ -37,7 +37,6 @@ interface TransitionRule {
 }
 
 type LockedOrder = RentalOrder;
-const PLATFORM_FEE_RATE = 0.15;
 
 interface ProofUpload {
   stage: ProofStageEnum;
@@ -98,18 +97,8 @@ export class RentalOrderOrchestrationService {
   ) {}
 
   confirm(userId: string, orderId: string) {
-    return this.transition(
-      userId,
-      orderId,
-      'confirm',
-      (tx) => this.escrowService.lock(orderId, tx),
-      (order) => {
-        const platformFee = order.rental_fee.mul(PLATFORM_FEE_RATE);
-        return {
-          platform_fee: platformFee,
-          lender_income: order.rental_fee.sub(platformFee),
-        };
-      },
+    return this.transition(userId, orderId, 'confirm', (tx) =>
+      this.escrowService.lock(orderId, tx),
     );
   }
 

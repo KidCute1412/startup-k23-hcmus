@@ -31,6 +31,11 @@ function calculateDays(start?: string | null, end?: string | null) {
   return Math.max(1, Math.ceil(diff / (1000 * 3600 * 24)));
 }
 
+function toMoney(value: number | string | null | undefined) {
+  const amount = Number(value ?? 0);
+  return Number.isFinite(amount) ? amount : 0;
+}
+
 function generateTimeline(order: RentalOrder) {
   const isCanceled = order.status === "cancelled";
   const isActive = (statusesToCheck: string[]) =>
@@ -184,6 +189,17 @@ export function OrderDetailView({
   const startDate = order.start_date ?? order.startDate;
   const endDate = order.end_date ?? order.endDate;
   const totalDays = calculateDays(startDate, endDate);
+  const rentalFee = Number(order.rental_fee ?? order.rentPrice ?? 0);
+  const depositAmount = Number(order.deposit_amount ?? order.depositCash ?? 0);
+  const isCreditLineDeposit =
+    (order.deposit_type ?? order.depositType) === 'credit_line';
+  const cashRequiredOnConfirm = isCreditLineDeposit
+    ? rentalFee
+    : rentalFee + depositAmount;
+  const isLenderView = user?.id === (order.lender_id ?? order.lenderId);
+  const settlement = order.rental_fee_settlement;
+  const expectedLenderIncome = Number(settlement?.status === "held" ? order.lender_income ?? 0 : settlement?.lender_income_amount ?? order.lender_income ?? 0);
+  const expectedPlatformFee = Number(settlement?.status === "held" ? order.platform_fee ?? 0 : settlement?.platform_fee_amount ?? order.platform_fee ?? 0);
   const timeline = generateTimeline(order);
   const returnDeadline = order.return_deadline_at ?? order.returnDeadlineAt;
   const shipDeadline = order.ship_deadline_at ?? order.shipDeadlineAt;
@@ -367,7 +383,7 @@ export function OrderDetailView({
               : "bg-emerald-500/10 border-emerald-500/30 text-emerald-500"
           }`}
         >
-          {actionMsg.startsWith("Lỗi") ? "✕" : "✓"} {actionMsg}
+          {actionMsg}
         </div>
       )}
 
@@ -380,7 +396,7 @@ export function OrderDetailView({
             <Card className="border-red-500/50 bg-red-50 p-6 dark:bg-red-950/70">
               <div className="flex items-center space-x-2 text-red-400 mb-2">
                 <span className="font-display text-lg font-bold uppercase tracking-wider">
-                  ⚠️ Đơn thuê đang ở trạng thái Khiếu nại
+                  Đơn thuê đang ở trạng thái Khiếu nại
                 </span>
               </div>
               <p className="text-xs leading-relaxed text-red-950 dark:text-red-100">
@@ -388,6 +404,12 @@ export function OrderDetailView({
                 được phong tỏa an toàn bởi hệ thống Mutux. Admin sẽ xem xét bằng
                 chứng của hai bên và đưa ra quyết định sớm nhất.
               </p>
+              {(currentDispute?.response_description ?? currentDispute?.responseDescription) && (
+                <p className="mt-3 rounded-v-sm bg-white/60 p-3 text-xs text-red-950 dark:bg-red-900/40 dark:text-red-100">
+                  <span className="font-semibold">Mô tả kháng cáo của lender:</span>{" "}
+                  {currentDispute.response_description ?? currentDispute.responseDescription}
+                </p>
+              )}
               {canSubmitResponse && disputeDeadline && (
                 <div className="mt-4 rounded-v-sm border border-red-300 bg-white/80 p-3 text-xs font-semibold text-red-900 dark:border-red-700 dark:bg-red-950 dark:text-red-100">
                   Vui lòng upload ảnh kháng cáo trước{" "}
@@ -464,6 +486,19 @@ export function OrderDetailView({
                   </div>
                 )}
               </div>
+              {settlement && (
+                <DisputeSettlementBreakdown
+                  settlement={settlement}
+                  resolutionType={disputeResolutionType}
+                  resolutionAmount={toMoney(
+                    currentDispute.deduct_amount ?? currentDispute.deductAmount,
+                  )}
+                  isLenderView={isLenderView}
+                  depositAmount={depositAmount}
+                  isCreditLineDeposit={isCreditLineDeposit}
+                  fallbackRentalFee={rentalFee}
+                />
+              )}
               {(currentDispute.resolution_note ?? currentDispute.resolutionNote) && (
                 <p className="mt-4 rounded-v-sm bg-black/10 p-3 text-xs dark:bg-white/5">
                   <span className="font-semibold">Ghi chú Admin:</span>{" "}
@@ -661,7 +696,7 @@ export function OrderDetailView({
                   }
                   className="w-full rounded-v-sm bg-vanguard-primary py-2.5 text-xs font-bold uppercase tracking-wider text-vanguard-dark-bg hover:opacity-90 transition"
                 >
-                  ✓ Xác nhận đơn thuê
+                  Xác nhận đơn thuê
                 </button>
               )}
 
@@ -730,20 +765,9 @@ export function OrderDetailView({
                     className="w-full rounded-v-sm bg-vanguard-primary py-2.5 text-xs font-bold uppercase tracking-wider text-vanguard-dark-bg hover:opacity-90 transition disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     {canConfirmReturn
-                      ? "🏁 Xác nhận đã nhận lại gear"
+                      ? "Xác nhận đã nhận lại gear"
                       : "Upload ảnh và xác nhận nhận lại gear"}
                   </button>
-                  {!canConfirmReturn && (
-                    <p className="text-[11px] text-amber-500 font-medium">
-                      ⚠️ Cần ảnh trả hàng (
-                      {hasPreReturnProof ? "✓ pre_return" : "✗ pre_return"}) và
-                      ảnh nghiệm thu (
-                      {hasPostReturnedProof
-                        ? "✓ post_returned"
-                        : "✗ post_returned"}
-                      ).
-                    </p>
-                  )}
                 </div>
               )}
 
@@ -832,11 +856,20 @@ export function OrderDetailView({
             <div className="space-y-3">
               <StatRow
                 label="Tiền thuê thiết bị"
-                value={formatCurrency(order.rental_fee ?? order.rentPrice ?? 0)}
+                value={formatCurrency(rentalFee)}
               />
+              {isLenderView && (
+                <>
+                  <StatRow label="Phí nền tảng" value={formatCurrency(expectedPlatformFee)} />
+                  <StatRow label={settlement?.status === "settled" ? "Bạn đã nhận" : "Bạn nhận dự kiến"} value={formatCurrency(expectedLenderIncome)} />
+                  <p className="mt-3 text-xs text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted">
+                    {settlement?.status === "held" ? "Tiền thuê đang được Mutux giữ chờ quyết toán sau khi đơn hoàn tất." : "Tiền thuê đã được quyết toán theo tỷ lệ platform/lender; tiền cọc được xử lý riêng."}
+                  </p>
+                </>
+              )}
               <StatRow
                 label="Tiền cọc giữ chỗ"
-                value={`${formatCurrency(order.deposit_amount ?? order.depositCash ?? 0)} (${(order.deposit_type ?? order.depositType) === "credit_line" ? "Tín dụng Mutux" : "Tiền mặt"})`}
+                value={`${formatCurrency(depositAmount)} (${isCreditLineDeposit ? "Tín dụng Mutux" : "Tiền mặt"})`}
               />
               {order.duration_days != null && (
                 <StatRow
@@ -844,11 +877,18 @@ export function OrderDetailView({
                   value={`${order.duration_days} ngày`}
                 />
               )}
-              <div className="border-t border-vanguard-light-border dark:border-vanguard-dark-border pt-3 mt-3 flex items-center justify-between">
-                <span className="font-bold text-sm">Tổng cộng tiền thuê</span>
-                <span className="font-display text-xl font-bold text-vanguard-primary">
-                  {formatCurrency(order.rental_fee ?? order.rentPrice ?? 0)}
-                </span>
+              <div className="border-t border-vanguard-light-border pt-3 dark:border-vanguard-dark-border">
+                <div className="rounded-v-sm border border-vanguard-primary/25 bg-vanguard-primary/5 p-3 text-xs">
+                <p className="flex items-center justify-between gap-3 font-semibold">
+                  <span>{isCreditLineDeposit ? "Cần thanh toán" : "Tổng cần thanh toán"}</span>
+                  <span className="text-vanguard-primary">{formatCurrency(cashRequiredOnConfirm)}</span>
+                </p>
+                <p className="mt-1 text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted">
+                  {isCreditLineDeposit
+                    ? `Tiền cọc ${formatCurrency(depositAmount)} được khóa từ hạn mức Mutux, không trừ từ ví tiêu dùng.`
+                    : `Bao gồm ${formatCurrency(rentalFee)} tiền thuê và ${formatCurrency(depositAmount)} tiền cọc sẽ được khóa; tiền cọc được xử lý theo kết quả đơn thuê.`}
+                </p>
+                </div>
               </div>
             </div>
           </Card>
@@ -972,4 +1012,92 @@ export function OrderDetailView({
 
     </div>
   );
+}
+
+function DisputeSettlementBreakdown({
+  settlement,
+  resolutionType,
+  resolutionAmount,
+  isLenderView,
+  depositAmount,
+  isCreditLineDeposit,
+  fallbackRentalFee,
+}: {
+  settlement: NonNullable<RentalOrder["rental_fee_settlement"]>;
+  resolutionType?: string | null;
+  resolutionAmount: number;
+  isLenderView: boolean;
+  depositAmount: number;
+  isCreditLineDeposit: boolean;
+  fallbackRentalFee: number;
+}) {
+  const grossRentalFee = toMoney(settlement.gross_rental_fee) || fallbackRentalFee;
+  const renterRefund = toMoney(settlement.rental_refund_amount);
+  const distributableRentalFee = toMoney(settlement.distributable_amount);
+  const platformFee = toMoney(settlement.platform_fee_amount);
+  const lenderRentalIncome = toMoney(settlement.lender_income_amount);
+  const lenderCompensation =
+    resolutionType === "lender_compensation" || resolutionType === "deposit_deduct"
+      ? resolutionAmount
+      : 0;
+  const lenderTotal = lenderRentalIncome + lenderCompensation;
+  const depositReturned = Math.max(0, depositAmount - lenderCompensation);
+  const renterTotal = renterRefund + depositReturned;
+  const feeRateBps = settlement.platform_fee_rate_bps;
+  const feeRate = feeRateBps == null ? null : feeRateBps / 100;
+
+  return (
+    <div className="mt-5 rounded-v-sm border border-vanguard-primary/30 bg-vanguard-primary/5 p-4">
+      <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+        <h4 className="font-display text-sm font-bold">Đối soát tài chính</h4>
+        <span className="text-[11px] text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted">
+          Số liệu sau khi quyết toán
+        </span>
+      </div>
+      <div className="mt-3 space-y-2">
+        <SettlementRow label="Tiền thuê theo đơn" value={formatCurrency(grossRentalFee)} />
+        <SettlementRow label="Renter được hoàn tiền thuê" value={formatCurrency(renterRefund)} tone={renterRefund > 0 ? "emerald" : "muted"} />
+        <SettlementRow label="Tiền thuê còn lại để phân chia" value={formatCurrency(distributableRentalFee)} />
+        <SettlementRow label={`Phí nền tảng${feeRate == null ? "" : ` (${feeRate}%)`}`} value={`-${formatCurrency(platformFee)}`} tone="rose" />
+        {isLenderView ? <>
+          <SettlementRow label="Lender nhận từ tiền thuê" value={formatCurrency(lenderRentalIncome)} tone="emerald" />
+          {lenderCompensation > 0 && <SettlementRow label="Lender nhận bồi thường từ tiền cọc" value={formatCurrency(lenderCompensation)} tone="amber" />}
+        </> : <>
+          <SettlementRow label={isCreditLineDeposit ? "Tiền cọc được mở khóa cho bạn" : "Tiền cọc được hoàn lại cho bạn"} value={formatCurrency(depositReturned)} tone="amber" />
+        </>}
+        <div className="mt-3 border-t border-vanguard-primary/20 pt-3">
+          <SettlementRow label={isLenderView ? "Bạn thực nhận từ quyết toán" : "Bạn được hoàn từ quyết toán"} value={formatCurrency(isLenderView ? lenderTotal : renterTotal)} strong tone="emerald" />
+        </div>
+        <p className="pt-1 text-[11px] leading-relaxed text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted">
+          {isLenderView
+            ? <>Tiền cọc là khoản xử lý riêng, không cộng vào doanh thu tiền thuê.{depositAmount > 0 && lenderCompensation === 0 ? " Theo phương án này, tiền cọc không phát sinh khoản bồi thường cho lender." : ""}</>
+            : isCreditLineDeposit
+              ? "Tiền cọc được mở khóa về hạn mức tín dụng Mutux, không phải khoản hoàn tiền mặt."
+              : "Tổng trên gồm phần hoàn tiền thuê (nếu có) và phần tiền cọc được hoàn lại."}
+        </p>
+      </div>
+    </div>
+  );
+}
+
+function SettlementRow({
+  label,
+  value,
+  tone = "default",
+  strong = false,
+}: {
+  label: string;
+  value: string;
+  tone?: "default" | "muted" | "emerald" | "amber" | "rose";
+  strong?: boolean;
+}) {
+  const valueClass = {
+    default: "text-vanguard-light-text dark:text-vanguard-dark-text",
+    muted: "text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted",
+    emerald: "text-emerald-500",
+    amber: "text-amber-500",
+    rose: "text-rose-500",
+  }[tone];
+
+  return <div className="flex items-start justify-between gap-4"><span className="text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted">{label}</span><span className={`${strong ? "text-base" : "text-sm"} shrink-0 font-bold tabular-nums ${valueClass}`}>{value}</span></div>;
 }

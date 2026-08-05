@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import { AlertTriangle, Upload, X, Loader2 } from "lucide-react";
 import { useDispute } from "@/hooks/useDispute";
 import type { DisputeReason } from "@/types/dispute";
+import { CustomSelect } from "@/components/ui/custom-select";
 
 interface SubmitDisputeModalProps {
   isOpen: boolean;
@@ -70,7 +71,7 @@ export function SubmitDisputeModal({
     e.preventDefault();
     setErrorMessage(null);
 
-    if (mode === "create" && !description.trim()) {
+    if (!description.trim()) {
       setErrorMessage("Vui lòng nhập mô tả chi tiết về sự cố.");
       return;
     }
@@ -92,6 +93,7 @@ export function SubmitDisputeModal({
       if (mode === "response") {
         if (!disputeId) throw new Error("Thiếu mã khiếu nại.");
         await addResponseEvidence(disputeId, {
+          description: description.trim(),
           evidences: uploadedUrls.map((url) => ({ mediaType: "image", url })),
         });
       } else {
@@ -155,32 +157,27 @@ export function SubmitDisputeModal({
             <label className="block text-xs font-bold uppercase tracking-wider text-gray-300 mb-1.5">
               Lý do khiếu nại <span className="text-red-400">*</span>
             </label>
-            <select
+            <CustomSelect
               value={reason}
-              onChange={(e) => setReason(e.target.value as DisputeReason)}
-              className="w-full rounded-lg border border-gray-700 bg-vanguard-dark-bg p-2.5 text-sm text-white focus:border-vanguard-primary focus:outline-none"
-            >
-              {REASON_OPTIONS.map((opt) => (
-                <option key={opt.value} value={opt.value}>
-                  {opt.label}
-                </option>
-              ))}
-            </select>
+              onValueChange={(val) => setReason(val as DisputeReason)}
+              options={REASON_OPTIONS}
+              className="w-full"
+            />
           </div>}
 
           {/* Description */}
-          {mode === "create" && <div>
+          <div>
             <label className="block text-xs font-bold uppercase tracking-wider text-gray-300 mb-1.5">
-              Mô tả chi tiết sự cố <span className="text-red-400">*</span>
+              {mode === "response" ? "Mô tả nội dung kháng cáo" : "Mô tả chi tiết sự cố"} <span className="text-red-400">*</span>
             </label>
             <textarea
               rows={3}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="Mô tả cụ thể tình trạng hư hỏng, thiếu phụ kiện hoặc lý do bạn gửi khiếu nại..."
+              placeholder={mode === "response" ? "Giải thích vì sao bạn không đồng ý với khiếu nại và cung cấp thêm thông tin cho Admin..." : "Mô tả cụ thể tình trạng hư hỏng, thiếu phụ kiện hoặc lý do bạn gửi khiếu nại..."}
               className="w-full rounded-lg border border-gray-700 bg-vanguard-dark-bg p-2.5 text-sm text-white placeholder-gray-500 focus:border-vanguard-primary focus:outline-none"
             />
-          </div>}
+          </div>
 
           {/* File Upload */}
           <div>

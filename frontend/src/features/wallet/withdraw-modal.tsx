@@ -5,7 +5,7 @@ import { createPortal } from "react-dom";
 import { AlertCircle, ArrowUpRight, CheckCircle2, Copy, Landmark, Loader2, ShieldCheck, X } from "lucide-react";
 import { formatCurrency } from "@/lib/format";
 import { useWallet } from "@/hooks/useWallet";
-import { FormSelect } from "@/components/ui/select";
+import { CustomSelect } from "@/components/ui/custom-select";
 
 interface WithdrawModalProps {
   isOpen: boolean;
@@ -254,7 +254,7 @@ export function WithdrawModal({
                   Ngân hàng nhận tiền
                 </label>
                 <div className="mt-1.5">
-                  <FormSelect
+                  <CustomSelect
                     options={POPULAR_BANKS.map((b) => ({
                       value: b.code,
                       label: `${b.name} (${b.code})`,

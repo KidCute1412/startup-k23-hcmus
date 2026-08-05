@@ -26,12 +26,19 @@ import {
 } from './dto/get-dispute-queue-query.dto';
 import { GetLenderUpgradeRequestsQueryDto } from './dto/get-lender-upgrade-requests-query.dto';
 import { EscrowService } from '../escrow/escrow.service';
+import { PlatformFinanceService } from '../finance/platform-finance.service';
 import type { EscrowResult } from '../escrow/escrow.service.interface';
 import { ResolutionType } from './dto/resolve-dispute.dto';
 import {
   DashboardAnalyticsGranularity,
   GetDashboardAnalyticsQueryDto,
 } from './dto/get-dashboard-analytics-query.dto';
+import {
+  GetRentalSettlementsQueryDto,
+  GetRevenueTransactionsQueryDto,
+  GetLenderPayableTransactionsQueryDto,
+  GetEscrowHistoryQueryDto,
+} from './dto/get-platform-finance-history.dto';
 
 const kycUserSelect = {
   id: true,
@@ -97,6 +104,7 @@ interface DisputePayload {
   reporter_role: string;
   reason: string;
   description?: string | null;
+  response_description?: string | null;
   status: DisputeStatusType;
   resolved_by?: string | null;
   resolution_note?: string | null;
@@ -128,6 +136,7 @@ export class AdminService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly escrowService: EscrowService,
+    private readonly platformFinance: PlatformFinanceService,
   ) {}
 
   async getKycQueue(query: GetKycQueueQueryDto) {
@@ -734,6 +743,47 @@ export class AdminService {
           note: resolutionNote ?? null,
         },
       });
+      const rentalRefundAmount = new Prisma.Decimal(
+        resolutionType === ResolutionType.renter_compensation
+          ? (deductAmount ?? 0)
+          : 0,
+      );
+      const distributableRentalFee =
+        dispute.rental_order.rental_fee.sub(rentalRefundAmount);
+      // This is the immutable rate captured when the lender confirmed this
+      // order; it is never a hard-coded 30/70 split.
+      const platformFeeRateBps =
+        dispute.rental_order.platform_fee_rate_bps ?? 0;
+      const platformRevenue = distributableRentalFee
+        .mul(platformFeeRateBps)
+        .div(10_000)
+        .floor();
+      const lenderRentalIncome = distributableRentalFee.sub(platformRevenue);
+      const depositDeducted = new Prisma.Decimal(
+        resolutionType === ResolutionType.lender_compensation ||
+          resolutionType === ResolutionType.deposit_deduct
+          ? (deductAmount ?? 0)
+          : 0,
+      );
+      const behavior =
+        resolutionType === ResolutionType.renter_compensation
+          ? [
+              'Hoàn tiền thuê đã chọn về ví renter.',
+              'Trả toàn bộ tiền cọc về renter.',
+              'Chia phần tiền thuê còn lại theo tỷ lệ snapshot của đơn.',
+            ]
+          : resolutionType === ResolutionType.lender_compensation ||
+              resolutionType === ResolutionType.deposit_deduct
+            ? [
+                'Khấu trừ phần tiền cọc đã chọn để bồi thường lender.',
+                'Trả phần tiền cọc còn lại về renter.',
+                'Quyết toán toàn bộ tiền thuê theo tỷ lệ snapshot của đơn.',
+              ]
+            : [
+                'Trả toàn bộ tiền cọc về renter.',
+                'Quyết toán toàn bộ tiền thuê theo tỷ lệ snapshot của đơn.',
+                'Không phát sinh khoản bồi thường thêm từ tiền cọc hoặc hoàn tiền thuê.',
+              ];
       return {
         ...this.toApiDispute(resolved),
         settlement: {
@@ -744,33 +794,22 @@ export class AdminService {
                   resolutionType === ResolutionType.deposit_deduct
                 ? 'compensated'
                 : 'released',
-          depositReturned:
-            resolutionType === ResolutionType.lender_compensation ||
-            resolutionType === ResolutionType.deposit_deduct
-              ? settlement.amount - (deductAmount ?? 0)
-              : settlement.amount,
-          depositDeducted:
-            resolutionType === ResolutionType.lender_compensation ||
-            resolutionType === ResolutionType.deposit_deduct
-              ? (deductAmount ?? 0)
-              : 0,
-          renterCompensation:
-            resolutionType === ResolutionType.renter_compensation
-              ? (deductAmount ?? 0)
-              : 0,
-          lenderCompensation:
-            resolutionType === ResolutionType.lender_compensation ||
-            resolutionType === ResolutionType.deposit_deduct
-              ? (deductAmount ?? 0)
-              : 0,
-          lenderRentalIncome:
-            resolutionType === ResolutionType.renter_compensation
-              ? 0
-              : dispute.rental_order.lender_income
-                ? typeof dispute.rental_order.lender_income === 'number'
-                  ? dispute.rental_order.lender_income
-                  : dispute.rental_order.lender_income.toNumber()
-                : 0,
+          depositReturned: settlement.amount - depositDeducted.toNumber(),
+          depositDeducted: depositDeducted.toNumber(),
+          renterCompensation: rentalRefundAmount.toNumber(),
+          lenderCompensation: depositDeducted.toNumber(),
+          lenderRentalIncome: lenderRentalIncome.toNumber(),
+          platformRevenue: platformRevenue.toNumber(),
+          rentalSettlement: {
+            grossRentalFee: dispute.rental_order.rental_fee.toNumber(),
+            renterRefund: rentalRefundAmount.toNumber(),
+            distributableRentalFee: distributableRentalFee.toNumber(),
+            platformFeeRateBps,
+            platformFeeRatePercent: platformFeeRateBps / 100,
+            platformRevenue: platformRevenue.toNumber(),
+            lenderIncome: lenderRentalIncome.toNumber(),
+          },
+          behavior,
           depositSource: settlement.source,
           escrowStatus: settlement.status,
         },
@@ -813,7 +852,7 @@ export class AdminService {
           (SELECT COUNT(*) FROM rental_orders o WHERE date_trunc(${bucket}::text, o.created_at) = periods.bucket AND o.created_at >= ${from}::timestamptz AND o.created_at < ${to}::timestamptz) AS orders,
           (SELECT COUNT(*) FROM users u WHERE date_trunc(${bucket}::text, u.created_at) = periods.bucket AND u.created_at >= ${from}::timestamptz AND u.created_at < ${to}::timestamptz) AS users,
           (SELECT COUNT(*) FROM gears g WHERE date_trunc(${bucket}::text, g.created_at) = periods.bucket AND g.created_at >= ${from}::timestamptz AND g.created_at < ${to}::timestamptz) AS gears,
-          (SELECT COALESCE(SUM(p.amount), 0) FROM payments p WHERE p.status = 'success' AND date_trunc(${bucket}::text, p.created_at) = periods.bucket AND p.created_at >= ${from}::timestamptz AND p.created_at < ${to}::timestamptz) AS revenue
+          (SELECT COALESCE(SUM(p.amount), 0) FROM platform_ledger_transactions p WHERE p.type = 'platform_revenue' AND date_trunc(${bucket}::text, p.created_at) = periods.bucket AND p.created_at >= ${from}::timestamptz AND p.created_at < ${to}::timestamptz) AS revenue
         FROM (SELECT generate_series(date_trunc(${bucket}::text, ${from}::timestamptz), date_trunc(${bucket}::text, ${to}::timestamptz), ('1 ' || ${bucket}::text)::interval) AS bucket) periods
         ORDER BY periods.bucket
       `,
@@ -870,6 +909,241 @@ export class AdminService {
         gears: countRows(gears as never[], 'approval_status'),
         disputes: countRows(disputes as never[], 'status'),
         creditLimits: countRows(creditLimits as never[], 'status'),
+      },
+    };
+  }
+
+  async getPlatformFinanceConfig() {
+    const [config, history] = await Promise.all([
+      this.platformFinance.getConfig(),
+      this.prisma.platformFeeConfigAudit.findMany({
+        orderBy: { created_at: 'desc' },
+        take: 20,
+      }),
+    ]);
+    return {
+      platformFeeRateBps: config.platform_fee_rate_bps,
+      platformFeeRatePercent: config.platform_fee_rate_bps / 100,
+      updatedAt: config.updated_at,
+      history,
+    };
+  }
+
+  updatePlatformFinanceConfig(adminId: string, rateBps: number) {
+    return this.platformFinance.updateRate(adminId, rateBps);
+  }
+
+  async getPlatformFinanceOverview() {
+    const [wallet, heldCount, escrow] = await Promise.all([
+      this.prisma.platformWallet.upsert({
+        where: { id: 1 },
+        create: { id: 1 },
+        update: {},
+      }),
+      this.prisma.rentalFeeSettlement.count({ where: { status: 'held' } }),
+      this.prisma.escrowWallet.aggregate({
+        where: { status: 'locked' },
+        _sum: { amount: true },
+      }),
+    ]);
+    return {
+      rentalHoldBalance: wallet.rental_hold_balance,
+      platformRevenueBalance: wallet.revenue_available_balance,
+      lenderPayableBalance: wallet.lender_payable_balance,
+      heldRentalOrders: heldCount,
+      lockedDepositBalance: escrow._sum.amount ?? new Prisma.Decimal(0),
+    };
+  }
+
+  async getPlatformFinanceTransactions() {
+    return this.prisma.platformLedgerTransaction.findMany({
+      orderBy: { created_at: 'desc' },
+      take: 100,
+      include: { rental_order: { select: { id: true, order_code: true } } },
+    });
+  }
+
+  async getRentalSettlementsHistory(query: GetRentalSettlementsQueryDto) {
+    const { status, page, limit } = query;
+    const where: Prisma.RentalFeeSettlementWhereInput = status
+      ? { status }
+      : {};
+
+    const [data, total] = await Promise.all([
+      this.prisma.rentalFeeSettlement.findMany({
+        where,
+        orderBy: { held_at: 'desc' },
+        skip: (page - 1) * limit,
+        take: limit,
+        include: {
+          rental_order: {
+            select: {
+              id: true,
+              order_code: true,
+              renter: {
+                select: {
+                  id: true,
+                  full_name: true,
+                  email: true,
+                },
+              },
+              lender: {
+                select: {
+                  id: true,
+                  full_name: true,
+                  email: true,
+                },
+              },
+            },
+          },
+        },
+      }),
+      this.prisma.rentalFeeSettlement.count({ where }),
+    ]);
+
+    return {
+      data,
+      meta: {
+        total,
+        page,
+        limit,
+      },
+    };
+  }
+
+  async getRevenueTransactionsHistory(query: GetRevenueTransactionsQueryDto) {
+    const { page, limit } = query;
+    const where: Prisma.PlatformLedgerTransactionWhereInput = {
+      type: 'platform_revenue',
+    };
+
+    const [data, total] = await Promise.all([
+      this.prisma.platformLedgerTransaction.findMany({
+        where,
+        orderBy: { created_at: 'desc' },
+        skip: (page - 1) * limit,
+        take: limit,
+        include: {
+          rental_order: {
+            select: {
+              id: true,
+              order_code: true,
+              renter: {
+                select: {
+                  id: true,
+                  full_name: true,
+                  email: true,
+                },
+              },
+              lender: {
+                select: {
+                  id: true,
+                  full_name: true,
+                  email: true,
+                },
+              },
+            },
+          },
+        },
+      }),
+      this.prisma.platformLedgerTransaction.count({ where }),
+    ]);
+
+    return {
+      data,
+      meta: {
+        total,
+        page,
+        limit,
+      },
+    };
+  }
+
+  async getLenderPayableTransactionsHistory(
+    query: GetLenderPayableTransactionsQueryDto,
+  ) {
+    const { type, page, limit } = query;
+    const where: Prisma.PlatformLedgerTransactionWhereInput = {
+      type: type ? type : { in: ['lender_payable', 'lender_withdrawal'] },
+    };
+
+    const [data, total] = await Promise.all([
+      this.prisma.platformLedgerTransaction.findMany({
+        where,
+        orderBy: { created_at: 'desc' },
+        skip: (page - 1) * limit,
+        take: limit,
+        include: {
+          rental_order: {
+            select: {
+              id: true,
+              order_code: true,
+              lender: {
+                select: {
+                  id: true,
+                  full_name: true,
+                  email: true,
+                },
+              },
+            },
+          },
+        },
+      }),
+      this.prisma.platformLedgerTransaction.count({ where }),
+    ]);
+
+    return {
+      data,
+      meta: {
+        total,
+        page,
+        limit,
+      },
+    };
+  }
+
+  async getEscrowHistory(query: GetEscrowHistoryQueryDto) {
+    const { status, page, limit } = query;
+    const where: Prisma.EscrowWalletWhereInput = status ? { status } : {};
+
+    const [data, total] = await Promise.all([
+      this.prisma.escrowWallet.findMany({
+        where,
+        orderBy: { locked_at: 'desc' },
+        skip: (page - 1) * limit,
+        take: limit,
+        include: {
+          rental_order: {
+            select: {
+              id: true,
+              order_code: true,
+              renter: {
+                select: {
+                  id: true,
+                  full_name: true,
+                  email: true,
+                },
+              },
+              lender: {
+                select: {
+                  id: true,
+                  full_name: true,
+                  email: true,
+                },
+              },
+            },
+          },
+        },
+      }),
+      this.prisma.escrowWallet.count({ where }),
+    ]);
+
+    return {
+      data,
+      meta: {
+        total,
+        page,
+        limit,
       },
     };
   }
@@ -958,6 +1232,7 @@ export class AdminService {
       reporterRole: dispute.reporter_role,
       reason: dispute.reason,
       description: dispute.description,
+      responseDescription: dispute.response_description,
       status: dispute.status,
       resolvedBy: dispute.resolved_by,
       resolutionNote: dispute.resolution_note,

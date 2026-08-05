@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import { AdminPagination } from "@/components/ui/admin-pagination";
+import { CustomSelect } from "@/components/ui/custom-select";
 
 import { useAdminDisputes } from "@/hooks/useAdminDisputes";
 import { resolveMediaUrl } from "@/lib/media";
@@ -95,6 +96,7 @@ export function DisputeResolutionFeature() {
     "Căn cứ hình ảnh bàn giao và đối soát bằng chứng của hai bên, Admin xác định phương án settlement theo mức độ trách nhiệm thực tế."
   );
   const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
+  const [successTitle, setSuccessTitle] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [closeNote, setCloseNote] = useState("");
@@ -143,7 +145,7 @@ export function DisputeResolutionFeature() {
           id: lenderId || "",
           name: item.rentalOrder?.lender?.fullName || "Chủ sở hữu",
           email: item.rentalOrder?.lender?.email || "",
-          claim: item.reporterRole === "lender" ? item.description || item.reason : "Chưa có báo cáo từ Chủ sở hữu",
+          claim: item.reporterRole === "lender" ? item.description || item.reason : item.responseDescription || "Chưa có báo cáo từ Chủ sở hữu",
           proof_media: lenderEvidences
             .filter((e) => e.url && e.url.trim().length > 0)
             .map((e) => ({ url: resolveMediaUrl(e.url), mediaType: e.mediaType || "image" })),
@@ -210,6 +212,7 @@ export function DisputeResolutionFeature() {
       };
 
       await resolveDispute(activeCase.id, payload);
+      setSuccessTitle("Phân xử Tranh chấp Thành công");
       setSuccessMessage("Đã settlement và chuyển dispute sang trạng thái Đã phân xử.");
       setIsSuccessModalOpen(true);
     } catch (err: any) {
@@ -227,6 +230,7 @@ export function DisputeResolutionFeature() {
     setIsTransitioning(true);
     try {
       await startDisputeReview(activeCase.id);
+      setSuccessTitle("Tiếp nhận Hồ sơ Thành công");
       setSuccessMessage("Đã tiếp nhận hồ sơ và chuyển sang Đang xem xét.");
       setIsSuccessModalOpen(true);
     } catch (err: any) {
@@ -242,6 +246,7 @@ export function DisputeResolutionFeature() {
     setIsTransitioning(true);
     try {
       await closeDispute(activeCase.id, closeNote.trim() || undefined);
+      setSuccessTitle("Đóng Hồ sơ Tranh chấp Thành công");
       setSuccessMessage("Đã đóng hồ sơ dispute. Không phát sinh thêm settlement.");
       setIsSuccessModalOpen(true);
       setCloseNote("");
@@ -337,12 +342,19 @@ export function DisputeResolutionFeature() {
             <span className="text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted">
               Queue được tải theo trang; trạng thái mới nhất sẽ được ưu tiên hiển thị.
             </span>
-            <label className="flex items-center gap-2 font-semibold">
-              Số bản ghi/trang
-              <select value={limit} onChange={(e) => setLimit(Number(e.target.value))} className="rounded-v-sm border border-vanguard-light-border bg-transparent px-2 py-1 dark:border-vanguard-dark-border">
-                {[10, 20, 50].map((value) => <option key={value} value={value}>{value}</option>)}
-              </select>
-            </label>
+            <div className="flex items-center gap-2 font-semibold">
+              <span>Số bản ghi/trang</span>
+              <CustomSelect
+                value={String(limit)}
+                onValueChange={(val) => setLimit(Number(val))}
+                className="w-20 text-xs min-h-[unset] h-8 py-1"
+                options={[
+                  { value: "10", label: "10" },
+                  { value: "20", label: "20" },
+                  { value: "50", label: "50" },
+                ]}
+              />
+            </div>
           </div>
           {isLoading ? (
             <div className="flex py-16 justify-center items-center text-sm text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted">
@@ -671,15 +683,18 @@ export function DisputeResolutionFeature() {
                                 Số tiền bồi thường (VNĐ) <span className="text-red-400">*</span>
                               </label>
                               <input
-                                type="number"
-                                min={1}
-                                max={
-                                  resolutionType === "renter_compensation"
-                                    ? activeCase.total_rent_fee
-                                    : activeCase.deposit_amount
-                                }
-                                value={deductAmount}
-                                onChange={(e) => setDeductAmount(Number(e.target.value))}
+                                type="text"
+                                inputMode="numeric"
+                                value={deductAmount === 0 ? "" : deductAmount.toLocaleString("vi-VN")}
+                                onChange={(e) => {
+                                  const rawVal = e.target.value.replace(/\D/g, "");
+                                  const numVal = rawVal ? Number(rawVal) : 0;
+                                  const maxAmount =
+                                    resolutionType === "renter_compensation"
+                                      ? activeCase.total_rent_fee
+                                      : activeCase.deposit_amount;
+                                  setDeductAmount(Math.min(numVal, maxAmount));
+                                }}
                                 className="w-full rounded-v-sm border border-vanguard-light-border bg-vanguard-light-bg p-3 text-xs font-mono font-bold text-vanguard-light-text outline-none focus:border-vanguard-primary dark:border-vanguard-dark-border dark:bg-vanguard-dark-bg dark:text-vanguard-dark-text"
                               />
                               <p className="mt-1 text-[11px] text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted">
@@ -826,7 +841,7 @@ export function DisputeResolutionFeature() {
           <div className="w-full max-w-md rounded-v border border-vanguard-primary/40 bg-vanguard-light-surf p-6 shadow-2xl dark:border-vanguard-primary/40 dark:bg-vanguard-dark-surf">
             <CheckCircle2 className="mx-auto size-12 text-emerald-500" />
             <h3 className="mt-3 text-center font-display text-lg font-bold text-vanguard-light-text dark:text-vanguard-dark-text">
-              Đã Phân xử Tranh chấp Thành công!
+              {successTitle || "Thao tác Thành công!"}
             </h3>
               <p className="mt-2 text-center text-xs text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted">
               {successMessage} <code className="font-mono text-vanguard-primary">{activeCase.order_id}</code>
@@ -834,7 +849,11 @@ export function DisputeResolutionFeature() {
             <div className="mt-6 text-center">
               <button
                 type="button"
-                onClick={() => setIsSuccessModalOpen(false)}
+                onClick={() => {
+                  setIsSuccessModalOpen(false);
+                  setSuccessTitle("");
+                  setSuccessMessage("");
+                }}
                 className="rounded-v-sm bg-vanguard-primary px-6 py-2 text-xs font-bold text-vanguard-dark-bg"
               >
                 Hoàn tất

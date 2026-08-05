@@ -3,6 +3,7 @@ import Image from "next/image";
 import { useEffect, useState } from "react";
 import { CreditCard } from "lucide-react";
 import { Card } from "@/components/ui/card";
+import { CustomSelect } from "@/components/ui/custom-select";
 import { useAdminCreditLimits } from "@/hooks/useAdminCreditLimits";
 import { formatCurrency } from "@/lib/format";
 import type { CreditLimitRequestStatus } from "@/types/credit-limit";
@@ -30,9 +31,19 @@ export function CreditLimitQueue() {
         Admin chỉ duyệt đúng tier renter đã yêu cầu; policy được backend kiểm tra lại.
       </p>
     </header>
-    <select value={status} onChange={(e) => { setStatus(e.target.value as CreditLimitRequestStatus | ""); setPage(1); }} className="rounded-v-sm border bg-transparent px-3 py-2 text-sm">
-      <option value="">Tất cả</option><option value="pending">Chờ duyệt</option><option value="under_review">Đang xem xét</option><option value="approved">Đã duyệt</option><option value="rejected">Từ chối</option><option value="cancelled">Đã hủy</option>
-    </select>
+    <CustomSelect
+      value={status}
+      onValueChange={(val) => { setStatus(val as CreditLimitRequestStatus | ""); setPage(1); }}
+      className="w-48 text-xs min-h-[unset] h-9"
+      options={[
+        { value: "", label: "Tất cả" },
+        { value: "pending", label: "Chờ duyệt" },
+        { value: "under_review", label: "Đang xem xét" },
+        { value: "approved", label: "Đã duyệt" },
+        { value: "rejected", label: "Từ chối" },
+        { value: "cancelled", label: "Đã hủy" },
+      ]}
+    />
     {queue.error && <p role="alert" className="text-red-400">{queue.error}</p>}
     {queue.loading && queue.items.length === 0 ? <p>Đang tải...</p> : queue.items.length === 0 ? (
       <Card className="overflow-hidden">

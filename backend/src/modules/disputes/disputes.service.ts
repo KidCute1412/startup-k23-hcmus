@@ -189,6 +189,12 @@ export class DisputesService {
           url,
         })),
       });
+      if (dto.description?.trim()) {
+        await tx.dispute.update({
+          where: { id: disputeId },
+          data: { response_description: dto.description.trim() },
+        });
+      }
       return tx.dispute.findUniqueOrThrow({
         where: { id: disputeId },
         include: disputeInclude,
@@ -227,6 +233,7 @@ export class DisputesService {
     reporter_role: ReporterRoleEnum;
     reason: string;
     description: string | null;
+    response_description: string | null;
     status: DisputeStatusType;
     resolved_by: string | null;
     resolution_note: string | null;
@@ -249,6 +256,7 @@ export class DisputesService {
       reporterRole: dispute.reporter_role,
       reason: dispute.reason,
       description: dispute.description,
+      responseDescription: dispute.response_description,
       status: dispute.status,
       resolvedBy: dispute.resolved_by,
       resolutionNote: dispute.resolution_note,

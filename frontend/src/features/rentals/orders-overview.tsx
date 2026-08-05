@@ -151,6 +151,15 @@ export function OrdersOverview({ viewRole = 'renter', detailBasePath = '/orders'
             order.start_date ?? order.startDate,
             order.end_date ?? order.endDate
           );
+          const rentalFee = Number(order.rental_fee ?? order.rentPrice ?? 0);
+          const depositAmount = Number(
+            order.deposit_amount ?? order.depositCash ?? 0,
+          );
+          const isCreditLineDeposit =
+            (order.deposit_type ?? order.depositType) === 'credit_line';
+          const totalPayable = isCreditLineDeposit
+            ? rentalFee
+            : rentalFee + depositAmount;
           const personLabel = viewRole === 'lender'
             ? `Người thuê: ${order.renter?.full_name || order.renter?.fullName || "—"}`
             : `Chủ sở hữu: ${order.lender?.full_name || order.lender?.fullName || "Chủ gear"}`;
@@ -198,16 +207,18 @@ export function OrdersOverview({ viewRole = 'renter', detailBasePath = '/orders'
                 </div>
 
                 <div className="text-left sm:text-right flex-shrink-0">
-                  <p className="text-xs uppercase tracking-widest text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted">Tổng phí thuê</p>
+                  <p className="text-xs uppercase tracking-widest text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted">
+                    {isCreditLineDeposit ? "Cần thanh toán" : "Tổng cần thanh toán"}
+                  </p>
                   <p className="font-display text-xl font-bold text-vanguard-primary mt-0.5">
-                    {formatCurrency(order.rental_fee ?? order.rentPrice ?? 0)}
+                    {formatCurrency(totalPayable)}
                   </p>
                 </div>
               </div>
 
               <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3 items-center">
                 <StatRow label="Thời gian thuê" value={`${formatShortDate(order.start_date ?? order.startDate)} - ${formatShortDate(order.end_date ?? order.endDate)} (${totalDays} ngày)`} />
-                <StatRow label="Tiền cọc" value={`${formatCurrency(order.deposit_amount ?? order.depositCash ?? 0)} (${(order.deposit_type ?? order.depositType) === 'credit_line' ? 'Tín dụng Mutux' : 'Tiền mặt'})`} />
+                <StatRow label="Tiền cọc" value={`${formatCurrency(depositAmount)} (${isCreditLineDeposit ? 'Tín dụng Mutux' : 'Tiền mặt'})`} />
 
                 <div className="flex justify-end space-x-2">
                   {canDispute && (

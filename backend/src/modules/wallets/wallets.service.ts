@@ -11,10 +11,14 @@ import { Prisma } from '@prisma/client';
 import { createHmac, timingSafeEqual } from 'crypto';
 import type { PayosWebhookDto } from './dto/payos-webhook.dto';
 import type { CreateWithdrawalDto } from './dto/create-withdrawal.dto';
+import { PlatformFinanceService } from '../finance/platform-finance.service';
 
 @Injectable()
 export class WalletsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly platformFinance: PlatformFinanceService,
+  ) {}
 
   async getRenter(userId: string) {
     const wallet = await this.prisma.renterWallet.upsert({
@@ -280,6 +284,7 @@ export class WalletsService {
           note: `Withdrawal request ${withdrawal.id}`,
         },
       });
+      await this.platformFinance.recordLenderWithdrawal(amount, tx);
 
       return {
         id: withdrawal.id,

@@ -13,12 +13,24 @@ html.dark {
   color-scheme: dark;
 }
 
+html {
+  scrollbar-gutter: stable;
+}
+
 body {
   min-height: 100vh;
   background: #faf9f6;
   color: #1c1f26;
   font-family: var(--font-body), sans-serif;
 }
+
+body[data-scroll-locked],
+[data-scroll-locked] {
+  margin-right: 0px !important;
+}
+
+
+
 
 .dark body {
   background: #090b10;
@@ -263,3 +275,34 @@ dialog,
     transform: translateY(-80px) scale(1.2);
   }
 }
+
+@keyframes vanguardDropdownEnter {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(var(--dropdown-translate-y-start, 0px));
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(var(--dropdown-translate-y-end, 0px));
+  }
+}
+
+@keyframes vanguardDropdownExit {
+  from {
+    opacity: 1;
+    transform: scale(1) translateY(var(--dropdown-translate-y-end, 0px));
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.96) translateY(var(--dropdown-translate-y-start, 0px));
+  }
+}
+
+.animate-dropdown-enter {
+  animation: vanguardDropdownEnter 120ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-dropdown-exit {
+  animation: vanguardDropdownExit 100ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+

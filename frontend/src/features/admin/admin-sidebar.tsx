@@ -12,6 +12,7 @@ import {
   BadgeDollarSign,
   UserCheck,
   UserRound,
+  Wallet,
 } from "lucide-react";
 import { cn } from "@/lib/cn";
 
@@ -27,6 +28,11 @@ const ADMIN_NAV_ITEMS: AdminNavItem[] = [
     href: "/admin",
     label: "Tổng quan Dashboard",
     icon: LayoutDashboard,
+  },
+  {
+    href: "/admin/finance",
+    label: "Quản lý Tài chính",
+    icon: Wallet,
   },
   {
     href: "/admin/kyc",
@@ -100,7 +106,7 @@ export function AdminSidebar({ className }: { className?: string }) {
 
             return (
               <React.Fragment key={item.href}>
-                {index === 1 && <div className="mb-2 mt-7 px-3 text-[10px] font-bold uppercase tracking-widest text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted">Xử lý nghiệp vụ</div>}
+                {index === 2 && <div className="mb-2 mt-7 px-3 text-[10px] font-bold uppercase tracking-widest text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted">Xử lý nghiệp vụ</div>}
                 <Link
                   key={item.href}
                   href={item.href}

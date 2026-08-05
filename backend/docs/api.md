@@ -663,7 +663,7 @@ Ngoài retry ở đúng target, status sai trả `400 INVALID_TRANSITION` (hoặ
 * **Success (201)**: Tạo tranh chấp cùng evidence thành công, server trả dữ liệu camelCase và order đổi sang `disputed`. Retry trả cùng dispute hiện hữu.
 
 #### [POST] `/disputes/:id/evidence` (Bên còn lại gửi bằng chứng phản hồi)
-* **Body**: `{ "evidences": [{ "mediaType": "image", "url": "/uploads/{currentUserId}/{uploadedFile}.jpg" }] }`.
+* **Body**: `{ "description": "Mô tả phản hồi của lender", "evidences": [{ "mediaType": "image", "url": "/uploads/{currentUserId}/{uploadedFile}.jpg" }] }`. `description` tối đa 2.000 ký tự và được lưu riêng với mô tả khiếu nại ban đầu.
 * **Rule**: chỉ bên không tạo dispute được gửi một lần, tối đa 5 ảnh, trong vòng 3 ngày kể từ `createdAt`; URL phải là ảnh do chính người gửi upload.
 * **Success (201)**: trả dispute cùng toàn bộ evidence và `responseDeadlineAt`.
 

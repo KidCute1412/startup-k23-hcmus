@@ -74,25 +74,27 @@ export function PricingSummary({
       {/* Totals Summary Breakdown */}
       <div className="space-y-2.5 border-t border-vanguard-light-border pt-4 text-xs dark:border-vanguard-dark-border">
         <div className="flex justify-between">
-          <span className="text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted">Tổng phí thuê:</span>
+          <span className="text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted">Tổng tiền thuê:</span>
           <span className="font-semibold">{formatCurrency(rentalTotal)}</span>
         </div>
         <div className="flex justify-between">
           <span className="text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted">
-            {depositType === "traditional" ? "Tổng tiền cọc tiền mặt:" : "Hạn mức Mutux cọc:"}
+            {depositType === "traditional" ? "Tiền cọc cần khóa từ ví:" : "Hạn mức Mutux cần khóa:"}
           </span>
           <span className="font-semibold text-vanguard-secondary dark:text-vanguard-primary">
             {formatCurrency(depositTotal)}
           </span>
         </div>
         <div className="flex justify-between border-t border-vanguard-light-border pt-3 text-sm font-bold dark:border-vanguard-dark-border">
-          <span>Tổng thanh toán từ ví:</span>
+          <span>{depositType === "traditional" ? "Tổng cần thanh toán:" : "Cần thanh toán:"}</span>
           <span className="text-vanguard-primary font-display">{formatCurrency(grandTotal)}</span>
         </div>
       </div>
 
       <p className="border border-vanguard-primary/30 bg-vanguard-primary/5 p-3 text-[11px] rounded-v-sm text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted">
-        Giá thuê, tiền cọc và thông tin chủ gear được xác thực chính xác từ database khi thanh toán.
+        {depositType === "traditional"
+          ? "Tiền thuê sẽ được trừ và tiền cọc sẽ được khóa khi lender xác nhận. Tiền cọc được xử lý theo kết quả đơn thuê."
+          : "Tiền thuê được trừ từ ví khi lender xác nhận; tiền cọc được khóa từ hạn mức Mutux."}
       </p>
     </Card>
   );

@@ -2,6 +2,8 @@ export interface WalletTransaction {
   id: string;
   wallet_id?: string;
   walletId?: string;
+  rental_order_id?: string | null;
+  rentalOrderId?: string | null;
   type: string;
   amount: number | string;
   balance_before?: number | string;

@@ -10,13 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input, Textarea } from "@/components/ui/field";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { CustomSelect } from "@/components/ui/custom-select";
 
 import { getCategories } from "@/features/catalog/mock-data";
 
@@ -253,18 +247,16 @@ export function AddGearForm() {
                   <label htmlFor="gear-category" className="field-label">
                     Danh mục <span className="text-red-500">*</span>
                   </label>
-                  <Select value={categoryId} onValueChange={setCategoryId}>
-                    <SelectTrigger id="gear-category" className="w-full">
-                      <SelectValue placeholder="Chọn danh mục" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {CATEGORIES.map((c) => (
-                        <SelectItem key={c.id} value={c.id}>
-                          {c.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <CustomSelect
+                    value={categoryId}
+                    onValueChange={setCategoryId}
+                    placeholder="Chọn danh mục"
+                    className="w-full"
+                    options={CATEGORIES.map((c) => ({
+                      value: c.id,
+                      label: c.name,
+                    }))}
+                  />
                 </div>
 
                 <div className="space-y-1.5">

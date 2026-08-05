@@ -24,6 +24,13 @@ import { GetLenderUpgradeRequestsQueryDto } from './dto/get-lender-upgrade-reque
 import { RejectLenderUpgradeRequestDto } from './dto/reject-lender-upgrade-request.dto';
 import { CloseDisputeDto } from './dto/close-dispute.dto';
 import { GetDashboardAnalyticsQueryDto } from './dto/get-dashboard-analytics-query.dto';
+import { UpdatePlatformFeeConfigDto } from './dto/update-platform-fee-config.dto';
+import {
+  GetRentalSettlementsQueryDto,
+  GetRevenueTransactionsQueryDto,
+  GetLenderPayableTransactionsQueryDto,
+  GetEscrowHistoryQueryDto,
+} from './dto/get-platform-finance-history.dto';
 
 @Controller('admin')
 @UseGuards(JwtAuthGuard, AdminGuard)
@@ -48,6 +55,56 @@ export class AdminController {
   @Get('dashboard/analytics')
   getDashboardAnalytics(@Query() query: GetDashboardAnalyticsQueryDto) {
     return this.adminService.getDashboardAnalytics(query);
+  }
+
+  @Get('platform-finance/config')
+  getPlatformFinanceConfig() {
+    return this.adminService.getPlatformFinanceConfig();
+  }
+
+  @Post('platform-finance/config')
+  updatePlatformFinanceConfig(
+    @Body() dto: UpdatePlatformFeeConfigDto,
+    @Req() req: AuthenticatedRequest,
+  ) {
+    return this.adminService.updatePlatformFinanceConfig(
+      req.user.id,
+      dto.platformFeeRateBps,
+    );
+  }
+
+  @Get('platform-finance/overview')
+  getPlatformFinanceOverview() {
+    return this.adminService.getPlatformFinanceOverview();
+  }
+
+  @Get('platform-finance/transactions')
+  getPlatformFinanceTransactions() {
+    return this.adminService.getPlatformFinanceTransactions();
+  }
+
+  @Get('platform-finance/rental-settlements')
+  getRentalSettlementsHistory(@Query() query: GetRentalSettlementsQueryDto) {
+    return this.adminService.getRentalSettlementsHistory(query);
+  }
+
+  @Get('platform-finance/revenue-transactions')
+  getRevenueTransactionsHistory(
+    @Query() query: GetRevenueTransactionsQueryDto,
+  ) {
+    return this.adminService.getRevenueTransactionsHistory(query);
+  }
+
+  @Get('platform-finance/lender-payable-transactions')
+  getLenderPayableTransactionsHistory(
+    @Query() query: GetLenderPayableTransactionsQueryDto,
+  ) {
+    return this.adminService.getLenderPayableTransactionsHistory(query);
+  }
+
+  @Get('platform-finance/escrow-history')
+  getEscrowHistory(@Query() query: GetEscrowHistoryQueryDto) {
+    return this.adminService.getEscrowHistory(query);
   }
 
   @Get('lender-upgrade-requests')

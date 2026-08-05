@@ -6,20 +6,15 @@ import {
 import { DepositTypeEnum, Prisma, WalletStatusType } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { EscrowReconciliationService } from './escrow-reconciliation.service';
+import { PlatformFinanceService } from '../finance/platform-finance.service';
 import { EscrowResult, IEscrowService } from './escrow.service.interface';
-
-const PLATFORM_FEE_RATE = 0.15;
-
-const computePlatformFee = (rentalFee: Prisma.Decimal) =>
-  rentalFee.mul(PLATFORM_FEE_RATE);
-const computeLenderIncome = (rentalFee: Prisma.Decimal) =>
-  rentalFee.sub(computePlatformFee(rentalFee));
 
 @Injectable()
 export class EscrowService implements IEscrowService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly reconciliation: EscrowReconciliationService,
+    private readonly platformFinance: PlatformFinanceService,
   ) {}
 
   async lock(
@@ -219,6 +214,7 @@ export class EscrowService implements IEscrowService {
           status: 'locked',
         },
       });
+      await this.platformFinance.holdRentalFee(order, client);
 
       return this.toResult(escrow);
     };
@@ -278,22 +274,6 @@ export class EscrowService implements IEscrowService {
         });
       }
 
-      const lenderIncome =
-        order.lender_income.toNumber() > 0
-          ? order.lender_income
-          : computeLenderIncome(order.rental_fee);
-
-      const lenderWallet = await client.lenderWallet.findUnique({
-        where: { lender_id: order.lender_id },
-      });
-      if (!lenderWallet) {
-        throw new BadRequestException({
-          error: 'LENDER_WALLET_NOT_FOUND',
-          message: 'Lender wallet not found',
-        });
-      }
-      await client.$queryRaw`SELECT id FROM lender_wallets WHERE id = ${lenderWallet.id}::uuid FOR UPDATE`;
-
       if (escrow.source === 'renter_cash') {
         const renterWallet = await client.renterWallet.findUnique({
           where: { user_id: order.renter_id },
@@ -352,23 +332,11 @@ export class EscrowService implements IEscrowService {
         });
       }
 
-      const lenderBalanceAfter = lenderWallet.balance.plus(lenderIncome);
-
-      await client.lenderWallet.update({
-        where: { id: lenderWallet.id },
-        data: { balance: lenderBalanceAfter },
-      });
-      await client.lenderWalletTransaction.create({
-        data: {
-          lender_wallet_id: lenderWallet.id,
-          rental_order_id: order.id,
-          type: 'income',
-          amount: lenderIncome,
-          balance_before: lenderWallet.balance,
-          balance_after: lenderBalanceAfter,
-          note: `Income for order ${order.order_code} (after ${PLATFORM_FEE_RATE * 100}% platform fee)`,
-        },
-      });
+      await this.platformFinance.settleRentalFee(
+        order.id,
+        new Prisma.Decimal(0),
+        client,
+      );
 
       const now = new Date();
       const updated = await client.escrowWallet.update({
@@ -402,7 +370,7 @@ export class EscrowService implements IEscrowService {
         });
       }
 
-      const reference = `LATE-DELIVERY-REFUND-${orderId}`;
+      const reference = `RENTAL-REFUND-${orderId}`;
       const existingRefund = await client.renterWalletTransaction.findUnique({
         where: { reference },
       });
@@ -432,26 +400,19 @@ export class EscrowService implements IEscrowService {
         });
       }
       await client.$queryRaw`SELECT id FROM renter_wallets WHERE id = ${renterWallet.id}::uuid FOR UPDATE`;
-      const balanceAfter = renterWallet.balance.plus(order.rental_fee);
+      await this.platformFinance.settleRentalFee(
+        order.id,
+        order.rental_fee,
+        client,
+      );
 
       await client.renterWallet.update({
         where: { id: renterWallet.id },
         data: {
-          balance: balanceAfter,
           locked_balance:
             escrow.source === 'renter_cash'
               ? renterWallet.locked_balance.sub(escrow.amount)
               : renterWallet.locked_balance,
-        },
-      });
-      await client.renterWalletTransaction.create({
-        data: {
-          wallet_id: renterWallet.id,
-          type: 'late_delivery_refund',
-          amount: order.rental_fee,
-          balance_before: renterWallet.balance,
-          balance_after: balanceAfter,
-          reference,
         },
       });
 
@@ -524,20 +485,7 @@ export class EscrowService implements IEscrowService {
         });
       }
 
-      const existingCompensation =
-        await client.renterWalletTransaction.findFirst({
-          where: {
-            reference: `RENTER-COMPENSATION-${orderId}`,
-            type: 'renter_compensation',
-          },
-        });
       if (escrow.status === 'renter_compensated') {
-        if (!existingCompensation) {
-          throw new BadRequestException({
-            error: 'SETTLEMENT_STATE_INCONSISTENT',
-            message: 'Renter-compensated escrow is missing its wallet ledger',
-          });
-        }
         return this.toResult(escrow);
       }
       if (escrow.status !== 'locked') {
@@ -556,12 +504,6 @@ export class EscrowService implements IEscrowService {
           message: `Compensation amount ${compensationAmount} exceeds rental fee ${order.rental_fee.toString()}`,
         });
       }
-      if (existingCompensation) {
-        throw new BadRequestException({
-          error: 'SETTLEMENT_STATE_INCONSISTENT',
-          message: 'Renter compensation ledger exists while escrow is locked',
-        });
-      }
 
       const renterWallet = await client.renterWallet.findUnique({
         where: { user_id: order.renter_id },
@@ -574,25 +516,18 @@ export class EscrowService implements IEscrowService {
       }
       await client.$queryRaw`SELECT id FROM renter_wallets WHERE id = ${renterWallet.id}::uuid FOR UPDATE`;
 
-      const renterBalanceAfter = renterWallet.balance.plus(compensation);
+      await this.platformFinance.settleRentalFee(
+        order.id,
+        compensation,
+        client,
+      );
       await client.renterWallet.update({
         where: { id: renterWallet.id },
         data: {
-          balance: renterBalanceAfter,
           locked_balance:
             escrow.source === 'renter_cash'
               ? renterWallet.locked_balance.sub(escrow.amount)
               : renterWallet.locked_balance,
-        },
-      });
-      await client.renterWalletTransaction.create({
-        data: {
-          wallet_id: renterWallet.id,
-          type: 'renter_compensation',
-          amount: compensation,
-          balance_before: renterWallet.balance,
-          balance_after: renterBalanceAfter,
-          reference: `RENTER-COMPENSATION-${orderId}`,
         },
       });
 
@@ -705,10 +640,13 @@ export class EscrowService implements IEscrowService {
         });
       }
 
-      const lenderIncome =
-        order.lender_income.toNumber() > 0
-          ? order.lender_income
-          : computeLenderIncome(order.rental_fee);
+      await this.platformFinance.settleRentalFee(
+        order.id,
+        new Prisma.Decimal(0),
+        client,
+      );
+      // Rental income has already been recorded by PlatformFinanceService.
+      const lenderIncome = new Prisma.Decimal(0);
 
       const lenderWallet = await client.lenderWallet.findUnique({
         where: { lender_id: order.lender_id },
@@ -803,17 +741,19 @@ export class EscrowService implements IEscrowService {
         data: { balance: lenderBalanceAfter },
       });
 
-      await client.lenderWalletTransaction.create({
-        data: {
-          lender_wallet_id: lenderWallet.id,
-          rental_order_id: order.id,
-          type: 'income',
-          amount: lenderIncome,
-          balance_before: lenderWallet.balance,
-          balance_after: lenderWallet.balance.plus(lenderIncome),
-          note: `Income for order ${order.order_code}`,
-        },
-      });
+      if (lenderIncome.greaterThan(0)) {
+        await client.lenderWalletTransaction.create({
+          data: {
+            lender_wallet_id: lenderWallet.id,
+            rental_order_id: order.id,
+            type: 'income',
+            amount: lenderIncome,
+            balance_before: lenderWallet.balance,
+            balance_after: lenderWallet.balance.plus(lenderIncome),
+            note: `Income for order ${order.order_code}`,
+          },
+        });
+      }
 
       if (deduct.greaterThan(0)) {
         await client.lenderWalletTransaction.create({

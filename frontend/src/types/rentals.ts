@@ -45,6 +45,16 @@ export interface RentalOrder {
   duration_days?: number;
   platform_fee?: number;
   lender_income?: number;
+  platform_fee_rate_bps?: number;
+  rental_fee_settlement?: {
+    gross_rental_fee: number | string;
+    rental_refund_amount: number | string;
+    distributable_amount: number | string;
+    platform_fee_amount: number | string;
+    lender_income_amount: number | string;
+    platform_fee_rate_bps?: number;
+    status: "held" | "settled" | "refunded";
+  } | null;
   // lifecycle timestamps
   lender_shipped_at?: string | null;
   renter_received_at?: string | null;
@@ -75,6 +85,8 @@ export interface RentalOrder {
     status: "open" | "under_review" | "resolved" | "closed" | string;
     reason: string;
     description?: string | null;
+    response_description?: string | null;
+    responseDescription?: string | null;
     reported_by?: string;
     reportedBy?: string;
     created_at?: string;

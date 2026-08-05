@@ -1,7 +1,7 @@
 import type { ComponentPropsWithoutRef } from "react";
 import { cn } from "@/lib/cn";
-export { FormSelect as Select, FormSelect } from "./select";
-export type { FormSelectProps, FormSelectOption } from "./select";
+export { CustomSelect as Select, CustomSelect } from "./custom-select";
+export type { CustomSelectProps, CustomSelectOption } from "./custom-select";
 export { DatePicker } from "./date-picker";
 export type { DatePickerProps } from "./date-picker";
 

@@ -5,16 +5,7 @@ import { useRouter } from "next/navigation";
 import { type FormEvent, useEffect, useMemo, useState, useRef } from "react";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/field";
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectLabel,
-  SelectSeparator,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { CustomSelect } from "@/components/ui/custom-select";
 import type { GearCategory } from "@/types/catalog";
 import { CategoryModal } from "./category-modal";
 
@@ -328,19 +319,19 @@ export function CatalogFilter({
               <span className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-vanguard-primary">
                 <ArrowUpDown size={13} /> Sắp xếp theo
               </span>
-              <Select value={selectedSort} onValueChange={handleSortChange}>
-                <SelectTrigger aria-label="Sắp xếp danh sách gear" className="w-full min-h-12 bg-transparent border-vanguard-light-border dark:border-vanguard-dark-border focus:ring-vanguard-primary">
-                  <SelectValue placeholder="Mặc định" />
-                </SelectTrigger>
-                <SelectContent className="bg-white dark:bg-vanguard-dark-surf border-vanguard-light-border dark:border-vanguard-dark-border">
-                  <SelectItem value="default">Mặc định</SelectItem>
-                  <SelectItem value="relevance">Liên quan nhất</SelectItem>
-                  <SelectItem value="newest">Mới nhất</SelectItem>
-                  <SelectItem value="priceAsc">Giá thuê: Thấp → Cao</SelectItem>
-                  <SelectItem value="priceDesc">Giá thuê: Cao → Thấp</SelectItem>
-                  <SelectItem value="ratingDesc">Đánh giá cao nhất</SelectItem>
-                </SelectContent>
-              </Select>
+              <CustomSelect
+                value={selectedSort}
+                onValueChange={handleSortChange}
+                className="w-full"
+                options={[
+                  { value: "default", label: "Mặc định" },
+                  { value: "relevance", label: "Liên quan nhất" },
+                  { value: "newest", label: "Mới nhất" },
+                  { value: "priceAsc", label: "Giá thuê: Thấp → Cao" },
+                  { value: "priceDesc", label: "Giá thuê: Cao → Thấp" },
+                  { value: "ratingDesc", label: "Đánh giá cao nhất" },
+                ]}
+              />
             </div>
 
             {error ? <p role="alert" className="text-xs font-semibold text-red-500">{error}</p> : null}

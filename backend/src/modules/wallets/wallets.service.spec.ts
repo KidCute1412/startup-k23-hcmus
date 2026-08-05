@@ -4,6 +4,7 @@ import { Prisma } from '@prisma/client';
 import { createHmac } from 'crypto';
 import type { PrismaService } from '../../prisma/prisma.service';
 import { stableStringify, WalletsService } from './wallets.service';
+import type { PlatformFinanceService } from '../finance/platform-finance.service';
 
 interface WalletTransactionMock {
   $queryRaw: jest.Mock;
@@ -33,6 +34,7 @@ describe('WalletsService', () => {
   let prisma: WalletPrismaMock;
   let tx: WalletTransactionMock;
   let service: WalletsService;
+  let platformFinance: Pick<PlatformFinanceService, 'recordLenderWithdrawal'>;
 
   beforeEach(() => {
     process.env.PAYOS_WEBHOOK_SECRET = 'test-secret';
@@ -76,7 +78,13 @@ describe('WalletsService', () => {
         findFirst: jest.fn(),
       },
     };
-    service = new WalletsService(prisma as unknown as PrismaService);
+    platformFinance = {
+      recordLenderWithdrawal: jest.fn().mockResolvedValue(undefined),
+    };
+    service = new WalletsService(
+      prisma as unknown as PrismaService,
+      platformFinance as PlatformFinanceService,
+    );
   });
 
   it('subtracts locked_balance from total balance for availableBalance in getRenter', async () => {

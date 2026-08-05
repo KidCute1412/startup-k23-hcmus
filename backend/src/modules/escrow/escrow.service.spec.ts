@@ -2,6 +2,7 @@
 import { Prisma } from '@prisma/client';
 import type { PrismaService } from '../../prisma/prisma.service';
 import { EscrowService } from './escrow.service';
+import type { PlatformFinanceService } from '../finance/platform-finance.service';
 
 interface EscrowRecord {
   id: string;
@@ -83,6 +84,10 @@ describe('EscrowService', () => {
   let transactionQueue: Promise<unknown>;
   let reconciliation: { checkCreditLineBalance: jest.Mock };
   let service: EscrowService;
+  let platformFinance: Pick<
+    PlatformFinanceService,
+    'holdRentalFee' | 'settleRentalFee'
+  >;
 
   beforeEach(() => {
     state = {
@@ -190,6 +195,10 @@ describe('EscrowService', () => {
     reconciliation = {
       checkCreditLineBalance: jest.fn().mockResolvedValue(undefined),
     };
+    platformFinance = {
+      holdRentalFee: jest.fn().mockResolvedValue(undefined),
+      settleRentalFee: jest.fn().mockResolvedValue(undefined),
+    };
     prisma = {
       $transaction: jest.fn((callback) => {
         transactionQueue = transactionQueue.then(async () => {
@@ -207,6 +216,7 @@ describe('EscrowService', () => {
     service = new EscrowService(
       prisma as unknown as PrismaService,
       reconciliation,
+      platformFinance as PlatformFinanceService,
     );
   });
 
@@ -391,16 +401,16 @@ describe('EscrowService', () => {
     const result = await service.compensateRenter(orderId, 100000);
 
     expect(result.status).toBe('renter_compensated');
-    expect(state.wallet.balance).toEqual(new Prisma.Decimal(700000));
+    // Rental refund is now owned by the platform settlement service; escrow
+    // only releases the deposit lock in this unit.
+    expect(state.wallet.balance).toEqual(new Prisma.Decimal(600000));
     expect(state.wallet.locked_balance).toEqual(new Prisma.Decimal(0));
     expect(state.order.escrow_wallet.status).toBe('renter_compensated');
-    expect(tx.renterWalletTransaction.create).toHaveBeenCalledWith({
-      data: expect.objectContaining({
-        type: 'renter_compensation',
-        amount: new Prisma.Decimal(100000),
-        reference: `RENTER-COMPENSATION-${orderId}`,
-      }),
-    });
+    expect(platformFinance.settleRentalFee).toHaveBeenCalledWith(
+      orderId,
+      new Prisma.Decimal(100000),
+      tx,
+    );
   });
 });
 
