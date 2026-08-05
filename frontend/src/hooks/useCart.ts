@@ -17,6 +17,7 @@ export const messages: Record<string, string> = {
   INSUFFICIENT_FUNDS: "Số dư ví không đủ để thực hiện giao dịch.",
   INSUFFICIENT_CASH: "Ví tiền mặt không đủ số dư để thực hiện thanh toán.",
   INSUFFICIENT_CREDIT: "Hạn mức Mutux Credit không đủ hoặc chưa được cấp.",
+  INSUFFICIENT_BALANCE_FOR_CREDIT_FEE: "Ví tiêu dùng cần đủ tiền thuê và phí sử dụng hạn mức 30.000đ.",
   WALLET_INACTIVE: "Ví đang bị khóa hoặc không hoạt động. Vui lòng kiểm tra lại ví của bạn.",
   VALIDATION_ERROR: "Dữ liệu nhập vào không hợp lệ, vui lòng kiểm tra lại.",
 };

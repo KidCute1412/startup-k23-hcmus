@@ -24,6 +24,10 @@ import { GetRentalOrdersQueryDto } from './dto/get-rental-orders-query.dto';
 import { RentalOrderOrchestrationService } from './rental-order-orchestration.service';
 import { RentalOrdersRepository } from './rental-orders.repository';
 import { MediaService } from '../media/media.service';
+import {
+  CREDIT_USAGE_FEE,
+  creditFeeReference,
+} from '../wallets/credit-fee-policy';
 
 interface CurrentUser {
   id: string;
@@ -537,15 +541,27 @@ export class RentalOrdersService {
       });
     }
 
+    let usageFee = new Prisma.Decimal(0);
+    if (depositType === DepositTypeEnum.credit_line) {
+      const feeTransaction = await tx.renterWalletTransaction.findUnique({
+        where: { reference: creditFeeReference(renterId) },
+        select: { id: true },
+      });
+      if (!feeTransaction) usageFee = CREDIT_USAGE_FEE;
+    }
     const cashRequired =
       depositType === DepositTypeEnum.traditional
         ? rentalFee.plus(depositAmount)
-        : rentalFee;
+        : rentalFee.plus(usageFee);
     const availableCash = cashWallet.balance.minus(cashWallet.locked_balance);
     if (availableCash.lessThan(cashRequired)) {
       throw new BadRequestException({
-        error: 'INSUFFICIENT_CASH',
-        message: 'Renter wallet balance is insufficient for this order',
+        error: usageFee.greaterThan(0)
+          ? 'INSUFFICIENT_BALANCE_FOR_CREDIT_FEE'
+          : 'INSUFFICIENT_CASH',
+        message: usageFee.greaterThan(0)
+          ? 'Renter wallet balance is insufficient for the monthly credit usage fee'
+          : 'Renter wallet balance is insufficient for this order',
       });
     }
 

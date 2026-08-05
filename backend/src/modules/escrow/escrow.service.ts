@@ -7,6 +7,10 @@ import { DepositTypeEnum, Prisma, WalletStatusType } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { EscrowReconciliationService } from './escrow-reconciliation.service';
 import { EscrowResult, IEscrowService } from './escrow.service.interface';
+import {
+  CREDIT_USAGE_FEE,
+  creditFeeReference,
+} from '../wallets/credit-fee-policy';
 
 const PLATFORM_FEE_RATE = 0.15;
 
@@ -116,10 +120,22 @@ export class EscrowService implements IEscrowService {
           },
         });
       } else {
-        if (availableCash.lessThan(order.rental_fee)) {
+        const feeReference = creditFeeReference(order.renter_id);
+        const feeTransaction = await client.renterWalletTransaction.findUnique({
+          where: { reference: feeReference },
+        });
+        const usageFee = feeTransaction
+          ? new Prisma.Decimal(0)
+          : CREDIT_USAGE_FEE;
+        const requiredCash = order.rental_fee.plus(usageFee);
+        if (availableCash.lessThan(requiredCash)) {
           throw new BadRequestException({
-            error: 'INSUFFICIENT_CASH',
-            message: 'INSUFFICIENT_CASH',
+            error: usageFee.greaterThan(0)
+              ? 'INSUFFICIENT_BALANCE_FOR_CREDIT_FEE'
+              : 'INSUFFICIENT_CASH',
+            message: usageFee.greaterThan(0)
+              ? 'Renter wallet balance is insufficient for the monthly credit usage fee'
+              : 'INSUFFICIENT_CASH',
           });
         }
 
@@ -139,6 +155,36 @@ export class EscrowService implements IEscrowService {
             reference,
           },
         });
+
+        if (!feeTransaction) {
+          const feeBalanceAfter = balanceAfter.minus(CREDIT_USAGE_FEE);
+          await client.renterWallet.update({
+            where: { id: cashWallet.id },
+            data: { balance: feeBalanceAfter },
+          });
+          await client.renterWalletTransaction.create({
+            data: {
+              wallet_id: cashWallet.id,
+              type: 'credit_fee',
+              amount: CREDIT_USAGE_FEE,
+              balance_before: balanceAfter,
+              balance_after: feeBalanceAfter,
+              reference: feeReference,
+            },
+          });
+          await client.payment.create({
+            data: {
+              rental_order_id: order.id,
+              user_id: order.renter_id,
+              type: 'credit_fee',
+              amount: CREDIT_USAGE_FEE,
+              method: 'credit_line',
+              status: 'success',
+              transaction_ref: feeReference,
+              paid_at: new Date(),
+            },
+          });
+        }
 
         const creditRef = await client.mutuxWallet.findUnique({
           where: { user_id: order.renter_id },

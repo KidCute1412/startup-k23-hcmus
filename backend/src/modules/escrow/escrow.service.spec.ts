@@ -2,6 +2,7 @@
 import { Prisma } from '@prisma/client';
 import type { PrismaService } from '../../prisma/prisma.service';
 import { EscrowService } from './escrow.service';
+import { creditFeeReference } from '../wallets/credit-fee-policy';
 
 interface EscrowRecord {
   id: string;
@@ -64,6 +65,7 @@ interface EscrowTransactionMock {
     update: jest.Mock;
   };
   creditTransaction: { create: jest.Mock };
+  payment: { create: jest.Mock };
 }
 
 interface EscrowPrismaMock {
@@ -181,6 +183,9 @@ describe('EscrowService', () => {
           return data;
         }),
       },
+      payment: {
+        create: jest.fn(async ({ data }) => data),
+      },
     };
     transactionQueue = Promise.resolve();
     reconciliation = {
@@ -273,9 +278,24 @@ describe('EscrowService', () => {
       source: 'credit_line',
       status: 'locked',
     });
-    expect(state.wallet.balance).toEqual(new Prisma.Decimal(100000));
+    expect(state.wallet.balance).toEqual(new Prisma.Decimal(70000));
     expect(state.wallet.locked_balance).toEqual(new Prisma.Decimal(0));
     expect(tx.renterWalletTransaction.create).toHaveBeenCalled();
+    expect(tx.renterWalletTransaction.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        type: 'credit_fee',
+        amount: new Prisma.Decimal(30000),
+        reference: expect.stringContaining('CREDIT-FEE-'),
+      }),
+    });
+    expect(tx.payment.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        type: 'credit_fee',
+        amount: new Prisma.Decimal(30000),
+        rental_order_id: orderId,
+        status: 'success',
+      }),
+    });
     expect(state.creditWallet?.display_balance).toEqual(
       new Prisma.Decimal(100000),
     );
@@ -308,6 +328,32 @@ describe('EscrowService', () => {
     await expect(service.lock(orderId)).rejects.toMatchObject({
       response: { error: 'INSUFFICIENT_CASH' },
     });
+  });
+
+  it('rejects the first credit-line lock when the renter cannot cover the monthly fee', async () => {
+    state.order.deposit_type = 'credit_line';
+    state.wallet.balance = new Prisma.Decimal(129999);
+
+    await expect(service.lock(orderId)).rejects.toMatchObject({
+      status: 400,
+      response: { error: 'INSUFFICIENT_BALANCE_FOR_CREDIT_FEE' },
+    });
+    expect(tx.escrowWallet.create).not.toHaveBeenCalled();
+    expect(tx.payment.create).not.toHaveBeenCalled();
+  });
+
+  it('does not charge the monthly fee again when the renter already used credit this month', async () => {
+    state.order.deposit_type = 'credit_line';
+    state.wallet.balance = new Prisma.Decimal(100000);
+    state.transactions.set(creditFeeReference(renterId), {
+      reference: creditFeeReference(renterId),
+    });
+
+    await service.lock(orderId);
+
+    expect(state.wallet.balance).toEqual(new Prisma.Decimal(0));
+    expect(tx.payment.create).not.toHaveBeenCalled();
+    expect(tx.renterWalletTransaction.create).toHaveBeenCalledTimes(1);
   });
 
   it('rolls back a credit-line lock when available credit is insufficient', async () => {
@@ -354,7 +400,7 @@ describe('EscrowService', () => {
     const second = await service.lock(orderId);
 
     expect(second).toEqual(first);
-    expect(tx.renterWallet.update).toHaveBeenCalledTimes(1);
+    expect(tx.renterWallet.update).toHaveBeenCalledTimes(2);
     expect(tx.mutuxWallet.update).toHaveBeenCalledTimes(1);
     expect(tx.creditTransaction.create).toHaveBeenCalledTimes(1);
     expect(tx.escrowWallet.create).toHaveBeenCalledTimes(1);

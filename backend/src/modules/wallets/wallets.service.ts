@@ -11,6 +11,11 @@ import { Prisma } from '@prisma/client';
 import { createHmac, timingSafeEqual } from 'crypto';
 import type { PayosWebhookDto } from './dto/payos-webhook.dto';
 import type { CreateWithdrawalDto } from './dto/create-withdrawal.dto';
+import {
+  CREDIT_USAGE_FEE_AMOUNT,
+  creditFeeReference,
+  creditFeeMonthStart,
+} from './credit-fee-policy';
 
 @Injectable()
 export class WalletsService {
@@ -66,9 +71,26 @@ export class WalletsService {
         status: 'not_granted' as const,
         approvedAt: null,
         expiredAt: null,
+        monthlyUsageFee: CREDIT_USAGE_FEE_AMOUNT,
+        billingMonth: creditFeeMonthStart().toISOString().slice(0, 7),
+        feeChargedThisMonth: false,
+        feeChargedAt: null,
       };
     }
-    return this.toMutuxWallet(wallet);
+    const feeReference = creditFeeReference(userId);
+    const feeTransaction = await this.prisma.renterWalletTransaction.findUnique(
+      {
+        where: { reference: feeReference },
+        select: { created_at: true },
+      },
+    );
+    return {
+      ...this.toMutuxWallet(wallet),
+      monthlyUsageFee: CREDIT_USAGE_FEE_AMOUNT,
+      billingMonth: creditFeeMonthStart().toISOString().slice(0, 7),
+      feeChargedThisMonth: Boolean(feeTransaction),
+      feeChargedAt: feeTransaction?.created_at ?? null,
+    };
   }
 
   async repayMutuxDebt(userId: string) {
@@ -499,6 +521,10 @@ export class WalletsService {
       status: expired ? 'expired' : wallet.status,
       approvedAt: wallet.approved_at,
       expiredAt: wallet.expired_at,
+      monthlyUsageFee: CREDIT_USAGE_FEE_AMOUNT,
+      billingMonth: creditFeeMonthStart().toISOString().slice(0, 7),
+      feeChargedThisMonth: false,
+      feeChargedAt: null,
     };
   }
 

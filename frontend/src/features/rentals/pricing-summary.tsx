@@ -12,13 +12,15 @@ function formatDateRange(startDate?: string, endDate?: string) {
 export function PricingSummary({
   items,
   depositType,
+  creditUsageFee = 0,
 }: {
   items: CartItem[];
   depositType: "traditional" | "credit_line";
+  creditUsageFee?: number;
 }) {
   const rentalTotal = items.reduce((sum, item) => sum + item.rentalFee, 0);
   const depositTotal = items.reduce((sum, item) => sum + item.depositAmount, 0);
-  const grandTotal = depositType === "traditional" ? rentalTotal + depositTotal : rentalTotal;
+  const grandTotal = depositType === "traditional" ? rentalTotal + depositTotal : rentalTotal + creditUsageFee;
 
   return (
     <Card className="p-5 space-y-5">
@@ -85,6 +87,10 @@ export function PricingSummary({
             {formatCurrency(depositTotal)}
           </span>
         </div>
+        {depositType === "credit_line" && creditUsageFee > 0 && <div className="flex justify-between">
+          <span className="text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted">Phí sử dụng hạn mức tháng này:</span>
+          <span className="font-semibold text-vanguard-secondary dark:text-vanguard-primary">{formatCurrency(creditUsageFee)}</span>
+        </div>}
         <div className="flex justify-between border-t border-vanguard-light-border pt-3 text-sm font-bold dark:border-vanguard-dark-border">
           <span>Tổng thanh toán từ ví:</span>
           <span className="text-vanguard-primary font-display">{formatCurrency(grandTotal)}</span>

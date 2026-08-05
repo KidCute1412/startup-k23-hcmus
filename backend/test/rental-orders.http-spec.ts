@@ -149,6 +149,9 @@ describe('RentalOrdersController (HTTP)', () => {
           status: 'active',
         }),
       },
+      renterWalletTransaction: {
+        findUnique: jest.fn().mockResolvedValue(null),
+      },
       mutuxWallet: {
         findUnique: jest.fn().mockResolvedValue({ id: 'credit-wallet-id' }),
         findUniqueOrThrow: jest.fn().mockResolvedValue({

@@ -110,9 +110,12 @@ export function RentalRequestForm({ items }: RentalRequestFormProps) {
   const rawBalance = renterWallet?.availableBalance ?? renterWallet?.balance ?? 0;
   const currentBalance = typeof rawBalance === "string" ? parseFloat(rawBalance) : rawBalance;
   const availableCredit = creditLine?.displayBalance ?? 0;
+  const creditUsageFee = draft.depositType === "credit_line" && !creditLine?.feeChargedThisMonth
+    ? creditLine?.monthlyUsageFee ?? 30_000
+    : 0;
   const cashRequired = draft.depositType === "traditional"
     ? totalRentalAmount + totalDepositAmount
-    : totalRentalAmount;
+    : totalRentalAmount + creditUsageFee;
   const isBalanceSufficient = currentBalance >= cashRequired;
   const isCreditSufficient = draft.depositType !== "credit_line" || availableCredit >= totalDepositAmount;
   const isSelectedWalletReady = cashWalletStatus === "ready" &&
@@ -427,6 +430,7 @@ export function RentalRequestForm({ items }: RentalRequestFormProps) {
         <PricingSummary
           items={items}
           depositType={draft.depositType as "traditional" | "credit_line"}
+          creditUsageFee={creditUsageFee}
         />
       </div>
 

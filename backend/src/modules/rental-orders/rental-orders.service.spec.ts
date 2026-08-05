@@ -174,6 +174,7 @@ describe('RentalOrdersService', () => {
     creditStatus?: WalletStatusType;
     creditExpiredAt?: Date | null;
     hasCredit?: boolean;
+    feeCharged?: boolean;
   }) {
     const values = {
       cashBalance: 5_000_000,
@@ -183,6 +184,7 @@ describe('RentalOrdersService', () => {
       creditStatus: WalletStatusType.active,
       creditExpiredAt: null,
       hasCredit: true,
+      feeCharged: false,
       ...options,
     };
     return {
@@ -195,6 +197,11 @@ describe('RentalOrdersService', () => {
           locked_balance: new Prisma.Decimal(values.cashLocked),
           status: values.cashStatus,
         }),
+      },
+      renterWalletTransaction: {
+        findUnique: jest
+          .fn()
+          .mockResolvedValue(values.feeCharged ? { id: 'fee-tx' } : null),
       },
       mutuxWallet: {
         findUnique: jest
@@ -262,6 +269,46 @@ describe('RentalOrdersService', () => {
       status: 400,
       response: { error: 'INSUFFICIENT_CREDIT' },
     });
+  });
+
+  it('includes the monthly credit usage fee in the first credit checkout cash requirement', async () => {
+    const tx = checkoutWalletTx({
+      cashBalance: 429_999,
+      cashLocked: 0,
+      creditBalance: 5_000_000,
+    });
+
+    await expect(
+      service.assertCheckoutFunds(
+        tx,
+        'renter-id',
+        DepositTypeEnum.credit_line,
+        new Prisma.Decimal(400_000),
+        new Prisma.Decimal(4_500_000),
+      ),
+    ).rejects.toMatchObject({
+      status: 400,
+      response: { error: 'INSUFFICIENT_BALANCE_FOR_CREDIT_FEE' },
+    });
+  });
+
+  it('does not require the monthly credit usage fee again after it was charged', async () => {
+    const tx = checkoutWalletTx({
+      cashBalance: 400_000,
+      cashLocked: 0,
+      creditBalance: 5_000_000,
+      feeCharged: true,
+    });
+
+    await expect(
+      service.assertCheckoutFunds(
+        tx,
+        'renter-id',
+        DepositTypeEnum.credit_line,
+        new Prisma.Decimal(400_000),
+        new Prisma.Decimal(4_500_000),
+      ),
+    ).resolves.toBeUndefined();
   });
 
   it('rejects checkout when the renter wallet is inactive', async () => {

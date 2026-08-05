@@ -19,6 +19,7 @@ export function CreditLimitPanel({ credit, renterBalance, busy, onRepay, onRefre
   const [tier, setTier] = useState<number | null>(null);
   useEffect(() => { void refetch(); }, [refetch]);
   const tiers = useMemo(() => [3_000_000, 5_000_000, 10_000_000].filter((value) => value > (credit?.totalLimit ?? 0)), [credit?.totalLimit]);
+  const monthlyUsageFee = credit?.monthlyUsageFee ?? 30_000;
   const debt = credit?.outstandingDebt ?? 0;
   return <Card className="p-5">
     <div className="flex flex-col gap-3 sm:flex-row sm:justify-between">
@@ -33,6 +34,12 @@ export function CreditLimitPanel({ credit, renterBalance, busy, onRepay, onRefre
       </span>}
     </div>
     {requests.error && <p className="mt-4 text-sm text-red-400">{requests.error}</p>}
+    {credit?.granted && <div className="mt-4 rounded-v-md border border-vanguard-primary/25 bg-vanguard-primary/5 p-3 text-xs">
+      <p className="font-bold">Phí sử dụng hạn mức: {formatCurrency(monthlyUsageFee)} / tháng</p>
+      <p className="mt-1 text-vanguard-light-textMuted dark:text-vanguard-dark-textMuted">
+        {credit.feeChargedThisMonth ? "Đã thu phí tháng này." : "Chỉ thu khi giao dịch cọc trả sau được xác nhận thành công."}
+      </p>
+    </div>}
     <div className="mt-5 rounded-v-md border border-vanguard-light-border bg-vanguard-light-surfDim p-4 dark:border-vanguard-dark-border dark:bg-vanguard-dark-surfDim">
       <div className="flex items-start gap-3">
         <CircleHelp size={18} className="mt-0.5 shrink-0 text-vanguard-primary" />

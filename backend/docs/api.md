@@ -327,7 +327,7 @@ HTTP Status: `400`, `401`, `403`, `404`, `422`, `500`.
 
 #### [GET] `/wallets/mutux` (Thông tin Ví trả sau / Credit Line - Renter)
 * **Authentication**: `accessToken` cookie; chỉ role `renter`.
-* **Success (200)**: Trả về hạn mức khả dụng (`displayBalance`), hạn mức bị khóa (`lockedBalance`), dư nợ (`outstandingDebt`), tổng hạn mức (`totalLimit`), trạng thái (`status`). Ví này chỉ dùng để bảo đảm cọc khi `depositType = credit_line`.
+* **Success (200)**: Trả về hạn mức khả dụng (`displayBalance`), hạn mức bị khóa (`lockedBalance`), dư nợ (`outstandingDebt`), tổng hạn mức (`totalLimit`), trạng thái (`status`) và trạng thái phí sử dụng tháng hiện tại. Ví này chỉ dùng để bảo đảm cọc khi `depositType = credit_line`; phí sử dụng được trừ từ ví renter.
 * **Response**:
   ```json
   {
@@ -339,11 +339,16 @@ HTTP Status: `400`, `401`, `403`, `404`, `422`, `500`.
       "displayBalance": 3000000,
       "lockedBalance": 1000000,
       "outstandingDebt": 1000000,
-      "status": "active"
+      "status": "active",
+      "monthlyUsageFee": 30000,
+      "billingMonth": "2026-08",
+      "feeChargedThisMonth": false,
+      "feeChargedAt": null
     }
   }
   ```
   > `displayBalance` luôn được tính theo invariant: `displayBalance = totalLimit - lockedBalance - outstandingDebt`.
+  > Với giao dịch credit line đầu tiên lock cọc thành công trong tháng, hệ thống trừ `30.000đ` từ ví renter và ghi `Payment.type = credit_fee` cùng ledger `RenterWalletTransaction.type = credit_fee`. Tạo đơn chỉ kiểm tra số dư dự kiến; giao dịch thất bại không bị thu phí.
 
 #### [GET] `/wallets/lender` (Thông tin Ví thu nhập ảo & Yêu cầu rút tiền - Lender)
 * **Authentication**: `accessToken` cookie; yêu cầu tài khoản `renter` có `lenderEnabled = true`.
