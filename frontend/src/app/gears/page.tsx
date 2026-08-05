@@ -52,7 +52,7 @@ export default async function GearsPage({ searchParams }: { searchParams: Query 
         </div>
       </section>
 
-      <section className="mx-auto grid max-w-7xl gap-8 px-4 py-10 sm:px-6 md:grid-cols-[280px_minmax(0,1fr)]">
+      <section className="mx-auto grid max-w-7xl gap-8 px-4 py-10 sm:px-6 md:grid-cols-[320px_minmax(0,1fr)]">
         <aside>
           <CatalogFilter
             categories={categories}
