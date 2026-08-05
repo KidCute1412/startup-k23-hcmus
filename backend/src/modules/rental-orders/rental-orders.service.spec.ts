@@ -465,11 +465,13 @@ describe('RentalOrdersService', () => {
   });
 
   it('rejects startDate on the current Ho Chi Minh business date', async () => {
-    await expect(service.create('renter-id', {
-      ...dto,
-      startDate: '2026-07-29',
-      endDate: '2026-07-30',
-    })).rejects.toMatchObject({
+    await expect(
+      service.create('renter-id', {
+        ...dto,
+        startDate: '2026-07-29',
+        endDate: '2026-07-30',
+      }),
+    ).rejects.toMatchObject({
       status: 400,
       response: { error: 'START_DATE_TOO_SOON' },
     });

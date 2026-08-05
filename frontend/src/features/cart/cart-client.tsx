@@ -10,8 +10,14 @@ import { useCart } from "@/features/cart/cart-context";
 import { formatCurrency } from "@/lib/format";
 
 function tomorrowDate() {
-  const date = new Date();
-  date.setDate(date.getDate() + 1);
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Ho_Chi_Minh",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(new Date());
+  const values = Object.fromEntries(parts.map(({ type, value }) => [type, value]));
+  const date = new Date(Date.UTC(Number(values.year), Number(values.month) - 1, Number(values.day) + 1));
   return date.toISOString().slice(0, 10);
 }
 
