@@ -7,17 +7,43 @@ Mô hình hoạt động của hệ thống Mutux được thiết kế nhằm �
 
 \subsubsection{Sơ đồ Use Case (Use Case Diagram)}
 
-Sơ đồ Use Case mô tả các tính năng chính mà các tác nhân (Actor) có thể tương tác với hệ thống. Hệ thống Mutux có 3 tác nhân chính:
+Sơ đồ Use Case mô tả các chức năng mà mỗi tác nhân có thể sử dụng trên nền tảng Mutux. Người dùng có thể tham gia với vai trò Người thuê (Renter), Người cho thuê (Lender), hoặc đảm nhiệm cả hai vai trò. Người cho thuê kế thừa toàn bộ use case của Người thuê và có thêm các chức năng quản lý tài sản cho thuê. Quản trị viên (Admin) là tác nhân kiểm soát các hoạt động cần phê duyệt và xử lý ngoại lệ.
 
+\paragraph{Use case của Người thuê (Renter).}
 \begin{itemize}
-    \item \textbf{Người thuê (Renter):} Tìm kiếm, đặt thuê thiết bị, thanh toán và đánh giá.
-    \item \textbf{Người cho thuê (Lender):} Đăng tải thiết bị, quản lý yêu cầu thuê, giao dịch và quản lý doanh thu.
-    \item \textbf{Quản trị viên (Admin):} Phê duyệt KYC, duyệt thiết bị, giải quyết tranh chấp (Dispute resolution) và quản lý hệ thống.
+    \item Xem danh mục thiết bị.
+    \item Quản lý giỏ hàng.
+    \item Đổi mật khẩu.
+    \item Xóa tài khoản.
+    \item Yêu cầu xác thực KYC.
+    \item Quản lý sổ địa chỉ.
+    \item Quản lý lịch sử đơn thuê.
+    \item Quản lý ví tiêu dùng.
+    \item Quản lý ví trả sau.
+    \item Đánh giá người cho thuê, thiết bị.
+\end{itemize}
+
+\paragraph{Use case của Người cho thuê (Lender).}
+Người cho thuê được sử dụng toàn bộ use case của Người thuê và có thêm các use case sau:
+\begin{itemize}
+    \item Nạp tiền vào Ví Mutux.
+    \item Yêu cầu hạn mức tín dụng.
+    \item Quản lý đơn thuê.
+    \item Đăng sản phẩm cho thuê.
+    \item Đánh giá người thuê.
+\end{itemize}
+
+\paragraph{Use case của Quản trị viên (Admin).}
+\begin{itemize}
+    \item Duyệt hạn mức tín dụng.
+    \item Duyệt KYC.
+    \item Duyệt thiết bị.
+    \item Xử lý tranh chấp.
 \end{itemize}
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.95\textwidth]{../PA2/img/usecase.png}
+    \includegraphics[width=0.95\textwidth]{../PA6/figures/usecase.png}
     \caption{Sơ đồ Use Case của hệ thống Mutux}
     \label{fig:usecase}
 \end{figure}
@@ -28,17 +54,18 @@ Quy trình cốt lõi nhất của Mutux là luồng Đặt thuê và Bàn giao 
 
 Quy trình cơ bản diễn ra theo các bước sau:
 \begin{enumerate}
-    \item \textbf{Đặt thuê:} Người thuê tìm kiếm thiết bị, chọn ngày thuê và gửi yêu cầu.
-    \item \textbf{Phê duyệt:} Người cho thuê xem xét và chấp nhận yêu cầu.
-    \item \textbf{Thanh toán:} Người thuê tiến hành thanh toán tiền thuê và tiền cọc. Số tiền này được chuyển vào ví hệ thống (Escrow) chờ xử lý.
-    \item \textbf{Giao nhận:} Người cho thuê bàn giao thiết bị và cập nhật hình ảnh minh chứng (Proof). Người thuê nhận, kiểm tra và xác nhận trên hệ thống.
-    \item \textbf{Hoàn trả:} Khi hết hạn, người thuê trả lại thiết bị kèm hình ảnh minh chứng. Người cho thuê nhận và xác nhận tình trạng.
-    \item \textbf{Quyết toán:} Hệ thống hoàn lại tiền cọc cho người thuê và chuyển tiền thuê (sau khi trừ phí nền tảng) vào ví của người cho thuê. Nếu có vấn đề phát sinh, Admin sẽ can thiệp để giải quyết tranh chấp.
+    \item \textbf{Đặt thuê:} Người thuê tìm kiếm thiết bị, chọn thời gian thuê, địa chỉ giao nhận và gửi đơn từ giỏ hàng.
+    \item \textbf{Người thuê xác nhận:} Người thuê kiểm tra lại thông tin đơn, phương thức thanh toán và xác nhận yêu cầu thuê. Người cho thuê tiếp nhận, xác nhận khả năng đáp ứng và chuẩn bị giao thiết bị.
+    \item \textbf{Khóa cọc và trừ phí thuê:} Khi đơn được xác nhận, hệ thống khóa tiền cọc và trừ phí thuê từ ví tiêu dùng hoặc ví trả sau theo lựa chọn của người thuê. Khoản tiền được ghi nhận trong Escrow, chưa chuyển ngay cho người cho thuê.
+    \item \textbf{Giao nhận:} Hai bên thực hiện giao nhận theo lịch hẹn. Người cho thuê cập nhật minh chứng bàn giao; người thuê kiểm tra tình trạng thiết bị và xác nhận đã nhận hàng trên hệ thống.
+    \item \textbf{Hoàn trả:} Khi kết thúc thời gian thuê, người thuê hoàn trả thiết bị và gửi minh chứng. Người cho thuê kiểm tra, xác nhận tình trạng nhận lại hoặc mở yêu cầu tranh chấp nếu phát hiện hư hỏng, thiếu hụt hay mất mát.
+    \item \textbf{Quyết toán:} Nếu không có tranh chấp, hệ thống hoàn cọc cho người thuê và chuyển tiền thuê sau khi trừ phí nền tảng vào Ví Mutux của người cho thuê. Nếu có tranh chấp, khoản tiền liên quan được giữ lại để Admin xem xét và quyết định.
+    \item \textbf{Đánh giá:} Sau khi quyết toán hoàn tất, người thuê và người cho thuê đánh giá lẫn nhau cùng chất lượng giao dịch. Kết quả được lưu vào hồ sơ để hỗ trợ xây dựng mức độ tin cậy trên nền tảng.
 \end{enumerate}
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.9\textwidth]{../PA2/img/activity.png}
+    \includegraphics[width=0.9\textwidth]{../PA6/figures/activity.png}
     \caption{Sơ đồ Hoạt động quy trình thuê thiết bị trên Mutux}
     \label{fig:activity}
 \end{figure}
