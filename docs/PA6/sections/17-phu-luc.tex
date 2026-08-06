@@ -1,44 +1,131 @@
-% !TeX root = ../main.tex
-% \section{Phụ lục}
-
-% Phần này chưa có nội dung, có thể bổ sung sau.
-
 \section{Phụ lục}
 
 \subsection{AI Usage}
 
+Trong quá trình thực hiện dự án Mutux, nhóm sử dụng các agent AI gồm
+\textbf{Antigravity, Codex và opencode} như các công cụ hỗ trợ tra cứu, diễn
+đạt, phát triển và kiểm thử; AI không thay thế việc phân tích, ra quyết định
+hoặc chịu trách nhiệm của nhóm. Ý tưởng sản phẩm, phạm vi MVP,
+ưu tiên tính năng, các giả định kinh doanh và các quyết định kỹ thuật đều do
+nhóm đề xuất. Mọi nội dung do AI gợi ý đều được thành viên đọc, đối chiếu với
+repo và yêu cầu của dự án, chỉnh sửa khi cần, sau đó mới đưa vào báo cáo hoặc
+mã nguồn.
+
 \subsubsection{Business Plan}
-- \textbf{PA01}: 
+
+Ý tưởng và nội dung định hướng của các PA là của nhóm. AI chủ yếu hỗ trợ
+chuyển các ý chính thành văn bản có cấu trúc, gợi ý cách trình bày, rà lỗi
+chính tả và giúp thống nhất thuật ngữ. Nhóm tự kiểm tra lại số liệu, lập luận,
+tính phù hợp với Mutux và chịu trách nhiệm cho bản cuối cùng.
 \begin{itemize}
-    \item 
-\end{itemize}
-- \textbf{PA02}: 
-\begin{itemize}
-    \item 
-\end{itemize}
-- \textbf{PA03}: 
-\begin{itemize}
-    \item 
-\end{itemize}
-- \textbf{PA04}: 
-\begin{itemize}
-    \item 
-\end{itemize}
-- \textbf{PA05}: 
-\begin{itemize}
-    \item 
+    \item \textbf{PA0 -- Hình thành ý tưởng và tính khả thi}: vấn đề thực tế,
+    đối tượng khách hàng, giải pháp, khác biệt, cạnh tranh, tính khả thi,
+    cơ sở ý tưởng và rủi ro.
+    \item \textbf{PA1 -- Đội ngũ}: tóm tắt ý tưởng, danh sách và vai trò thành
+    viên, năng lực, cơ cấu tổ chức và các vị trí còn thiếu.
+    \item \textbf{PA2 -- Sản phẩm và MVP}: mô tả sản phẩm, ICP, giá trị,
+    tính năng chính, khác biệt, mô hình hoạt động, MVP và lộ trình phát triển.
+    \item \textbf{PA3 -- Thị trường và marketing}: thị trường, chân dung
+    khách hàng, chiến lược marketing và kế hoạch xử lý giai đoạn cold start.
+    \item \textbf{PA4 -- Tài chính và gọi vốn}: mô hình doanh thu, nguồn doanh
+    thu, chi phí, dự kiến tài chính, nhu cầu vốn, mục đích sử dụng và kế hoạch
+    giải ngân.
+    \item \textbf{PA5 -- Kế hoạch triển khai}: các nội dung kế hoạch được
+    nhóm xác định; AI hỗ trợ diễn đạt và rà soát tính nhất quán.
+    \item \textbf{PA6 -- Kế hoạch kinh doanh tổng hợp}: tóm tắt điều hành,
+    sản phẩm, khách hàng, thị trường, đối thủ, mô hình kinh doanh, marketing,
+    đội ngũ, tài chính, gọi vốn, rủi ro, lộ trình, mã nguồn prototype và kết
+    luận.
 \end{itemize}
 
+AI không được xem là nguồn xác nhận cho các khảo sát, số liệu thị trường hoặc
+giả định tài chính. Những phần này được nhóm tự thu thập, lựa chọn và kiểm tra
+trước khi sử dụng.
+
 \subsubsection{MVP R\&D}
-- \textbf{Frontend}:
+
+\paragraph{Backend.}
+Ý tưởng về các luồng người dùng và nghiệp vụ là của nhóm. AI hỗ trợ đề xuất
+cấu trúc NestJS, viết hoặc hoàn thiện một phần controller/service/DTO,
+validation, xử lý lỗi và test. Thành viên phụ trách backend kiểm tra lại
+quyền truy cập, trạng thái nghiệp vụ, transaction, dữ liệu Prisma và chạy test
+trước khi chấp nhận thay đổi.
 \begin{itemize}
-    \item 
+    \item \textbf{Xác thực}: đăng ký, đăng nhập, làm mới phiên, đổi mật khẩu
+    và đăng xuất.
+    \item \textbf{Người dùng}: xem và cập nhật hồ sơ, đóng tài khoản, gửi KYC,
+    yêu cầu nâng cấp thành lender và quản lý địa chỉ.
+    \item \textbf{Catalog}: quản lý danh mục và các thao tác tạo, tìm kiếm,
+    xem, cập nhật, xoá gear, bao gồm cả danh sách gear của lender.
+    \item \textbf{Giỏ hàng}: xem giỏ hàng, thêm hoặc cập nhật sản phẩm, xoá
+    từng sản phẩm và xoá toàn bộ giỏ hàng.
+    \item \textbf{Đơn thuê}: tạo đơn đơn lẻ hoặc hàng loạt, xem danh sách,
+    xem tổng quan tài chính, xem chi tiết và thực hiện các bước xác nhận, giao,
+    huỷ, nhận hàng, trả hàng.
+    \item \textbf{Bằng chứng và tranh chấp}: tạo, xem bằng chứng giao nhận,
+    tạo tranh chấp và bổ sung bằng chứng cho tranh chấp.
+    \item \textbf{Ví và thanh toán}: xem ví renter, ví Mutux, ví lender; trả
+    nợ, rút tiền, nạp tiền, mô phỏng thanh toán và tiếp nhận webhook PayOS.
+    \item \textbf{Hạn mức tín dụng}: renter tạo, xem và huỷ yêu cầu; admin
+    tiếp nhận, xem xét, phê duyệt hoặc từ chối yêu cầu.
+    \item \textbf{Media}: tải hình ảnh và tệp phục vụ hồ sơ, gear, KYC và
+    bằng chứng giao nhận.
+    \item \textbf{Admin}: các chức năng hàng đợi và phê duyệt KYC, gear,
+    lender upgrade; xử lý tranh chấp; analytics; cấu hình, tổng quan và lịch
+    sử tài chính nền tảng.
 \end{itemize}
-- \textbf{Backend}:
+
+Các test do AI gợi ý chỉ là điểm bắt đầu. Nhóm tự bổ sung các trường hợp lỗi,
+phân quyền, dữ liệu biên, chuyển trạng thái đơn thuê và tính nhất quán số dư;
+test phải chạy đạt và kết quả được thành viên kiểm tra trước khi sử dụng.
+
+\paragraph{Frontend.}
+Giao diện ban đầu được nhóm định hướng và sử dụng Stitch để sinh các phương án
+thiết kế. Nhóm lựa chọn, chỉnh sửa và triển khai lại giao diện trong Next.js;
+Stitch/AI không tự quyết định toàn bộ trải nghiệm, nội dung hay luồng nghiệp vụ.
+Các trang hiện có gồm:
 \begin{itemize}
-    \item 
+    \item \textbf{Công khai và xác thực}: trang chủ, giới thiệu, đăng nhập,
+    đăng ký, đổi mật khẩu.
+    \item \textbf{Catalog}: danh sách gear, chi tiết gear và giỏ hàng.
+    \item \textbf{Người thuê}: checkout, danh sách đơn, chi tiết đơn, tài
+    khoản, ví và các màn hình nạp tiền, trả nợ, KYC, tranh chấp.
+    \item \textbf{Người cho thuê}: danh sách gear, thêm gear, sửa gear, danh
+    sách đơn và doanh thu.
+    \item \textbf{Quản trị}: tổng quan, hồ sơ admin, hàng đợi KYC, hàng đợi
+    gear, lender upgrade, hạn mức tín dụng, tranh chấp và tài chính nền tảng.
 \end{itemize}
-- \textbf{Integration}:
+
+AI hỗ trợ chuyển thiết kế thành component, nối form với API, xử lý trạng thái
+loading/error và responsive layout. Nhóm tự kiểm tra bằng trình duyệt trên
+desktop/mobile, kiểm tra route và quyền truy cập, đồng thời chỉnh các chi tiết
+UX không phù hợp với người dùng thực tế.
+
+\paragraph{Integration.}
+AI hỗ trợ ghép nối frontend--backend và đề xuất cách xử lý dữ liệu, nhưng nhóm
+tự xác định tiêu chí hoàn thành và tự test lại toàn bộ luồng. Các tính năng đã
+được tích hợp gồm:
 \begin{itemize}
-    \item 
+    \item đăng ký, đăng nhập, refresh/logout và bảo vệ route theo vai trò;
+    \item xem, lọc, phân trang catalog; xem chi tiết gear và quản lý giỏ hàng;
+    \item tạo checkout và đơn thuê, theo dõi trạng thái từ giao đến trả,
+    upload bằng chứng và xem chi tiết đơn;
+    \item quản lý hồ sơ, địa chỉ, KYC và yêu cầu chuyển sang lender;
+    \item ví renter/lender, nạp tiền mô phỏng PayOS, trả nợ, escrow,
+    settlement, doanh thu và rút tiền;
+    \item yêu cầu hạn mức tín dụng và quy trình admin review/approve/reject;
+    \item tạo và xử lý tranh chấp, bổ sung bằng chứng và phân xử bởi admin;
+    \item dashboard admin, duyệt KYC/gear/lender upgrade, quản lý tài chính
+    nền tảng và lịch sử giao dịch;
+    \item upload hình ảnh/tệp và hiển thị các trạng thái thành công, lỗi,
+    loading trên giao diện.
 \end{itemize}
+
+Sau khi tích hợp, nhóm kiểm tra bằng dữ liệu thử, test API, test giao diện và
+chạy các luồng nghiệp vụ đầu-cuối. Khi kết quả của AI không phù hợp với mô
+hình dữ liệu, yêu cầu bảo mật hoặc hành vi mong muốn, nhóm ưu tiên sửa theo
+thiết kế và đặc tả của dự án, không giữ lại mã chỉ vì mã đã được AI sinh ra.
+
+Nhóm không giao cho AI quyền tự triển khai, tự quyết định dữ liệu thật hoặc tự kết luận kết quả kiểm
+thử. Thành viên vẫn phải hiểu phần mình sử dụng, có khả năng giải thích và
+chịu trách nhiệm về báo cáo, mã nguồn và kết quả cuối cùng.
