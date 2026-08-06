@@ -79,6 +79,8 @@ Mutux vận hành theo mô hình trung gian kết nối (Marketplace) kết hợ
 \textbf{Nguồn doanh thu cơ sở (từ Giao dịch B2C):}
 \begin{itemize}
     \item \textbf{Phí nền tảng (Take Rate):} Đây là nguồn thu chủ lực của Mutux. Hệ thống sẽ tự động trích xuất hoa hồng \textbf{30\%} trên tổng giá trị tiền thuê của mỗi giao dịch thành công.
+    \item \textbf{Phí bảo hiểm:} Người thuê có thể lựa chọn gói bảo hiểm tự nguyện với một khoản phí nhỏ để được miễn hoặc giảm chi phí bồi thường đối với các hư hỏng nhẹ ngoài ý muốn theo điều kiện áp dụng.
+    \item \textbf{Phí giới thiệu mua sản phẩm:} Sau khi thuê và quyết định mua sản phẩm tại shop đối tác, Mutux nhận hoa hồng giới thiệu theo tỷ lệ phần trăm hoặc một khoản cố định trên mỗi đơn hàng thành công.
 \end{itemize}
 
 \textbf{Nguồn doanh thu Dịch vụ (Theo lộ trình 2 giai đoạn):}
@@ -89,7 +91,7 @@ Mutux vận hành theo mô hình trung gian kết nối (Marketplace) kết hợ
 \textbf{Nguồn doanh thu mở rộng (từ Đối tác B2B - Triển khai sau 1 năm):}
 \begin{itemize}
     \item \textbf{Phí quảng cáo và Đẩy tin (Featured Listings):} Nhằm tối ưu hóa khả năng bán hàng cho các shop gaming gear, Mutux thu phí để hiển thị ưu tiên sản phẩm của họ trên trang chủ hoặc khi người dùng tìm kiếm. 
-    \item \textbf{Hoa hồng bán chéo (Cross-selling):} Đóng vai trò như một kênh "Dùng thử trước khi mua", Mutux sẽ nhận hoa hồng môi giới khi người thuê quyết định "mua đứt" thiết bị sau quá trình trải nghiệm.
+    \item \textbf{Bán hộ gear cũ:} Mutux hỗ trợ shop hoặc cá nhân kiểm định, đăng bán, thanh toán và giao dịch thiết bị đã qua sử dụng hoặc hàng demo sau thời gian cho thuê; nền tảng thu hoa hồng trên giá bán khi giao dịch thành công.
 \end{itemize}
 
 
@@ -109,12 +111,15 @@ Các khoản phí chính trong mô hình gồm:
     \item \textbf{Tiền cọc truyền thống}: người thuê đặt cọc để bảo vệ tài sản cho bên cho thuê. Với thiết bị trị giá khoảng 1.800.000--2.000.000 đồng, tiền cọc có thể bằng toàn bộ giá trị sản phẩm. Khoản này không phải doanh thu của Mutux mà là khoản đảm bảo, được hoàn lại khi người thuê trả thiết bị đúng tình trạng.
     \item \textbf{Phí Cọc Trả Sau hoặc phí vay cọc}: nếu người dùng không muốn hoặc không đủ khả năng ứng trước toàn bộ tiền cọc, họ có thể chọn dịch vụ hỗ trợ cọc. Ví dụ, thay vì khóa trước 2.000.000 đồng tiền cọc cho một món gear, người dùng trả thêm khoảng 30.000 đồng phí vay khi giao dịch lần đầu tiên trong tháng. Mức phí này được thiết kế rất thấp, tương tự các nền tảng ví trả sau hoặc SPayLater, còn tiền thuê/mượn thiết bị vẫn do người cho thuê đặt ra.
     \item \textbf{Hoa hồng từ đối tác tài chính}: nếu dịch vụ Cọc Trả Sau được triển khai qua ngân hàng, ví điện tử hoặc công ty tài chính được cấp phép, Mutux có thể nhận phần chia sẻ doanh thu hoặc hoa hồng giới thiệu từ giao dịch này.
-    \item \textbf{Hoa hồng mua sau thuê}: nếu người dùng thuê thử và quyết định mua sản phẩm từ shop, Mutux có thể nhận hoa hồng từ giao dịch mua. Shop cũng có thể trừ một phần phí thuê vào giá bán để tăng tỷ lệ chuyển đổi.
-    \item \textbf{Gói thành viên}: người dùng trả phí định kỳ để được giảm phí thuê, giảm phí bảo lãnh cọc, ưu tiên thuê gear hot hoặc nhận ưu đãi giao nhận.
-    \item \textbf{Gói dịch vụ cho shop}: shop có thể trả phí để đăng nhiều thiết bị hơn, dùng dashboard quản lý đơn thuê, được quảng bá sản phẩm hoặc tiếp cận nhóm khách có nhu cầu mua sau khi dùng thử.
+    \item \textbf{Phí bảo hiểm thiết bị}: người thuê trả thêm phí nếu lựa chọn gói bảo hiểm tự nguyện cho thiết bị trong thời gian thuê; khoản phí này tạo doanh thu cho Mutux.
+    \item \textbf{Phí giới thiệu mua sản phẩm}: nếu người dùng thuê thử và quyết định mua sản phẩm tại shop đối tác, Mutux nhận hoa hồng theo tỷ lệ phần trăm hoặc khoản cố định trên đơn hàng thành công. Shop chỉ trả phí khi bán được hàng.
+    \item \textbf{Hoa hồng bán hộ gear cũ}: Mutux thu hoa hồng khi bán thành công gear đã qua sử dụng hoặc hàng demo cho shop, cá nhân và đối tác cho thuê.
+    \item \textbf{Phí quảng cáo và đẩy tin}: shop trả phí để ưu tiên hiển thị sản phẩm trên trang chủ hoặc kết quả tìm kiếm \textit{(nguồn doanh thu tương lai)}.
+    \item \textbf{Gói thành viên}: người dùng trả phí định kỳ để được giảm phí thuê, giảm phí bảo lãnh cọc, ưu tiên thuê gear hot hoặc nhận ưu đãi giao nhận \textit{(nguồn doanh thu tương lai)}.
+    \item \textbf{Gói dịch vụ cho shop}: shop trả phí để đăng nhiều thiết bị hơn, sử dụng dashboard quản lý đơn thuê, quảng bá sản phẩm hoặc tiếp cận nhóm khách có nhu cầu mua sau khi dùng thử \textit{(nguồn doanh thu tương lai)}.
 \end{itemize}
 
-Với cách vận hành này, doanh thu của Mutux không phụ thuộc hoàn toàn vào phí thuê gear. Phần phí thuê chủ yếu cần đủ hấp dẫn để shop và chủ gear có động lực đưa thiết bị lên nền tảng. Lớp doanh thu quan trọng hơn nằm ở hoa hồng, phí vay/hỗ trợ cọc, chia sẻ doanh thu với đối tác tài chính và giao dịch mua sau thuê.
+Với cách vận hành này, doanh thu của Mutux không phụ thuộc hoàn toàn vào phí thuê gear. Phần phí thuê chủ yếu cần đủ hấp dẫn để shop và chủ gear có động lực đưa thiết bị lên nền tảng. Lớp doanh thu bổ sung nằm ở phí bảo hiểm, phí giao nhận, phí giới thiệu mua sản phẩm, hoa hồng bán hộ gear cũ, phí vay/hỗ trợ cọc, chia sẻ doanh thu với đối tác tài chính và các nguồn thu tương lai như quảng cáo, gói thành viên và gói dịch vụ cho shop.
 
 \subsubsection{So sánh hai cách đặt cọc}
 
