@@ -1,6 +1,97 @@
 % !TeX root = ../main.tex
 \section{Kế hoạch gọi vốn}
 
+\subsection{Định giá bản thân}
+
+Do Mutux hiện đang ở giai đoạn \textbf{Pre-Seed}, nhóm dự án đã hoàn thiện phiên bản MVP, xây dựng mô hình kinh doanh, kế hoạch tài chính và lộ trình phát triển, tuy nhiên chưa phát sinh doanh thu thực tế và vẫn đang trong quá trình kiểm chứng \textit{Product-Market Fit (PMF)}. Vì vậy, các phương pháp định giá dựa trên dòng tiền tương lai như \textit{Discounted Cash Flow (DCF)} chưa phản ánh đúng giá trị hiện tại của doanh nghiệp do thiếu dữ liệu tài chính và tồn tại nhiều giả định chưa được kiểm chứng.
+
+Nhóm lựa chọn kết hợp hai phương pháp định giá phổ biến dành cho các startup giai đoạn đầu là \textbf{Scorecard Valuation Method} và \textbf{Berkus Method}. Hai phương pháp này tập trung đánh giá giá trị của startup thông qua chất lượng đội ngũ sáng lập, quy mô thị trường, mức độ hoàn thiện của sản phẩm, lợi thế cạnh tranh và tiềm năng phát triển thay vì doanh thu hiện tại.
+
+\subsection{Phương pháp Scorecard Valuation}
+
+Phương pháp Scorecard xác định giá trị doanh nghiệp bằng cách so sánh với các startup cùng giai đoạn trên thị trường, sau đó điều chỉnh theo các tiêu chí quan trọng. Nhóm lựa chọn mức định giá trung bình của một startup công nghệ Việt Nam ở giai đoạn Pre-Seed là \textbf{5 tỷ đồng} làm mức tham chiếu.
+
+\begin{table}[H]
+\centering
+\caption{Đánh giá Scorecard Valuation của Mutux}
+\begin{tabular}{lcc}
+\toprule
+\textbf{Tiêu chí} & \textbf{Trọng số} & \textbf{Đánh giá} \\
+\midrule
+Đội ngũ sáng lập & 30\% & 90\% \\
+Quy mô thị trường & 25\% & 120\% \\
+Chất lượng sản phẩm (MVP) & 15\% & 120\% \\
+Lợi thế cạnh tranh & 15\% & 130\% \\
+Chiến lược tăng trưởng & 10\% & 100\% \\
+Các yếu tố khác & 5\% & 100\% \\
+\midrule
+\textbf{Điểm quy đổi} & & \textbf{108\%} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Từ kết quả trên, giá trị doanh nghiệp được xác định theo công thức:
+
+\[
+\text{Pre-money Valuation}
+=
+5.000.000.000
+\times
+108\%
+=
+5.400.000.000 \text{ VNĐ}
+\]
+
+Mức đánh giá cao hơn trung bình đến từ việc Mutux đã xây dựng thành công MVP, sở hữu mô hình doanh thu đa dạng (hoa hồng thuê, phí dịch vụ, mua sau thuê, gói thành viên, B2B), đồng thời hướng đến thị trường gaming gear và eSports đang tăng trưởng nhanh tại Việt Nam. Ngoài ra, mô hình Marketplace kết hợp dịch vụ ``Thuê thử trước khi mua'' hiện chưa có đối thủ trực tiếp trong nước. Tuy nhiên, dự án vẫn đang trong giai đoạn kiểm chứng nhu cầu thị trường nên chưa đủ cơ sở để đạt mức định giá quá cao.
+
+\subsection{Phương pháp Berkus}
+
+Berkus Method định giá startup dựa trên các tài sản tạo ra giá trị thay vì doanh thu. Phương pháp này phù hợp với các doanh nghiệp công nghệ mới thành lập nhưng đã sở hữu sản phẩm khả dụng và kế hoạch phát triển rõ ràng.
+
+\begin{table}[H]
+\centering
+\caption{Định giá theo phương pháp Berkus}
+\begin{tabular}{lr}
+\toprule
+\textbf{Tiêu chí} & \textbf{Giá trị} \\
+\midrule
+Ý tưởng và công nghệ & 350.000 USD \\
+Đội ngũ sáng lập & 250.000 USD \\
+MVP đã hoàn thành & 400.000 USD \\
+Tiềm năng thị trường & 350.000 USD \\
+Tiềm năng doanh thu & 250.000 USD \\
+\midrule
+\textbf{Tổng giá trị} & \textbf{1.600.000 USD} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Do Berkus được xây dựng dựa trên môi trường đầu tư tại Hoa Kỳ, nhóm áp dụng hệ số điều chỉnh khoảng 35--40\% để phù hợp với mặt bằng định giá startup công nghệ tại Việt Nam. Sau khi điều chỉnh, giá trị doanh nghiệp được ước tính vào khoảng \textbf{6 tỷ đồng}.
+
+Kết quả này phản ánh việc nhóm sáng lập có khả năng tự phát triển toàn bộ hệ thống kỹ thuật, giúp giảm đáng kể chi phí triển khai; dự án đã hoàn thiện MVP, có kế hoạch tài chính và chiến lược gọi vốn rõ ràng. Tuy nhiên, startup vẫn chưa có doanh thu thực tế và chưa chứng minh được Product-Market Fit nên mức định giá vẫn cần được điều chỉnh ở mức hợp lý.
+
+\subsection{Kết luận định giá}
+
+Kết quả từ hai phương pháp định giá được tổng hợp trong Bảng~\ref{tab:valuation}.
+
+\begin{table}[H]
+\centering
+\caption{Tổng hợp kết quả định giá}
+\label{tab:valuation}
+\begin{tabular}{lc}
+\toprule
+\textbf{Phương pháp} & \textbf{Giá trị} \\
+\midrule
+Scorecard Valuation & 5,4 tỷ VNĐ \\
+Berkus Method & 6,0 tỷ VNĐ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Sau khi cân nhắc kết quả của cả hai phương pháp, nhóm lựa chọn mức định giá \textbf{Pre-money Valuation là 5,5 tỷ đồng}. Đây được xem là mức định giá phù hợp với một startup công nghệ Việt Nam ở giai đoạn Pre-Seed, vừa phản ánh giá trị của sản phẩm và tiềm năng thị trường, vừa đảm bảo tính hấp dẫn đối với nhà đầu tư.
+
+Với kế hoạch gọi vốn \textbf{500 triệu đồng}, giá trị doanh nghiệp sau đầu tư (\textit{Post-money Valuation}) đạt khoảng \textbf{6 tỷ đồng}, tương ứng nhà đầu tư sở hữu khoảng \textbf{8,33\%} cổ phần. Mức pha loãng này giúp startup có đủ nguồn lực để tiếp tục phát triển sản phẩm, kiểm chứng Product-Market Fit và chuẩn bị cho các vòng gọi vốn tiếp theo mà vẫn giữ được quyền kiểm soát của nhóm sáng lập.
+
 % !TeX root = ../main.tex
 \subsection{Nhu cầu gọi vốn}
 
