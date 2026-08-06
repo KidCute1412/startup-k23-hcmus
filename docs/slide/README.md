@@ -48,6 +48,17 @@ File kết quả là `docs/slide/main.pdf`.
 
 - LuaLaTeX và các package Beamer, TikZ, pgfplots, BibLaTeX.
 - Cookie theme, cụ thể là `beamerthemecookie.sty`.
+- Font Fira Sans và Fira Mono (package `fira` trong TeX distribution). Theme mặc
+  định dùng Noto Sans, nhưng font này thường không có sẵn trong MiKTeX nên deck
+  sẽ rơi về TeX Gyre Heros. Khi build bằng LuaLaTeX/XeLaTeX, `main.tex` chủ động
+  đặt lại Fira Sans vì font này hẹp hơn Heros khoảng 6% ở dòng tiêu đề trong khi
+  độ đậm nét tương đương, giúp tiêu đề slide dài không bị tràn dòng. Nếu máy
+  không có Fira, deck vẫn build được và tự quay về font dự phòng của theme.
+- Deck build được bằng cả `lualatex` và `pdflatex`. Khối đặt font trong
+  `main.tex` chỉ chạy khi có `fontspec` (LuaLaTeX/XeLaTeX); với `pdflatex` thì
+  theme tự dùng package `FiraSans`. Khi thêm lệnh font mới vào `main.tex`, phải
+  giữ nguyên bọc `\\ifdefined\\setmainfont`, nếu không `pdflatex` sẽ lỗi
+  `Undefined control sequence` ngay ở preamble.
 - Không cần Perl nếu build bằng hai lệnh `lualatex` ở trên.
 
 Các ảnh prototype được tham chiếu từ `../PA2/img/mvp/` để tái sử dụng tài nguyên hiện có của repository.
