@@ -30,6 +30,25 @@
 ]{cookie}
 \lstset{style=cookie}
 
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.18}
+
+\pgfplotsset{
+  mutux axis/.style={
+    axis lines=left,
+    axis line style={draw=cookieLine},
+    tick align=outside,
+    tick style={draw=cookieLine},
+    ymajorgrids=true,
+    major grid style={draw=cookieLine,dashed},
+    label style={font=\scriptsize,text=cookieMuted},
+    tick label style={font=\scriptsize,text=cookieInk},
+    legend style={font=\scriptsize,draw=none,fill=none,at={(0.02,0.97)},anchor=north west},
+    nodes near coords style={font=\scriptsize\bfseries,text=cookieInk},
+    clip=false
+  }
+}
+
 \title[Mutux]{Mutux}
 \subtitle{Thuê thử gaming gear trước khi mua}
 \author[Startup K23]{Nhóm Mutux}
@@ -67,9 +86,10 @@
 \input{sections/04-khach-hang-muc-tieu}
 \input{sections/05-diem-khac-biet}
 \input{sections/06-tiep-can-thi-truong}
-\input{sections/07-mo-hinh-kiem-tien}
-\input{sections/08-goi-von-va-su-dung-von}
-\input{sections/09-doi-ngu}
-\input{sections/10-prototype-va-minh-chung}
+\input{sections/07-marketing}
+\input{sections/08-mo-hinh-kiem-tien}
+\input{sections/09-goi-von-va-su-dung-von}
+\input{sections/10-doi-ngu}
+\input{sections/11-prototype-va-minh-chung}
 
 \end{document}

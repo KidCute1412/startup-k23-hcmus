@@ -1,0 +1,115 @@
+\section{Gọi vốn và sử dụng vốn}
+
+\begin{frame}{500 triệu VNĐ Pre-Seed}{Khoản vốn để vượt qua giai đoạn cold-start}
+  \vspace{1.2em}
+  \centering
+  \metric{500 triệu}{vốn cần gọi (20.000 USD)}
+  \metric{350 triệu}{thiếu hụt lớn nhất ở Q3}
+  \metric{+116 triệu}{dòng tiền hoạt động Q4}
+  \metric{Q3 năm 2}{hòa vốn lũy kế}
+  \vfill
+  \centering\small\color{cookieMuted}
+  350 triệu bù thiếu hụt tiền mặt tối đa; 150 triệu còn lại là bộ đệm vận hành và rủi ro.
+\end{frame}
+
+\begin{frame}{Vốn cần bao nhiêu là đủ?}{Con số 500 triệu đến từ đáy dòng tiền tích lũy, không phải ước lượng}
+  \vspace{.2em}
+  \centering
+  \begin{tikzpicture}
+    \begin{axis}[
+      mutux axis,
+      width=.86\textwidth,
+      height=.58\textheight,
+      ymin=-420, ymax=90,
+      enlarge x limits=.14,
+      ylabel={Dòng tiền tích lũy (triệu VNĐ)},
+      symbolic x coords={Q1,Q2,Q3,Q4},
+      xtick=data,
+      axis x line=none,
+      extra x ticks={Q1,Q2,Q3,Q4},
+      nodes near coords,
+      nodes near coords style={font=\small\bfseries,text=cookieInk,anchor=north}
+      ]
+      \addplot[draw=none,fill=mutuxBlue!80] coordinates {(Q1,-161) (Q2,-294) (Q3,-350) (Q4,-234)};
+      \draw[mutuxOrange,line width=1pt,dashed]
+        (axis cs:Q1,-350) -- (axis cs:Q4,-350)
+        node[above left=0mm and 1mm,font=\scriptsize\bfseries,text=mutuxOrange]
+        {Đáy tiền mặt $-$350 triệu};
+    \end{axis}
+  \end{tikzpicture}
+  \vfill
+  \centering\small\color{cookieMuted}
+  Tổng chi năm 1 là 684 triệu, doanh thu 449 triệu; vốn gọi phủ toàn bộ đáy và giữ bộ đệm rủi ro.
+\end{frame}
+
+\begin{frame}{Sử dụng vốn để làm gì?}{MVP đã xong nên vốn dồn cho tăng trưởng và vận hành}
+  \vspace{.2em}
+  \centering
+  \begin{tikzpicture}
+    \begin{axis}[
+      mutux axis,
+      xbar,
+      width=.74\textwidth,
+      height=.58\textheight,
+      xmin=0, xmax=215,
+      bar width=13pt,
+      enlarge y limits=.15,
+      xlabel={Triệu VNĐ},
+      ymajorgrids=false,
+      xmajorgrids=true,
+      symbolic y coords={{Dự phòng},{Pháp lý},{Sản phẩm \& hạ tầng},{Vận hành \& nhân sự},{Marketing \& CAC}},
+      ytick=data,
+      point meta=explicit symbolic,
+      nodes near coords,
+      nodes near coords style={font=\scriptsize\bfseries,text=cookieInk,anchor=west,xshift=.6mm}
+      ]
+      \addplot[draw=none,fill=mutuxBlue] coordinates {
+        (180,{Marketing \& CAC}) [180 --- 36\%]
+        (150,{Vận hành \& nhân sự}) [150 --- 30\%]
+        (80,{Sản phẩm \& hạ tầng}) [80 --- 16\%]
+        (40,{Pháp lý}) [40 --- 8\%]
+        (50,{Dự phòng}) [50 --- 10\%]};
+    \end{axis}
+  \end{tikzpicture}
+  \vfill
+  \centering\small\color{cookieMuted}
+  Trọng tâm kỹ thuật: eKYC, escrow, PayOS, ví, đối soát và xử lý tranh chấp.
+\end{frame}
+
+\begin{frame}{Giải ngân theo cột mốc}{Vốn được mở dần theo tiến độ kiểm chứng}
+  \vspace{1em}
+  \begin{columns}[T,onlytextwidth]
+    \column{.21\textwidth}
+      \cookiekicker{Q1 --- 200 triệu}\par\vspace{.4em}
+      Công nghệ lõi eKYC--escrow, pháp lý và khởi động cold-start.
+    \column{.21\textwidth}
+      \cookiekicker{Q2 --- 150 triệu}\par\vspace{.4em}
+      Digital ads, trợ giá đơn đầu, CSKH và đo CAC.
+    \column{.21\textwidth}
+      \cookiekicker{Q3 --- 100 triệu}\par\vspace{.4em}
+      Mở rộng trường đại học, gaming cafe và vận hành.
+    \column{.21\textwidth}
+      \cookiekicker{Q4 --- 50 triệu}\par\vspace{.4em}
+      Bổ sung toàn bộ vào quỹ dự phòng rủi ro tài sản.
+  \end{columns}
+  \vfill
+  \centering\small\color{cookieMuted}
+  Tỷ lệ giải ngân 40\% -- 30\% -- 20\% -- 10\% theo bốn quý của năm đầu.
+\end{frame}
+
+\begin{frame}{Điều kiện chuyển pha}{Ba chỉ số quyết định việc mở khoản giải ngân tiếp theo}
+  \vspace{1.2em}
+  \begin{columns}[T,onlytextwidth]
+    \column{.30\textwidth}
+      \cookiekicker{CAC}\par\vspace{.45em}
+      Nhỏ hơn hoặc bằng 60.000 VNĐ mỗi người thuê có đơn hoàn tất.
+    \column{.30\textwidth}
+      \cookiekicker{Tổn thất thiết bị}\par\vspace{.45em}
+      Duy trì dưới 1\% trên tổng số đơn thuê.
+    \column{.30\textwidth}
+      \cookiekicker{Hoàn tất \& tái thuê}\par\vspace{.45em}
+      Hai tỷ lệ này phải cải thiện qua từng quý.
+  \end{columns}
+  \vfill
+  \centering\textcolor{mutuxOrange}{\textbf{Không đạt chỉ số thì không mở pha tiếp theo.}}
+\end{frame}

@@ -7,40 +7,60 @@
       \cookiekicker{Phí nền tảng}\par\vspace{.45em}
       Thu 30\% trên giá trị tiền thuê của giao dịch hoàn tất.
     \column{.30\textwidth}
-      \cookiekicker{Hiển thị ưu tiên}\par\vspace{.45em}
-      Shop trả phí để tiếp cận đúng nhu cầu đã được xác thực.
+      \cookiekicker{Phí bảo hiểm}\par\vspace{.45em}
+      Gói bảo vệ thiết bị tùy chọn, kỳ vọng 15\% đơn sử dụng.
     \column{.30\textwidth}
       \cookiekicker{Hoa hồng mua sau thuê}\par\vspace{.45em}
       Nhận hoa hồng khi trải nghiệm chuyển thành quyết định mua.
   \end{columns}
   \vfill
-  \centering\textbf{Đơn thuê hoàn tất} $\rightarrow$ \textbf{Doanh thu lặp lại} $\rightarrow$ \textbf{Dịch vụ giá trị cao}
+  \centering\textbf{63.000 VNĐ} lợi nhuận gộp trên mỗi đơn $\rightarrow$ \textbf{Doanh thu lặp lại} $\rightarrow$ \textbf{Dịch vụ B2B}
 \end{frame}
 
 \begin{frame}{Dự phóng năm 1}{Tập trung vào lực kéo từ giao dịch thuê}
   \vspace{1.2em}
   \centering
-  \metric{1,11 tỷ}{GMV năm 1}
-  \metric{\textasciitilde340 triệu}{doanh thu năm 1}
+  \metric{1,87 tỷ}{GMV năm 1}
+  \metric{\textasciitilde449 triệu}{doanh thu năm 1}
   \metric{7.050}{đơn thuê mục tiêu}
+  \metric{10.000}{người dùng đăng ký}
   \vfill
   \centering\small\color{cookieMuted}
-  Cơ sở: 30\% phí nền tảng trên đơn thuê; chưa tính doanh thu B2B chưa kiểm chứng.
+  Cơ sở: 30\% phí nền tảng, 15\% đơn mua bảo hiểm và 5\% chuyển đổi mua đứt.
 \end{frame}
 
 \begin{frame}{Doanh thu theo quý}{Tăng trưởng dồn về nửa sau của năm đầu}
-  \vspace{1.4em}
+  \vspace{.2em}
   \centering
-  \small
-  \begin{tabularx}{.8\textwidth}{@{}Xrrrr@{}}
-    \toprule
-    & \textbf{Q1} & \textbf{Q2} & \textbf{Q3} & \textbf{Q4} \\
-    \midrule
-    Doanh thu (triệu VNĐ) & 14 & 29 & 86 & 212 \\
-    \bottomrule
-  \end{tabularx}
+  \begin{tikzpicture}
+    \begin{axis}[
+      mutux axis,
+      width=.86\textwidth,
+      height=.60\textheight,
+      ybar,
+      bar width=20pt,
+      ymin=-210, ymax=345,
+      enlarge x limits=.18,
+      ylabel={Triệu VNĐ},
+      axis x line=none,
+      extra x ticks={Q1,Q2,Q3,Q4},
+      symbolic x coords={Q1,Q2,Q3,Q4},
+      xtick=data,
+      nodes near coords,
+      nodes near coords style={font=\small\bfseries,text=cookieInk},
+      legend style={at={(0.02,0.98)},anchor=north west}
+      ]
+      \addplot[draw=none,fill=mutuxBlue] coordinates {(Q1,10) (Q2,38) (Q3,115) (Q4,287)};
+      \addplot[
+        draw=mutuxOrange,line width=1.1pt,mark=*,
+        mark options={fill=mutuxOrange,draw=white,line width=.6pt,scale=.85},
+        nodes near coords style={font=\scriptsize,text=mutuxOrange,anchor=north}
+      ] coordinates {(Q1,-161) (Q2,-133) (Q3,-56) (Q4,116)};
+      \legend{Doanh thu quý,Dòng tiền thuần}
+    \end{axis}
+  \end{tikzpicture}
   \vfill
-  \centering\textcolor{mutuxOrange}{\textbf{Nửa đầu năm để kiểm chứng, nửa sau để tăng tốc.}}
+  \centering\textcolor{mutuxOrange}{\textbf{Dòng tiền hoạt động chuyển dương từ Q4 với $+$116 triệu VNĐ.}}
 \end{frame}
 
 \begin{frame}{Các chỉ số cần chứng minh trước khi scale}{Tăng trưởng chỉ có ý nghĩa khi cung, cầu và an toàn cùng được kiểm soát}
