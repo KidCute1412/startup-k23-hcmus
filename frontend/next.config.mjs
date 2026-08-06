@@ -1,6 +1,20 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   transpilePackages: ["lucide-react"],
+  async rewrites() {
+    const backendUrl = process.env.BACKEND_URL;
+
+    if (!backendUrl) {
+      return [];
+    }
+
+    return [
+      {
+        source: "/api/v1/:path*",
+        destination: `${backendUrl.replace(/\/$/, "")}/api/v1/:path*`,
+      },
+    ];
+  },
   experimental: {
     optimizePackageImports: ["lucide-react"],
   },
