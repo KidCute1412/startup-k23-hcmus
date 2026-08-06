@@ -1,17 +1,33 @@
 \section{Vấn đề}
 
-\begin{frame}{Vấn đề nhóm đang giải quyết}{Người dùng không thể biết gaming gear có hợp mình hay không}
+\begin{frame}{Vấn đề nhóm đang giải quyết}{Người dùng phải mua trước khi biết gaming gear có hợp mình hay không}
+  \vspace{.6em}
   \begin{columns}[T,onlytextwidth]
-    \column{.48\textwidth}
-      \begin{alertblock}{Nỗi đau}
-        Gaming gear tốt thường có giá vài triệu đồng. Review và thông số chỉ cho biết sản phẩm tốt trên giấy, không cho biết cảm giác dùng thật. Trải nghiệm tại showroom lại quá ngắn.
-      \end{alertblock}
-    \column{.42\textwidth}
-      \begin{cookiecard}[title=Hệ quả]
-        \centering\Large
-        Mua nhầm\\[.35em]
-        \textcolor{mutuxOrange}{\textbf{tốn tiền}}\\[.35em]
-        và khó bán lại.
-      \end{cookiecard}
+    \column{.30\textwidth}
+      \cookiekicker{Giá trị thử sai lớn}\par\vspace{.45em}
+      Gear tốt thường có giá vài triệu đồng cho mỗi lần thử.
+    \column{.30\textwidth}
+      \cookiekicker{Thông tin chưa đủ}\par\vspace{.45em}
+      Review và thông số chỉ cho biết sản phẩm ``tốt trên giấy''.
+    \column{.30\textwidth}
+      \cookiekicker{Trải nghiệm quá ngắn}\par\vspace{.45em}
+      Showroom không phản ánh cảm giác dùng lâu dài.
   \end{columns}
+  \vfill
+  \centering\textcolor{mutuxOrange}{\textbf{Người dùng ra quyết định trong trạng thái thiếu chắc chắn.}}
+\end{frame}
+
+\begin{frame}{Hệ quả của việc mua khi chưa chắc}{Chi phí thử sai rơi hết về phía người dùng}
+  \vspace{.4em}
+  \centering
+  \begin{tikzpicture}[node distance=9mm]
+    \node[cookie accent node,minimum width=2.6cm] (a) {Mua nhầm};
+    \node[cookie node,minimum width=2.6cm,right=of a] (b) {Tốn tiền};
+    \node[cookie node,minimum width=2.9cm,right=of b] (c) {Khó bán lại};
+    \foreach \x/\y in {a/b,b/c} \draw[cookie arrow] (\x) -- (\y);
+  \end{tikzpicture}
+  \vfill
+  \begin{alertblock}{Khoảng trống hiện tại}
+    Chưa có cách nào để dùng thử gear đủ lâu, trong chính không gian chơi của mình, trước khi xuống tiền.
+  \end{alertblock}
 \end{frame}
