@@ -2,7 +2,9 @@
 const nextConfig = {
   transpilePackages: ["lucide-react"],
   async rewrites() {
-    const backendUrl = process.env.BACKEND_URL;
+    const backendUrl = process.env.BACKEND_URL
+      ?.replace(/\/$/, "")
+      .replace(/\/api\/v1$/, "");
 
     if (!backendUrl) {
       return [];
@@ -11,7 +13,7 @@ const nextConfig = {
     return [
       {
         source: "/api/v1/:path*",
-        destination: `${backendUrl.replace(/\/$/, "")}/api/v1/:path*`,
+        destination: `${backendUrl}/api/v1/:path*`,
       },
     ];
   },

@@ -1,8 +1,13 @@
-const API_URL =
-  process.env.NEXT_PUBLIC_API_URL ??
-  (process.env.NODE_ENV === "development"
-    ? "http://localhost:8080/api/v1"
-    : "/api/v1");
+const isServer = typeof window === "undefined";
+
+const API_URL = isServer
+  ? (process.env.BACKEND_URL
+      ? `${process.env.BACKEND_URL.replace(/\/$/, "")}/api/v1`
+      : "http://localhost:8080/api/v1")
+  : (process.env.NEXT_PUBLIC_API_URL ??
+     (process.env.NODE_ENV === "development"
+       ? "http://localhost:8080/api/v1"
+       : "/api/v1"));
 
 export type PaginationMeta = {
   total: number;
