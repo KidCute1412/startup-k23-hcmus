@@ -1,5 +1,46 @@
 \section{Kế hoạch marketing}
 
+\begin{frame}{Chiến lược Marketing}{Go-to-market cho marketplace gaming gear}
+  \vfill
+  \centering
+  {\fontsize{36}{42}\selectfont\color{mutuxBlue}\bfseries
+    Từ nguồn cung đáng tin\\[.25em]
+    đến giao dịch đầu tiên}
+  \par\vspace{1.2em}
+  \textcolor{cookieMuted}{B2B2C supply-first \textemdash{} thử nghiệm, đo lường và mở rộng có điều kiện}
+  \vfill
+\end{frame}
+
+\begin{frame}{Thứ tự mở kênh}{Supply-first: có danh mục và quy trình trước, rồi mới kéo người thuê}
+  \vspace{1em}
+  \begin{columns}[T,onlytextwidth]
+    \column{.29\textwidth}
+      \cookiekicker{Kênh lõi}\par\vspace{.45em}
+      Sales trực tiếp tới shop/gaming center và Demo Shelf tại điểm đối tác.
+    \column{.29\textwidth}
+      \cookiekicker{Kênh địa phương}\par\vspace{.45em}
+      Facebook khu vực, Discord, CLB sinh viên và nội dung trải nghiệm sau khi có cung.
+    \column{.29\textwidth}
+      \cookiekicker{Kênh mở rộng}\par\vspace{.45em}
+      TikTok và sự kiện esports sau khi có nhu cầu; referral chỉ kích hoạt sau đơn hoàn tất.
+  \end{columns}
+\end{frame}
+
+\begin{frame}{Lộ trình thử nghiệm 90 ngày}{Mỗi pha trả lời một câu hỏi kiểm chứng}
+  \vspace{1.4em}
+  \centering
+  \begin{tikzpicture}[x=1cm]
+    \draw[cookieLine,line width=1pt] (0,0) -- (10.8,0);
+    \foreach \x/\label/\detail in {1.2/Ngày 1--30/đối tác và danh mục,4.0/Ngày 31--60/giao dịch đầu tiên,6.9/Ngày 61--90/tối ưu và đánh giá,9.8/Sau 90 ngày/mở rộng theo KPI} {
+      \fill[cookieAccent] (\x,0) circle[radius=2.2pt];
+      \node[above=3mm,font=\small\bfseries] at (\x,0) {\label};
+      \node[below=3mm,font=\scriptsize,text=cookieMuted] at (\x,0) {\detail};
+    }
+  \end{tikzpicture}
+  \vfill
+  \centering\textcolor{mutuxOrange}{\textbf{Chỉ mở rộng khi các chỉ số của giai đoạn trước đạt yêu cầu.}}
+\end{frame}
+
 \begin{frame}{Chiến lược marketing: B2B2C supply-first}{Có nguồn cung đáng tin trước, rồi mới kéo người thuê}
   \vspace{1.1em}
   \centering
@@ -23,6 +64,49 @@
   \end{columns}
 \end{frame}
 
+\begin{frame}{Khách hàng mục tiêu}{B2B trước, người thuê sau khi danh mục đã sẵn sàng}
+  \vspace{.8em}
+  \begin{columns}[T,onlytextwidth]
+    \column{.29\textwidth}
+      \cookiekicker{Đối tác đầu tiên}\par\vspace{.45em}
+      Shop gaming gear và gaming center có thiết bị mẫu, dự phòng hoặc đang nhàn rỗi.
+    \column{.29\textwidth}
+      \cookiekicker{Thuê thử trước khi mua}\par\vspace{.45em}
+      Sinh viên, game thủ và người làm việc với máy tính muốn thử chuột, bàn phím hoặc tai nghe.
+    \column{.29\textwidth}
+      \cookiekicker{Nhu cầu theo thời điểm}\par\vspace{.45em}
+      Đội/game thủ cần gear để luyện tập, thi đấu hoặc thay thế thiết bị gặp sự cố.
+  \end{columns}
+  \vfill
+  \centering\small\color{cookieMuted}
+  Cá nhân sở hữu gear và các phân khúc khác chỉ mở rộng sau khi mô hình shop vận hành ổn định.
+\end{frame}
+
+\begin{frame}{Chọn cụm thử nghiệm và onboarding}{Chỉ mở một cụm khi đủ cung, cầu và khả năng vận hành}
+  \vspace{.7em}
+  \centering
+  \begin{tikzpicture}[node distance=4mm,font=\small]
+    \node[cookie accent node,minimum width=2.1cm] (a) {Chọn cụm};
+    \node[cookie node,minimum width=2.1cm,right=of a] (b) {Khảo sát shop};
+    \node[cookie node,minimum width=2.1cm,right=of b] (c) {Chọn 3--10 gear};
+    \node[cookie node,minimum width=2.1cm,right=of c] (d) {Chuẩn hóa listing};
+    \node[cookie node,minimum width=2.1cm,right=of d] (e) {Đánh giá 30/60/90};
+    \foreach \x/\y in {a/b,b/c,c/d,d/e} \draw[cookie arrow] (\x) -- (\y);
+  \end{tikzpicture}
+  \vfill
+  \begin{columns}[T,onlytextwidth]
+    \column{.29\textwidth}
+      \cookiekicker{Điều kiện tối thiểu}\par\vspace{.35em}
+      3 đối tác tiềm năng, 2 kênh demand và ít nhất 1 điểm nhận--trả.
+    \column{.29\textwidth}
+      \cookiekicker{Phạm vi pilot}\par\vspace{.35em}
+      Ảnh, tình trạng, giá, ký quỹ, lịch sẵn sàng và người phụ trách rõ ràng.
+    \column{.29\textwidth}
+      \cookiekicker{Quyết định}\par\vspace{.35em}
+      Gia hạn, điều chỉnh giá/danh mục hoặc kết thúc thử nghiệm theo dữ liệu.
+  \end{columns}
+\end{frame}
+
 \begin{frame}{Gói Mutux Partner Pilot}{Đề nghị 60--90 ngày đủ nhỏ để shop dám thử}
   \vspace{.8em}
   \centering\small
@@ -33,32 +117,32 @@
     Danh mục thử nghiệm & 3--10 thiết bị, Mutux hỗ trợ tin đăng và ảnh & Thời gian tiếp nhận \\
     Vận hành nhận--trả & Tại shop hoặc điểm cố định, có biên bản tình trạng & Tỷ lệ tranh chấp \\
     Thu hút nhu cầu & Nội dung địa phương, demo nhỏ, cộng đồng gaming & Đơn thuê đầu tiên \\
-    Báo cáo đối tác & Lượt xem, yêu cầu thuê, doanh thu, phản hồi & Tỷ lệ gia hạn \\
+    Báo cáo đối tác & Lượt xem, yêu cầu thuê, đơn hoàn tất, doanh thu, tỷ lệ hủy và phản hồi & Tỷ lệ gia hạn \\
+    Mô hình phí & Phí thử nghiệm thấp kết hợp hoa hồng trên đơn hoàn tất & Hiệu quả kinh tế \\
     \bottomrule
   \end{tabularx}
   \vfill
   \centering\textcolor{mutuxOrange}{\textbf{Không yêu cầu shop đưa toàn bộ kho lên nền tảng.}}
 \end{frame}
 
-\begin{frame}{Vai trò của từng kênh}{Kênh mở rộng chỉ bật sau khi danh mục và quy trình đã ổn}
-  \vspace{.7em}
+\begin{frame}{Sau giao dịch: tạo niềm tin và tái thuê}{Mỗi đơn hoàn tất phải tạo thêm giá trị cho cả hai phía}
+  \vspace{1em}
   \begin{columns}[T,onlytextwidth]
-    \column{.30\textwidth}
-      \cookiekicker{Kênh lõi}\par\vspace{.45em}
-      Sales trực tiếp tới shop và Demo Shelf tại điểm đối tác.
-    \column{.30\textwidth}
-      \cookiekicker{Kênh địa phương}\par\vspace{.45em}
-      Facebook khu vực, Discord cộng đồng và CLB sinh viên.
-    \column{.30\textwidth}
-      \cookiekicker{Kênh mở rộng}\par\vspace{.45em}
-      TikTok, sự kiện esports và referral sau đơn hoàn tất.
+    \column{.29\textwidth}
+      \cookiekicker{Trước khi nhận}\par\vspace{.45em}
+      KYC, ký quỹ, hướng dẫn sử dụng và bằng chứng tình trạng thiết bị.
+    \column{.29\textwidth}
+      \cookiekicker{Sau khi trả}\par\vspace{.45em}
+      Hoàn cọc, đánh giá, ghi nhận sự cố và cập nhật hồ sơ giao dịch.
+    \column{.29\textwidth}
+      \cookiekicker{Kích hoạt lại}\par\vspace{.45em}
+      Gợi ý gear phù hợp sau 7--14 ngày; referral chỉ thưởng khi đơn mới hoàn tất.
   \end{columns}
   \vfill
-  \centering\small\color{cookieMuted}
-  Kênh tạo lượt xem nhưng không tạo yêu cầu thuê đủ điều kiện sẽ bị cắt ngân sách.
+  \centering\textcolor{mutuxBlue}{\textbf{Giao dịch hoàn tất $\rightarrow$ Dữ liệu \& uy tín $\rightarrow$ Tái thuê \& gia hạn}}
 \end{frame}
 
-\begin{frame}{Ngân sách thử nghiệm 90 ngày}{20--50 triệu, phân bổ theo kết quả từng giai đoạn}
+\begin{frame}{Ngân sách thử nghiệm 90 ngày}{20--50 triệu đồng, phân bổ theo kết quả từng giai đoạn}
   \vspace{.4em}
   \centering
   \begin{tikzpicture}
@@ -90,22 +174,26 @@
   \end{tikzpicture}
   \vfill
   \centering\small\color{cookieMuted}
-  Khung kiểm thử, không phải cam kết chi tiêu; chưa gồm nhân sự cố định và bồi thường tài sản.
+  Khung kiểm thử, không phải cam kết chi tiêu; chưa gồm nhân sự cố định và bồi thường tài sản.\par
+  Kênh chỉ tạo lượt xem mà không tạo yêu cầu thuê đủ điều kiện sẽ được giảm ngân sách.
 \end{frame}
 
-\begin{frame}{Điều kiện chuyển pha sau 90 ngày}{Sáu ngưỡng phải đạt trước khi tăng ngân sách}
+\begin{frame}{Điều kiện chuyển pha sau 90 ngày}{Các ngưỡng phải đạt trước khi tăng ngân sách}
   \vspace{.8em}
   \begin{columns}[T,onlytextwidth]
-    \column{.30\textwidth}
+    \column{.23\textwidth}
       \cookiekicker{Nguồn cung}\par\vspace{.4em}
       3 đối tác nhận pilot và 10 thiết bị hoạt động.
-    \column{.30\textwidth}
+    \column{.23\textwidth}
       \cookiekicker{Nhu cầu}\par\vspace{.4em}
       30 yêu cầu thuê đủ điều kiện, 10 đơn hoàn tất.
-    \column{.30\textwidth}
-      \cookiekicker{Chất lượng}\par\vspace{.4em}
-      90\% đơn có bằng chứng bàn giao, biên đóng góp không âm.
+    \column{.23\textwidth}
+      \cookiekicker{Bằng chứng mở rộng}\par\vspace{.4em}
+      Hoàn trả có bằng chứng từ 90\% trở lên; không tranh chấp nghiêm trọng.
+    \column{.23\textwidth}
+      \cookiekicker{Giá trị đối tác}\par\vspace{.4em}
+      Ít nhất 1 đối tác gia hạn/điều chỉnh danh mục; biên đóng góp không âm.
   \end{columns}
   \vfill
-  \centering\Large\textcolor{mutuxBlue}{\textbf{Nguồn cung $\rightarrow$ Giao dịch $\rightarrow$ Mở rộng}}
+  \centering\large\textcolor{mutuxBlue}{\textbf{Nguồn cung $\rightarrow$ Giao dịch $\rightarrow$ Đối tác quay lại $\rightarrow$ Mở rộng}}
 \end{frame}
