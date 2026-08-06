@@ -1,0 +1,245 @@
+\section{Kế hoạch kinh doanh}
+
+% Nội dung được chắt lọc từ docs/Full Business Plan. Các giả định tài chính
+% định lượng tiếp tục dùng phiên bản mới hơn ở phần Mô hình kiếm tiền/Gọi vốn.
+
+\begin{frame}{Bắt đầu từ một cụm thị trường nhỏ}{Đủ gần để tạo thanh khoản cho cả hai phía}
+  \vspace{.7em}
+  \begin{columns}[T,onlytextwidth]
+    \column{.29\textwidth}
+      \cookiekicker{Địa bàn đầu tiên}\par\vspace{.45em}
+      Làng Đại học ĐHQG-HCM và khu vực lân cận tại Thủ Đức.
+    \column{.29\textwidth}
+      \cookiekicker{Cầu đầu tiên}\par\vspace{.45em}
+      Sinh viên cần thử gear vài ngày hoặc chuẩn bị cho giải đấu.
+    \column{.29\textwidth}
+      \cookiekicker{Cung đầu tiên}\par\vspace{.45em}
+      Shop SME và gaming center đã có thiết bị, nhân sự và điểm nhận--trả.
+  \end{columns}
+  \vfill
+  \centering\Large\textcolor{mutuxBlue}{\textbf{Một khu vực $+$ một nhóm gear $+$ một quy trình chuẩn}}
+\end{frame}
+
+\begin{frame}{Minh Quân: người thuê đầu tiên}{Sinh viên muốn thử đúng gear trước khi bỏ tiền mua}
+  \begin{columns}[T,onlytextwidth]
+    \column{.32\textwidth}
+      \vspace{.8em}
+      {\fontsize{25}{28}\selectfont\color{mutuxBlue}\bfseries Minh Quân}\par
+      \vspace{.4em}
+      \textbf{20 tuổi}\par
+      Sinh viên CNTT, sống tại ký túc xá, chơi Valorant và CS2 cùng bạn bè.
+    \column{.60\textwidth}
+      \begin{block}{Bối cảnh}
+        Muốn thử chuột nhẹ hoặc bàn phím cơ trong một cuối tuần trước khi mua.
+      \end{block}
+      \begin{block}{Rào cản}
+        Ngân sách 2--4 triệu/tháng; sợ chuột không hợp tay hoặc switch quá ồn.
+      \end{block}
+      \begin{exampleblock}{Điểm kích hoạt}
+        Giá thuê nhỏ, cọc minh bạch và lời giới thiệu từ bạn bè/CLB.
+      \end{exampleblock}
+  \end{columns}
+\end{frame}
+
+\begin{frame}{Bình: đối tác nguồn cung neo}{Shop nhỏ cần một kênh thử trước khi mua có kiểm soát}
+  \begin{columns}[T,onlytextwidth]
+    \column{.32\textwidth}
+      \vspace{.8em}
+      {\fontsize{25}{28}\selectfont\color{mutuxBlue}\bfseries Bình}\par
+      \vspace{.4em}
+      \textbf{Chủ shop gear SME}\par
+      Có showroom nhỏ, hàng demo và một số sản phẩm đổi trả còn tốt.
+    \column{.60\textwidth}
+      \begin{block}{Động lực}
+        Biến hàng demo thành doanh thu phụ và đưa người thuê quay lại mua hàng.
+      \end{block}
+      \begin{block}{Rào cản}
+        Lo hao mòn, kiểm kê, vệ sinh và trách nhiệm khi thiết bị trầy xước.
+      \end{block}
+      \begin{exampleblock}{Đề nghị phù hợp}
+        Pilot ngắn với vài sản phẩm, nhận--trả tại shop và báo cáo phản hồi rõ ràng.
+      \end{exampleblock}
+  \end{columns}
+\end{frame}
+
+\begin{frame}{Founding Shelf: có cung trước khi kéo cầu}{Khởi động thủ công để kiểm chứng chất lượng danh mục}
+  \vspace{1em}
+  \centering
+  \begin{tikzpicture}[node distance=6mm,font=\small]
+    \node[cookie accent node,text width=2.05cm,align=center] (a) {3--5 đối tác\\đồng ý pilot};
+    \node[cookie node,text width=2.05cm,align=center,right=of a] (b) {10 thiết bị\\đã xác minh};
+    \node[cookie node,text width=2.05cm,align=center,right=of b] (c) {Nhóm thuê kín\\dùng thử};
+    \node[cookie node,text width=2.05cm,align=center,right=of c] (d) {Gear Match Day\\tại trường};
+    \foreach \x/\y in {a/b,b/c,c/d} \draw[cookie arrow] (\x) -- (\y);
+  \end{tikzpicture}
+  \vfill
+  \begin{columns}[T,onlytextwidth]
+    \column{.44\textwidth}
+      \cookiekicker{Danh mục ban đầu}\par\vspace{.35em}
+      Chuột gaming, bàn phím cơ và tai nghe: dễ giải thích, dễ thử, dễ đối soát.
+    \column{.44\textwidth}
+      \cookiekicker{Việc nhóm làm thủ công}\par\vspace{.35em}
+      Hỗ trợ ảnh, tin đăng, bàn giao và thu phản hồi sau từng đơn.
+  \end{columns}
+\end{frame}
+
+\begin{frame}{Một đơn thuê tạo giá trị như thế nào?}{Tiền và thiết bị chỉ được quyết toán sau khi hai bên xác nhận}
+  \vspace{.9em}
+  \centering
+  \begin{tikzpicture}[node distance=4.5mm,font=\scriptsize]
+    \node[cookie accent node,minimum width=1.45cm] (a) {Đặt thuê};
+    \node[cookie node,minimum width=1.45cm,right=of a] (b) {Duyệt đơn};
+    \node[cookie node,minimum width=1.45cm,right=of b] (c) {Escrow};
+    \node[cookie node,minimum width=1.45cm,right=of c] (d) {Bàn giao};
+    \node[cookie node,minimum width=1.45cm,right=of d] (e) {Hoàn trả};
+    \node[cookie node,minimum width=1.45cm,right=of e] (f) {Quyết toán};
+    \foreach \x/\y in {a/b,b/c,c/d,d/e,e/f} \draw[cookie arrow] (\x) -- (\y);
+  \end{tikzpicture}
+  \vfill
+  \begin{columns}[T,onlytextwidth]
+    \column{.29\textwidth}
+      \cookiekicker{Người thuê}\par\vspace{.35em}
+      Chọn lịch, thanh toán, xác nhận nhận và trả thiết bị.
+    \column{.29\textwidth}
+      \cookiekicker{Chủ gear}\par\vspace{.35em}
+      Duyệt đơn, ghi nhận tình trạng và nhận doanh thu.
+    \column{.29\textwidth}
+      \cookiekicker{Mutux}\par\vspace{.35em}
+      Lưu bằng chứng, giữ tiền và xử lý ngoại lệ/tranh chấp.
+  \end{columns}
+\end{frame}
+
+\begin{frame}{Bài toán cọc quyết định tỷ lệ chuyển đổi}{Phí thuê nhỏ nhưng khoản tiền phải chuẩn bị ban đầu lại rất lớn}
+  \vspace{.4em}
+  \begin{columns}[T,onlytextwidth]
+    \column{.44\textwidth}
+      \begin{block}{Cọc truyền thống}
+        \centering
+        {\fontsize{25}{28}\selectfont\color{mutuxBlue}\bfseries 2,03 triệu}\par
+        \vspace{.35em}
+        2 triệu tiền cọc $+$ 30 nghìn tiền thuê trong 3 ngày.
+      \end{block}
+    \column{.44\textwidth}
+      \begin{exampleblock}{Hỗ trợ cọc qua đối tác}
+        \centering
+        {\fontsize{25}{28}\selectfont\color{mutuxTeal}\bfseries 35--40 nghìn}\par
+        \vspace{.35em}
+        30 nghìn tiền thuê $+$ 5--10 nghìn phí hỗ trợ cọc.
+      \end{exampleblock}
+  \end{columns}
+  \vfill
+  \centering\small\color{cookieMuted}
+  Minh họa từ Business Plan cho gear trị giá 2 triệu; chỉ triển khai thật qua đối tác tài chính được cấp phép và sau khi kiểm chứng rủi ro.
+\end{frame}
+
+\begin{frame}{Ba lớp doanh thu mở theo độ trưởng thành}{Không bật tất cả nguồn thu ngay trong giai đoạn MVP}
+  \vspace{.8em}
+  \begin{columns}[T,onlytextwidth]
+    \column{.29\textwidth}
+      \cookiekicker{Lớp 1 -- Giao dịch}\par\vspace{.45em}
+      Phí nền tảng từ đơn thuê hoàn tất và gói bảo vệ tùy chọn.
+    \column{.29\textwidth}
+      \cookiekicker{Lớp 2 -- Chuyển đổi}\par\vspace{.45em}
+      Hoa hồng mua sau thuê, referral và ưu đãi tái thuê.
+    \column{.29\textwidth}
+      \cookiekicker{Lớp 3 -- B2B}\par\vspace{.45em}
+      Dashboard, quảng bá danh mục và báo cáo phản hồi cho shop.
+  \end{columns}
+  \vfill
+  \centering\Large\textcolor{mutuxBlue}{\textbf{Đơn thuê trước $\rightarrow$ dữ liệu sau $\rightarrow$ dịch vụ B2B}}
+\end{frame}
+
+\begin{frame}{Ra mắt qua bốn cổng kiểm chứng}{Mỗi cổng chỉ trả lời một câu hỏi kinh doanh}
+  \vspace{.8em}
+  \begin{columns}[T,onlytextwidth]
+    \column{.21\textwidth}
+      \cookiekicker{1. Chuẩn bị}\par\vspace{.35em}
+      Có đủ nguồn cung đáng tin để mời người thuê chưa?
+    \column{.21\textwidth}
+      \cookiekicker{2. Pilot kín}\par\vspace{.35em}
+      Quy trình nhận--trả có chạy trơn tru không?
+    \column{.21\textwidth}
+      \cookiekicker{3. Trong trường}\par\vspace{.35em}
+      Trải nghiệm thật có tạo đơn và review không?
+    \column{.21\textwidth}
+      \cookiekicker{4. Mở rộng}\par\vspace{.35em}
+      Cụm đầu tiên có đủ thanh khoản để nhân bản không?
+  \end{columns}
+  \vfill
+  \centering\textcolor{mutuxOrange}{\textbf{Không mở khu vực mới chỉ vì lượt xem tăng.}}
+\end{frame}
+
+\begin{frame}{Rủi ro marketplace: giao dịch đi cửa sau}{Giữ người dùng bằng giá trị bảo vệ, không chỉ bằng rào cản}
+  \begin{columns}[T,onlytextwidth]
+    \column{.44\textwidth}
+      \begin{alertblock}{Điều gì xảy ra?}
+        Hai bên quen nhau sau đơn đầu và tự giao dịch để tránh phí nền tảng.
+      \end{alertblock}
+      \vspace{.3em}
+      Mutux mất doanh thu, dữ liệu giao dịch và khả năng quản trị rủi ro.
+    \column{.46\textwidth}
+      \begin{exampleblock}{Lý do để ở lại nền tảng}
+        \begin{itemize}\small
+          \item Uy tín chỉ tăng qua đơn được ghi nhận.
+          \item Escrow và bằng chứng bàn giao.
+          \item Hỗ trợ tranh chấp/bồi thường theo chính sách.
+          \item Ưu đãi tái thuê sau đơn hợp lệ.
+        \end{itemize}
+      \end{exampleblock}
+  \end{columns}
+\end{frame}
+
+\begin{frame}{Rủi ro vận hành: hư hỏng do ai?}{Chuỗi bằng chứng phải đi cùng thiết bị qua mọi điểm chạm}
+  \vspace{1em}
+  \centering
+  \begin{tikzpicture}[node distance=7mm,font=\small]
+    \node[cookie accent node,text width=1.75cm,align=center] (a) {Shop\\đóng gói};
+    \node[cookie node,text width=1.75cm,align=center,right=of a] (b) {Giao nhận\\hai chiều};
+    \node[cookie node,text width=1.75cm,align=center,right=of b] (c) {Người thuê\\sử dụng};
+    \node[cookie node,text width=1.75cm,align=center,right=of c] (d) {Shop\\nhận lại};
+    \foreach \x/\y in {a/b,b/c,c/d} \draw[cookie arrow] (\x) -- (\y);
+    \node[below=5mm,font=\scriptsize,text=cookieMuted] at (a.south) {ảnh/video};
+    \node[below=5mm,font=\scriptsize,text=cookieMuted] at (b.south) {biên bản};
+    \node[below=5mm,font=\scriptsize,text=cookieMuted] at (c.south) {xác nhận};
+    \node[below=5mm,font=\scriptsize,text=cookieMuted] at (d.south) {đối soát};
+  \end{tikzpicture}
+  \vfill
+  \centering\textcolor{mutuxOrange}{\textbf{Thiếu một mắt xích bằng chứng $=$ tranh chấp khó kết luận.}}
+\end{frame}
+
+\begin{frame}{Rủi ro thị trường: gear giá rẻ dễ mua hơn}{Không phải món gear nào cũng đáng đưa lên marketplace}
+  \vspace{.7em}
+  \begin{columns}[T,onlytextwidth]
+    \column{.29\textwidth}
+      \cookiekicker{Không cạnh tranh ở}\par\vspace{.4em}
+      Phụ kiện phổ thông có giá mua gần bằng tổng chi phí thuê và giao nhận.
+    \column{.29\textwidth}
+      \cookiekicker{Tập trung vào}\par\vspace{.4em}
+      Gear cao cấp, mẫu khó chọn, thiết bị theo mùa giải hoặc cần thử dài ngày.
+    \column{.29\textwidth}
+      \cookiekicker{Tận dụng mua sau thuê}\par\vspace{.4em}
+      Với món giá thấp, chuyển trải nghiệm thành giao dịch mua thay vì cố kéo dài thuê.
+  \end{columns}
+  \vfill
+  \centering\Large\textcolor{mutuxBlue}{\textbf{Giá trị trải nghiệm phải lớn hơn ma sát giao dịch}}
+\end{frame}
+
+\begin{frame}{Khi nào được rời cụm ĐHQG-HCM?}{Mở rộng khi mô hình đã lặp lại được, không chỉ vì đã hết 90 ngày}
+  \vspace{.8em}
+  \begin{columns}[T,onlytextwidth]
+    \column{.21\textwidth}
+      \cookiekicker{Nguồn cung}\par\vspace{.35em}
+      Đối tác tiếp tục gia hạn và listing có đơn đều.
+    \column{.21\textwidth}
+      \cookiekicker{Thanh khoản}\par\vspace{.35em}
+      Thời gian từ đăng thiết bị đến đơn đầu giảm dần.
+    \column{.21\textwidth}
+      \cookiekicker{An toàn}\par\vspace{.35em}
+      Bàn giao có bằng chứng, hủy và tranh chấp trong ngưỡng.
+    \column{.21\textwidth}
+      \cookiekicker{Kinh tế}\par\vspace{.35em}
+      CAC và biên đóng góp đủ tốt để nhân bản sang cụm mới.
+  \end{columns}
+  \vfill
+  \centering\textcolor{mutuxOrange}{\textbf{Nhân bản quy trình đã chứng minh, không nhân bản giả định.}}
+\end{frame}

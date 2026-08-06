@@ -30,6 +30,42 @@
 ]{cookie} 
 \lstset{style=cookie}
 
+% Fonts: Noto Sans (mac dinh cua theme) khong co trong MiKTeX nen deck se roi ve
+% TeX Gyre Heros. Dung Fira Sans Medium cho phan than bai va SemiBold cho chu
+% dam de net chu ro, day hon ma van giu du cho cac tieu de dai.
+%
+% Hai luu y quan trong:
+%  1. Khoi nay chi chay khi bien dich bang LuaLaTeX/XeLaTeX. Voi pdflatex thi
+%     theme khong load fontspec, nen \setmainfont va \IfFontExistsTF khong ton
+%     tai va se lam vo preamble. Vi vay phai kiem tra \ifdefined\setmainfont.
+%     Voi pdflatex, theme tu dung package FiraSans, khong can dat gi o day.
+%  2. Dung \IfFontExistsTF chu khong phai \IfFileExists, vi \IfFileExists tra
+%     theo TEXINPUTS nen khong thay file .otf nam trong cay fonts cua MiKTeX.
+\ifdefined\setmainfont
+  \IfFontExistsTF{FiraSans-Medium.otf}{%
+    \setmainfont{FiraSans-Medium.otf}[
+      Ligatures=TeX,
+      BoldFont=FiraSans-SemiBold.otf,
+      ItalicFont=FiraSans-MediumItalic.otf,
+      BoldItalicFont=FiraSans-SemiBoldItalic.otf
+    ]%
+    \setsansfont{FiraSans-Medium.otf}[
+      Ligatures=TeX,
+      BoldFont=FiraSans-SemiBold.otf,
+      ItalicFont=FiraSans-MediumItalic.otf,
+      BoldItalicFont=FiraSans-SemiBoldItalic.otf
+    ]%
+    \IfFontExistsTF{FiraMono-Regular.otf}{%
+      \setmonofont{FiraMono-Regular.otf}[
+        Scale=0.90,
+        BoldFont=FiraMono-Bold.otf,
+        ItalicFont=FiraMono-Oblique.otf,
+        BoldItalicFont=FiraMono-BoldOblique.otf
+      ]%
+    }{}%
+  }{}%
+\fi
+
 \usepackage{pgfplots}
 \pgfplotsset{compat=1.18}
 
@@ -85,6 +121,7 @@
 \input{sections/03-san-pham-dich-vu}
 \input{sections/04-khach-hang-muc-tieu}
 \input{sections/05-diem-khac-biet}
+\input{sections/06-ke-hoach-kinh-doanh}
 \input{sections/06-tiep-can-thi-truong}
 \input{sections/07-marketing}
 \input{sections/08-mo-hinh-kiem-tien}

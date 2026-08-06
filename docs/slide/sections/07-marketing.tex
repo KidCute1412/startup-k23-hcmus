@@ -3,11 +3,11 @@
 \begin{frame}{Chiến lược marketing: B2B2C supply-first}{Có nguồn cung đáng tin trước, rồi mới kéo người thuê}
   \vspace{1.1em}
   \centering
-  \begin{tikzpicture}[node distance=8mm]
-    \node[cookie accent node,minimum width=2.9cm] (a) {Shop \& gaming center};
-    \node[cookie node,minimum width=2.9cm,right=of a] (b) {Danh mục đã xác minh};
-    \node[cookie node,minimum width=2.5cm,right=of b] (c) {Người thuê};
-    \node[cookie node,minimum width=2.6cm,right=of c] (d) {Đơn hoàn tất};
+  \begin{tikzpicture}[node distance=5mm,font=\small]
+    \node[cookie accent node,minimum width=2.5cm] (a) {Shop \& gaming center};
+    \node[cookie node,minimum width=2.5cm,right=of a] (b) {Danh mục xác minh};
+    \node[cookie node,minimum width=2cm,right=of b] (c) {Người thuê};
+    \node[cookie node,minimum width=2.1cm,right=of c] (d) {Đơn hoàn tất};
     \foreach \x/\y in {a/b,b/c,c/d} \draw[cookie arrow] (\x) -- (\y);
   \end{tikzpicture}
   \vfill
