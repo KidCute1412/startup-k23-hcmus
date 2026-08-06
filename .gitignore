@@ -62,3 +62,6 @@ backend/docs/tasks
 *.nav
 *.run.xml
 *.snm
+
+# --- Codex (cấu hình cá nhân, không commit) ---
+.codex/

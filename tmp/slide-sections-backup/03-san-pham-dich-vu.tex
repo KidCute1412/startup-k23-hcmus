@@ -1,17 +1,17 @@
 \section{Sản phẩm và dịch vụ}
 
-\begin{frame}{Sản phẩm của nhóm}{Marketplace hai chiều cho gaming gear}
+\begin{frame}{Sản phẩm / dịch vụ của nhóm}{Marketplace hai chiều cho gaming gear}
   \begin{columns}[T,onlytextwidth]
     \column{.42\textwidth}
       \begin{block}{Người thuê}
-        Tìm kiếm, chọn thời gian, đặt cọc, thanh toán và nhận gear tại nơi sử dụng.
+        Tìm kiếm, lọc, chọn thời gian, đặt cọc, thanh toán và nhận gear tại nơi sử dụng.
       \end{block}
     \column{.42\textwidth}
       \begin{exampleblock}{Chủ gear / Shop}
-        Đăng thiết bị, quản lý lịch, nhận đơn và theo dõi doanh thu.
+        Đăng thiết bị, quản lý lịch, nhận đơn, theo dõi doanh thu và tiếp cận khách mua mới.
       \end{exampleblock}
   \end{columns}
-  \vfill
+  \vspace{.75em}
   \centering
   \begin{tikzpicture}[node distance=1.25cm]
     \node[cookie accent node,minimum width=2.3cm] (r) {Người thuê};
@@ -23,7 +23,6 @@
 \end{frame}
 
 \begin{frame}{Hành trình sử dụng}{Thuê thử trước, mua khi đã chắc}
-  \vspace{1.2em}
   \centering
   \begin{tikzpicture}[node distance=7mm]
     \node[cookie accent node,minimum width=1.75cm] (a) {Khám phá};
@@ -33,24 +32,8 @@
     \node[cookie node,minimum width=2.15cm,right=of d] (e) {Mua / thuê lại};
     \foreach \x/\y in {a/b,b/c,c/d,d/e} \draw[cookie arrow] (\x) -- (\y);
   \end{tikzpicture}
-  \vfill
-  \centering\textcolor{mutuxOrange}{\textbf{Mỗi đơn thuê là một lần kiểm chứng trước khi mua.}}
-\end{frame}
-
-\begin{frame}{Lớp tin cậy của Mutux}{Bốn cơ chế giúp giao dịch giữa người lạ diễn ra an toàn}
-  \vspace{.8em}
-  \begin{columns}[T,onlytextwidth]
-    \column{.22\textwidth}
-      \cookiekicker{KYC}\par\vspace{.4em}
-      Xác minh danh tính người dùng hai phía.
-    \column{.22\textwidth}
-      \cookiekicker{Hồ sơ thiết bị}\par\vspace{.4em}
-      Ghi nhận tình trạng gear trước và sau khi thuê.
-    \column{.22\textwidth}
-      \cookiekicker{Escrow}\par\vspace{.4em}
-      Giữ tiền cho đến khi đơn thuê hoàn tất.
-    \column{.22\textwidth}
-      \cookiekicker{Đánh giá}\par\vspace{.4em}
-      Tạo dữ liệu uy tín sau mỗi giao dịch.
-  \end{columns}
+  \vspace{1em}
+  \begin{block}{Lớp tin cậy}
+    KYC xác minh người dùng, hồ sơ thiết bị ghi nhận tình trạng, escrow giữ tiền và đánh giá tạo dữ liệu sau giao dịch.
+  \end{block}
 \end{frame}

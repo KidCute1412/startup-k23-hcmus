@@ -1,0 +1,111 @@
+\section{Kế hoạch marketing}
+
+\begin{frame}{Chiến lược marketing: B2B2C supply-first}{Có nguồn cung đáng tin trước, rồi mới kéo người thuê}
+  \vspace{1.1em}
+  \centering
+  \begin{tikzpicture}[node distance=8mm]
+    \node[cookie accent node,minimum width=2.9cm] (a) {Shop \& gaming center};
+    \node[cookie node,minimum width=2.9cm,right=of a] (b) {Danh mục đã xác minh};
+    \node[cookie node,minimum width=2.5cm,right=of b] (c) {Người thuê};
+    \node[cookie node,minimum width=2.6cm,right=of c] (d) {Đơn hoàn tất};
+    \foreach \x/\y in {a/b,b/c,c/d} \draw[cookie arrow] (\x) -- (\y);
+  \end{tikzpicture}
+  \vfill
+  \begin{columns}[T,onlytextwidth]
+    \column{.46\textwidth}
+      \begin{block}{Vì sao không quảng bá đại trà trước}
+        Marketplace hai phía: thiếu danh mục tin cậy thì traffic không thành giao dịch.
+      \end{block}
+    \column{.46\textwidth}
+      \begin{exampleblock}{Lời hứa bán cho shop}
+        Biến thiết bị nhàn rỗi thành doanh thu, kèm khách trải nghiệm mới.
+      \end{exampleblock}
+  \end{columns}
+\end{frame}
+
+\begin{frame}{Gói Mutux Partner Pilot}{Đề nghị 60--90 ngày đủ nhỏ để shop dám thử}
+  \vspace{.8em}
+  \centering\small
+  \begin{tabularx}{.94\textwidth}{@{}>{\bfseries\raggedright\arraybackslash}p{.24\textwidth}>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}p{.21\textwidth}@{}}
+    \toprule
+    Thành phần & Cách triển khai & Đo lường \\
+    \midrule
+    Danh mục thử nghiệm & 3--10 thiết bị, Mutux hỗ trợ tin đăng và ảnh & Thời gian tiếp nhận \\
+    Vận hành nhận--trả & Tại shop hoặc điểm cố định, có biên bản tình trạng & Tỷ lệ tranh chấp \\
+    Thu hút nhu cầu & Nội dung địa phương, demo nhỏ, cộng đồng gaming & Đơn thuê đầu tiên \\
+    Báo cáo đối tác & Lượt xem, yêu cầu thuê, doanh thu, phản hồi & Tỷ lệ gia hạn \\
+    \bottomrule
+  \end{tabularx}
+  \vfill
+  \centering\textcolor{mutuxOrange}{\textbf{Không yêu cầu shop đưa toàn bộ kho lên nền tảng.}}
+\end{frame}
+
+\begin{frame}{Vai trò của từng kênh}{Kênh mở rộng chỉ bật sau khi danh mục và quy trình đã ổn}
+  \vspace{.7em}
+  \begin{columns}[T,onlytextwidth]
+    \column{.30\textwidth}
+      \cookiekicker{Kênh lõi}\par\vspace{.45em}
+      Sales trực tiếp tới shop và Demo Shelf tại điểm đối tác.
+    \column{.30\textwidth}
+      \cookiekicker{Kênh địa phương}\par\vspace{.45em}
+      Facebook khu vực, Discord cộng đồng và CLB sinh viên.
+    \column{.30\textwidth}
+      \cookiekicker{Kênh mở rộng}\par\vspace{.45em}
+      TikTok, sự kiện esports và referral sau đơn hoàn tất.
+  \end{columns}
+  \vfill
+  \centering\small\color{cookieMuted}
+  Kênh tạo lượt xem nhưng không tạo yêu cầu thuê đủ điều kiện sẽ bị cắt ngân sách.
+\end{frame}
+
+\begin{frame}{Ngân sách thử nghiệm 90 ngày}{20--50 triệu, phân bổ theo kết quả từng giai đoạn}
+  \vspace{.4em}
+  \centering
+  \begin{tikzpicture}
+    \begin{axis}[
+      mutux axis,
+      xbar stacked,
+      width=.78\textwidth,
+      height=.55\textheight,
+      xmin=0, xmax=52,
+      bar width=9pt,
+      enlarge y limits=.18,
+      xlabel={Tỷ trọng ngân sách (\%)},
+      ymajorgrids=false,
+      xmajorgrids=true,
+      symbolic y coords={Tracking,Ưu đãi đơn đầu,Nội dung \& ads,Demo \& trải nghiệm,Sales \& onboarding},
+      ytick=data,
+      legend style={at={(0.99,1.14)},anchor=north east,legend columns=2}
+      ]
+      \addplot[draw=none,fill=mutuxBlue] coordinates {
+        (30,Sales \& onboarding) (20,Demo \& trải nghiệm) (15,Nội dung \& ads) (10,Ưu đãi đơn đầu) (5,Tracking)};
+      \addplot[draw=none,fill=mutuxBlue!28,
+        nodes near coords={\footnotesize\bfseries\pgfmathprintnumber{\pgfplotspointmeta}\%},
+        point meta=explicit,
+        nodes near coords style={anchor=west,text=cookieInk,xshift=1mm}] coordinates {
+        (10,Sales \& onboarding) [40] (10,Demo \& trải nghiệm) [30]
+        (10,Nội dung \& ads) [25] (5,Ưu đãi đơn đầu) [15] (5,Tracking) [10]};
+      \legend{Mức sàn,Biên độ tối đa}
+    \end{axis}
+  \end{tikzpicture}
+  \vfill
+  \centering\small\color{cookieMuted}
+  Khung kiểm thử, không phải cam kết chi tiêu; chưa gồm nhân sự cố định và bồi thường tài sản.
+\end{frame}
+
+\begin{frame}{Điều kiện chuyển pha sau 90 ngày}{Sáu ngưỡng phải đạt trước khi tăng ngân sách}
+  \vspace{.8em}
+  \begin{columns}[T,onlytextwidth]
+    \column{.30\textwidth}
+      \cookiekicker{Nguồn cung}\par\vspace{.4em}
+      3 đối tác nhận pilot và 10 thiết bị hoạt động.
+    \column{.30\textwidth}
+      \cookiekicker{Nhu cầu}\par\vspace{.4em}
+      30 yêu cầu thuê đủ điều kiện, 10 đơn hoàn tất.
+    \column{.30\textwidth}
+      \cookiekicker{Chất lượng}\par\vspace{.4em}
+      90\% đơn có bằng chứng bàn giao, biên đóng góp không âm.
+  \end{columns}
+  \vfill
+  \centering\Large\textcolor{mutuxBlue}{\textbf{Nguồn cung $\rightarrow$ Giao dịch $\rightarrow$ Mở rộng}}
+\end{frame}
