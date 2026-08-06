@@ -31,8 +31,8 @@
 \lstset{style=cookie}
 
 % Fonts: Noto Sans (mac dinh cua theme) khong co trong MiKTeX nen deck se roi ve
-% TeX Gyre Heros. Fira Sans hep hon Heros khoang 6% o dong tieu de nhung do dam
-% net tuong duong, nen dat lai o day de tieu de dai khong bi tran dong.
+% TeX Gyre Heros. Dung Fira Sans Medium cho phan than bai va SemiBold cho chu
+% dam de net chu ro, day hon ma van giu du cho cac tieu de dai.
 %
 % Hai luu y quan trong:
 %  1. Khoi nay chi chay khi bien dich bang LuaLaTeX/XeLaTeX. Voi pdflatex thi
@@ -42,18 +42,18 @@
 %  2. Dung \IfFontExistsTF chu khong phai \IfFileExists, vi \IfFileExists tra
 %     theo TEXINPUTS nen khong thay file .otf nam trong cay fonts cua MiKTeX.
 \ifdefined\setmainfont
-  \IfFontExistsTF{FiraSans-Regular.otf}{%
-    \setmainfont{FiraSans-Regular.otf}[
+  \IfFontExistsTF{FiraSans-Medium.otf}{%
+    \setmainfont{FiraSans-Medium.otf}[
       Ligatures=TeX,
-      BoldFont=FiraSans-Bold.otf,
-      ItalicFont=FiraSans-Italic.otf,
-      BoldItalicFont=FiraSans-BoldItalic.otf
+      BoldFont=FiraSans-SemiBold.otf,
+      ItalicFont=FiraSans-MediumItalic.otf,
+      BoldItalicFont=FiraSans-SemiBoldItalic.otf
     ]%
-    \setsansfont{FiraSans-Regular.otf}[
+    \setsansfont{FiraSans-Medium.otf}[
       Ligatures=TeX,
-      BoldFont=FiraSans-Bold.otf,
-      ItalicFont=FiraSans-Italic.otf,
-      BoldItalicFont=FiraSans-BoldItalic.otf
+      BoldFont=FiraSans-SemiBold.otf,
+      ItalicFont=FiraSans-MediumItalic.otf,
+      BoldItalicFont=FiraSans-SemiBoldItalic.otf
     ]%
     \IfFontExistsTF{FiraMono-Regular.otf}{%
       \setmonofont{FiraMono-Regular.otf}[
@@ -121,6 +121,7 @@
 \input{sections/03-san-pham-dich-vu}
 \input{sections/04-khach-hang-muc-tieu}
 \input{sections/05-diem-khac-biet}
+\input{sections/06-ke-hoach-kinh-doanh}
 \input{sections/06-tiep-can-thi-truong}
 \input{sections/07-marketing}
 \input{sections/08-mo-hinh-kiem-tien}

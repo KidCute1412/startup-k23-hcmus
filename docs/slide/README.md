@@ -11,6 +11,7 @@ Nội dung được rút gọn còn khoảng 40--70 từ mỗi slide, phù hợp
 - `sections/03-san-pham-dich-vu.tex`: Sản phẩm và dịch vụ.
 - `sections/04-khach-hang-muc-tieu.tex`: Khách hàng mục tiêu.
 - `sections/05-diem-khac-biet.tex`: Điểm khác biệt.
+- `sections/06-ke-hoach-kinh-doanh.tex`: Kế hoạch kinh doanh, cold-start, vận hành và rủi ro.
 - `sections/06-tiep-can-thi-truong.tex`: Cách tiếp cận thị trường.
 - `sections/07-marketing.tex`: Kế hoạch marketing B2B2C supply-first.
 - `sections/08-mo-hinh-kiem-tien.tex`: Mô hình kiếm tiền.
@@ -51,9 +52,9 @@ File kết quả là `docs/slide/main.pdf`.
 - Font Fira Sans và Fira Mono (package `fira` trong TeX distribution). Theme mặc
   định dùng Noto Sans, nhưng font này thường không có sẵn trong MiKTeX nên deck
   sẽ rơi về TeX Gyre Heros. Khi build bằng LuaLaTeX/XeLaTeX, `main.tex` chủ động
-  đặt lại Fira Sans vì font này hẹp hơn Heros khoảng 6% ở dòng tiêu đề trong khi
-  độ đậm nét tương đương, giúp tiêu đề slide dài không bị tràn dòng. Nếu máy
-  không có Fira, deck vẫn build được và tự quay về font dự phòng của theme.
+  dùng Fira Sans Medium cho phần thân bài và Fira Sans SemiBold cho chữ đậm,
+  giúp nét chữ rõ hơn mà vẫn đủ gọn cho các tiêu đề dài. Nếu máy không
+  có Fira, deck vẫn build được và tự quay về font dự phòng của theme.
 - Deck build được bằng cả `lualatex` và `pdflatex`. Khối đặt font trong
   `main.tex` chỉ chạy khi có `fontspec` (LuaLaTeX/XeLaTeX); với `pdflatex` thì
   theme tự dùng package `FiraSans`. Khi thêm lệnh font mới vào `main.tex`, phải
