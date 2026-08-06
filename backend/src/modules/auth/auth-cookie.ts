@@ -8,7 +8,7 @@ export const REFRESH_TOKEN_COOKIE_PATH = '/api/v1/auth';
 const baseCookieOptions = {
   httpOnly: true,
   secure: process.env.NODE_ENV === 'production',
-  sameSite: 'lax' as const,
+  sameSite: process.env.NODE_ENV === 'production' ? ('none' as const) : ('lax' as const),
 };
 
 export const accessTokenCookieOptions = {
